@@ -1,0 +1,23 @@
+{
+  "status": "bringup-only",
+  "binary_sha256": "ffbab18f4d4fe286646b175618940e464c5d529fefae35f15eea91e6a363193b",
+  "short_context_bitwise_checks": 6890,
+  "prefill_lengths_completed": [
+    8192,
+    32768
+  ],
+  "long_context_reference_acceptance": "pending separate SDPA gate; not eager exactness",
+  "host_suite_passed": 385,
+  "source_sha256": {
+    "native/src/lfm3_main.cu": "8b762bfe1009af7630d5ff3636970093b29cd1026fb64481dff1f7db6eff160b",
+    "native/include/lfm/text_serving_limits.hpp": "8e6072563e90b63f3d67dd3292c212f54bedc222a34fd0dc736494c42585a985"
+  },
+  "frontend_official_parity": {
+    "cases": 6,
+    "utf8_bytes_equal": true,
+    "token_ids_equal": true,
+    "environment": "Thor pinned container, CUDA_VISIBLE_DEVICES empty; oracle processor loaded only for comparison"
+  },
+  "public_launcher_max_context": 4096,
+  "experimental_long_context_required": true
+}

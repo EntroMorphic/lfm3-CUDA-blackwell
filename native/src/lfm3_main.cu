@@ -2,6 +2,7 @@
 #include <lfm/model_config.hpp>
 #include <lfm/safetensors.hpp>
 #include <lfm/lfm3_ops.cuh>
+#include <lfm/text_serving_limits.hpp>
 #include <cublas_v2.h>
 #include <algorithm>
 #include <chrono>
@@ -147,9 +148,10 @@ __global__ void probabilities_large(const bf16* scores,bf16* probs,int rows,int 
   const int tid=threadIdx.x,row=blockIdx.x%rows,position=start+row;
   const int begin=window?max(0,position-window+1):0;
   const size_t base=size_t(blockIdx.x)*end;
-  float elements[4];
+  float elements[32];
+  const int iterations=(end+1023)/1024;
   float maximum=-3.402823466e38f;
-  for(int i=0;i<4;++i) {
+  for(int i=0;i<iterations;++i) {
     const int t=tid+i*1024;
     float value=-INFINITY;
     if(t<end && t+key_start>=begin && t+key_start<=position)
@@ -160,9 +162,9 @@ __global__ void probabilities_large(const bf16* scores,bf16* probs,int rows,int 
   __shared__ float shared[32];
   maximum=block_softmax_reduce<true>(maximum,shared);
   float sum=0;
-  for(int i=0;i<4;++i) if(tid+i*1024<end) sum=__fadd_rn(sum,expf(elements[i]-maximum));
+  for(int i=0;i<iterations;++i) if(tid+i*1024<end) sum=__fadd_rn(sum,expf(elements[i]-maximum));
   sum=block_softmax_reduce<false>(sum,shared);
-  for(int i=0;i<4;++i) if(tid+i*1024<end)
+  for(int i=0;i<iterations;++i) if(tid+i*1024<end)
     probs[base+tid+i*1024]=__float2bfloat16_rn(expf(elements[i]-maximum)/sum);
 }
 unsigned grid(size_t n) { return (n + 255) / 256; }
@@ -211,7 +213,8 @@ class Runner {
         gates(size_t(s.context)*s.query_heads), attended(size_t(s.context)*s.hidden), gated(size_t(s.context)*s.hidden),
         a(size_t(s.context)*s.mlp), b(size_t(s.context)*s.mlp), act(size_t(s.context)*s.mlp), logits(s.vocabulary),
         positions(s.context), tokens(s.context), workspace(4096*1024*2+16*1024*8),
-        score_buffer(size_t(s.query_heads)*s.context*s.context), probability_buffer(size_t(s.query_heads)*s.context*s.context),
+        score_buffer(lfm::text::attention_scratch_elements(s.context,s.query_heads)),
+        probability_buffer(lfm::text::attention_scratch_elements(s.context,s.query_heads)),
         pointer_a(s.query_heads),pointer_b(s.query_heads),pointer_c(s.query_heads) {
     // Validate the complete selected text schema before launching any forward kernels.
     weight("embed_tokens.weight", {s.vocabulary, s.hidden}); weight("embedding_norm.weight", {s.hidden});
@@ -286,16 +289,16 @@ class Runner {
   void normalize(const bf16* x, const std::string& weight_name, bf16* out, int rows, int width) {
     norm<<<rows,norm_threads(rows,width)>>>(x,w(weight_name),out,width,s.epsilon);
   }
-  void attention(int layer,int rows,int window) {
+  void attention_tile(int layer,int rows,int window,int first,int total_rows) {
     // Dynamic sliding cache returns only its last window for one-token decode.
     // Masking a larger product is mathematically equivalent, but not BF16-equivalent.
-    const int key_start=(rows==1 && window>0)?std::max(0,cursor+rows-window):0;
-    const int end=cursor+rows-key_start;
+    const int key_start=(total_rows==1 && window>0)?std::max(0,cursor+rows-window):0;
+    const int end=cursor+total_rows-key_start;
     std::vector<const bf16*> ap(s.query_heads),bp(s.query_heads);
     std::vector<bf16*> cp(s.query_heads);
     for(int h=0;h<s.query_heads;++h) {
       ap[h]=keys[layer]->p+(size_t(h/(s.query_heads/s.kv_heads))*s.context+key_start)*s.head_dim;
-      bp[h]=q.p+h*s.head_dim;
+      bp[h]=q.p+size_t(first)*s.hidden+h*s.head_dim;
       cp[h]=score_buffer.p+size_t(h)*rows*end;
     }
     auto upload=[&] {
@@ -309,19 +312,26 @@ class Runner {
       reinterpret_cast<const void* const*>(pointer_a.p),CUDA_R_16BF,s.head_dim,
       reinterpret_cast<const void* const*>(pointer_b.p),CUDA_R_16BF,s.hidden,&beta,
       reinterpret_cast<void* const*>(pointer_c.p),CUDA_R_16BF,end,s.query_heads,CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));
-    if(end<=2048) probabilities<<<rows*s.query_heads,32>>>(score_buffer.p,probability_buffer.p,rows,end,cursor,window,s.head_dim,key_start);
-    else probabilities_large<<<rows*s.query_heads,1024>>>(score_buffer.p,probability_buffer.p,rows,end,cursor,window,s.head_dim,key_start);
-    dump("layers."+std::to_string(layer)+".self_attn.probabilities",probability_buffer.p,size_t(s.query_heads)*rows*end);
+    if(end<=2048) probabilities<<<rows*s.query_heads,32>>>(score_buffer.p,probability_buffer.p,rows,end,cursor+first,window,s.head_dim,key_start);
+    else probabilities_large<<<rows*s.query_heads,1024>>>(score_buffer.p,probability_buffer.p,rows,end,cursor+first,window,s.head_dim,key_start);
+    std::string label="layers."+std::to_string(layer)+".self_attn.probabilities";
+    if(total_rows>lfm::text::scratch_rows(s.context)) label+=".tile"+std::to_string(first);
+    dump(label,probability_buffer.p,size_t(s.query_heads)*rows*end);
     for(int h=0;h<s.query_heads;++h) {
       ap[h]=values[layer]->p+(size_t(h/(s.query_heads/s.kv_heads))*s.context+key_start)*s.head_dim;
       bp[h]=probability_buffer.p+size_t(h)*rows*end;
-      cp[h]=attended.p+h*s.head_dim;
+      cp[h]=attended.p+size_t(first)*s.hidden+h*s.head_dim;
     }
     upload();
     blas_check(cublasGemmBatchedEx(blas,CUBLAS_OP_N,CUBLAS_OP_N,s.head_dim,rows,end,&alpha,
       reinterpret_cast<const void* const*>(pointer_a.p),CUDA_R_16BF,s.head_dim,
       reinterpret_cast<const void* const*>(pointer_b.p),CUDA_R_16BF,end,&beta,
       reinterpret_cast<void* const*>(pointer_c.p),CUDA_R_16BF,s.hidden,s.query_heads,CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+  }
+  void attention(int layer,int rows,int window) {
+    const int tile=lfm::text::scratch_rows(s.context);
+    for(int first=0;first<rows;first+=tile)
+      attention_tile(layer,std::min(tile,rows-first),window,first,rows);
   }
   std::vector<float> forward(const std::vector<int>& input) {
     const int rows = input.size();
@@ -406,7 +416,10 @@ int main(int argc,char** argv) try {
     throw std::runtime_error("usage: liquid-lfm3 --experimental MODEL_DIRECTORY REQUEST.json OUTPUT.json");
   auto request=read_json(argv[3]);
   int capacity=request.has("capacity")?request.at("capacity").integer():4096;
-  if(capacity<1 || capacity>4096) throw std::runtime_error("capacity must be 1..4096");
+  lfm::text::scratch_rows(capacity);
+  const bool long_context=request.has("experimental_long_context") && request.at("experimental_long_context").boolean();
+  if(capacity>4096 && !long_context)
+    throw std::runtime_error("capacity must be 1..4096 unless experimental_long_context is enabled (unaccepted 32K bring-up)");
   auto cfg=lfm::ModelConfig::load(std::string(argv[2])+"/config.json",capacity);
   if(!cfg.is_lfm3() || !cfg.sandwich_norm || !cfg.tied || cfg.shape.conv_width!=7 || cfg.shape.head_dim!=128 || cfg.shape.hidden!=2048)
     throw std::runtime_error("runner requires tied, sandwich-normalized width-7 LFM3 with hidden=2048, head_dim=128");
@@ -434,6 +447,9 @@ int main(int argc,char** argv) try {
   if(input.empty() || input.size()>size_t(capacity) || count>capacity || forced.size()>size_t(capacity) ||
      input.size()+std::max(size_t(count?count-1:0),forced.size())>size_t(capacity) || (count && !forced.empty()))
     throw std::runtime_error("invalid or overflowing prefill/decode request");
+  // New serving contract counts the final emitted prediction too. Legacy
+  // <=4096 fixture accounting remains unchanged unless explicitly opted in.
+  if(long_context) lfm::text::require_budget(input.size(),size_t(count),capacity);
   if(std::set<int>(suppress.begin(),suppress.end()).size()==size_t(cfg.shape.vocabulary))
     throw std::runtime_error("cannot suppress whole vocabulary");
   Runner runner(argv[2],cfg);

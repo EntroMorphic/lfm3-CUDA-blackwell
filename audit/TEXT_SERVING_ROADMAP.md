@@ -50,6 +50,20 @@ two quadratic BF16 matrices. KV and other activation allocations are additional.
 The new long-row softmax has32 scalar registers/thread to cover32768 columns;
 its arithmetic above4096 is bring-up, not an exact ATen equivalence certificate.
 
+The first bring-up binary completed8192- and32768-token prefills with finite
+logits and preserved all6890 bitwise short-context activation checks. The combined
+host suite passes385 tests. Evidence: `validation/32k-foundation/`. This is **not**
+accepted full32K text serving: independent long-context numerical comparison,
+decode/reset boundaries, new-kernel sanitizer coverage, frontend/sampling runtime
+integration and the later session/concurrency gates remain required.
+
+`check_lfm3_32k.py` runs a separate SDPA oracle at8192,32767+1, and32768. It uses
+predeclared maximum logit error0.5 and relative RMS0.02 plus exact argmax/reset;
+this is explicitly different from the older eager bitwise gate. It preserves
+failure evidence and never raises tolerances to close a failed test. That initial
+comparison is pending; SDPA is chosen to avoid a quadratic eager oracle's memory
+peak, not to label a different backend as exact eager parity.
+
 `text_sampling.hpp` and `lfm3_text_frontend.py` are independently tested components;
 neither is silently advertised as fully integrated native serving. Their detailed
 contracts and remaining validation are in `SAMPLING.md` and `TEXT_FRONTEND.md`.
