@@ -30,6 +30,10 @@ then EOF. The native interface is exactly:
 liquid-lfm3 --experimental MODEL_DIRECTORY request.json output.json
 ```
 
+The final frozen runtime also completed the original reflective-recursion prompt
+through this launcher. Its actual 86-token response and raw request/output are
+saved locally in project-root `tmp/lfm3-native-final/`.
+
 Artifacts are `request.json`, untouched native `output.json`, decoded
 `response.json`, and `text.txt`. Stdout is decoded text. `response.json` explicitly
 records official preprocessing and `native_tokenizer_parity: false`. Copy actual

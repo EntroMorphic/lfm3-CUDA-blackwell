@@ -78,6 +78,12 @@ exact generated IDs. Earlier failed candidate reports remain on Thor in
 `build/forward-baseline-pedantic`, `build/forward-gates-v1`, `build/forward-gates-v2`,
 and the preserved pre-normalization comparison reports.
 
+The final frozen runtime (`cabeb776...`) passes **6,890 bitwise activation/logit
+checks**, all nine context cases through 4096, and a hash-matched warmed 86-token
+benchmark. Integrated 4096-token memcheck/racecheck/synccheck pass within the
+documented NVJET exclusion scope; initcheck remains explicitly blocked. Full
+results and the final disposition are in `audit/ACCEPTANCE.md`.
+
 ## Reproduction on Thor
 
 ```bash

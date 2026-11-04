@@ -1,0 +1,147 @@
+{
+  "passed": false,
+  "initcheck_status": "blocked-cuBLAS-output-tracking",
+  "controls_ok": true,
+  "synccheck_nvjet_excluded": true,
+  "records": [
+    {
+      "name": "memcheck",
+      "tool": "memcheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/forward-sanitizer-final4096/memcheck.log",
+        "/workspace/liquid-CUDA/build/cmake/liquid-lfm3",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/sanitizer-context4096-request.json",
+        "/workspace/liquid-CUDA/build/forward-sanitizer-final4096/memcheck.json"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "clean": true
+    },
+    {
+      "name": "racecheck",
+      "tool": "racecheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/forward-sanitizer-final4096/racecheck.log",
+        "/workspace/liquid-CUDA/build/cmake/liquid-lfm3",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/sanitizer-context4096-request.json",
+        "/workspace/liquid-CUDA/build/forward-sanitizer-final4096/racecheck.json"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "clean": true
+    },
+    {
+      "name": "synccheck",
+      "tool": "synccheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "synccheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/forward-sanitizer-final4096/synccheck.log",
+        "--kernel-name-exclude",
+        "kns=nvjet",
+        "/workspace/liquid-CUDA/build/cmake/liquid-lfm3",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/sanitizer-context4096-request.json",
+        "/workspace/liquid-CUDA/build/forward-sanitizer-final4096/synccheck.json"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "clean": true
+    },
+    {
+      "name": "initcheck-kernel-control",
+      "tool": "initcheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/forward-sanitizer-final4096/initcheck-kernel-control.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-projection-probe",
+        "kernel",
+        "257",
+        "2048"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "clean": true
+    },
+    {
+      "name": "initcheck-missing-control",
+      "tool": "initcheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/forward-sanitizer-final4096/initcheck-missing-control.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-projection-probe",
+        "missing",
+        "257",
+        "2048"
+      ],
+      "returncode": 86,
+      "timed_out": false,
+      "clean": false
+    },
+    {
+      "name": "initcheck-cublas-producer",
+      "tool": "initcheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/forward-sanitizer-final4096/initcheck-cublas-producer.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-projection-probe",
+        "gemm",
+        "257",
+        "2048"
+      ],
+      "returncode": 86,
+      "timed_out": false,
+      "clean": false
+    }
+  ],
+  "binary_sha256": "cabeb776f6221895810ad226c673ff12fa911d13a5bca19d96f94aea53f1c27c",
+  "probe_sha256": "8b98507e259713a56cce4f5281d0b7a8707a637cf1195754c886dd0868fc8b22"
+}

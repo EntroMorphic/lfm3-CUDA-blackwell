@@ -1,0 +1,64 @@
+{
+  "records": [
+    {
+      "mode": "kernel",
+      "returncode": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--print-limit",
+        "4",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-nonuniform-final/kernel.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-projection-probe",
+        "kernel",
+        "257",
+        "2048"
+      ]
+    },
+    {
+      "mode": "missing",
+      "returncode": 86,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--print-limit",
+        "4",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-nonuniform-final/missing.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-projection-probe",
+        "missing",
+        "257",
+        "2048"
+      ]
+    },
+    {
+      "mode": "gemm",
+      "returncode": 86,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--print-limit",
+        "4",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-nonuniform-final/gemm.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-projection-probe",
+        "gemm",
+        "257",
+        "2048"
+      ]
+    }
+  ],
+  "probe_sha256": "a77d4028d0d1113455803708436489fc60e9ed1d50472a10cb40df9a60fba2d0",
+  "gemm_output_pattern": "nonuniform row pattern, distinct from constant CUDA-fill control",
+  "initcheck_disposition": "reproduced output tracking failure, not a clean pass"
+}

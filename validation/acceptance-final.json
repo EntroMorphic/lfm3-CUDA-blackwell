@@ -1,0 +1,87 @@
+{
+  "runtime_binary_sha256": "cabeb776f6221895810ad226c673ff12fa911d13a5bca19d96f94aea53f1c27c",
+  "host_tests_passed": 327,
+  "bitwise_activation_logit_checks": 6890,
+  "context_cases": 9,
+  "maximum_capacity_verified": 4096,
+  "bitwise_context_logit_vectors": 19,
+  "preupload_rejections": 12,
+  "greedy_response_tokens": 86,
+  "benchmark": {
+    "greedy_exact": true,
+    "accepted_parity_benchmark": true,
+    "mismatches": [],
+    "first_mismatch": null,
+    "input_tokens": 34,
+    "max_new_tokens": 128,
+    "reference_attention": "eager",
+    "native_attention": "eager-bf16",
+    "native": {
+      "prefill_seconds_median": 0.0310562,
+      "decode_seconds_median": 2.13398,
+      "decode_tok_s_median": 39.83167602320546,
+      "generated_tokens_per_sample": [
+        86,
+        86,
+        86
+      ],
+      "decode_forward_calls_per_sample": [
+        85,
+        85,
+        85
+      ]
+    },
+    "transformers": {
+      "prefill_seconds_median": 0.03584415599834756,
+      "decode_seconds_median": 2.547498256999461,
+      "decode_tok_s_median": 33.36606797137369,
+      "generated_tokens_per_sample": [
+        86,
+        86,
+        86
+      ],
+      "decode_forward_calls_per_sample": [
+        85,
+        85,
+        85
+      ]
+    },
+    "samples": 3,
+    "native_warmup_runs_per_process": 1,
+    "native_processes": 3,
+    "reference_warmup_runs_total": 1,
+    "reference_initial_oracle_generation": true,
+    "reference_samples_same_process": true,
+    "warmup_scope": "full greedy generation, same requested stopping/suppression policy; reference additionally runs initial oracle generation before its discarded warmup; native resets cache after each process warmup",
+    "binary_sha256": "cabeb776f6221895810ad226c673ff12fa911d13a5bca19d96f94aea53f1c27c",
+    "timing_scope": "synchronized batch-1 backend-specific manual greedy loops; prefill separate; decode forward calls/sec; no traces; excludes loading and text decoding; zero decode calls => null throughput",
+    "limitations": "native host logits/argmax and contiguous cache; reference Python token allocations/argmax and dynamic cache; different synchronization/loop boundaries; sequential workloads; no speedup or isolated-kernel claim; gate report not checkpoint-attested"
+  },
+  "integrated_sanitizers": {
+    "memcheck": "passed",
+    "racecheck": "passed",
+    "synccheck": "passed with NVJET excluded; all custom kernels instrumented",
+    "initcheck": "blocked by reproduced cuBLAS output tracking; not passed"
+  },
+  "overall_pristine": false,
+  "original_source_hashes_verified_unchanged": true,
+  "source_sha256": {
+    "native/CMakeLists.txt": "00c8889b569c06b526d6a1291a8d658f2d9ed4b47e5b4eba64f893d47f183f40",
+    "native/src/lfm3_main.cu": "b05b928ecd11829530a44c3c38c2c247c11b0495dae6463e985d17c88f945e83",
+    "native/tests/lfm3_projection_probe.cu": "565e30833ee7f3985e9e2bfdb39b3dfb1ce96a352135aa9b96fe5b5ace2fc664",
+    "tools/check_lfm3_forward.py": "083803800d81075ca4f710b35ef0988b1ccb7a6b04d5cfaddda0a3cc772dca0b",
+    "tools/check_lfm3_context.py": "5e6dc18350671c975fcbb9b0627b82681d836016f0a6accb5b9d299370cf786e",
+    "tools/check_lfm3_sanitizer.py": "7f23bcde9b65fca7bfd1f18b77ee324058ade8056bde12e83a2a21cf02ea8d60",
+    "tools/compare_lfm3_traces.py": "a9bb813daad08b2cb3bb37c88867fc3234bc1bd925195007569caa73a3bdf9cb",
+    "tools/lfm3_reference.py": "5eb6dd93ccc18f9874d40db2bf303d88847af3faff14512e47f9b89ff3ca894a",
+    "tools/lfm3_chat.py": "36985f03b8cc1d09dec014edd34e269d43d8101d4309ac3e1a468e8a9f72355d",
+    "tools/benchmark_lfm3.py": "91776a7c142af70c31757542899a1d0ee83b21efd67fbdf47e97b3bbecbaff8f"
+  },
+  "chat_artifacts_sha256": {
+    "output.json": "927f75b80235e3655d9e7040c53edaf08ab8b5c9d578d9228925203827103a95",
+    "request.json": "83243deb3dc9ea13fa3c447b00b3bbacc87b168bc76a20ee5ec093f0ac5ed1dd",
+    "response.json": "b6d0888d26de9554feb476a0239e89ebd955de1080f65f37cb900d1d8c27bba8",
+    "text.txt": "0347ffd1ae02ac0f7b24748ae2b576093c78acc509efa4ba929b426645a929f4"
+  },
+  "remaining_blocker": "Complete integrated initialization coverage needs compatible NVIDIA tooling/library/driver stack or vendor remediation"
+}

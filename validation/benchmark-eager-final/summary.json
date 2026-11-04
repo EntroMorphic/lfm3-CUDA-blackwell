@@ -1,0 +1,50 @@
+{
+  "greedy_exact": true,
+  "accepted_parity_benchmark": true,
+  "mismatches": [],
+  "first_mismatch": null,
+  "input_tokens": 34,
+  "max_new_tokens": 128,
+  "reference_attention": "eager",
+  "native_attention": "eager-bf16",
+  "native": {
+    "prefill_seconds_median": 0.0310562,
+    "decode_seconds_median": 2.13398,
+    "decode_tok_s_median": 39.83167602320546,
+    "generated_tokens_per_sample": [
+      86,
+      86,
+      86
+    ],
+    "decode_forward_calls_per_sample": [
+      85,
+      85,
+      85
+    ]
+  },
+  "transformers": {
+    "prefill_seconds_median": 0.03584415599834756,
+    "decode_seconds_median": 2.547498256999461,
+    "decode_tok_s_median": 33.36606797137369,
+    "generated_tokens_per_sample": [
+      86,
+      86,
+      86
+    ],
+    "decode_forward_calls_per_sample": [
+      85,
+      85,
+      85
+    ]
+  },
+  "samples": 3,
+  "native_warmup_runs_per_process": 1,
+  "native_processes": 3,
+  "reference_warmup_runs_total": 1,
+  "reference_initial_oracle_generation": true,
+  "reference_samples_same_process": true,
+  "warmup_scope": "full greedy generation, same requested stopping/suppression policy; reference additionally runs initial oracle generation before its discarded warmup; native resets cache after each process warmup",
+  "binary_sha256": "cabeb776f6221895810ad226c673ff12fa911d13a5bca19d96f94aea53f1c27c",
+  "timing_scope": "synchronized batch-1 backend-specific manual greedy loops; prefill separate; decode forward calls/sec; no traces; excludes loading and text decoding; zero decode calls => null throughput",
+  "limitations": "native host logits/argmax and contiguous cache; reference Python token allocations/argmax and dynamic cache; different synchronization/loop boundaries; sequential workloads; no speedup or isolated-kernel claim; gate report not checkpoint-attested"
+}

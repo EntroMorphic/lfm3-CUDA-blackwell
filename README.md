@@ -13,7 +13,7 @@ limitations still apply.
 ## Current milestone
 
 **Experimental text forward/generation is now implemented separately in
-`liquid-lfm3`.** Four real-checkpoint cases pass 5,746 bitwise activation/logit
+`liquid-lfm3`.** Four real-checkpoint cases pass 6,890 bitwise activation/logit
 comparisons against Transformers eager, plus greedy generation and cache-reset
 checks. A checked text launcher is available in `tools/lfm3_chat.py`. The expanded
 context suite also passes bitwise logits through the 4096-token limit, including
@@ -22,7 +22,7 @@ parity and full integrated initcheck acceptance remain outstanding; the latter
 has a reproduced cuBLAS/tool tracking blocker, not a credited pass.
 The current combined host suite has 327 passing tests. See
 [audit/ACCEPTANCE.md](audit/ACCEPTANCE.md) for findings, fixes and evidence limits.
-See [audit/FORWARD.md](audit/FORWARD.md) and `validation/forward-v3/`.
+See [audit/FORWARD.md](audit/FORWARD.md) and `validation/forward-final/`.
 The preserved `liquid-native` runtime still rejects LFM3; its guard is unchanged.
 
 The earlier isolated-operator milestone established:

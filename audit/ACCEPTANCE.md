@@ -47,6 +47,12 @@ was stopped rather than credited as passed.
   those values uninitialized at the consumer. No output initialization, host
   roundtrip, custom-kernel exclusion or suppression is used to conceal this.
 
+The reproduction was red-teamed again: a uniform GEMM output might accidentally
+match stale memory from the fill control. The final probe instead uses a
+nonuniform per-channel GEMM pattern, distinct from the constant fill control, and
+checks every sampled result against its exact analytic value. The same tracking
+failure persists. Evidence: `validation/projection-nonuniform-final/`.
+
 The reproduction persists with Compute Sanitizer 2025.3.1, 2025.4.1, and 2026.2.0;
 enabling tensor-op checks on the latter did not resolve it. Tested cuBLAS reports
 version 130100 on Thor. Isolated sanitizer downloads were SHA-256 verified; no
@@ -58,6 +64,12 @@ potentially very slow integrated initcheck. It records `passed: false` and
 preserves the logs. It cannot credit missing logs, internal errors, failed
 controls or incorrect producer values as a clean result. Six host regressions
 verify this fail-closed behavior. Evidence: `validation/forward-sanitizer-v2/`.
+
+The frozen `cabeb776...` runtime also passes integrated **memcheck, racecheck and
+synccheck at 4096-token prefill** with no timeout. Only synccheck excludes NVJET;
+custom kernels, including the new large softmax and RoPE path, remain instrumented.
+The final report still has `passed: false` because initcheck is blocked. Evidence:
+`validation/forward-sanitizer-final4096/`.
 
 **Disposition:** bounded numerical/native inference acceptance can be measured,
 but complete integrated global-memory initialization coverage remains blocked by
@@ -96,7 +108,36 @@ Saved evidence: `validation/context-v3/`; the failed predecessor is preserved in
 `validation/context-failed-v2/`. Raw oracle vectors remain in the Thor build tree;
 the checked-in manifest records their SHA-256 values and explicit weight identity.
 
-The combined host suite passes **327 tests** (`validation/host-acceptance-iteration1.log`).
-The new full-context runtime is awaiting its final broad activation regression,
-hash-matched warmed benchmark, and long-context sanitizer record. Earlier metrics
-and sanitizer results remain pinned to their earlier candidate hashes.
+## Frozen-candidate final verification
+
+Runtime SHA-256:
+`cabeb776f6221895810ad226c673ff12fa911d13a5bca19d96f94aea53f1c27c`.
+The final forward, context, benchmark and 4096-token sanitizer records all identify
+this exact runtime binary.
+
+- **6,890 bitwise activation/logit comparisons** pass, now also capturing actual
+  eager rotary inputs, attended outputs and probabilities. Teacher-forced and
+  free-running generation, exact reset, stopping and suppression pass unchanged.
+- All nine context cases and twelve config-only controls pass, as above.
+- Three measured runs per backend generate identical **86-token** responses.
+  Median warmed decode is **39.83 tok/s native**, **33.37 tok/s Transformers eager**;
+  median prefill is 31.06 ms and 35.84 ms respectively. See benchmark scope and
+  limitations above; timings exclude model loading and text decoding.
+- Integrated memcheck/racecheck/synccheck at 4096-token prefill pass within scope;
+  complete initcheck is still **blocked**, with the strengthened nonuniform
+  reproduction preserved. The final combined sanitizer report is not passing.
+- **327 host tests pass** (`validation/host-acceptance-final.log`). The original
+  repository's recorded source hashes remain unchanged.
+- Actual typed-prompt → native generation → decoded text succeeds for the frozen
+  runtime; local artifacts are in `../tmp/lfm3-native-final/`.
+
+Final evidence: `validation/forward-final/`, `validation/context-v3/`,
+`validation/benchmark-eager-final/`, `validation/forward-sanitizer-final4096/`, and
+`validation/acceptance-final.json`. Earlier candidate evidence remains historical.
+
+**Disposition:** owned findings in priorities 1 and 3, and the benchmark/harness
+findings in priority 2, are remediated and verified for the stated coverage.
+“Pristine” overall acceptance is **not achieved**: initialization coverage requires
+a compatible NVIDIA tooling/library/driver stack or vendor remediation. No system
+driver upgrade, suppression of our kernels, or numerical-tolerance relaxation was
+used to manufacture closure.
