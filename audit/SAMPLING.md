@@ -26,7 +26,9 @@ is invalid: request greedy with `do_sample=false`, not temperature=0.
 
 `sample(const float*, size_t, const vector<int>& history={}, const vector<int>&
 suppressed={}) -> int` never mutates logits/history. History should include the
-prompt and all previously generated IDs; duplicate IDs apply the penalty once.
+the intended repetition history; duplicate IDs apply the penalty once. The native
+Omni integration uses generated IDs only, matching the checkpoint's text-history
+policy rather than penalizing the input prompt.
 Positive seen logits are divided by the penalty; negative ones multiplied.
 Penalties below one are valid (encourage repetition). Suppression/history IDs
 must be in bounds even when the penalty is one. Duplicate suppression is benign.
@@ -57,3 +59,33 @@ probability. Identical inputs/options/seed/call sequence on the same host build
 reproduce exactly; copying a sampler copies its stream. This is **not bitwise
 PyTorch RNG parity**, nor a promise across different libm/long-double platforms.
 The sampler is mutable and requires external synchronization if shared.
+
+## Native request integration
+
+The runtime parses `do_sample`, `temperature`, `top_k`, `top_p`, `min_p`,
+`repetition_penalty`, and `seed` before constructing the GPU runner. The current
+JSON boundary accepts seeds0..2147483647 (the standalone header supports uint64).
+Teacher argmax diagnostics never consume stochastic RNG. Each warmup starts the
+same seeded sampler as the measured request, so warmup cannot advance its stream.
+Default greedy/penalty1 retains a direct argmax fast path. Reset verification
+replays token inputs and requires exactly equal raw logits, independently of RNG.
+
+`tools/check_lfm3_sampling.py` tests top-k1/greedy equality, repeated seed42,
+warmup isolation, suppression/stopping, exact reset and fourteen invalid metadata
+cases rejected against a config-only directory before weights can be loaded.
+The first native suite passed those controls, but independent review found that
+they could all pass if runtime sampling were silently bypassed. The remediated
+gate now records every sampled step's logits and replays them in a standalone
+`text-sampling-oracle` process with the identical policy, seed and generated-only
+history. Every emitted ID must match and the fixed fixture must contain a
+non-greedy choice. Six host oracle tests explicitly reject greedy bypass, wrong
+IDs, missing/truncated traces and empty output.
+
+The strengthened GPU integration suite passed for binary `85028f2a...`, including
+independent logit replay and a demonstrated non-greedy choice. All6890 short
+activation/logit comparisons remain bitwise equal for that candidate.
+
+An independent Python arithmetic oracle additionally matches token support and
+probabilities to1e-12 over80 deterministic policy combinations (temperature,
+top-k/top-p/min-p, sign-correct repetition penalty, duplicate history/suppression,
+and ties). This validates the documented filter order, not torch RNG equivalence.

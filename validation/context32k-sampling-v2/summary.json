@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "binary_sha256": "85028f2ab4354c8833885bf967132a223a225be9adecf810452e21cb2e05c16c",
+  "reference_backend": "Transformers SDPA",
+  "native_backend": "native tiled eager-bf16",
+  "torch": "2.10.0+cu130",
+  "transformers": "5.22.1",
+  "max_logit_error": 0.5,
+  "max_relative_rms": 0.02,
+  "cases": [
+    {
+      "case": "prefill8192",
+      "logits": [
+        {
+          "step": 0,
+          "max_abs": 0.125,
+          "relative_rms": 0.0024953216779977083,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        }
+      ],
+      "reset_exact": true,
+      "passed": true
+    },
+    {
+      "case": "decode_into32768",
+      "logits": [
+        {
+          "step": 0,
+          "max_abs": 0.125,
+          "relative_rms": 0.002395542338490486,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        },
+        {
+          "step": 1,
+          "max_abs": 0.1875,
+          "relative_rms": 0.003130023367702961,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        }
+      ],
+      "reset_exact": true,
+      "passed": true
+    },
+    {
+      "case": "prefill32768",
+      "logits": [
+        {
+          "step": 0,
+          "max_abs": 0.125,
+          "relative_rms": 0.0028063072822988033,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        }
+      ],
+      "reset_exact": true,
+      "passed": true
+    }
+  ],
+  "limitations": "Not eager bitwise parity; finite fixed fixtures; no performance claim",
+  "location": "prefill32768:native"
+}

@@ -30,6 +30,9 @@ set_target_properties(liquid-native PROPERTIES
 )
 
 if(LIQUID_LFM3_OPS_TESTS)
+  add_executable(text-sampling-oracle tests/text_sampling_oracle.cpp)
+  target_include_directories(text-sampling-oracle PRIVATE include)
+  target_compile_features(text-sampling-oracle PRIVATE cxx_std_17)
   add_executable(lfm3-projection-probe tests/lfm3_projection_probe.cu)
   target_link_libraries(lfm3-projection-probe PRIVATE CUDA::cudart CUDA::cublas)
   set_target_properties(lfm3-projection-probe PROPERTIES CUDA_ARCHITECTURES 110)

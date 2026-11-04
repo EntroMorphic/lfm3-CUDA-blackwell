@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "binary_sha256": "85028f2ab4354c8833885bf967132a223a225be9adecf810452e21cb2e05c16c",
+  "seed_reproducible": true,
+  "warmup_rng_isolated": true,
+  "topk1_equals_greedy": true,
+  "exact_reset_all_runs": true,
+  "preupload_sampling_rejections": 14,
+  "distinct_seeds_differ": true,
+  "scope": "finite native integration fixtures; sampler distribution tested separately; no torch RNG identity"
+}

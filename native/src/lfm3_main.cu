@@ -3,6 +3,7 @@
 #include <lfm/safetensors.hpp>
 #include <lfm/lfm3_ops.cuh>
 #include <lfm/text_serving_limits.hpp>
+#include <lfm/text_sampling.hpp>
 #include <cublas_v2.h>
 #include <algorithm>
 #include <chrono>
@@ -452,6 +453,28 @@ int main(int argc,char** argv) try {
   if(long_context) lfm::text::require_budget(input.size(),size_t(count),capacity);
   if(std::set<int>(suppress.begin(),suppress.end()).size()==size_t(cfg.shape.vocabulary))
     throw std::runtime_error("cannot suppress whole vocabulary");
+  lfm::TextSamplingOptions sampling;
+  if(request.has("do_sample")) sampling.do_sample=request.at("do_sample").boolean();
+  if(request.has("temperature")) sampling.temperature=request.at("temperature").number();
+  if(request.has("top_k")) sampling.top_k=request.at("top_k").integer();
+  if(request.has("top_p")) sampling.top_p=request.at("top_p").number();
+  if(request.has("min_p")) sampling.min_p=request.at("min_p").number();
+  if(request.has("repetition_penalty")) sampling.repetition_penalty=request.at("repetition_penalty").number();
+  if(request.has("seed")) sampling.seed=request.at("seed").integer();
+  if(sampling.top_k>cfg.shape.vocabulary) throw std::runtime_error("top_k exceeds vocabulary size");
+  lfm::TextSampler sampler(sampling); // Validates every scalar before GPU upload.
+  auto greedy=[&](const std::vector<float>& logits) {
+    int best=-1;
+    for(int token=0;token<cfg.shape.vocabulary;++token)
+      if(std::find(suppress.begin(),suppress.end(),token)==suppress.end() &&
+         (best<0 || logits[token]>logits[best])) best=token;
+    if(best<0) throw std::runtime_error("cannot suppress whole vocabulary");
+    return best;
+  };
+  auto sample=[&](lfm::TextSampler& picker,const std::vector<float>& logits,const std::vector<int>& history) {
+    if(!sampling.do_sample && sampling.repetition_penalty==1.0) return greedy(logits);
+    return picker.sample(logits.data(),logits.size(),history,suppress);
+  };
   Runner runner(argv[2],cfg);
   runner.trace_logits_only=trace_logits_only;
   if(request.has("trace_directory")) {
@@ -463,12 +486,14 @@ int main(int argc,char** argv) try {
   const std::string trace_directory=runner.trace;
   runner.trace.clear();
   for(int run=0;run<warmups;++run) {
+    lfm::TextSampler warm_sampler(sampling);
+    std::vector<int> warm_history;
     auto warm_scores=runner.forward(input);
     for(int token:forced) warm_scores=runner.forward({token});
     // Warm precisely the same greedy workload as the timed run, not one decode.
     if(forced.empty()) for(int t=0;t<count;++t) {
-      for(int id:suppress) warm_scores[id]=-INFINITY;
-      int token=int(std::max_element(warm_scores.begin(),warm_scores.end())-warm_scores.begin());
+      int token=sample(warm_sampler,warm_scores,warm_history);
+      warm_history.push_back(token);
       if(std::find(stop.begin(),stop.end(),token)!=stop.end() || t==count-1) break;
       warm_scores=runner.forward({token});
     }
@@ -481,8 +506,7 @@ int main(int argc,char** argv) try {
   std::vector<int> generated;
   std::vector<int> argmax;
   auto pick=[&] {
-    for(int id:suppress) scores[id]=-INFINITY;
-    return int(std::max_element(scores.begin(),scores.end())-scores.begin());
+    return greedy(scores); // Teacher diagnostic never consumes stochastic RNG.
   };
   argmax.push_back(pick());
   for(int token:forced) {
@@ -491,7 +515,7 @@ int main(int argc,char** argv) try {
     argmax.push_back(pick());
   }
   for(int t=0;t<count;++t) {
-    int token=pick(); generated.push_back(token);
+    int token=sample(sampler,scores,generated); generated.push_back(token);
     if(std::find(stop.begin(),stop.end(),token)!=stop.end() || t==count-1) break;
     scores=runner.forward({token});
     if(check_reset) checkpoints.push_back(scores);
@@ -516,7 +540,8 @@ int main(int argc,char** argv) try {
    <<",\"decode_forward_calls\":"<<(forced.empty()?std::max(0,int(generated.size())-1):int(forced.size()))
    <<",\"reset_checked\":"<<(check_reset?"true":"false")
    <<",\"reset_exact_logits_ok\":"<<(check_reset?(reset_ok?"true":"false"):"null")
-   <<",\"warmup_runs\":"<<warmups<<",\"tracing\":"<<(trace_directory.empty()?"false":"true")<<"}\n";
+   <<",\"warmup_runs\":"<<warmups<<",\"tracing\":"<<(trace_directory.empty()?"false":"true")
+   <<",\"do_sample\":"<<(sampling.do_sample?"true":"false")<<",\"seed\":"<<sampling.seed<<"}\n";
   if(!f) throw std::runtime_error("output write failed");
   return 0;
 } catch(const std::exception& e) { std::cerr<<"lfm3: "<<e.what()<<"\n"; return 1; }

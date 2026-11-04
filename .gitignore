@@ -3,3 +3,5 @@ native/build/
 __pycache__/
 .pytest_cache/
 *.pyc
+# Keep numerical trace payloads local; commit comparison reports and hashes.
+validation/**/*.bf16

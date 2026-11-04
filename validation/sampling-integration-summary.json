@@ -1,0 +1,28 @@
+{
+  "status": "finite integration gates passed",
+  "binary_sha256": "85028f2ab4354c8833885bf967132a223a225be9adecf810452e21cb2e05c16c",
+  "bitwise_short_context_checks": 6890,
+  "long_context_oracle": "Transformers SDPA tolerance, not eager bitwise",
+  "long_context_cases": [
+    "prefill8192",
+    "decode_into32768",
+    "prefill32768"
+  ],
+  "sampling_logit_replay_verified": true,
+  "sampling_non_greedy_fixture_verified": true,
+  "sampling_metadata_preupload_rejections": 14,
+  "full_text_serving_accepted": false,
+  "source_sha256": {
+    "native/src/lfm3_main.cu": "a29cd3329e7c08e7e718e266eb3b7a839f324f97f6eaa52b5821a63b45f60c13",
+    "native/include/lfm/text_sampling.hpp": "15b12945391d2694270aba26f98bed8fdc9c42eb902371b22ced325bb4923736",
+    "native/tests/text_sampling_oracle.cpp": "158f9352d32fd3cce4b47f63a8771a42755cd9a0a4dd23dac9b805e6fc8e3b2a",
+    "tools/check_lfm3_sampling.py": "b9f45952ee5f724d8f7eaa96e76ac761a2819943177753270c85e216b505c499"
+  },
+  "remaining_gates": [
+    "persistent KV sessions",
+    "resident request service",
+    "actual GPU batching/concurrency",
+    "32K sanitizer completion and initcheck blocker",
+    "frontend review remediation and integration revalidation"
+  ]
+}
