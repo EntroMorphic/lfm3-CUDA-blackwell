@@ -1,0 +1,63 @@
+{
+  "status": "passed",
+  "records": [
+    {
+      "tool": "memcheck",
+      "passed": true,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/serving-ops-sanitizers-v1/memcheck.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-serving-ops-probe"
+      ]
+    },
+    {
+      "tool": "racecheck",
+      "passed": true,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/serving-ops-sanitizers-v1/racecheck.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-serving-ops-probe"
+      ]
+    },
+    {
+      "tool": "synccheck",
+      "passed": true,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "synccheck",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/serving-ops-sanitizers-v1/synccheck.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-serving-ops-probe"
+      ]
+    },
+    {
+      "tool": "initcheck",
+      "passed": true,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.3.27/cuda_sanitizer_api-linux-sbsa-13.3.27-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/serving-ops-sanitizers-v1/initcheck.log",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-serving-ops-probe"
+      ]
+    }
+  ],
+  "probe_sha256": "85fe1580bc9e412866ce8ec6d462fb0626c97722344ba32cd07de66e7c1d2b6b",
+  "scope": "60 small uniform-score softmax/norm shared-memory fixtures including width32768; all four tools without exclusions; NOT integrated32K racecheck/initcheck coverage"
+}

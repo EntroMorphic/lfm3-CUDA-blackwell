@@ -1,0 +1,1 @@
+PASS: 60 shared-memory operator fixtures, 981638 exactly checked BF16 values; max softmax width32768; not integrated race coverage

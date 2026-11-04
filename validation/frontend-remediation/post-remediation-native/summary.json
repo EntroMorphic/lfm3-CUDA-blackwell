@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "scope": "actual post-remediation codec-free control prompt; no processor/codec load",
+  "generated_tokens": 86,
+  "same_ids_as_prior_control": true,
+  "source_sha256": {
+    "tools/lfm3_chat.py": "fb7d37efe64dcb917c86da4170cd6e6dee8174178d1a9ac69d1f83b6c8d8ca9f",
+    "tools/lfm3_text_frontend.py": "2f4ed0f779fb7ac5264a8305d3decd94cf78f445f493244f06daada21f2cdf1e"
+  },
+  "artifacts_sha256": {
+    "output.json": "5d1a4ecbd9be9f3de6d85fa888d640610c32e33caa1729c4f7a1fd8f5fff230b",
+    "request.json": "5651a375a4dd1144c6f49e72a666cf2423ef3062b5502821381a6936ed1c4946",
+    "response.json": "cee9dfd69b1d37e4a53ba9d791c641e5e3c7bb06840338602a72f89f99826592",
+    "text.txt": "0347ffd1ae02ac0f7b24748ae2b576093c78acc509efa4ba929b426645a929f4"
+  }
+}

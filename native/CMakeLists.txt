@@ -13,6 +13,13 @@ target_compile_options(liquid-lfm3 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad
 target_link_libraries(liquid-lfm3 PRIVATE CUDA::cudart CUDA::cublas)
 set_target_properties(liquid-lfm3 PROPERTIES CUDA_ARCHITECTURES 110)
 
+add_executable(liquid-lfm3-worker src/lfm3_worker.cu src/safetensors.cpp)
+target_include_directories(liquid-lfm3-worker PRIVATE include)
+target_compile_features(liquid-lfm3-worker PRIVATE cxx_std_20 cuda_std_20)
+target_compile_options(liquid-lfm3-worker PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
+target_link_libraries(liquid-lfm3-worker PRIVATE CUDA::cudart CUDA::cublas)
+set_target_properties(liquid-lfm3-worker PROPERTIES CUDA_ARCHITECTURES 110)
+
 add_executable(liquid-native src/main.cu src/safetensors.cpp src/tokenizer.cpp)
 target_include_directories(liquid-native PRIVATE include)
 if(LIQUID_PROFILE_NVTX)
@@ -30,6 +37,12 @@ set_target_properties(liquid-native PROPERTIES
 )
 
 if(LIQUID_LFM3_OPS_TESTS)
+  add_executable(lfm3-serving-ops-probe tests/lfm3_serving_ops_probe.cu src/safetensors.cpp)
+  target_include_directories(lfm3-serving-ops-probe PRIVATE include)
+  target_compile_features(lfm3-serving-ops-probe PRIVATE cxx_std_20 cuda_std_20)
+  target_compile_options(lfm3-serving-ops-probe PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
+  target_link_libraries(lfm3-serving-ops-probe PRIVATE CUDA::cudart CUDA::cublas)
+  set_target_properties(lfm3-serving-ops-probe PROPERTIES CUDA_ARCHITECTURES 110)
   add_executable(text-sampling-oracle tests/text_sampling_oracle.cpp)
   target_include_directories(text-sampling-oracle PRIVATE include)
   target_compile_features(text-sampling-oracle PRIVATE cxx_std_17)

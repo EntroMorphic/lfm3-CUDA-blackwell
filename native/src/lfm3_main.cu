@@ -4,6 +4,7 @@
 #include <lfm/lfm3_ops.cuh>
 #include <lfm/text_serving_limits.hpp>
 #include <lfm/text_sampling.hpp>
+#include <lfm/handle_setup.hpp>
 #include <cublas_v2.h>
 #include <algorithm>
 #include <chrono>
@@ -192,7 +193,7 @@ class Runner {
  public:
   lfm::ModelConfig config;
   lfm::RuntimeShape s;
-  lfm::Safetensors weights;
+  std::shared_ptr<lfm::Safetensors> weights;
   cublasHandle_t blas = nullptr;
   Buffer<bf16> hidden, normalized, projected, operated, updated, q, k, v, gates, attended, gated, a, b, act, logits;
   Buffer<int> positions, tokens;
@@ -206,8 +207,10 @@ class Runner {
   bool trace_logits_only = false;
   int step = 0, cursor = 0;
 
-  Runner(const std::string& directory, lfm::ModelConfig cfg)
-      : config(cfg), s(cfg.shape), weights(directory + "/model.safetensors"),
+  Runner(const std::string& directory, lfm::ModelConfig cfg,
+         std::shared_ptr<lfm::Safetensors> shared_weights = {})
+      : config(cfg), s(cfg.shape), weights(shared_weights?std::move(shared_weights):
+          std::make_shared<lfm::Safetensors>(directory + "/model.safetensors")),
         hidden(size_t(s.context)*s.hidden), normalized(size_t(s.context)*s.hidden),
         projected(size_t(s.context)*3*s.hidden), operated(size_t(s.context)*s.hidden), updated(size_t(s.context)*s.hidden),
         q(size_t(s.context)*s.hidden), k(size_t(s.context)*s.kv_width()), v(size_t(s.context)*s.kv_width()),
@@ -248,19 +251,21 @@ class Runner {
       }
     }
     blas_check(cublasCreate(&blas));
-    // Match PyTorch 2.10's non-Hopper cuBLAS workspace budget.
-    blas_check(cublasSetWorkspace(blas, workspace.p, 4096*1024*2+16*1024*8));
-    // Match default PyTorch BF16 cuBLAS policy; outputs materialize in BF16.
-    blas_check(cublasSetMathMode(blas, CUBLAS_DEFAULT_MATH));
-    reset();
+    lfm::finish_handle_setup(blas,[](cublasHandle_t handle) noexcept {cublasDestroy(handle);},[&] {
+      // Match PyTorch 2.10's non-Hopper cuBLAS workspace budget.
+      blas_check(cublasSetWorkspace(blas, workspace.p, 4096*1024*2+16*1024*8));
+      // Match default PyTorch BF16 cuBLAS policy; outputs materialize in BF16.
+      blas_check(cublasSetMathMode(blas, CUBLAS_DEFAULT_MATH));
+      reset();
+    });
   }
   ~Runner() { if (blas) cublasDestroy(blas); }
   const bf16* weight(const std::string& name, std::initializer_list<int64_t> shape) {
-    const auto& t = weights.at(config.tensor_prefix + name);
+    const auto& t = weights->at(config.tensor_prefix + name);
     if (t.dtype != "BF16" || t.shape != std::vector<int64_t>(shape)) throw std::runtime_error("weight contract: " + name);
     return t.device_data;
   }
-  const bf16* w(const std::string& name) { return weights.at(config.tensor_prefix + name).device_data; }
+  const bf16* w(const std::string& name) { return weights->at(config.tensor_prefix + name).device_data; }
   void reset() {
     cuda_check(cudaDeviceSynchronize());
     cursor = 0; step = 0;
@@ -412,6 +417,7 @@ void print_ids(std::ostream& f,const std::vector<int>& x) {
 }
 } // namespace
 
+#ifndef LFM3_RUNTIME_ONLY
 int main(int argc,char** argv) try {
   if(argc!=5 || std::string(argv[1])!="--experimental")
     throw std::runtime_error("usage: liquid-lfm3 --experimental MODEL_DIRECTORY REQUEST.json OUTPUT.json");
@@ -545,3 +551,4 @@ int main(int argc,char** argv) try {
   if(!f) throw std::runtime_error("output write failed");
   return 0;
 } catch(const std::exception& e) { std::cerr<<"lfm3: "<<e.what()<<"\n"; return 1; }
+#endif

@@ -64,6 +64,48 @@ failure evidence and never raises tolerances to close a failed test. That initia
 comparison is pending; SDPA is chosen to avoid a quadratic eager oracle's memory
 peak, not to label a different backend as exact eager parity.
 
+The first SDPA comparison **passed** for binary `ffbab18f...`:8192 prefill,
+32767+1 cached decode, and32768 prefill. Maximum observed logit absolute error
+was0.1875 and relative RMS0.003131; every argmax matched and native reset logits
+were exact. Evidence: `validation/context32k-sdpa-v1/`. This closes those finite
+fixtures, not all long-position/backend behavior or full text-serving acceptance.
+Later runtime changes require hash-matched revalidation.
+
+## Sampling/frontend integration increment
+
+The native runtime now accepts sampling fields with strict validation before GPU
+upload. A reviewed false-pass in the first integration harness was remediated:
+reproducibility alone cannot prove that sampling is wired in. The new gate
+independently replays logits in `text-sampling-oracle` and requires a verified
+non-greedy choice. It passes seed reproducibility, warmup RNG isolation, top-k1
+equivalence, exact-logit reset, suppression/stopping and14 config-only rejections.
+
+`lfm3_chat.py` now uses only the tokenizer/template frontend for normal requests,
+exposes the sampling fields and `--messages` textual history, and enforces the
+strict combined32K serving budget. The control prompt reproduces the previously
+validated response without loading the codec. A sampled four-message history
+correctly recalled the requested code word `cobalt`. This is history replay through
+prefill, **not persistent KV sessions** or GPU batching.
+
+The same integrated binary (`85028f2a...`) passes6890 short-context bitwise checks
+and repeats the8192/32767+1/32768 SDPA gate with the same bounded errors. The host
+suite has422 passing tests. User-facing actual outputs are copied locally to
+`../tmp/control-codecfree-001/` and `../tmp/multiturn-sampled-001/`.
+
+The next resident-worker increment now has finite GPU cache-isolation evidence;
+see `SESSIONS.md` and `validation/worker-gates-v3-32k/`. Actual GPU batching, bounded
+external request serving/concurrent cancellation, soak and performance/resource
+acceptance remain open. The32K integrated sanitizer run passed memcheck and
+NVJET-excluded synccheck, but racecheck timed out after1200 seconds and is **not a
+pass**; the cuBLAS initcheck blocker also remains open. Evidence:
+`validation/sanitizer32k-sampling-v1/`. Small maximum-dimension shared-memory
+probes passed all four tools without exclusions (60 fixtures, including softmax
+width32768): `validation/serving-ops-sanitizers-v1/`. They do not substitute for
+integrated coverage. The shared-weight runner repeats the32K SDPA checks:
+`validation/context32k-resident-shared-v1/`. Existing/resident host suites pass470
+tests, excluding the separately developing HTTP/client suites.
+Do not represent successful components as complete full-serving or100/100 acceptance.
+
 `text_sampling.hpp` and `lfm3_text_frontend.py` are independently tested components;
 neither is silently advertised as fully integrated native serving. Their detailed
 contracts and remaining validation are in `SAMPLING.md` and `TEXT_FRONTEND.md`.

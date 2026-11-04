@@ -1,0 +1,20 @@
+{
+  "status": "finite resident gates passed",
+  "worker_sha256": "3bc90ece555ed2bf335275112a822374c735fcbe910d1b95016b206a1c6ff51a",
+  "single_sha256": "faf3d2dfe078e432cc3aedc1b179dffdb7dcdec503a2ab9618081be50b07c62f",
+  "source_sha256": {
+    "native/src/lfm3_main.cu": "7169bd15dcc471322762a6c2569a54781b74c47828486c919fdcb0694af1fab7",
+    "native/src/lfm3_worker.cu": "d15dd2f94649b7748a73024bc7949b6c7c1b62dee2e38248c2745e6854998655",
+    "native/include/lfm/text_sessions.hpp": "421b84d99b37847744980791c811dd42568aa5ab6375506b4d7c77b50aece2b9",
+    "native/include/lfm/handle_setup.hpp": "c8c051ad9661c07bad22aacb8f1c105e4af270ab812bc773601c085f11911bd6",
+    "native/tests/lfm3_serving_ops_probe.cu": "aae1c2d987bb7a6a0b0f880685b3d77b8e5d20ba4efdc662b1d3467b235adcc5",
+    "tools/check_lfm3_worker.py": "bfb6716db854a7441cf81aea84837eb857e54be0b7da59b20a3d845f31d02f11"
+  },
+  "short_bitwise_checks": 6890,
+  "resident32k_checked": true,
+  "host_tests": 470,
+  "host_scope": "existing/resident tests; HTTP/client excluded",
+  "operator_sanitizers": "four tools pass; isolated60 fixtures only",
+  "integrated_sanitizers": "memcheck/scoped synccheck pass; racecheck1200s timeout; cuBLAS initcheck blocked",
+  "full_serving_accepted": false
+}
