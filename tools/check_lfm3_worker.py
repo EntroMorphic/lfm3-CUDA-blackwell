@@ -13,17 +13,20 @@ import time
 
 
 class Worker:
-    def __init__(self,binary,checkpoint,log,env,timeout=300):
+    def __init__(self,binary,checkpoint,log,env,timeout=300,trace_root=None):
         self.log=log.open("wb")
-        self.process=subprocess.Popen([str(binary),"--experimental",str(checkpoint)],env=env,
+        command=[str(binary),"--experimental",str(checkpoint)]
+        if trace_root is not None:command += ["--sampling-trace-root",str(trace_root)]
+        self.process=subprocess.Popen(command,env=env,
                                       stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=self.log,start_new_session=True)
         self.timeout=timeout;self.buffer=bytearray();self.selector=selectors.DefaultSelector()
         self.closed=False
+        self.sequence=0
         os.set_blocking(self.process.stdin.fileno(),False)
         self.selector.register(self.process.stdout,selectors.EVENT_READ)
         try:
             ready=self.read()
-            if ready.get("ready") is not True or type(ready.get("protocol")) is not int or ready["protocol"]!=1:
+            if ready.get("ready") is not True or type(ready.get("protocol")) is not int or ready["protocol"]!=2:
                 raise RuntimeError("invalid handshake")
         except BaseException:
             self.close();raise
@@ -42,8 +45,10 @@ class Worker:
         if not isinstance(result,dict):raise RuntimeError("worker response must be object")
         return result
     def call(self,request,success=True):
-        payload=(json.dumps(request,allow_nan=False)+"\n").encode()
-        if len(payload)>4*1024*1024:raise ValueError("request exceeds frame limit")
+        if "rpc_id" in request:raise ValueError("rpc_id is owned by transport")
+        if len(json.dumps(request,allow_nan=False).encode())+32>4*1024*1024:raise ValueError("request exceeds frame limit")
+        self.sequence+=1
+        payload=(json.dumps(dict(request,rpc_id=self.sequence),allow_nan=False)+"\n").encode()
         deadline=time.monotonic()+self.timeout
         try:
             with selectors.DefaultSelector() as writable:
@@ -57,6 +62,9 @@ class Worker:
             response=self.read(deadline)
         except TimeoutError:
             self.close();raise
+        if type(response.get("rpc_id")) is not int or response["rpc_id"]!=self.sequence or self.buffer:
+            self.close();raise RuntimeError("uncorrelated/trailing worker response")
+        del response["rpc_id"]
         if response.get("ok") is not success:raise AssertionError((request,response))
         return response
     def close(self):
@@ -83,13 +91,17 @@ def main():
     p.add_argument("--output",type=Path,required=True)
     p.add_argument("--preflight-only",action="store_true")
     p.add_argument("--long-request",type=Path,help="Optional accepted32767-token prompt for resident32K budget gate")
+    p.add_argument("--oracle",type=Path,help="Standalone text-sampling-oracle; required for non-preflight gates")
     args=p.parse_args();args.output.mkdir(parents=True,exist_ok=False)
+    if not args.preflight_only and args.oracle is None:raise ValueError("full resident gate requires sampling oracle")
     env=dict(os.environ)
     env["LD_LIBRARY_PATH"]=str(Path(sys.prefix)/"lib/python3.12/site-packages/nvidia/cu13/lib")+":"+env.get("LD_LIBRARY_PATH","")
     records=[]
     worker_hash=hashlib.sha256(args.worker.read_bytes()).hexdigest()
     single_hash=hashlib.sha256(args.single.read_bytes()).hexdigest()
-    worker=Worker(args.worker,args.checkpoint,args.output/"worker.stderr.log",env)
+    oracle_hash=hashlib.sha256(args.oracle.read_bytes()).hexdigest() if args.oracle else None
+    worker=Worker(args.worker,args.checkpoint,args.output/"worker.stderr.log",env,
+                  trace_root=args.output/"sampling-traces" if args.oracle else None)
     def call(request,success=True):
         response=worker.call(request,success)
         # Large vocabulary logits are hashed separately, not repeated in reports.
@@ -185,6 +197,27 @@ def main():
             if not early["generated"] or len(early["generated"])>=16 or early["generated"][-1] not in stops:
                 raise AssertionError("fixture must exercise natural early stopping")
             generate("A-early-stop","A",early_prompt,early,0,count=16)
+            sampling_policy=dict(do_sample=True,temperature=0.7,top_k=42,top_p=0.963,min_p=0.01,repetition_penalty=1.1,seed=42)
+            stochastic=dict(op="generate",session_id="A",input_ids=prompt,max_new_tokens=32,trace_sampling=True,**sampling_policy)
+            sampled=call(stochastic)
+            trace_id=sampled.get("sampling_trace")
+            if type(trace_id) is not int or trace_id<1:raise AssertionError("missing resident sampling trace")
+            oracle_request=dict(stochastic,suppress_tokens=base["suppress_tokens"])
+            request_path=args.output/"resident-sampling.request.json"
+            result_path=args.output/"resident-sampling.result.json"
+            request_path.write_text(json.dumps(oracle_request,indent=2)+"\n")
+            result_path.write_text(json.dumps(sampled,indent=2)+"\n")
+            with (args.output/"resident-sampling-oracle.log").open("w") as stream:
+                try:
+                    subprocess.run([str(args.oracle),str(request_path),str(result_path),str(args.output/"sampling-traces"/str(trace_id)),str(vocabulary)],
+                                   env=env,check=True,stdout=stream,stderr=subprocess.STDOUT,timeout=30)
+                except subprocess.CalledProcessError as exc:raise AssertionError("resident sampling logit replay failed") from exc
+            # Reset/interleaving must not advance the next request's RNG stream.
+            call(dict(op="reset",session_id="A"))
+            generate("B-between-sampled-replays","B",prompt+[8],expected_b,0)
+            repeat=call(dict(stochastic,trace_sampling=False))
+            if repeat.get("generated_ids")!=sampled.get("generated_ids") or not sampled.get("generated_ids"):
+                raise AssertionError("resident sampled seed/reset/interleaving reproducibility failed")
             (args.output/"comparisons.json").write_text(json.dumps(comparisons,indent=2)+"\n")
         call(dict(op="close",session_id="A"));call(dict(op="close",session_id="B"))
         call(dict(op="create",session_id="large",capacity=32768))
@@ -205,9 +238,11 @@ def main():
         if worker.process.wait(timeout=10)!=0:raise AssertionError("unclean worker exit")
         if hashlib.sha256(args.worker.read_bytes()).hexdigest()!=worker_hash or hashlib.sha256(args.single.read_bytes()).hexdigest()!=single_hash:
             raise AssertionError("worker/single binary changed during checks")
+        if args.oracle and hashlib.sha256(args.oracle.read_bytes()).hexdigest()!=oracle_hash:raise AssertionError("sampling oracle changed")
         report=dict(status="passed",preflight_only=args.preflight_only,worker_sha256=worker_hash,
                     single_sha256=single_hash,records=records,
                     resident32k_checked=bool(args.long_request and not args.preflight_only),
+                    resident_sampling_logit_replay=not args.preflight_only,oracle_sha256=oracle_hash,
                     scope="single-threaded resident cache isolation/prefix/lifecycle; not GPU batching or concurrent cancellation")
         (args.output/"summary.json").write_text(json.dumps(report,indent=2)+"\n")
         print(json.dumps({k:v for k,v in report.items() if k!="records"},indent=2))

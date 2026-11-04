@@ -11,20 +11,20 @@ import pytest
 TOOL=Path(__file__).resolve().parents[1]/"tools/check_lfm3_worker.py"
 
 
-@pytest.mark.parametrize("damage",[None,"empty-generation","wrong-generation","consumed","transcript","B-reuse","short-oracle"])
+@pytest.mark.parametrize("damage",[None,"empty-generation","wrong-generation","consumed","transcript","B-reuse","short-oracle","sampling-replay"])
 def test_worker_gate_cannot_credit_broken_generation(tmp_path,monkeypatch,damage):
     spec=importlib.util.spec_from_file_location("worker_acceptance",TOOL)
     gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(gate)
     checkpoint=tmp_path/"checkpoint";checkpoint.mkdir()
     (checkpoint/"config.json").write_text(json.dumps(dict(vocab_size=8,eos_token_id=2)))
-    for name in ["single","worker"]:(tmp_path/name).write_text("test fixture")
-    request=tmp_path/"request.json";request.write_text(json.dumps(dict(input_ids=[1,2,3])))
+    for name in ["single","worker","oracle"]:(tmp_path/name).write_text("test fixture")
+    request=tmp_path/"request.json";request.write_text(json.dumps(dict(input_ids=[1,2,3],suppress_tokens=[])))
     output=tmp_path/"evidence"
     monkeypatch.setattr(sys,"argv",[str(TOOL),"--checkpoint",str(checkpoint),"--worker",str(tmp_path/"worker"),
-                                   "--single",str(tmp_path/"single"),"--request",str(request),"--output",str(output)])
+                                   "--single",str(tmp_path/"single"),"--request",str(request),"--output",str(output),"--oracle",str(tmp_path/"oracle")])
     logits=list(map(float,range(8)))
     class FakeWorker:
-        def __init__(self,*args):self.sessions={};self.process=types.SimpleNamespace(wait=lambda timeout:0)
+        def __init__(self,*args,**kwargs):self.sessions={};self.process=types.SimpleNamespace(wait=lambda timeout:0)
         def close(self):pass
         def call(self,req,success=True):
             if not success:return dict(ok=False,error="fixture rejection")
@@ -44,11 +44,15 @@ def test_worker_gate_cannot_credit_broken_generation(tmp_path,monkeypatch,damage
                 generated=[7,2] if inputs==[4,4] else [7]*req["max_new_tokens"]
                 s["transcript"]=inputs+generated;s["consumed"]=(inputs+generated)[:-1]
                 return dict(ok=True,generated_ids=[] if damage=="empty-generation" else [6] if damage=="wrong-generation" else generated,
+                            sampling_trace=1,
                             consumed_tokens=len(s["consumed"])+(damage=="consumed"),last_logits=logits,
                             reused_tokens=0 if damage=="B-reuse" and id=="B" else reused)
             return dict(ok=True)
     monkeypatch.setattr(gate,"Worker",FakeWorker)
     def single(command,**kwargs):
+        if command[0]==str(tmp_path/"oracle"):
+            if damage=="sampling-replay":raise gate.subprocess.CalledProcessError(1,command)
+            return
         req=json.loads(Path(command[-2]).read_text());dest=Path(command[-1])
         count=req["max_new_tokens"]
         generated=([7,2] if req["input_ids"]==[4,4] else [7]*count) if count else []

@@ -43,8 +43,8 @@ lfm::TextSamplingOptions sampling_options(const lfm::Json& request,int vocab) {
   lfm::TextSampler validate(o);return o;
 }
 void schema(const lfm::Json& request,const std::string& op) {
-  const std::set<std::string> common={"op","session_id"};
-  const std::set<std::string> generate={"input_ids","max_new_tokens","do_sample","temperature","top_k","top_p","min_p","repetition_penalty","seed","return_logits"};
+  const std::set<std::string> common={"op","session_id","rpc_id"};
+  const std::set<std::string> generate={"input_ids","max_new_tokens","do_sample","temperature","top_k","top_p","min_p","repetition_penalty","seed","return_logits","trace_sampling"};
   const auto* object=std::get_if<lfm::Json::Object>(&request.value);
   if(!object) throw std::runtime_error("expected object");
   for(const auto& [key,value]:*object) {
@@ -57,9 +57,13 @@ void schema(const lfm::Json& request,const std::string& op) {
 } // namespace
 
 int main(int argc,char** argv) try {
-  if(argc!=3 || std::string(argv[1])!="--experimental")
-    throw std::runtime_error("usage: liquid-lfm3-worker --experimental MODEL_DIRECTORY");
+  if((argc!=3 && argc!=5) || std::string(argv[1])!="--experimental" ||
+     (argc==5 && std::string(argv[3])!="--sampling-trace-root"))
+    throw std::runtime_error("usage: liquid-lfm3-worker --experimental MODEL_DIRECTORY [--sampling-trace-root NEW_DIRECTORY]");
   const std::string directory=argv[2];
+  const std::string sampling_trace_root=argc==5?argv[4]:"";
+  if(argc==5 && (sampling_trace_root.empty() || !std::filesystem::create_directory(sampling_trace_root)))
+    throw std::runtime_error("sampling trace root must be a new directory");
   const auto model=read_json(directory+"/config.json");
   auto cfg=lfm::ModelConfig::load(directory+"/config.json",32768);
   if(!cfg.is_lfm3() || !cfg.sandwich_norm || !cfg.tied || cfg.shape.hidden!=2048 || cfg.shape.head_dim!=128 || cfg.shape.conv_width!=7)
@@ -78,7 +82,8 @@ int main(int argc,char** argv) try {
   // JSON readers generally parse numbers as double. Emit enough digits to
   // preserve the exact float->double value, not merely a float32 roundtrip.
   std::cout<<std::setprecision(std::numeric_limits<double>::max_digits10);
-  std::cout<<"{\"ready\":true,\"protocol\":1,\"max_sessions\":2,\"aggregate_capacity\":32768,\"gpu_batching\":false}\n"<<std::flush;
+  std::cout<<"{\"ready\":true,\"protocol\":2,\"max_sessions\":2,\"aggregate_capacity\":32768,\"gpu_batching\":false}\n"<<std::flush;
+  int last_rpc_id=0;
   for(;;) {
     // Bounded framing, unlike unbounded std::getline allocation.
     std::string line;bool oversized=false;char c;
@@ -86,15 +91,20 @@ int main(int argc,char** argv) try {
       if(line.size()<4*1024*1024) line+=c;else oversized=true;
     }
     if(line.empty() && !std::cin && !oversized) break;
+    int rpc_id=0;
     try {
       if(oversized) throw std::runtime_error("request exceeds 4 MiB");
       const auto request=lfm::Json::parse(line);
+      rpc_id=request.at("rpc_id").integer();
+      if(rpc_id<1 || last_rpc_id==2147483647 || rpc_id!=last_rpc_id+1)
+        throw std::runtime_error("out-of-sequence RPC ID");
+      last_rpc_id=rpc_id;
       const auto op=request.at("op").string();schema(request,op);
       if(op=="shutdown") {
-        std::cout<<"{\"ok\":true,\"shutdown\":true}\n"<<std::flush;break;
+        std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"shutdown\":true}\n"<<std::flush;break;
       }
       if(op=="stats") {
-        std::cout<<"{\"ok\":true,\"sessions\":"<<ledger.size()<<",\"reserved_tokens\":"<<ledger.reserved_tokens()
+        std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"sessions\":"<<ledger.size()<<",\"reserved_tokens\":"<<ledger.reserved_tokens()
                  <<",\"weights_loaded\":"<<(weights?"true":"false")<<"}\n"<<std::flush;continue;
       }
       const auto id=session_id(request);
@@ -103,27 +113,27 @@ int main(int argc,char** argv) try {
         ledger.create(id,capacity);
         try {sessions.emplace(id,Session{capacity,{},{},{}});}
         catch(...) {ledger.close(id);throw;}
-        std::cout<<"{\"ok\":true,\"session_id\":"<<quote(id)<<"}\n"<<std::flush;continue;
+        std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)<<"}\n"<<std::flush;continue;
       }
       auto found=sessions.find(id);
       if(found==sessions.end()) throw std::runtime_error("unknown session");
       auto& session=found->second;
       if(op=="inspect") {
         const auto snapshot=ledger.inspect(id);
-        std::cout<<"{\"ok\":true,\"capacity\":"<<snapshot.capacity<<",\"consumed_tokens\":"<<snapshot.consumed.size()
+        std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"capacity\":"<<snapshot.capacity<<",\"consumed_tokens\":"<<snapshot.consumed.size()
                  <<",\"transcript_tokens\":"<<snapshot.transcript.size()<<",\"cache_valid\":"<<(snapshot.cache_valid?"true":"false")
                  <<",\"inflight\":"<<(snapshot.inflight?"true":"false")<<"}\n"<<std::flush;continue;
       }
       if(op=="close") {
         ledger.close(id);sessions.erase(found);
-        std::cout<<"{\"ok\":true,\"closed\":true}\n"<<std::flush;continue;
+        std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"closed\":true}\n"<<std::flush;continue;
       }
       if(op=="reset") {
         try {if(session.runner) session.runner->reset();}
         catch(...) {session.runner.reset();session.consumed.clear();session.last_scores.clear();ledger.reset(id);throw;}
         session.consumed.clear();session.last_scores.clear();
         ledger.reset(id);
-        std::cout<<"{\"ok\":true,\"reset\":true}\n"<<std::flush;continue;
+        std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"reset\":true}\n"<<std::flush;continue;
       }
       if(op!="generate") throw std::runtime_error("unknown operation");
       const auto input=ids(request,"input_ids",cfg.shape.vocabulary);
@@ -133,6 +143,9 @@ int main(int argc,char** argv) try {
       if(count<1) throw std::runtime_error("max_new_tokens must be positive");
       lfm::text::require_budget(input.size(),count,session.capacity);
       const bool return_logits=request.has("return_logits") && request.at("return_logits").boolean();
+      const bool trace_sampling=request.has("trace_sampling") && request.at("trace_sampling").boolean();
+      if(trace_sampling && (sampling_trace_root.empty() || count>32))
+        throw std::runtime_error("sampling trace needs startup audit root and at most32 output tokens");
       const auto options=sampling_options(request,cfg.shape.vocabulary);
       lfm::TextSampler sampler(options);
       auto lease=ledger.begin(id,lfm::text::SessionLedger::Tokens(input.begin(),input.end()),count);
@@ -156,7 +169,17 @@ int main(int argc,char** argv) try {
           session.last_scores=runner.forward({input[i]});session.consumed.push_back(input[i]);
         }
         std::vector<int> generated;
+        const auto sampling_trace=sampling_trace_root+"/"+std::to_string(rpc_id);
+        if(trace_sampling && !std::filesystem::create_directory(sampling_trace))
+          throw std::runtime_error("sampling trace request already exists");
         for(int t=0;t<count;++t) {
+          if(trace_sampling) {
+            std::vector<bf16> trace_scores(session.last_scores.size());
+            for(size_t i=0;i<trace_scores.size();++i) trace_scores[i]=__float2bfloat16_rn(session.last_scores[i]);
+            std::ofstream trace_file(sampling_trace+"/"+std::to_string(t)+".logits.bf16",std::ios::binary);
+            trace_file.write(reinterpret_cast<const char*>(trace_scores.data()),trace_scores.size()*sizeof(bf16));
+            if(!trace_file) throw std::runtime_error("sampling trace write failed");
+          }
           int token=sampler.sample(session.last_scores.data(),session.last_scores.size(),generated,suppressed);
           generated.push_back(token);
           if(std::find(stops.begin(),stops.end(),token)!=stops.end() || t==count-1) break;
@@ -164,9 +187,10 @@ int main(int argc,char** argv) try {
         }
         lease.commit(lfm::text::SessionLedger::Tokens(generated.begin(),generated.end()),
                      lfm::text::SessionLedger::Tokens(session.consumed.begin(),session.consumed.end()));
-        std::cout<<"{\"ok\":true,\"session_id\":"<<quote(id)<<",\"generated_ids\":";print_ids(std::cout,generated);
+        std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)<<",\"generated_ids\":";print_ids(std::cout,generated);
         std::cout<<",\"reused_tokens\":"<<reused<<",\"consumed_tokens\":"<<session.consumed.size()
-                 <<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed;
+                  <<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed;
+        if(trace_sampling) std::cout<<",\"sampling_trace\":"<<rpc_id;
         if(return_logits) {
           std::cout<<",\"last_logits\":[";
           for(size_t i=0;i<session.last_scores.size();++i) {if(i)std::cout<<',';std::cout<<session.last_scores[i];}
@@ -177,7 +201,7 @@ int main(int argc,char** argv) try {
         session.runner.reset();session.consumed.clear();session.last_scores.clear();throw;
       }
     } catch(const std::exception& e) {
-      std::cout<<"{\"ok\":false,\"error\":"<<quote(e.what())<<"}\n"<<std::flush;
+      std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":false,\"error\":"<<quote(e.what())<<"}\n"<<std::flush;
     }
   }
   return 0;

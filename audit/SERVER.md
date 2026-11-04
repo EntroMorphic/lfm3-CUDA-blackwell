@@ -82,15 +82,33 @@ queue admission**. A session lease includes validation, queue wait and execution
 reset/close cannot race generation. No stdin writes from HTTP threads occur.
 The listener backlog is the stdlib bounded socket backlog; connections exceeding
 handler capacity are closed without spawning a thread, not promised a JSON 429.
-Tokenizer input/work concurrency is bounded, but an in-process tokenizer call is
-not preemptible; the queue/request deadline starts after frontend validation.
+Frontend execution uses one daemon thread and a queue bounded to one job, with a
+nonblocking admission lock held until that CPU job finishes. Encode and decode
+share this serialization; contention rejects new encoding with 429 rather than
+spawning threads. The generation deadline starts before frontend processing and
+the same absolute deadline covers encoding, owner-queue wait, and decoding.
+Expired encoding is never admitted to native execution. A slow encoder or decoder
+returns 504 to its waiting caller within the remaining budget; slow decoding also
+releases the native owner to handle other jobs at that deadline, without invalidating
+otherwise valid caches. Once native work has finished (or before it ever starts),
+the lease can safely be released even if CPU-only frontend work is still running.
+Late frontend completion never changes a session lease or submits GPU work.
+
+An in-process frontend call is **not preemptible**: after caller timeout its CPU
+work may continue in the sole daemon, retaining frontend admission until completion;
+its late result is discarded. Shutdown does not join that daemon or register an
+unbounded executor exit join. This bounds thread population and caller waits, not
+CPU execution time, memory consumption, or interpreter/GIL starvation. Process CPU
+isolation and hard CPU cancellation are not claimed.
 
 Header and body deadlines default to ten seconds each (header trickling has an
 absolute deadline). Socket writes also time out. Each worker RPC uses one shared
 absolute write/read deadline, default 300 seconds, and 4 MiB bounded framing.
-Queue/request wait defaults to 330 seconds; expired queued jobs do not execute.
-HTTP 504 for a running request is **outcome unknown**, not cancellation: its lease
-remains held until execution completes/fails. A disconnected caller similarly
+The generation request budget defaults to 330 seconds; expired queued jobs do not
+execute. HTTP 504 while native execution is running is **outcome unknown**, not
+cancellation: its lease remains held until native execution completes/fails. A
+frontend timeout does not cancel its CPU job, but cannot trigger late native work.
+A disconnected caller similarly
 does not cancel execution. A create that exceeds its request deadline is special:
 the owner closes its newly created allocation after completion, before releasing
 the reserved quota, instead of retaining an unreachable ID. Completion publication
@@ -133,10 +151,18 @@ does not start any network listener, load a model, use SSH, or access a GPU.
 Coverage includes strict JSON, frame limits, EOF/timeout/write-backpressure and
 cleanup, handshake rejection, quota/budget validation, lifecycle isolation,
 per-session leases, serialized ownership, queue rejection, timeout lease retention,
+bounded slow encode/decode waits, single-deadline propagation, late frontend result
+discard without releasing a newer lease, frontend completion/timeout races,
+shutdown without joining a stalled CPU frontend,
 abandoned-create reclamation, idle allocation expiration, startup SIGTERM descendant
 cleanup, fail-closed invalidation (including ambiguous nested sampling metadata),
 token-file permissions and mocked-handler HTTP validation.
 Real native GPU gates and end-to-end HTTP/load tests remain separate requirements.
+
+Deadline remediation focused verification: **67 host tests passed** with
+`python -m pytest -q tests/test_lfm3_server.py tests/test_lfm3_server_sockets.py tests/test_lfm3_server_redteam.py::test_request_deadline_includes_tokenization_before_native_admission`.
+This selection excludes the separately owned worker-protocol duplicate-reply
+regression and does not claim native/GPU acceptance of the deadline changes.
 
 Host contract/regression evidence is not GPU acceptance or serving load evidence.
 Separate socketpair framing tests are maintained in `tests/test_lfm3_server_sockets.py`.

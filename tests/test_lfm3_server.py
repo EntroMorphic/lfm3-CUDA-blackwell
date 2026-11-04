@@ -240,6 +240,154 @@ def test_frontend_contention_releases_lease(service):
         service.frontend_lock.release()
 
 
+def wait_until(predicate, timeout=1):
+    deadline = time.monotonic() + timeout
+    while not predicate() and time.monotonic() < deadline:
+        time.sleep(0.001)
+    assert predicate()
+
+
+@pytest.mark.parametrize("phase", ["encode", "decode"])
+def test_slow_frontend_bounds_caller_and_owner_without_late_lease_release(phase):
+    worker, frontend = Worker(), Frontend()
+    entered, release = threading.Event(), threading.Event()
+    original = frontend.encode_messages if phase == "encode" else frontend.decode
+
+    def slow(*args):
+        entered.set()
+        assert release.wait(3)
+        return original(*args)
+
+    setattr(frontend, "encode_messages" if phase == "encode" else "decode", slow)
+    service = server.Service(worker, frontend, CONFIG, server.Settings(request_timeout=0.05))
+    try:
+        sid = create(service)
+        with ThreadPoolExecutor(1) as pool:
+            future = pool.submit(invoke, service, server.encode_json(generation(sid)), path="/generate")
+            try:
+                assert entered.wait(1)
+                status, body = future.result(timeout=0.5)
+                assert status == 504 and "deadline" in body["error"]
+                wait_until(lambda: not service.sessions[sid]["busy"])
+                assert not service.failed and service.owner.is_alive()
+                assert service.frontend_owner.daemon and service.frontend_owner.is_alive()
+                assert service.frontend_jobs.maxsize == 1
+                # Repeated admission cannot spawn CPU workers or native work.
+                before = len(worker.requests)
+                for _ in range(10):
+                    with pytest.raises(server.APIError, match="frontend_busy"):
+                        service.generate(generation(sid))
+                assert len(worker.requests) == before
+                expected = ["create"] + (["generate"] if phase == "decode" else [])
+                assert [request["op"] for request in worker.requests] == expected
+                # The native owner remains available even during slow decode.
+                service.lifecycle(sid, "reset", {})
+                service._lease(sid)
+            finally:
+                release.set()
+            service.frontend_jobs.join()
+            # A stale frontend completion must not release this newer lease.
+            assert service.sessions[sid]["busy"]
+            service._release(sid)
+        setattr(frontend, "encode_messages" if phase == "encode" else "decode", original)
+        assert service.generate(generation(sid))["text"] == "text"
+        assert not service.failed
+    finally:
+        release.set()
+        service.close()
+
+
+def test_generation_propagates_one_deadline_to_encode_queue_and_decode(service, monkeypatch):
+    sid = create(service)
+    deadlines = []
+    frontend_call, submit = service._frontend_call, service._submit
+
+    def frontend(function, deadline, **kwargs):
+        deadlines.append(deadline)
+        return frontend_call(function, deadline, **kwargs)
+
+    def queued(function, cleanup, **kwargs):
+        deadlines.append(kwargs["deadline"])
+        return submit(function, cleanup, **kwargs)
+
+    monkeypatch.setattr(service, "_frontend_call", frontend)
+    monkeypatch.setattr(service, "_submit", queued)
+    service.generate(generation(sid))
+    assert len(deadlines) == 3 and len(set(deadlines)) == 1
+
+
+def test_expired_submission_releases_lease_without_native_execution(service):
+    sid = create(service)
+    service._lease(sid)
+    before = list(service.worker.requests)
+    with pytest.raises(server.APIError, match="queue_deadline"):
+        service._submit(lambda: pytest.fail("expired native work ran"),
+                        lambda: service._release(sid), deadline=time.monotonic() - 1)
+    assert service.worker.requests == before
+    assert not service.sessions[sid]["busy"] and not service.failed
+
+
+def test_frontend_completion_racing_wait_timeout_does_not_fail_service(service, monkeypatch):
+    sid = create(service)
+    original = server.Future.result
+
+    def raced(future, timeout=None):
+        result = original(future, timeout=timeout)
+        if timeout is not None:
+            raise server.FutureTimeout
+        return result
+
+    monkeypatch.setattr(server.Future, "result", raced)
+    assert service.generate(generation(sid))["text"] == "text"
+    assert not service.failed and not service.sessions[sid]["busy"]
+
+
+def test_late_owner_completion_cannot_publish_success_to_delayed_waiter(service, monkeypatch):
+    original = server.Future.result
+    cleaned = threading.Event()
+    deadline = time.monotonic() + 0.03
+
+    def delayed_waiter(future, timeout=None):
+        # Model a caller descheduled across the timeout: owner publication must
+        # independently enforce the deadline, not rely on waiter abandonment.
+        return original(future, timeout=1 if timeout is not None else None)
+
+    def late():
+        time.sleep(0.08)
+        return {"ok": True}
+
+    monkeypatch.setattr(server.Future, "result", delayed_waiter)
+    with pytest.raises(server.APIError, match="request_deadline_outcome_unknown"):
+        service._submit(late, cleaned.set, deadline=deadline)
+    assert cleaned.is_set() and not service.failed
+
+
+def test_shutdown_does_not_join_nonpreemptible_frontend():
+    entered, release = threading.Event(), threading.Event()
+    frontend = Frontend()
+
+    def stalled(*args):
+        entered.set()
+        assert release.wait(3)
+        return [1, 2]
+
+    frontend.encode_messages = stalled
+    service = server.Service(Worker(), frontend, CONFIG, server.Settings(request_timeout=0.05))
+    try:
+        sid = create(service)
+        with pytest.raises(server.APIError) as caught:
+            service.generate(generation(sid))
+        assert caught.value.status == 504 and entered.is_set()
+        start = time.monotonic()
+        service.close()
+        assert time.monotonic() - start < 0.5
+        assert service.frontend_owner.is_alive() and not release.is_set()
+    finally:
+        release.set()
+        service.frontend_owner.join(timeout=1)
+        service.close()
+
+
 def test_expired_queue_job_never_calls_worker():
     worker = Worker()
     service = server.Service(worker, Frontend(), CONFIG, server.Settings(request_timeout=0.05))

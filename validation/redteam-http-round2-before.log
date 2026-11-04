@@ -1,0 +1,71 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_____ test_request_deadline_includes_tokenization_before_native_admission ______
+
+    def test_request_deadline_includes_tokenization_before_native_admission():
+        entered, release = threading.Event(), threading.Event()
+    
+        class Frontend:
+            def encode_messages(self, messages, capacity, count):
+                entered.set()
+                assert release.wait(2)
+                return [1, 2]
+    
+            def decode(self, ids):
+                return "text"
+    
+        worker = Worker()
+        service = server.Service(worker, Frontend(), CONFIG,
+                                 server.Settings(request_timeout=0.05))
+        try:
+            sid = service.create({"capacity": 32})["session_id"]
+            with ThreadPoolExecutor(1) as pool:
+                future = pool.submit(service.generate, dict(
+                    session_id=sid, messages=[{"role": "user", "content": "hello"}],
+                    max_new_tokens=1))
+                try:
+                    assert entered.wait(1)
+                    # The frontend is still executing after the configured request
+                    # budget. Releasing it must not grant a new inference budget.
+                    time.sleep(0.15)
+                finally:
+                    release.set()
+>               with pytest.raises(server.APIError) as caught:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE <class 'lfm3_server.APIError'>
+
+tests/test_lfm3_server_redteam.py:68: Failed
+_____ test_duplicate_worker_reply_cannot_acknowledge_unexecuted_next_reset _____
+
+tmp_path = PosixPath('/tmp/user/1000/pytest-of-ztflynn/pytest-188/test_duplicate_worker_reply_ca0')
+
+    def test_duplicate_worker_reply_cannot_acknowledge_unexecuted_next_reset(tmp_path):
+        ready = dict(ready=True, protocol=1, max_sessions=2,
+                     aggregate_capacity=32768, gpu_batching=False)
+        executable = tmp_path / "duplicate-reply-worker"
+        executable.write_text(
+            f"#!{sys.executable}\n"
+            "import json,os,sys,time\n"
+            f"print({json.dumps(json.dumps(ready))}, flush=True)\n"
+            "sys.stdin.readline()\n"
+            "reply = b'{\"ok\":true,\"reset\":true,\"execution\":1}\\n'\n"
+            # A single atomic pipe write makes both frames available together.
+            "os.write(1, reply + reply)\n"
+            "sys.stdin.readline()\n"
+            # Second reset has NOT executed and will never produce its own reply.
+            "time.sleep(10)\n"
+        )
+        executable.chmod(0o700)
+        worker = WorkerClient(executable, tmp_path, timeout=0.2)
+        try:
+            # Reject either when the duplicate arrives or before accepting the next
+            # reply. Returning success twice silently misattributes execution #1.
+>           with pytest.raises(WorkerFailure):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE <class 'lfm3_worker_client.WorkerFailure'>
+
+tests/test_lfm3_server_redteam.py:99: Failed
+=========================== short test summary info ============================
+FAILED tests/test_lfm3_server_redteam.py::test_request_deadline_includes_tokenization_before_native_admission
+FAILED tests/test_lfm3_server_redteam.py::test_duplicate_worker_reply_cannot_acknowledge_unexecuted_next_reset
+2 failed in 0.29s

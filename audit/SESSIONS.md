@@ -1,5 +1,12 @@
 # Session ledger and experimental resident worker
 
+Current internal protocol is **2**: positive monotonically increasing `rpc_id`
+is mandatory on every request and echoed on every response; clients fail closed
+on mismatches and surplus frames. Rebuild clients and workers together. The
+strengthened sampling/32K gate is `validation/worker-redteam-v4/` (worker
+`1f3401db...`), including independent per-step sampled-logit replay with a verified
+non-greedy choice. Historical evidence below retains its original binary scope.
+
 `native/include/lfm/text_sessions.hpp` is header-only C++17 bookkeeping with
 no CUDA dependency. It neither allocates GPU caches nor changes any runner,
 protocol, frontend, or model execution. Persistent resident sessions are **not

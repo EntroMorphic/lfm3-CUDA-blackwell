@@ -72,6 +72,7 @@ class WorkerClient:
         self.closed = False
         self.lock = threading.Lock()
         self.buffer = bytearray()
+        self.sequence = 0
         # No checkpoint writes, shell, inherited stdout or unbounded stderr pipe.
         self.process = None
         try:
@@ -98,7 +99,7 @@ class WorkerClient:
             os.set_blocking(self.process.stdout.fileno(), False)
             ready = self._read(time.monotonic() + timeout)
             if (ready.get("ready") is not True or type(ready.get("protocol")) is not int
-                    or ready["protocol"] != 1 or ready.get("gpu_batching") is not False
+                    or ready["protocol"] != 2 or ready.get("gpu_batching") is not False
                     or type(ready.get("max_sessions")) is not int or ready["max_sessions"] != 2
                     or type(ready.get("aggregate_capacity")) is not int
                     or ready["aggregate_capacity"] != 32768):
@@ -132,14 +133,24 @@ class WorkerClient:
                 self.buffer.extend(block)
 
     def call(self, request):
-        payload = (json.dumps(request, allow_nan=False, separators=(",", ":")) + "\n").encode("utf-8")
-        if len(payload) > MAX_FRAME:
+        if "rpc_id" in request:
+            raise ValueError("rpc_id is owned by the transport")
+        # Validate size before admission without consuming an RPC sequence.
+        raw = json.dumps(request, allow_nan=False, separators=(",", ":"))
+        if len(raw.encode("utf-8")) + 32 > MAX_FRAME:
             raise ValueError("request frame exceeds limit")
         if not self.lock.acquire(blocking=False):
             raise WorkerFailure("concurrent worker pipe access is forbidden")
         try:
             if self.closed:
                 raise WorkerFailure("worker closed")
+            if self.sequence >= 2147483647:
+                raise WorkerFailure("RPC sequence exhausted; restart required")
+            self.sequence += 1
+            sequence = self.sequence
+            payload = (json.dumps(dict(request, rpc_id=sequence), allow_nan=False, separators=(",", ":")) + "\n").encode("utf-8")
+            if self.buffer:
+                raise WorkerFailure("unsolicited trailing worker data")
             deadline = time.monotonic() + self.timeout
             with selectors.DefaultSelector() as selector:
                 selector.register(self.process.stdin, selectors.EVENT_WRITE)
@@ -156,8 +167,10 @@ class WorkerClient:
                         raise WorkerFailure("worker pipe closed")
                     offset += written
             result = self._read(deadline)
-            if type(result.get("ok")) is not bool:
+            if (type(result.get("ok")) is not bool or type(result.get("rpc_id")) is not int
+                    or result["rpc_id"] != sequence or self.buffer):
                 raise WorkerFailure("invalid worker reply")
+            del result["rpc_id"]
             return result
         except (OSError, ValueError, TimeoutError, WorkerFailure) as exc:
             self.close()

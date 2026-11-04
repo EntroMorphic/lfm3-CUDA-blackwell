@@ -32,10 +32,10 @@ def test_bad_handshake_is_bounded_and_cleaned_up(tmp_path,body):
 def test_valid_rpc_and_failure_acknowledgment(tmp_path):
     import os
     exe=binary(tmp_path,'''
-print('{"ready":true,"protocol":1}',flush=True)
+print('{"ready":true,"protocol":2}',flush=True)
 for line in sys.stdin:
  r=json.loads(line)
- print(json.dumps({"ok":r.get("op")=="good"}),flush=True)
+ print(json.dumps({"ok":r.get("op")=="good","rpc_id":r["rpc_id"]}),flush=True)
 ''')
     worker=gate.Worker(exe,tmp_path,tmp_path/"stderr.log",dict(os.environ),timeout=1)
     try:
@@ -49,7 +49,7 @@ for line in sys.stdin:
 
 def test_request_write_deadline_kills_nonreading_worker(tmp_path):
     import os
-    exe=binary(tmp_path,"print('{\"ready\":true,\"protocol\":1}',flush=True)\ntime.sleep(20)")
+    exe=binary(tmp_path,"print('{\"ready\":true,\"protocol\":2}',flush=True)\ntime.sleep(20)")
     worker=gate.Worker(exe,tmp_path,tmp_path/"stderr.log",dict(os.environ),timeout=0.3)
     with pytest.raises(TimeoutError,match="write timeout"):
         worker.call({"op":"generate","data":"x"*1000000})

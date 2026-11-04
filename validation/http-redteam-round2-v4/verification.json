@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "host_tests": 575,
+  "host_scope": "red-team increment; pending soak/cancellation excluded",
+  "worker_sha256": "1f3401db47f5facf4978668ea41d9614bb2601e798fec6d96c1ea099234cc94b",
+  "single_sha256": "faf3d2dfe078e432cc3aedc1b179dffdb7dcdec503a2ab9618081be50b07c62f",
+  "source_sha256": {
+    "native/src/lfm3_worker.cu": "8080b967c3d7abc45e3d9a54a335991d3b3efe72176afb267eedef0c03dbc213",
+    "tools/lfm3_server.py": "1acb93103024b9ad90bf07716ad0a11a5a3a4e41ba678d3c0a04e5bd80e0eaa8",
+    "tools/lfm3_worker_client.py": "32f700ee58e992798771473b8f323843ddbecc7cdc79ecefc8550f4c104d55c7",
+    "tools/check_lfm3_server.py": "e3ecf9d7005748ed2f32050ca1c52f0c745d4f0086790bddda29bffdf54df049",
+    "tools/check_lfm3_worker.py": "4d94df36ed0fc6894df69c0f1dad71ad886b041c8a606ad80d14eeb78c310f2d"
+  },
+  "full_serving_accepted": false,
+  "actual_response": "../tmp/http-redteam-round2-v4/control-response.txt"
+}

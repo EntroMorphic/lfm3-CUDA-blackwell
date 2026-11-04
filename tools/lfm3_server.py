@@ -61,8 +61,8 @@ class Settings:
 class Service:
     """One owner thread for every native RPC; per-session lease includes queued work.
 
-    Tokenization is bounded by the HTTP handler limit and a nonblocking frontend
-    lock, and finishes before admission to the inference queue. No history stored.
+    One daemon executes serialized frontend work; callers wait only until their
+    absolute deadline. CPU work is not preemptible. No history stored.
     """
     def __init__(self, worker, frontend, config, settings=Settings()):
         self.worker, self.frontend, self.config, self.settings = worker, frontend, config, settings
@@ -74,8 +74,64 @@ class Service:
         self.failed = False
         self.cleanup_failed = False
         self.stopping = threading.Event()
+        self.frontend_jobs = queue.Queue(1)
+        self.frontend_owner = threading.Thread(target=self._run_frontend,
+                                               name="lfm3-frontend-owner", daemon=True)
+        self.frontend_owner.start()
         self.owner = threading.Thread(target=self._run, name="lfm3-worker-owner", daemon=True)
         self.owner.start()
+
+    def _run_frontend(self):
+        while not self.stopping.is_set() or not self.frontend_jobs.empty():
+            try:
+                function, future, deadline = self.frontend_jobs.get(timeout=0.05)
+            except queue.Empty:
+                continue
+            error = None
+            try:
+                if self.stopping.is_set() or time.monotonic() >= deadline:
+                    raise APIError(504, "frontend_deadline")
+                result = function()
+                if time.monotonic() >= deadline:
+                    raise APIError(504, "frontend_deadline")
+            except BaseException as exc:
+                error = exc
+            finally:
+                # This worker never touches session leases or submits native
+                # work. Late CPU completion cannot release a newer lease.
+                self.frontend_lock.release()
+                self.frontend_jobs.task_done()
+            if error is not None:
+                future.set_exception(error)
+            else:
+                future.set_result(result)
+
+    def _frontend_call(self, function, deadline, *, wait=False):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise APIError(504, "frontend_deadline")
+        acquired = (self.frontend_lock.acquire(timeout=remaining) if wait
+                    else self.frontend_lock.acquire(blocking=False))
+        if not acquired:
+            raise APIError(504 if wait else 429, "frontend_deadline" if wait else "frontend_busy")
+        future = Future()
+        try:
+            if self.stopping.is_set():
+                raise APIError(503, "worker_unavailable")
+            if time.monotonic() >= deadline:
+                raise APIError(504, "frontend_deadline")
+            self.frontend_jobs.put_nowait((function, future, deadline))
+        except BaseException:
+            self.frontend_lock.release()
+            raise
+        try:
+            return future.result(timeout=max(0, deadline - time.monotonic()))
+        except FutureTimeout:
+            if future.done():
+                return future.result()
+            # No cancellation: the sole daemon retains the frontend lock until
+            # completion, discarding expired results. It cannot reach the GPU.
+            raise APIError(504, "frontend_deadline") from None
 
     def _fatal(self):
         with self.lock:
@@ -124,8 +180,11 @@ class Service:
                 # Publish completion and observe abandonment atomically. Only
                 # this owner thread may release an abandoned native allocation.
                 with completion_lock:
-                    abandoned = discard and (state["abandoned"] or time.monotonic() >= deadline)
-                    if abandoned:
+                    expired = state["abandoned"] or time.monotonic() >= deadline
+                    abandoned = discard and expired
+                    if expired:
+                        if not abandoned:
+                            cleanup()
                         future.set_exception(APIError(504, "request_deadline_outcome_unknown"))
                     else:
                         cleanup()
@@ -157,7 +216,9 @@ class Service:
         with self.lock:
             self.sessions.pop(sid, None)
 
-    def _submit(self, function, cleanup, discard=None):
+    def _submit(self, function, cleanup, discard=None, *, deadline=None):
+        if deadline is None:
+            deadline = time.monotonic() + self.settings.request_timeout
         future = Future()
         state = {"abandoned": False}
         completion_lock = threading.Lock()
@@ -165,8 +226,10 @@ class Service:
             with self.lock:
                 if self.failed or self.stopping.is_set():
                     raise APIError(503, "worker_unavailable")
+                if time.monotonic() >= deadline:
+                    raise APIError(504, "queue_deadline")
                 try:
-                    self.jobs.put_nowait((function, future, time.monotonic() + self.settings.request_timeout,
+                    self.jobs.put_nowait((function, future, deadline,
                                          cleanup, state, completion_lock, discard))
                 except queue.Full:
                     raise APIError(429, "queue_full") from None
@@ -174,7 +237,7 @@ class Service:
             cleanup()
             raise
         try:
-            return future.result(timeout=self.settings.request_timeout)
+            return future.result(timeout=max(0, deadline - time.monotonic()))
         except FutureTimeout:
             with completion_lock:
                 if future.done():
@@ -251,6 +314,7 @@ class Service:
         return self._submit(run, lambda: self._release(sid))
 
     def generate(self, body):
+        deadline = time.monotonic() + self.settings.request_timeout
         if set(body) - {"session_id", "messages", "max_new_tokens", "sampling"} or not {
                 "session_id", "messages", "max_new_tokens"} <= set(body):
             raise ValueError("invalid generation fields")
@@ -261,13 +325,10 @@ class Service:
         sid = body["session_id"]
         capacity = self._lease(sid)
         try:
-            if not self.frontend_lock.acquire(blocking=False):
-                raise APIError(429, "frontend_busy")
-            try:
-                request = make_request(self.frontend, None, None, self.config, capacity,
-                                       body["max_new_tokens"], messages=body["messages"], sampling=body.get("sampling"))
-            finally:
-                self.frontend_lock.release()
+            request = self._frontend_call(
+                lambda: make_request(self.frontend, None, None, self.config, capacity,
+                                     body["max_new_tokens"], messages=body["messages"],
+                                     sampling=body.get("sampling")), deadline)
             native = {key: value for key, value in request.items()
                       if key not in ("capacity", "suppress_tokens", "stop_tokens", "experimental_long_context")}
             native.update(op="generate", session_id=sid)
@@ -276,6 +337,8 @@ class Service:
             raise
 
         def run():
+            if time.monotonic() >= deadline:
+                raise APIError(504, "queue_deadline")
             result = self._rpc(native)
             if any(key in result for key in ("sampling_policy", "sampled_policy", "sampling")):
                 raise WorkerFailure("ambiguous sampling metadata")
@@ -290,19 +353,16 @@ class Service:
             consumed = len(request["input_ids"]) + len(generated) - 1
             integer(result.get("consumed_tokens"), "consumed_tokens", consumed, consumed)
             integer(result.get("reused_tokens"), "reused_tokens", 0, len(request["input_ids"]))
-            if not self.frontend_lock.acquire(timeout=self.settings.request_timeout):
-                raise WorkerFailure("frontend decode deadline")
-            try:
-                text = self.frontend.decode(generated[:-1] if generated[-1] in self.stops else generated)
-            finally:
-                self.frontend_lock.release()
+            text = self._frontend_call(
+                lambda: self.frontend.decode(generated[:-1] if generated[-1] in self.stops else generated),
+                deadline, wait=True)
             response = dict(session_id=sid, text=text, generated_ids=generated,
                             reused_tokens=result["reused_tokens"], consumed_tokens=consumed,
                             do_sample=result["do_sample"], seed=result["seed"], gpu_batching=False)
             if len(encode_json(response)) > MAX_RESPONSE:
                 raise WorkerFailure("response exceeds limit")
             return response
-        return self._submit(run, lambda: self._release(sid))
+        return self._submit(run, lambda: self._release(sid), deadline=deadline)
 
     def close(self):
         self.stopping.set()

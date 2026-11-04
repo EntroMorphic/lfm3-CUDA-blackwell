@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from lfm3_worker_client import MAX_FRAME, WorkerClient, WorkerFailure, strict_json
 
 
-READY = dict(ready=True, protocol=1, max_sessions=2, aggregate_capacity=32768, gpu_batching=False)
+READY = dict(ready=True, protocol=2, max_sessions=2, aggregate_capacity=32768, gpu_batching=False)
 
 
 def executable(tmp_path, code, ready=READY):
@@ -28,9 +28,11 @@ def test_strict_json(raw):
 
 
 def test_calls_and_cleanup(tmp_path):
-    worker = WorkerClient(executable(tmp_path, 'for line in sys.stdin:\n print(json.dumps(dict(ok=True, echo=json.loads(line))),flush=True)\n'), tmp_path, timeout=2)
+    worker = WorkerClient(executable(tmp_path, 'for line in sys.stdin:\n req=json.loads(line);rid=req.pop("rpc_id");print(json.dumps(dict(ok=True,rpc_id=rid,echo=req)),flush=True)\n'), tmp_path, timeout=2)
     try:
         assert worker.call({"op": "stats"}) == {"ok": True, "echo": {"op": "stats"}}
+        with pytest.raises(ValueError, match="owned by the transport"):
+            worker.call({"op":"stats", "rpc_id": 123})
         with pytest.raises(ValueError):
             worker.call({"large": "x" * MAX_FRAME})
         assert not worker.closed
@@ -53,7 +55,7 @@ def test_child_restores_signal_mask_and_responds_to_sigterm(tmp_path):
     import signal
     parent_mask = signal.pthread_sigmask(signal.SIG_BLOCK, set())
     worker = WorkerClient(executable(tmp_path,
-        'import signal\nfor line in sys.stdin:\n print(json.dumps(dict(ok=True,mask=sorted(int(s) for s in signal.pthread_sigmask(signal.SIG_BLOCK,set())))),flush=True)\n'),
+        'import signal\nfor line in sys.stdin:\n print(json.dumps(dict(ok=True,rpc_id=json.loads(line)["rpc_id"],mask=sorted(int(s) for s in signal.pthread_sigmask(signal.SIG_BLOCK,set())))),flush=True)\n'),
         tmp_path, timeout=2)
     try:
         assert worker.call({"op": "mask"})["mask"] == sorted(int(s) for s in parent_mask)
@@ -111,6 +113,33 @@ def test_write_deadline(tmp_path):
 def test_handshake_contract(tmp_path):
     with pytest.raises(WorkerFailure):
         WorkerClient(executable(tmp_path, 'time.sleep(10)\n', {**READY, "gpu_batching": True}), tmp_path, timeout=1)
+
+
+@pytest.mark.parametrize("bad_id", [None, True, 0, 2, "1"])
+def test_mismatched_rpc_identity_fails_closed(tmp_path, bad_id):
+    reply = {"ok": True, "rpc_id": bad_id}
+    worker = WorkerClient(executable(tmp_path, 'sys.stdin.readline()\nprint('+repr(json.dumps(reply))+',flush=True)\ntime.sleep(10)\n'), tmp_path, timeout=1)
+    with pytest.raises(WorkerFailure):
+        worker.call({"op": "reset"})
+    assert worker.closed and worker.process.poll() is not None
+
+
+def test_delayed_duplicate_cannot_acknowledge_next_rpc(tmp_path):
+    worker = WorkerClient(executable(tmp_path, '''
+request=json.loads(sys.stdin.readline())
+reply=dict(ok=True,rpc_id=request["rpc_id"],reset=True)
+print(json.dumps(reply),flush=True)
+sys.stdin.readline()
+print(json.dumps(reply),flush=True)
+time.sleep(10)
+'''), tmp_path, timeout=1)
+    try:
+        assert worker.call({"op":"reset"})["reset"] is True
+        with pytest.raises(WorkerFailure):
+            worker.call({"op":"reset"})
+        assert worker.closed
+    finally:
+        worker.close()
 
 
 def test_partial_initialization_interrupt_closes_child(tmp_path, monkeypatch):
