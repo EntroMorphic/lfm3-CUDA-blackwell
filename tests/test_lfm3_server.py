@@ -107,6 +107,8 @@ def test_lifecycle_and_sampling(service):
     assert a != b and len(a) == 32
     result = service.generate(generation(a, sampling={"do_sample": True, "seed": 42}))
     assert result["do_sample"] and result["seed"] == 42 and result["gpu_batching"] is False
+    assert result["cancelled"] is False and result["cache_valid"] is True
+    assert result["finish_reason"] == "length"
     native = service.worker.requests[-1]
     assert native["session_id"] == a and native["input_ids"] == [1, 2]
     assert not set(native) & {"capacity", "suppress_tokens", "experimental_long_context"}
@@ -238,6 +240,18 @@ def test_frontend_contention_releases_lease(service):
         assert not service.sessions[sid]["busy"]
     finally:
         service.frontend_lock.release()
+
+
+def test_legacy_worker_cancel_unavailable_does_not_set_generation_event(service):
+    sid = create(service)
+    event = threading.Event()
+    service._lease(sid, "generate", event)
+    try:
+        status, body = invoke(service, b"{}", path=f"/sessions/{sid}/cancel")
+        assert status == 501 and body == {"error": "cancellation_unavailable"}
+        assert not event.is_set() and service.sessions[sid]["busy"]
+    finally:
+        service._release(sid, event)
 
 
 def wait_until(predicate, timeout=1):

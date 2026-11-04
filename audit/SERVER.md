@@ -1,5 +1,11 @@
 # Local text server (experimental)
 
+Latest cancellation acceptance:667 host tests plus native and authenticated HTTP
+token-boundary cancellation gates pass for worker `842a46f1...`; see
+`CANCELLATION.md` and `validation/cancellation-verification.json`. Physical cache
+discard and retained committed history are reported separately. Earlier scoped
+verification below is historical, not a claim of kernel/prefill preemption.
+
 ## Additional signal-mask remediation
 
 Independent verification of the startup fix found that blocking SIGTERM/SIGINT
@@ -52,9 +58,13 @@ tool definitions/calls and multimodal inputs are not.
   Sampling is optional and follows `lfm3_chat.sampling_options`, including explicit
   seed validation. Return fields: `session_id`, decoded `text`, `generated_ids`
   (including a final stop token if present), `reused_tokens`, `consumed_tokens`,
-  `do_sample`, `seed`, `gpu_batching:false`.
+  `do_sample`, `seed`, `gpu_batching:false`, `cancelled`, `finish_reason` and
+  `cache_valid`. Normal completion reports `cancelled:false`, `cache_valid:true`,
+  and `finish_reason:"stop"` or `"length"`.
 * `POST /sessions/ID/reset` with `{}` clears that cache but retains its allocation.
 * `POST /sessions/ID/close` with `{}` releases that session/allocation.
+* `POST /sessions/ID/cancel` with `{}` requests cancellation of that session's
+  currently leased generation; see the cooperative cancellation contract below.
 * `GET /health` is unauthenticated and returns only `ready` and
   `gpu_batching:false` (HTTP 503 after worker failure).
 
@@ -72,6 +82,64 @@ Expiration closes the native allocation and removes its session ID; subsequent
 use returns 404. Clients must create a new session after expiration.
 
 ## Bounds, failure and operational limits
+
+### Cooperative cancellation (experimental)
+
+The cancel endpoint requires the same bearer authentication and strict JSON/framing
+as other POSTs. It returns HTTP **202** with `cancel_requested:true`, `session_id`,
+and `gpu_batching:false` only while a generation lease exists (encoding, queued,
+native execution, or decoding). This acknowledges intent, **not terminal success**:
+completion may win the race. Repeated requests while the same generation is leased
+are idempotent requests. Idle/finished sessions and create/reset/close leases return
+409; unknown IDs return 404. Workers without `supports_cancellation:true` return
+501 `cancellation_unavailable` before any cancellation event is set. The production
+CLI enables the transport capability with `cancellation=True`; normal calls remain
+compatible with legacy/fake workers without the cancellable-call interface.
+A transport notification failure returns 503 `cancellation_transport_failed`, not
+a successful acknowledgment; its already-set event may still be observed by the
+owner/transport. It does not authorize handler-thread cache mutation.
+
+A per-generation event and operation marker are installed atomically with the
+lease. The handler sets that event and makes only a nonblocking targeted transport
+notification; it never resets a runner/cache or performs inference. Holding the
+lease identity stable through notification prevents an old request from targeting
+the next generation. The cancellable transport receives that same event so a
+request arriving before native dispatch/active registration is not lost.
+
+Before native generation, the owner observes cancellation and performs a validated
+native reset for that session only. Its terminal generation response is HTTP 200,
+`cancelled:true`, `finish_reason:"cancelled"`, `text:""`, `generated_ids:[]`,
+`consumed_tokens:0`, `reused_tokens:0`, and `cache_valid:false`, with the requested
+`do_sample`/`seed` and `gpu_batching:false`. Running native cancellation may return
+a partial (possibly empty) transcript, decoded under the same absolute request
+deadline, with those same cancellation/count/cache flags. Partial IDs still obey
+vocabulary, modality-suppression, count, and stop-token checks; only cancelled
+responses may be empty or short without EOS. Unsolicited native cancellation or
+invalid cancellation metadata fails the entire service closed, rather than
+inventing a valid cache. A valid cancellation invalidates only the target cache;
+other session allocations remain intact. Keep sending full conversation history
+on subsequent generation; the aborted transcript is not cached history.
+
+The lease is not released until the owner finishes native generation/reset and
+validation (or ordinary admission/deadline cleanup). Late CPU-only completion
+cannot release a newer generation's lease. A requested cancellation does not
+extend the deadline or guarantee a terminal cancelled response: admission errors,
+request expiry, disconnects, or normal completion may intervene. Slow in-process
+encoding/decoding is not preempted; the existing daemon/deadline bounds still apply.
+Cancellation during native prefill waits for the full current forward operation;
+this is cooperative cancellation, **not GPU preemption**, a cancellation latency
+SLA, or native acceptance evidence. Service/HTTP host tests are separate from
+native-worker/client cancellation verification and GPU correctness gates.
+
+Focused local verification: **101 host tests passed** with
+`python -m pytest -q tests/test_lfm3_server_cancellation.py tests/test_lfm3_server.py tests/test_lfm3_server_sockets.py tests/test_lfm3_server_redteam.py::test_request_deadline_includes_tokenization_before_native_admission`.
+The cancellation suite exercises authenticated admission, unsupported workers,
+queued/encoding/running requests, the pre-dispatch event bridge, duplicates,
+completion races, deadline lease retention, invalid partial/unsolicited metadata,
+and peer-cache isolation using fake workers and in-memory HTTP handlers only.
+No native/GPU cancellation acceptance or remote soak-source update is implied.
+
+### Resource and deadline bounds
 
 Defaults: eight simultaneous HTTP handlers, four pending owner-queue jobs (plus
 one executing), 4 MiB request/response bodies, 4096 messages and 4 MiB combined
@@ -138,7 +206,7 @@ supervisor should still terminate the whole service group if force-killing the
 Python process, since SIGKILL cannot run cleanup.
 
 This focused stdlib wrapper has no TLS, per-client ACLs, durable sessions,
-multi-process serving, true GPU batching, native cooperative cancellation, public
+multi-process serving, true GPU batching, GPU-preemptive cancellation, public
 deployment hardening, throughput SLA, or demonstrated multi-user load stability.
 Do not expose it via a public proxy or reinterpret loopback plus a global bearer
 as tenant isolation. Health readiness is process/service state, not a GPU probe.

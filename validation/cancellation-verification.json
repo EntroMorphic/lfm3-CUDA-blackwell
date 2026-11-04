@@ -1,0 +1,21 @@
+{
+  "status": "finite native and HTTP token-boundary cancellation gates passed",
+  "host_tests": 667,
+  "worker_sha256": "842a46f18a7038006ac4ef685d3526e3455262507a376b4021ef36b9e96e1ebb",
+  "source_sha256": {
+    "native/src/lfm3_worker.cu": "b6e5f73def7625b3a2ca3290d515d71667be33398be68d4ed10510346ffeb1be",
+    "native/include/lfm/text_cancellation.hpp": "c371be2b693cc32843240635626fb94b24b85f20b77bfe3267a86a963574e91f",
+    "tools/lfm3_worker_client.py": "00c0815dd8a040ce38bdbe4033870e2e4e03ea65dd90fccd7bbff73254394832",
+    "tools/lfm3_server.py": "0947c4353e0f271fab73c97254cee7a27625beaa6db21b66b16bf97a020bf108",
+    "tools/check_lfm3_cancellation.py": "108fdb8eb26f3f9c4138a7516ed5fdc2a49b6ead304ae664be2fad8d96cb97f5",
+    "tools/check_lfm3_http_cancellation.py": "7a42cf841d3ec28d19040b8a687d92c9cf212a1ad088b6ce35d68f51d2e1f2a2"
+  },
+  "physical_cache_discarded": true,
+  "committed_history_preserved": true,
+  "peer_cache_exact": true,
+  "no_prefill_or_kernel_preemption": true,
+  "full_serving_accepted": false,
+  "resident32k_and_sampling_replay": "validation/worker-cancellation-fastpath-v6",
+  "short_bitwise_checks": 6890,
+  "single_sha256": "ad757f347a4651292541b72b8ea3af2c41c5673c332e525eb05f8133330d0772"
+}

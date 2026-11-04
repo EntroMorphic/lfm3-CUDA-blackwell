@@ -1,0 +1,123 @@
+[ 33%] Building CUDA object CMakeFiles/liquid-lfm3-worker.dir/src/lfm3_worker.cu.o
+[ 66%] Linking CXX executable liquid-lfm3-worker
+[100%] Built target liquid-lfm3-worker
+{
+  "status": "passed",
+  "worker_sha256": "842a46f18a7038006ac4ef685d3526e3455262507a376b4021ef36b9e96e1ebb",
+  "scope": "native completed-decode cancellation, pre-dispatch cancellation, stale IDs, cache abort, peer preservation and exact recovery; token boundaries only, no prefill/kernel preemption or latency SLA",
+  "observed_cancel_completion_seconds": 0.03311809000297217
+}
+{
+  "status": "passed",
+  "worker_sha256": "842a46f18a7038006ac4ef685d3526e3455262507a376b4021ef36b9e96e1ebb",
+  "source_sha256": {
+    "check_lfm3_http_cancellation.py": "7a42cf841d3ec28d19040b8a687d92c9cf212a1ad088b6ce35d68f51d2e1f2a2",
+    "lfm3_server.py": "0947c4353e0f271fab73c97254cee7a27625beaa6db21b66b16bf97a020bf108",
+    "lfm3_worker_client.py": "00c0815dd8a040ce38bdbe4033870e2e4e03ea65dd90fccd7bbff73254394832"
+  },
+  "scope": "finite authenticated HTTP running cancellation, exact partial IDs, cache discard/history preservation, peer preservation and recovery; token-boundary only, no prefill/kernel preemption or latency guarantee"
+}
+{
+  "status": "passed",
+  "worker_sha256": "842a46f18a7038006ac4ef685d3526e3455262507a376b4021ef36b9e96e1ebb",
+  "bounded_admission_rounds": [
+    {
+      "round": 0,
+      "statuses": [
+        409,
+        409,
+        200,
+        409,
+        409,
+        409,
+        409,
+        200
+      ],
+      "post_contention_both_sessions_exact": true
+    },
+    {
+      "round": 1,
+      "statuses": [
+        409,
+        409,
+        200,
+        409,
+        409,
+        409,
+        409,
+        200
+      ],
+      "post_contention_both_sessions_exact": true
+    },
+    {
+      "round": 2,
+      "statuses": [
+        409,
+        409,
+        409,
+        409,
+        200,
+        409,
+        409,
+        200
+      ],
+      "post_contention_both_sessions_exact": true
+    }
+  ],
+  "listener": "temporary IPv4 loopback with random unrecorded bearer",
+  "scope": "finite native HTTP control/history/cache/auth/reset/fault and optional8-client admission fixtures; serialized inference, NOT GPU batching, cancellation or soak acceptance"
+}
+baseline PASS
+arithmetic PASS
+window257 PASS
+single PASS
+{
+  "cases": [
+    {
+      "case": "baseline",
+      "activation_checks": 4240,
+      "tokens": 16,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    },
+    {
+      "case": "arithmetic",
+      "activation_checks": 530,
+      "tokens": 2,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    },
+    {
+      "case": "window257",
+      "activation_checks": 1060,
+      "tokens": 4,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    },
+    {
+      "case": "single",
+      "activation_checks": 1060,
+      "tokens": 4,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    }
+  ],
+  "stop_check": true,
+  "suppression_check": true,
+  "invalid_requests_rejected": 8,
+  "final_cache_slot_checked": true,
+  "binary_sha256": "ad757f347a4651292541b72b8ea3af2c41c5673c332e525eb05f8133330d0772",
+  "scope": "actual BF16 checkpoint activations/logits, teacher forcing and free-running greedy; eager attention only"
+}

@@ -145,8 +145,10 @@ class Service:
             with self.lock:
                 self.cleanup_failed = True
 
-    def _rpc(self, request):
-        result = self.worker.call(request)
+    def _rpc(self, request, cancel_event=None):
+        cancellable = getattr(self.worker, "call_cancellable", None)
+        result = (cancellable(request, cancel_event) if cancel_event is not None and cancellable is not None
+                  else self.worker.call(request))
         # Even native execution errors are fail-closed, rather than guessing
         # which CUDA errors might leave the process or another cache usable.
         if result.get("ok") is not True:
@@ -257,7 +259,8 @@ class Service:
             if (len(self.sessions) >= self.settings.max_sessions
                     or sum(s["capacity"] for s in self.sessions.values()) + capacity > self.settings.total_capacity):
                 raise APIError(429, "session_quota")
-            self.sessions[sid] = {"capacity": capacity, "busy": True, "last_used": time.monotonic()}
+            self.sessions[sid] = {"capacity": capacity, "busy": True, "operation": "create",
+                                  "cancel_event": None, "last_used": time.monotonic()}
         created = False
 
         def run():
@@ -273,12 +276,13 @@ class Service:
                 if sid in self.sessions:
                     if created:
                         self.sessions[sid]["busy"] = False
+                        self.sessions[sid]["operation"] = None
                         self.sessions[sid]["last_used"] = time.monotonic()
                     else:
                         del self.sessions[sid]
         return self._submit(run, cleanup, lambda: self._close_allocation(sid))
 
-    def _lease(self, sid):
+    def _lease(self, sid, operation=None, cancel_event=None):
         if not isinstance(sid, str) or not SESSION_ID.fullmatch(sid):
             raise ValueError("invalid session ID")
         with self.lock:
@@ -290,18 +294,54 @@ class Service:
             if session["busy"]:
                 raise APIError(409, "session_busy")
             session["busy"] = True
+            session["operation"] = operation
+            session["cancel_event"] = cancel_event
             return session["capacity"]
 
-    def _release(self, sid):
+    def _release(self, sid, cancel_event=None):
         with self.lock:
-            if sid in self.sessions:
-                self.sessions[sid]["busy"] = False
-                self.sessions[sid]["last_used"] = time.monotonic()
+            session = self.sessions.get(sid)
+            if session is not None and (cancel_event is None or session.get("cancel_event") is cancel_event):
+                session["busy"] = False
+                session["operation"] = None
+                session["cancel_event"] = None
+                session["last_used"] = time.monotonic()
+
+    def cancel(self, sid, body):
+        if body:
+            raise ValueError("cancel requires an empty object")
+        if not isinstance(sid, str) or not SESSION_ID.fullmatch(sid):
+            raise ValueError("invalid session ID")
+        with self.lock:
+            if self.failed or self.stopping.is_set():
+                raise APIError(503, "worker_unavailable")
+            session = self.sessions.get(sid)
+            if session is None:
+                raise APIError(404, "unknown_session")
+            event = session.get("cancel_event")
+            if not session["busy"] or session.get("operation") != "generate" or event is None:
+                raise APIError(409, "generation_not_active")
+            if getattr(self.worker, "supports_cancellation", False) is not True:
+                raise APIError(501, "cancellation_unavailable")
+            event.set()
+            send = getattr(self.worker, "cancel", None)
+            if send is not None:
+                # Nonblocking targeted pipe notification only, never a runner
+                # mutation. Keep the lease identity stable until it is sent:
+                # an old cancellation must not target a subsequent generation.
+                try:
+                    send(sid)
+                except WorkerFailure as exc:
+                    # A failed notification cannot be acknowledged as 202.
+                    # The event remains set; only the owner may complete the
+                    # generation/reset, and completion may still win.
+                    raise APIError(503, "cancellation_transport_failed") from exc
+        return dict(session_id=sid, cancel_requested=True, gpu_batching=False)
 
     def lifecycle(self, sid, op, body):
         if op not in ("reset", "close") or body:
             raise ValueError("invalid lifecycle request")
-        self._lease(sid)
+        self._lease(sid, op)
 
         def run():
             result = self._rpc(dict(op=op, session_id=sid))
@@ -323,7 +363,8 @@ class Service:
         if not isinstance(body["messages"], list):
             raise ValueError("messages must be a list")
         sid = body["session_id"]
-        capacity = self._lease(sid)
+        cancel_event = threading.Event()
+        capacity = self._lease(sid, "generate", cancel_event)
         try:
             request = self._frontend_call(
                 lambda: make_request(self.frontend, None, None, self.config, capacity,
@@ -333,36 +374,54 @@ class Service:
                       if key not in ("capacity", "suppress_tokens", "stop_tokens", "experimental_long_context")}
             native.update(op="generate", session_id=sid)
         except BaseException:
-            self._release(sid)
+            self._release(sid, cancel_event)
             raise
 
         def run():
             if time.monotonic() >= deadline:
                 raise APIError(504, "queue_deadline")
-            result = self._rpc(native)
+            if cancel_event.is_set():
+                reset = self._rpc(dict(op="reset", session_id=sid))
+                if reset.get("reset") is not True or reset.get("session_id", sid) != sid:
+                    raise WorkerFailure("invalid cancellation reset reply")
+                return dict(session_id=sid, text="", generated_ids=[], consumed_tokens=0,
+                            reused_tokens=0, cancelled=True, finish_reason="cancelled", cache_valid=False,
+                            do_sample=request["do_sample"], seed=request["seed"], gpu_batching=False)
+            result = self._rpc(native, cancel_event)
             if any(key in result for key in ("sampling_policy", "sampled_policy", "sampling")):
                 raise WorkerFailure("ambiguous sampling metadata")
+            if "cancelled" in result and type(result["cancelled"]) is not bool:
+                raise WorkerFailure("invalid cancellation metadata")
+            cancelled = result.get("cancelled", False)
+            if cancelled:
+                if not cancel_event.is_set() or result.get("cache_valid") is not False:
+                    raise WorkerFailure("unsolicited or invalid cancellation")
+            elif (("cache_valid" in result and result["cache_valid"] is not True)
+                  or result.get("finish_reason") == "cancelled"):
+                raise WorkerFailure("unsolicited cache invalidation")
             generated = token_ids(result.get("generated_ids"), "generated_ids", self.vocabulary, request["max_new_tokens"])
-            if (result.get("session_id") != sid or not generated or set(generated) & set(self.suppress)
+            if (result.get("session_id") != sid or (not generated and not cancelled) or set(generated) & set(self.suppress)
                     or any(t in self.stops for t in generated[:-1])
-                    or (len(generated) < request["max_new_tokens"] and generated[-1] not in self.stops)):
+                    or (not cancelled and len(generated) < request["max_new_tokens"] and generated[-1] not in self.stops)):
                 raise WorkerFailure("invalid generation reply")
             for key in ("do_sample", "seed"):
                 if type(result.get(key)) is not type(request[key]) or result[key] != request[key]:
                     raise WorkerFailure("sampling metadata mismatch")
-            consumed = len(request["input_ids"]) + len(generated) - 1
+            consumed = 0 if cancelled else len(request["input_ids"]) + len(generated) - 1
             integer(result.get("consumed_tokens"), "consumed_tokens", consumed, consumed)
-            integer(result.get("reused_tokens"), "reused_tokens", 0, len(request["input_ids"]))
-            text = self._frontend_call(
+            integer(result.get("reused_tokens"), "reused_tokens", 0, 0 if cancelled else len(request["input_ids"]))
+            text = "" if not generated else self._frontend_call(
                 lambda: self.frontend.decode(generated[:-1] if generated[-1] in self.stops else generated),
                 deadline, wait=True)
             response = dict(session_id=sid, text=text, generated_ids=generated,
                             reused_tokens=result["reused_tokens"], consumed_tokens=consumed,
-                            do_sample=result["do_sample"], seed=result["seed"], gpu_batching=False)
+                             do_sample=result["do_sample"], seed=result["seed"], gpu_batching=False,
+                             cancelled=cancelled, cache_valid=not cancelled,
+                             finish_reason="cancelled" if cancelled else "stop" if generated[-1] in self.stops else "length")
             if len(encode_json(response)) > MAX_RESPONSE:
                 raise WorkerFailure("response exceeds limit")
             return response
-        return self._submit(run, lambda: self._release(sid), deadline=deadline)
+        return self._submit(run, lambda: self._release(sid, cancel_event), deadline=deadline)
 
     def close(self):
         self.stopping.set()
@@ -518,9 +577,13 @@ class Handler(BaseHTTPRequestHandler):
             elif self.path == "/generate":
                 result = service.generate(request)
             else:
-                match = re.fullmatch(r"/sessions/([A-Za-z0-9_-]{32})/(reset|close)", self.path)
+                match = re.fullmatch(r"/sessions/([A-Za-z0-9_-]{32})/(reset|close|cancel)", self.path)
                 if not match:
                     raise APIError(404, "not_found")
+                if match[2] == "cancel":
+                    result = service.cancel(match[1], request)
+                    self._reply(202, result)
+                    return
                 result = service.lifecycle(match[1], match[2], request)
             self._reply(200, result)
         except APIError as exc:
@@ -566,7 +629,8 @@ def main():
         # Retain ownership before initialization, including interruption between
         # a successful constructor return and the caller's assignment.
         worker = WorkerClient.__new__(WorkerClient)
-        worker.__init__(args.worker.resolve(strict=True), checkpoint, timeout=args.worker_timeout, env=worker_env)
+        worker.__init__(args.worker.resolve(strict=True), checkpoint, timeout=args.worker_timeout,
+                        env=worker_env, cancellation=True)
         service = Service(worker, frontend, config, settings)
         with LocalHTTPServer(("127.0.0.1", args.port), service, token) as server:
             server.serve_forever()

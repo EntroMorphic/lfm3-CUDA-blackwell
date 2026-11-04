@@ -1,9 +1,11 @@
 """Bounded local resident-worker transport, independent of the GPU gate tool."""
 import json
+from contextlib import nullcontext
 import math
 import os
 import selectors
 import signal
+import struct
 import subprocess
 import sys
 import threading
@@ -65,17 +67,30 @@ class WorkerFailure(RuntimeError):
 
 
 class WorkerClient:
-    def __init__(self, binary, checkpoint, *, timeout=300, env=None):
+    def __init__(self, binary, checkpoint, *, timeout=300, env=None, cancellation=False, sampling_trace_root=None):
         if not math.isfinite(timeout) or not 0 < timeout <= 86400:
             raise ValueError("invalid worker timeout")
+        if type(cancellation) is not bool:
+            raise ValueError("cancellation must be boolean")
         self.timeout = timeout
         self.closed = False
         self.lock = threading.Lock()
         self.buffer = bytearray()
         self.sequence = 0
+        self.supports_cancellation = cancellation
+        self.active_lock = threading.Lock()
+        self.cleanup_lock = threading.Lock()
+        self.active_generation = None
+        self.cancel_read_fd = self.cancel_write_fd = None
         # No checkpoint writes, shell, inherited stdout or unbounded stderr pipe.
         self.process = None
         try:
+            worker_command = [str(binary), "--experimental", str(checkpoint)]
+            if sampling_trace_root is not None:
+                worker_command += ["--sampling-trace-root", str(sampling_trace_root)]
+            if cancellation:
+                self.cancel_read_fd, self.cancel_write_fd = os.pipe2(os.O_NONBLOCK | os.O_CLOEXEC)
+                worker_command += ["--cancel-fd", str(self.cancel_read_fd)]
             # Defer interruption until Popen's child is recorded; otherwise a
             # signal between spawn and assignment can orphan its separate group.
             blocked = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGINT})
@@ -88,13 +103,16 @@ class WorkerClient:
                      "import os,signal,sys;signal.pthread_sigmask(signal.SIG_SETMASK,"
                      + repr(sorted(int(sig) for sig in blocked))
                      + ");os.execv(sys.argv[1],sys.argv[1:])",
-                     str(binary), "--experimental", str(checkpoint)], env=env,
+                     *worker_command], env=env,
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                     start_new_session=True,
                     restore_signals=True,
+                    pass_fds=() if self.cancel_read_fd is None else (self.cancel_read_fd,),
                 )
             finally:
                 signal.pthread_sigmask(signal.SIG_SETMASK, blocked)
+            if self.cancel_read_fd is not None:
+                self._retire_cancel_fd("cancel_read_fd")
             os.set_blocking(self.process.stdin.fileno(), False)
             os.set_blocking(self.process.stdout.fileno(), False)
             ready = self._read(time.monotonic() + timeout)
@@ -102,7 +120,8 @@ class WorkerClient:
                     or ready["protocol"] != 2 or ready.get("gpu_batching") is not False
                     or type(ready.get("max_sessions")) is not int or ready["max_sessions"] != 2
                     or type(ready.get("aggregate_capacity")) is not int
-                    or ready["aggregate_capacity"] != 32768):
+                    or ready["aggregate_capacity"] != 32768
+                    or (cancellation and ready.get("cancellation") is not True)):
                 raise WorkerFailure("incompatible worker handshake")
         except BaseException:
             self.close()
@@ -132,7 +151,29 @@ class WorkerClient:
                     raise WorkerFailure("worker exited before reply")
                 self.buffer.extend(block)
 
-    def call(self, request):
+    def call_cancellable(self, request, cancel_event):
+        return self.call(request, cancel_event=cancel_event)
+
+    def cancel(self, session_id):
+        """Request only: terminal cancellation is acknowledged by the RPC reply."""
+        with self.active_lock:
+            active = self.active_generation
+            if self.closed or self.cancel_write_fd is None or active is None or active["session_id"] != session_id:
+                return False
+            if active["sent"]:
+                return True
+            try:
+                written = os.write(self.cancel_write_fd, struct.pack("<Q", active["rpc_id"]))
+            except BlockingIOError:
+                raise WorkerFailure("cancellation control queue full") from None
+            except OSError as exc:
+                raise WorkerFailure("cancellation control pipe failed") from exc
+            if written != 8:
+                raise WorkerFailure("partial cancellation control write")
+            active["sent"] = True
+            return True
+
+    def call(self, request, *, cancel_event=None):
         if "rpc_id" in request:
             raise ValueError("rpc_id is owned by the transport")
         # Validate size before admission without consuming an RPC sequence.
@@ -151,6 +192,12 @@ class WorkerClient:
             payload = (json.dumps(dict(request, rpc_id=sequence), allow_nan=False, separators=(",", ":")) + "\n").encode("utf-8")
             if self.buffer:
                 raise WorkerFailure("unsolicited trailing worker data")
+            if request.get("op") == "generate":
+                with self.active_lock:
+                    self.active_generation = dict(session_id=request.get("session_id"), rpc_id=sequence, sent=False)
+                if self.supports_cancellation and cancel_event is not None and cancel_event.is_set():
+                    if not self.cancel(request.get("session_id")):
+                        raise WorkerFailure("pre-dispatch cancellation was not admitted")
             deadline = time.monotonic() + self.timeout
             with selectors.DefaultSelector() as selector:
                 selector.register(self.process.stdin, selectors.EVENT_WRITE)
@@ -176,37 +223,68 @@ class WorkerClient:
             self.close()
             raise WorkerFailure("worker RPC failed; all caches invalid") from exc
         finally:
+            with self.active_lock:
+                self.active_generation = None
             self.lock.release()
 
     def close(self):
-        if getattr(self, "closed", False):
-            return
-        self.closed = True
-        if getattr(self, "process", None) is None:
-            return
-        # Kill the owned group even if the direct child already exited: helpers
-        # must not survive an EOF/protocol failure in their parent.
+        blocked = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGINT})
         try:
-            try:
-                os.killpg(self.process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            if self.process.poll() is None:
+            # Concurrent callers must wait for the in-progress cleanup rather
+            # than returning merely because requests have been marked closed.
+            with getattr(self, "cleanup_lock", None) or nullcontext():
+                if getattr(self, "closed", False):
+                    return
+                self.closed = True
+                descriptor_error = None
+                with getattr(self, "active_lock", None) or nullcontext():
+                    for name in ("cancel_read_fd", "cancel_write_fd"):
+                        try:
+                            self._retire_cancel_fd(name)
+                        except OSError as exc:
+                            descriptor_error = exc
+                if getattr(self, "process", None) is None:
+                    if descriptor_error is not None:
+                        raise descriptor_error
+                    return
+                # Descriptor cleanup failure must never skip child termination.
                 try:
-                    self.process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
+                    try:
+                        os.killpg(self.process.pid, signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
+                    if self.process.poll() is None:
+                        try:
+                            self.process.wait(timeout=2)
+                        except subprocess.TimeoutExpired:
+                            try:
+                                os.killpg(self.process.pid, signal.SIGKILL)
+                            except ProcessLookupError:
+                                pass
+                            self.process.wait(timeout=2)
                     try:
                         os.killpg(self.process.pid, signal.SIGKILL)
                     except ProcessLookupError:
                         pass
-                    self.process.wait(timeout=2)
-            try:
-                os.killpg(self.process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+                finally:
+                    try:
+                        self.process.stdin.close()
+                    finally:
+                        self.process.stdout.close()
+                if descriptor_error is not None:
+                    raise descriptor_error
         finally:
-            # Even an uninterruptible child exceeding the final reap deadline
-            # must not leak the parent's pipe descriptors. Do not hide that
-            # timeout or falsely report the process as reaped.
-            self.process.stdin.close()
-            self.process.stdout.close()
+            signal.pthread_sigmask(signal.SIG_SETMASK, blocked)
+
+    def _retire_cancel_fd(self, name):
+        # exec/spawn ownership is interruption-safe; retiring its inherited
+        # descriptor must be too. In particular, don't double-close a stale fd
+        # if SIGINT arrives after close but before clearing the field.
+        blocked = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGINT})
+        try:
+            fd = getattr(self, name, None)
+            setattr(self, name, None)
+            if fd is not None:
+                os.close(fd)
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, blocked)

@@ -1,0 +1,9 @@
+[ 33%] Building CUDA object CMakeFiles/liquid-lfm3-worker.dir/src/lfm3_worker.cu.o
+[ 66%] Linking CXX executable liquid-lfm3-worker
+[100%] Built target liquid-lfm3-worker
+Traceback (most recent call last):
+  File "/workspace/liquid-CUDA/tools/check_lfm3_cancellation.py", line 132, in <module>
+    main()
+  File "/workspace/liquid-CUDA/tools/check_lfm3_cancellation.py", line 86, in main
+    raise AssertionError("cancelled cache/lease/transcript accounting mismatch")
+AssertionError: cancelled cache/lease/transcript accounting mismatch

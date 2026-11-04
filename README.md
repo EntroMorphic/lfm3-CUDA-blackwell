@@ -7,8 +7,9 @@ sampling. An opt-in tiled native path passes fixed 32K combined-context numerica
 checks against Transformers SDPA; short-context exact checks remain separate.
 The resident worker passes finite persistent-KV isolation and 32K budget gates.
 The authenticated loopback HTTP service also passes finite native and admission
-gates. This is **not yet full-serving acceptance**: GPU batching, cancellation,
-soak/resource/performance and the complete sanitizer gate remain open. See
+gates. Cooperative token-boundary cancellation and a finite host-resource soak
+also pass. This is **not yet full-serving acceptance**: worker/service GPU batching,
+long-soak/GPU-resource/performance and the complete sanitizer gate remain open. See
 [`audit/TEXT_SERVING_ROADMAP.md`](audit/TEXT_SERVING_ROADMAP.md) for current evidence
 and deliberately unclaimed features. Historical milestone details follow.
 

@@ -6,6 +6,15 @@ replay were strengthened.575 increment-scoped host tests and native resident/HTT
 gates pass for protocol2 worker `1f3401db...`. Soak/cancellation/batching and
 integrated sanitizer acceptance remain separate gates.
 
+Subsequent verified increments: `SOAK.md` records a finite30-cycle host/worker
+RSS/descriptor gate and end-to-end latency (not a GPU-memory or SLA certificate).
+`CANCELLATION.md` records667 host tests and native/HTTP token-boundary cancellation
+with physical-cache discard, committed-history preservation, peer isolation and
+exact recovery. The final worker `842a46f1...` also passes resident32K budget and
+independent stochastic replay. True paired decode is still a standalone prototype,
+not worker/service batching; long soak/GPU-resource/performance and integrated
+sanitizer gates remain open.
+
 Requested scope: text preprocessing/decoding, native generation with sampling,
 multi-turn sessions, batching/concurrency, and the model-card context maximum.
 Existing bounded experimental acceptance is preserved, not generalized silently.

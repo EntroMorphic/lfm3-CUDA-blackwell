@@ -1,0 +1,6 @@
+{
+  "status": "failed, preserved",
+  "cause": "inspect consumed_tokens exposed retained committed history rather than destroyed physical cache",
+  "remediation": "report physical consumed_tokens plus separate committed_consumed_tokens; require zero physical and unchanged committed/transcript accounting",
+  "assertions_weakened": false
+}
