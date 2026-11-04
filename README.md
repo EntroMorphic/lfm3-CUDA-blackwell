@@ -12,6 +12,16 @@ limitations still apply.
 
 ## Current milestone
 
+**Experimental text forward/generation is now implemented separately in
+`liquid-lfm3`.** Four real-checkpoint cases pass 5,746 bitwise activation/logit
+comparisons against Transformers eager, plus greedy generation and cache-reset
+checks. It accepts token-ID requests; native chat-tokenizer parity, longer-context
+coverage and final integrated sanitizer/benchmark acceptance remain outstanding.
+See [audit/FORWARD.md](audit/FORWARD.md) and `validation/forward-v3/`.
+The preserved `liquid-native` runtime still rejects LFM3; its guard is unchanged.
+
+The earlier isolated-operator milestone established:
+
 - CPU configuration parsing for standalone LFM3 and the LFM3-Omni text backbone.
 - Per-layer operator kind, RoPE theta/partial rotation, sliding window, attention
   gates, sandwich norms, checkpoint namespace, and actual SwiGLU width.

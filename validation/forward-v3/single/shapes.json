@@ -1,0 +1,4422 @@
+{
+  "0.embed": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.0.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.0.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.0.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.0.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.0.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.0.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.0.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.0.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.0.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.0.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.1.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.1.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.1.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.1.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.1.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.1.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.1.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.1.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.1.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.1.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.2.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.2.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.2.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.2.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.2.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.2.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.2.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.2.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.3.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.3.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.3.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.3.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.3.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.3.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.3.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.3.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.3.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.3.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.4.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.4.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.4.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.4.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.4.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.4.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.4.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.4.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.5.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.5.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.5.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.5.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.5.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.5.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.5.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.5.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.5.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.5.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.6.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.6.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.6.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.6.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.6.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.6.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.6.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.6.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.7.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.7.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.7.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.7.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.7.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.7.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.7.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.7.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.7.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.7.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.8.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.8.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.8.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.8.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.8.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.8.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.8.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.8.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.9.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.9.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.9.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.9.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.9.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.9.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.9.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.9.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.9.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.9.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.10.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.10.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.10.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.10.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.10.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.10.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.10.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.10.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.11.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.11.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.11.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.11.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.11.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.11.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.11.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.11.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.11.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.11.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.12.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.12.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.12.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.12.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.12.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.12.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.12.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.12.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.13.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.13.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.13.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.13.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.13.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.13.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.13.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.13.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.13.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.13.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.14.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.14.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.14.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.14.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.14.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.14.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.14.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.14.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.15.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.15.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.15.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.15.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.15.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.15.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.15.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.15.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.15.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.15.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.16.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.16.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.16.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.16.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.16.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.16.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.16.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.16.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.17.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.17.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.17.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.17.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.17.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.17.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.17.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.17.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.17.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.17.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.18.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.18.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.18.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.18.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.18.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.18.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.18.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.18.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.19.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.19.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.19.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.19.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.19.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.19.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.19.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.19.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.19.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.19.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.20.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.20.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.20.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.20.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.20.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.20.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.20.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.20.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.21.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.21.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.21.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.21.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.21.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.21.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.21.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.21.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.21.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.21.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.22.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.22.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.22.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.22.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.22.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.22.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.22.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.22.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.23.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.23.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "0.layers.23.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.23.operator": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.23.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.23.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.23.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.23.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "0.layers.23.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "0.layers.23.output": [
+    1,
+    1,
+    2048
+  ],
+  "0.final_norm": [
+    1,
+    1,
+    2048
+  ],
+  "0.logits": [
+    1,
+    1,
+    128000
+  ],
+  "1.embed": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.0.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.0.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.0.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.0.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.0.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.0.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.0.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.0.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.0.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.0.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.1.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.1.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.1.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.1.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.1.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.1.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.1.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.1.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.1.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.1.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.2.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.2.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.2.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.2.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.2.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.2.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.2.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.2.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.3.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.3.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.3.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.3.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.3.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.3.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.3.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.3.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.3.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.3.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.4.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.4.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.4.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.4.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.4.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.4.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.4.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.4.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.5.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.5.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.5.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.5.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.5.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.5.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.5.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.5.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.5.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.5.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.6.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.6.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.6.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.6.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.6.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.6.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.6.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.6.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.7.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.7.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.7.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.7.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.7.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.7.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.7.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.7.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.7.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.7.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.8.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.8.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.8.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.8.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.8.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.8.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.8.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.8.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.9.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.9.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.9.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.9.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.9.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.9.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.9.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.9.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.9.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.9.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.10.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.10.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.10.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.10.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.10.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.10.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.10.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.10.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.11.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.11.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.11.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.11.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.11.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.11.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.11.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.11.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.11.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.11.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.12.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.12.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.12.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.12.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.12.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.12.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.12.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.12.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.13.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.13.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.13.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.13.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.13.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.13.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.13.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.13.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.13.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.13.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.14.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.14.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.14.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.14.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.14.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.14.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.14.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.14.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.15.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.15.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.15.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.15.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.15.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.15.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.15.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.15.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.15.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.15.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.16.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.16.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.16.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.16.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.16.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.16.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.16.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.16.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.17.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.17.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.17.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.17.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.17.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.17.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.17.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.17.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.17.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.17.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.18.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.18.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.18.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.18.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.18.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.18.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.18.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.18.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.19.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.19.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.19.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.19.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.19.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.19.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.19.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.19.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.19.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.19.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.20.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.20.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.20.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.20.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.20.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.20.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.20.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.20.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.21.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.21.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.21.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.21.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.21.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.21.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.21.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.21.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.21.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.21.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.22.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.22.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.22.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.22.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.22.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.22.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.22.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.22.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.23.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.23.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "1.layers.23.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.23.operator": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.23.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.23.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.23.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.23.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "1.layers.23.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "1.layers.23.output": [
+    1,
+    1,
+    2048
+  ],
+  "1.final_norm": [
+    1,
+    1,
+    2048
+  ],
+  "1.logits": [
+    1,
+    1,
+    128000
+  ],
+  "2.embed": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.0.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.0.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.0.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.0.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.0.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.0.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.0.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.0.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.0.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.0.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.1.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.1.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.1.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.1.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.1.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.1.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.1.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.1.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.1.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.1.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.2.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.2.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.2.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.2.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.2.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.2.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.2.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.2.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.3.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.3.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.3.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.3.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.3.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.3.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.3.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.3.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.3.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.3.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.4.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.4.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.4.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.4.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.4.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.4.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.4.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.4.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.5.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.5.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.5.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.5.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.5.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.5.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.5.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.5.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.5.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.5.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.6.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.6.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.6.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.6.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.6.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.6.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.6.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.6.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.7.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.7.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.7.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.7.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.7.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.7.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.7.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.7.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.7.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.7.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.8.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.8.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.8.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.8.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.8.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.8.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.8.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.8.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.9.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.9.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.9.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.9.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.9.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.9.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.9.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.9.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.9.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.9.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.10.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.10.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.10.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.10.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.10.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.10.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.10.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.10.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.11.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.11.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.11.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.11.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.11.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.11.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.11.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.11.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.11.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.11.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.12.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.12.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.12.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.12.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.12.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.12.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.12.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.12.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.13.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.13.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.13.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.13.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.13.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.13.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.13.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.13.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.13.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.13.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.14.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.14.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.14.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.14.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.14.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.14.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.14.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.14.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.15.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.15.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.15.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.15.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.15.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.15.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.15.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.15.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.15.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.15.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.16.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.16.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.16.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.16.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.16.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.16.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.16.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.16.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.17.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.17.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.17.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.17.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.17.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.17.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.17.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.17.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.17.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.17.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.18.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.18.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.18.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.18.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.18.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.18.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.18.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.18.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.19.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.19.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.19.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.19.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.19.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.19.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.19.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.19.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.19.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.19.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.20.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.20.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.20.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.20.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.20.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.20.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.20.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.20.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.21.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.21.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.21.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.21.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.21.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.21.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.21.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.21.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.21.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.21.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.22.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.22.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.22.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.22.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.22.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.22.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.22.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.22.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.23.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.23.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "2.layers.23.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.23.operator": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.23.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.23.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.23.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.23.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "2.layers.23.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "2.layers.23.output": [
+    1,
+    1,
+    2048
+  ],
+  "2.final_norm": [
+    1,
+    1,
+    2048
+  ],
+  "2.logits": [
+    1,
+    1,
+    128000
+  ],
+  "3.embed": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.0.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.0.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.0.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.0.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.0.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.0.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.0.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.0.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.0.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.0.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.1.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.1.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.1.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.1.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.1.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.1.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.1.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.1.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.1.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.1.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.2.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.2.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.2.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.2.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.2.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.2.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.2.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.2.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.3.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.3.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.3.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.3.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.3.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.3.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.3.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.3.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.3.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.3.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.4.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.4.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.4.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.4.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.4.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.4.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.4.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.4.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.5.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.5.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.5.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.5.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.5.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.5.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.5.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.5.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.5.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.5.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.6.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.6.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.6.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.6.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.6.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.6.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.6.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.6.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.7.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.7.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.7.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.7.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.7.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.7.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.7.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.7.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.7.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.7.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.8.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.8.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.8.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.8.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.8.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.8.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.8.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.8.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.9.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.9.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.9.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.9.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.9.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.9.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.9.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.9.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.9.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.9.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.10.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.10.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.10.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.10.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.10.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.10.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.10.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.10.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.11.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.11.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.11.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.11.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.11.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.11.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.11.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.11.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.11.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.11.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.12.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.12.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.12.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.12.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.12.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.12.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.12.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.12.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.13.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.13.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.13.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.13.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.13.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.13.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.13.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.13.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.13.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.13.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.14.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.14.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.14.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.14.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.14.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.14.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.14.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.14.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.15.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.15.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.15.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.15.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.15.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.15.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.15.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.15.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.15.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.15.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.16.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.16.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.16.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.16.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.16.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.16.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.16.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.16.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.17.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.17.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.17.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.17.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.17.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.17.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.17.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.17.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.17.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.17.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.18.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.18.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.18.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.18.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.18.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.18.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.18.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.18.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.19.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.19.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.19.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.19.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.19.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.19.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.19.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.19.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.19.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.19.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.20.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.20.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.20.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.20.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.20.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.20.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.20.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.20.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.21.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.21.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.21.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.21.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.21.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.21.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.21.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.21.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.21.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.21.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.22.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.22.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.22.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.22.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.22.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.22.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.22.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.22.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.23.operator_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.23.conv.in_proj": [
+    1,
+    1,
+    6144
+  ],
+  "3.layers.23.conv.product": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.23.operator": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.23.ffn_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.23.feed_forward.w1": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.23.feed_forward.w3": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.23.feed_forward.product": [
+    1,
+    1,
+    7680
+  ],
+  "3.layers.23.feed_forward": [
+    1,
+    1,
+    2048
+  ],
+  "3.layers.23.output": [
+    1,
+    1,
+    2048
+  ],
+  "3.final_norm": [
+    1,
+    1,
+    2048
+  ],
+  "3.logits": [
+    1,
+    1,
+    128000
+  ]
+}

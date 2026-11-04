@@ -1,0 +1,7 @@
+{
+  "max_relative_rms": 0.02,
+  "max_logit_error": 0.5,
+  "teacher_argmax_exact": true,
+  "checks": 884,
+  "failures": []
+}

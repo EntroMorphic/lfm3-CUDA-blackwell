@@ -6,6 +6,13 @@ option(LIQUID_LFM3_OPS_TESTS "Build the isolated LFM3 operator test bridge" OFF)
 
 find_package(CUDAToolkit REQUIRED)
 
+add_executable(liquid-lfm3 src/lfm3_main.cu src/safetensors.cpp)
+target_include_directories(liquid-lfm3 PRIVATE include)
+target_compile_features(liquid-lfm3 PRIVATE cxx_std_20 cuda_std_20)
+target_compile_options(liquid-lfm3 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
+target_link_libraries(liquid-lfm3 PRIVATE CUDA::cudart CUDA::cublas)
+set_target_properties(liquid-lfm3 PROPERTIES CUDA_ARCHITECTURES 110)
+
 add_executable(liquid-native src/main.cu src/safetensors.cpp src/tokenizer.cpp)
 target_include_directories(liquid-native PRIVATE include)
 if(LIQUID_PROFILE_NVTX)

@@ -1,0 +1,49 @@
+{
+  "cases": [
+    {
+      "case": "baseline",
+      "activation_checks": 3536,
+      "tokens": 16,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    },
+    {
+      "case": "arithmetic",
+      "activation_checks": 442,
+      "tokens": 2,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    },
+    {
+      "case": "window257",
+      "activation_checks": 884,
+      "tokens": 4,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    },
+    {
+      "case": "single",
+      "activation_checks": 884,
+      "tokens": 4,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    }
+  ],
+  "stop_check": true,
+  "suppression_check": true,
+  "invalid_requests_rejected": 8,
+  "binary_sha256": "27463169b13bbd7cd747b84de860ddcbdf5e95af3827c9424aadbc19b96f714d",
+  "scope": "actual BF16 checkpoint activations/logits, teacher forcing and free-running greedy; eager attention only"
+}
