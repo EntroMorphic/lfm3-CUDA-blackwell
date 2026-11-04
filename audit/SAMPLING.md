@@ -89,3 +89,40 @@ An independent Python arithmetic oracle additionally matches token support and
 probabilities to1e-12 over80 deterministic policy combinations (temperature,
 top-k/top-p/min-p, sign-correct repetition penalty, duplicate history/suppression,
 and ties). This validates the documented filter order, not torch RNG equivalence.
+
+## Linear deterministic selection fast paths
+
+`TextSampler::sample()` now scans for the maximum adjusted allowed score when
+`do_sample=false` or `top_k==1`. These paths avoid candidate sorting, exponentials
+and normalization; time is O(vocabulary + history + suppression), with two
+vocabulary-sized byte flag arrays. `distribution()` and the arithmetic/filter
+order for all other stochastic policies are unchanged.
+
+The scan retains the full validation contract: vocabulary/null checks, top_k
+bounds even for greedy calls, every history/suppression ID (duplicates remain
+benign), and every logit's finiteness even when suppressed. Allowed history
+entries receive the sign-correct long-double penalty once, with the same overflow
+check as `distribution()`. Suppressed entries are not penalty-adjusted, matching
+the existing contract. Ascending traversal with a strict greater-than comparison
+retains the lowest-ID maximum. Positive temperature and valid top_p/min_p cannot
+remove that maximum, so selection matches `distribution().front().token_id`.
+
+Only after successful validation does stochastic top-k1 explicitly discard one
+`mt19937_64` output. Greedy and rejected calls consume none. No mutable-policy or
+RNG-inspection API was added. Since fixed top-k1 outputs cannot reveal RNG
+position through the public API, its exact draw is guarded by a source-contract
+test; runtime reference-engine tests cover the general stochastic path, including
+singleton support followed by wider support and intervening rejected calls.
+
+Host validation: `python -m pytest -q tests/test_text_sampling.py
+tests/test_text_sampling_distribution.py tests/test_text_sampling_oracle.py
+tests/test_text_sampling_fastpath.py` passed **25 tests**. The new probes run both
+optimized and with UBSan (`-fsanitize=undefined -fno-sanitize-recover=all`), compare
+against the unchanged distribution and an independent unsorted argmax oracle,
+and exhaust all 5^3 small score tuples, history subsets and nonempty allowed
+subsets across greedy/top-k1 policies. Additional cases cover finite arithmetic
+extremes, signed-zero ties, repeated IDs, invalid inputs and 128K vocabulary.
+This is host correctness evidence, not an HTTP throughput result: the reported
+13.1 tok/s HTTP soak and older roughly 39 tok/s standalone measurement are not
+comparable benchmarks. Native logit replay and like-for-like performance checks
+remain integration work; no GPU execution was performed for this change.

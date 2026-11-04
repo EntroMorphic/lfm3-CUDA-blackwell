@@ -119,6 +119,50 @@ class TextSampler {
   int sample(const float* logits, std::size_t vocab_size,
              const std::vector<int>& history = {},
              const std::vector<int>& suppressed = {}) {
+    if (!options_.do_sample || options_.top_k == 1) {
+      // The maximum survives temperature, min_p and top_p filtering. Avoid
+      // sorting/softmax, but retain distribution()'s validation and arithmetic.
+      if (!logits || vocab_size == 0 ||
+          vocab_size > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw std::invalid_argument("invalid text logits/vocabulary");
+      if (static_cast<std::uint64_t>(options_.top_k) > vocab_size)
+        throw std::invalid_argument("top_k exceeds vocabulary size");
+      std::vector<unsigned char> seen(vocab_size, 0), blocked(vocab_size, 0);
+      const auto mark = [vocab_size](const std::vector<int>& ids,
+                                   std::vector<unsigned char>& flags) {
+        for (int id : ids) {
+          if (id < 0 || static_cast<std::size_t>(id) >= vocab_size)
+            throw std::invalid_argument("text token ID out of vocabulary bounds");
+          flags[static_cast<std::size_t>(id)] = 1;
+        }
+      };
+      mark(history, seen);
+      mark(suppressed, blocked);
+      int best = -1;
+      long double maximum = 0;
+      for (std::size_t i = 0; i < vocab_size; ++i) {
+        if (!std::isfinite(logits[i]))
+          throw std::invalid_argument("text logits must all be finite");
+        if (blocked[i]) continue;
+        long double value = logits[i];
+        if (seen[i]) {
+          const long double penalty = options_.repetition_penalty;
+          value = value < 0 ? value * penalty : value / penalty;
+        }
+        if (!std::isfinite(value))
+          throw std::overflow_error("repetition penalty exceeds host arithmetic range");
+        // Ascending iteration and strict comparison retain the lowest-ID tie.
+        if (best < 0 || value > maximum) {
+          best = static_cast<int>(i);
+          maximum = value;
+        }
+      }
+      if (best < 0) throw std::invalid_argument("all text tokens suppressed");
+      // Successful stochastic singleton calls still consume exactly one draw;
+      // greedy and rejected calls consume none, as on the general path.
+      if (options_.do_sample) (void)rng_();
+      return best;
+    }
     const auto candidates = distribution(logits, vocab_size, history, suppressed);
     if (!options_.do_sample) return candidates.front().token_id;
     // Exactly one engine draw for every successful stochastic call (including
