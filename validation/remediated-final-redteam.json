@@ -1,0 +1,69 @@
+{
+  "gpu": "NVIDIA Thor",
+  "torch": "2.10.0+cu130",
+  "findings": [],
+  "library_sha256": "734ec4ba25d3d924e7fcc86d95139b65170eb517a9a32d3c76c0513f966501b3",
+  "observations": [
+    {
+      "name": "attention-position--1",
+      "rejected": true,
+      "detail": "position outside valid cache/rotary range"
+    },
+    {
+      "name": "attention-position-16",
+      "rejected": true,
+      "detail": "position outside valid cache/rotary range"
+    },
+    {
+      "name": "attention-position-18",
+      "rejected": true,
+      "detail": "position outside valid cache/rotary range"
+    },
+    {
+      "name": "attention-float32-query",
+      "rejected": true,
+      "detail": "tensor 0: wrong layout, dtype or shape"
+    },
+    {
+      "name": "attention-strided-query",
+      "rejected": true,
+      "detail": "tensor 0: expected contiguous CUDA inference tensor"
+    },
+    {
+      "name": "attention-int64-position",
+      "rejected": true,
+      "detail": "tensor 3: wrong layout, dtype or shape"
+    },
+    {
+      "name": "rope-broad/theta=1000000.0",
+      "max_abs": 0.0,
+      "unequal": 0
+    },
+    {
+      "name": "rope-broad/theta=10000.0",
+      "max_abs": 0.0,
+      "unequal": 0
+    },
+    {
+      "name": "conv-cancellation/exponent=12",
+      "decode_max_abs": 0.0,
+      "prefill_max_abs": 0.0
+    },
+    {
+      "name": "conv-cancellation/exponent=20",
+      "decode_max_abs": 0.0,
+      "prefill_max_abs": 0.0
+    },
+    {
+      "name": "conv-cancellation/exponent=25",
+      "decode_max_abs": 0.0,
+      "prefill_max_abs": 0.0
+    },
+    {
+      "name": "conv-cancellation/exponent=30",
+      "decode_max_abs": 0.0,
+      "prefill_max_abs": 0.0
+    }
+  ],
+  "scope": "adversarial probes against current candidate; original pre-remediation evidence retained separately"
+}

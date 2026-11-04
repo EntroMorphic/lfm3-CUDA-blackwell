@@ -1,0 +1,1 @@
+error: LFM3 metadata is supported, but native LFM3 execution is not implemented yet: operator forward-pass integration and end-to-end parity validation are still required

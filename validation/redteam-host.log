@@ -1,0 +1,34 @@
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+_____________________ test_reject_fractional_type_offsets ______________________
+audit/test_host_contracts.py:18: in test_reject_fractional_type_offsets
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_____________________ test_reject_boolean_shape_dimensions _____________________
+audit/test_host_contracts.py:26: in test_reject_boolean_shape_dimensions
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_________________ test_reject_other_modality_overlapping_text __________________
+audit/test_host_contracts.py:34: in test_reject_other_modality_overlapping_text
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+______________________ test_reject_duplicate_header_keys _______________________
+audit/test_host_contracts.py:47: in test_reject_duplicate_header_keys
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_________________ test_reject_bias_config_without_bias_tensors _________________
+audit/test_host_contracts.py:56: in test_reject_bias_config_without_bias_tensors
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+=========================== short test summary info ============================
+FAILED audit/test_host_contracts.py::test_reject_fractional_type_offsets - Fa...
+FAILED audit/test_host_contracts.py::test_reject_boolean_shape_dimensions - F...
+FAILED audit/test_host_contracts.py::test_reject_other_modality_overlapping_text
+FAILED audit/test_host_contracts.py::test_reject_duplicate_header_keys - Fail...
+FAILED audit/test_host_contracts.py::test_reject_bias_config_without_bias_tensors
+5 failed in 0.13s

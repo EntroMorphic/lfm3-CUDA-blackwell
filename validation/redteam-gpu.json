@@ -1,0 +1,106 @@
+{
+  "gpu": "NVIDIA Thor",
+  "torch": "2.10.0+cu130",
+  "findings": [
+    {
+      "name": "attention-position--1",
+      "problem": "invalid input accepted without an error"
+    },
+    {
+      "name": "attention-position-16",
+      "problem": "invalid input accepted without an error"
+    },
+    {
+      "name": "attention-position-18",
+      "problem": "invalid input accepted without an error"
+    },
+    {
+      "name": "attention-float32-query",
+      "problem": "invalid input accepted without an error"
+    },
+    {
+      "name": "attention-strided-query",
+      "problem": "invalid input accepted without an error"
+    },
+    {
+      "name": "attention-int64-position",
+      "problem": "invalid input accepted without an error"
+    },
+    {
+      "name": "conv-reduction-cancellation",
+      "problem": "native sequential reduction differs from checkpoint Triton reduction",
+      "cases": [
+        {
+          "exponent": 25,
+          "max_abs": 2.0,
+          "native": [
+            2.0,
+            2.0,
+            2.0,
+            1.0,
+            2.0,
+            1.0
+          ],
+          "reference": [
+            2.0,
+            3.0,
+            2.0,
+            3.0,
+            3.0,
+            3.0
+          ],
+          "checkpoint_prefill": [
+            2.0,
+            2.0,
+            2.0,
+            1.0,
+            2.0,
+            1.0
+          ]
+        },
+        {
+          "exponent": 30,
+          "max_abs": 2.0,
+          "native": [
+            2.0,
+            2.0,
+            2.0,
+            1.0,
+            2.0,
+            1.0
+          ],
+          "reference": [
+            2.0,
+            3.0,
+            2.0,
+            3.0,
+            3.0,
+            3.0
+          ],
+          "checkpoint_prefill": [
+            2.0,
+            2.0,
+            2.0,
+            1.0,
+            2.0,
+            1.0
+          ]
+        }
+      ]
+    }
+  ],
+  "library_sha256": "7499e514030551f827ce6b90908b3359ecceaa32738cdf3b0f5a8ba2508fe2ab",
+  "observations": [
+    {
+      "name": "rope-broad/theta=1000000.0",
+      "max_abs": 0.0,
+      "unequal": 0
+    },
+    {
+      "name": "rope-broad/theta=10000.0",
+      "max_abs": 0.0,
+      "unequal": 0
+    }
+  ],
+  "scope": "adversarial probes only; no production code modified"
+}

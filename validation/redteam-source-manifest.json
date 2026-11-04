@@ -1,0 +1,12 @@
+{
+  "host_acceptance_test_exit": 1,
+  "python": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:16:10) [GCC 11.2.0]",
+  "reviewed_source_sha256": {
+    "native/include/lfm/lfm3_ops.cuh": "1d0743ab74077bdbcddb9f54f508c74fa0d04801b9d2ddbd14a3efd8f7c8c500",
+    "native/tests/lfm3_ops_bridge.cu": "f5006c5fe92e724ddc990ae6f200aec6badbc05ce40092e5fbcff6c51ea98291",
+    "native/include/lfm/model_config.hpp": "4bcb41ef95526f0aa26b1f421f067b64375f075565b79796b533b3a5e3aebfcf",
+    "tools/inspect_checkpoint.py": "f05173124e6ed0b244d7d7596efe645c7b840d60cdec6fdefd407d38034c70fb",
+    "tools/check_lfm3_ops.py": "2e1ce54cd0111ea7c691d0bd65b0d4c7679853daa0fb9afc3c0196b6d6e85a26",
+    "audit/test_host_contracts.py": "6aa58127da66d60bbcc19d308255ee9630795227e2774d25d86c650b39133c50"
+  }
+}
