@@ -3,6 +3,18 @@
 This ledger separates verified native behavior from tool limitations. An open
 external validation limitation is **not** a clean full-sanitizer certificate.
 
+## Current text-serving status (later increments)
+
+The historical batch-one milestones below are preserved. The codec-free frontend,
+seeded sampling, fixed32K numerical checks, resident cache isolation and local
+authenticated HTTP service now have separate evidence. The current HTTP increment
+passes554 host tests and finite native control/history/reset/fault and eight-client
+admission fixtures: `validation/http-native-remediated-v3/`. This is serialized
+inference, **not GPU batching**. Native cancellation, sustained soak/resource/
+performance acceptance, integrated racecheck (1200-second timeout) and blocked
+cuBLAS initcheck remain open. See `TEXT_SERVING_ROADMAP.md`, `SESSIONS.md` and
+`SERVER.md`; no full-serving or100/100 acceptance is implied.
+
 ## Priority 1 — typed prompt to native text
 
 Closed for the supported single-turn, batch-one, greedy interface. Commit

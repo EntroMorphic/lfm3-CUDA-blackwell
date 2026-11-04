@@ -6,8 +6,9 @@ The tokenizer-only CLI now supports explicit textual histories and seeded native
 sampling. An opt-in tiled native path passes fixed 32K combined-context numerical
 checks against Transformers SDPA; short-context exact checks remain separate.
 The resident worker passes finite persistent-KV isolation and 32K budget gates.
-This is **not yet full-serving acceptance**: external request serving, GPU batching,
-concurrency/cancellation and the complete sanitizer gate remain open. See
+The authenticated loopback HTTP service also passes finite native and admission
+gates. This is **not yet full-serving acceptance**: GPU batching, cancellation,
+soak/resource/performance and the complete sanitizer gate remain open. See
 [`audit/TEXT_SERVING_ROADMAP.md`](audit/TEXT_SERVING_ROADMAP.md) for current evidence
 and deliberately unclaimed features. Historical milestone details follow.
 

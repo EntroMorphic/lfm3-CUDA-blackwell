@@ -106,6 +106,21 @@ integrated coverage. The shared-weight runner repeats the32K SDPA checks:
 tests, excluding the separately developing HTTP/client suites.
 Do not represent successful components as complete full-serving or100/100 acceptance.
 
+## Authenticated local HTTP increment
+
+The loopback-only bearer-authenticated service passes554 host tests plus the
+finite native HTTP gate (`validation/http-native-remediated-v3/`). Verification
+includes control/history/cache/reset parity, auth and malformed inputs, process
+failure invalidation, and three eight-client admission rounds. Each round accepts
+two serialized session requests and rejects six busy/contending peers, then confirms exact
+output from both sessions. This is **not GPU batching** or sustained-load acceptance.
+
+Independent review remediated startup cleanup, unreachable timed-out creation
+quota, idle allocation expiration, contradictory sampling metadata and inherited
+blocked signals; the failed native first run remains preserved. See `SERVER.md`.
+True GPU batching, native cancellation, soak/resource/performance gates and the
+integrated racecheck timeout/initcheck blocker still prevent full acceptance.
+
 `text_sampling.hpp` and `lfm3_text_frontend.py` are independently tested components;
 neither is silently advertised as fully integrated native serving. Their detailed
 contracts and remaining validation are in `SAMPLING.md` and `TEXT_FRONTEND.md`.

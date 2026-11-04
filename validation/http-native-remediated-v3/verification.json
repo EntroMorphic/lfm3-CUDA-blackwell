@@ -1,0 +1,30 @@
+{
+  "status": "final-source finite native HTTP gates passed",
+  "host_tests": 554,
+  "source_sha256": {
+    "tools/lfm3_server.py": "ffaeed4a1dedbdde8d4a399aefe4cce4fd674502c0adfdd3a002e13a7a9fbe70",
+    "tools/lfm3_worker_client.py": "372960b9b95b9932e803b0a16241a310d7084b9b358bddd0c18c8a9662ee80f0",
+    "tools/check_lfm3_server.py": "7a9ecd1215e09eb3921ec727b4625c77727981f3b883091f642fde599d389973"
+  },
+  "remote_local_source_hashes_match": true,
+  "worker_sha256": "3bc90ece555ed2bf335275112a822374c735fcbe910d1b95016b206a1c6ff51a",
+  "actual_response_local_path": "../tmp/http-native-remediated-v3/control-response.txt",
+  "bounded_admission_rounds": 3,
+  "simultaneous_clients_per_round": 8,
+  "status_counts": {
+    "200": 6,
+    "409": 16,
+    "429": 2
+  },
+  "gpu_batching": false,
+  "no_worker_or_test_process_remaining": true,
+  "failed_attempt_preserved": "validation/http-native-remediated-v1",
+  "full_serving_accepted": false,
+  "remaining": [
+    "actual GPU batching",
+    "native asynchronous cancellation",
+    "soak/resource/performance acceptance",
+    "integrated racecheck1200s timeout",
+    "cuBLAS initcheck tracking blocker"
+  ]
+}

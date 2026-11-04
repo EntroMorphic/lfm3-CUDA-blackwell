@@ -1,0 +1,8 @@
+{
+  "status": "failed, preserved",
+  "failure": "worker SIGTERM fault injection timed out; cleanup escalation also exceeded bounded wait",
+  "root_cause": "startup signal blocking inherited across exec; observed SigBlk0x4002",
+  "remediation": "exec-only launcher restores original child signal mask; host regression verifies exact masks and normal SIGTERM exit",
+  "rerun": "http-native-remediated-v2, pending",
+  "assertions_weakened": false
+}

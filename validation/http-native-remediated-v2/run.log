@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "worker_sha256": "3bc90ece555ed2bf335275112a822374c735fcbe910d1b95016b206a1c6ff51a",
+  "bounded_admission_rounds": [
+    {
+      "round": 0,
+      "statuses": [
+        200,
+        409,
+        409,
+        409,
+        409,
+        200,
+        409,
+        409
+      ],
+      "post_contention_both_sessions_exact": true
+    },
+    {
+      "round": 1,
+      "statuses": [
+        409,
+        409,
+        409,
+        409,
+        409,
+        409,
+        200,
+        200
+      ],
+      "post_contention_both_sessions_exact": true
+    },
+    {
+      "round": 2,
+      "statuses": [
+        200,
+        200,
+        409,
+        409,
+        409,
+        409,
+        409,
+        409
+      ],
+      "post_contention_both_sessions_exact": true
+    }
+  ],
+  "listener": "temporary IPv4 loopback with random unrecorded bearer",
+  "scope": "finite native HTTP control/history/cache/auth/reset/fault and optional8-client admission fixtures; serialized inference, NOT GPU batching, cancellation or soak acceptance"
+}

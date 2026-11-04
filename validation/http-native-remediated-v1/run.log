@@ -1,0 +1,44 @@
+Traceback (most recent call last):
+  File "/workspace/liquid-CUDA/tools/check_lfm3_server.py", line 119, in main
+    os.killpg(worker.process.pid,signal.SIGTERM);worker.process.wait(timeout=10)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/workspace/liquid-CUDA/build/cmake/liquid-lfm3-worker', '--experimental', '/workspace/models/LFM3-Omni-2B']' timed out after 10 seconds
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/workspace/liquid-CUDA/tools/lfm3_worker_client.py", line 174, in close
+    self.process.wait(timeout=2)
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/workspace/liquid-CUDA/build/cmake/liquid-lfm3-worker', '--experimental', '/workspace/models/LFM3-Omni-2B']' timed out after 2 seconds
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/workspace/liquid-CUDA/tools/check_lfm3_server.py", line 137, in <module>
+    if __name__=="__main__":main()
+                            ^^^^^^
+  File "/workspace/liquid-CUDA/tools/check_lfm3_server.py", line 134, in main
+    server.shutdown();server.server_close();thread.join(timeout=10);service.close()
+                                                                    ^^^^^^^^^^^^^^^
+  File "/workspace/liquid-CUDA/tools/lfm3_server.py", line 306, in close
+    self._fatal()
+  File "/workspace/liquid-CUDA/tools/lfm3_server.py", line 83, in _fatal
+    self.worker.close()
+  File "/workspace/liquid-CUDA/tools/lfm3_worker_client.py", line 180, in close
+    self.process.wait(timeout=2)
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/workspace/liquid-CUDA/build/cmake/liquid-lfm3-worker', '--experimental', '/workspace/models/LFM3-Omni-2B']' timed out after 2 seconds
