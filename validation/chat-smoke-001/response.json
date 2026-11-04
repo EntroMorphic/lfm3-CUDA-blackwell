@@ -1,0 +1,19 @@
+{
+  "backend": "native-cuda-experimental",
+  "preprocessing": "official-local-AutoProcessor",
+  "native_tokenizer_parity": false,
+  "generated_ids": [
+    35808,
+    9,
+    1712,
+    510,
+    358,
+    1300,
+    509,
+    3507,
+    39,
+    124900
+  ],
+  "text": "Hello! How can I help you today?",
+  "finish_reason": "stop"
+}

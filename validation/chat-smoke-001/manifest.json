@@ -1,0 +1,11 @@
+{
+  "backend": "native-cuda-experimental",
+  "binary_sha256": "af0a0db7ff1c0833aff3076104ec3897b8f4d838fbae125cf5c8fe8cdbbf22d2",
+  "scope": "typed prompt -> official processor -> native CUDA greedy inference -> decoded text; processor may load its auxiliary audio codec",
+  "artifacts_sha256": {
+    "output.json": "c41b60288ff18ce95130f491b4ca0aabe634e46baa64c4c69fee852650789454",
+    "request.json": "7c50872d83c3d058fabc20f53e6cfba9f132d73b367ec88c3dad2a1a3741e7ee",
+    "response.json": "a4bca0f966ddc7dfb3a8443d099b45925012a910c678443a4e8c72ee28670e10",
+    "text.txt": "b0a88b7f04e245f8b0c63d8deb16ff66324998affa15e35098892b064e02ac53"
+  }
+}
