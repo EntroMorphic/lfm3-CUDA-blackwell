@@ -1,0 +1,28 @@
+{
+  "runtime_binary_sha256": "cabeb776f6221895810ad226c673ff12fa911d13a5bca19d96f94aea53f1c27c",
+  "context_status": "passed",
+  "context_cases": 9,
+  "bitwise_logit_vectors": 19,
+  "bitwise_logit_values": 2432000,
+  "maximum_capacity": 4096,
+  "rejections_before_weight_loading": 12,
+  "host_tests_passed": 327,
+  "chat_commit": "d86d657",
+  "source_sha256": {
+    "build-forward-thor.sh": "73f5408cdbdc9fb0ff932068a00fdeeef32807dabaf73834678ae4c228826150",
+    "native/CMakeLists.txt": "00c8889b569c06b526d6a1291a8d658f2d9ed4b47e5b4eba64f893d47f183f40",
+    "native/src/lfm3_main.cu": "b05b928ecd11829530a44c3c38c2c247c11b0495dae6463e985d17c88f945e83",
+    "native/tests/lfm3_projection_probe.cu": "67eefa74df9753d8f933782f088a2ee1eb7d37964e2b69dc2fa26fe000a75f52",
+    "run-forward-sanitizers-thor.sh": "9d7561ebb1d2ff9786a06770fc34960080acaac6ad20ae25917dee4cf5425dd6",
+    "tests/test_lfm3_benchmark.py": "f8f2d152ebd2e53a7267eb796d8f7d97f89aeac15f4055106bd9adc8ef3facc4",
+    "tests/test_lfm3_context.py": "01122230ced05623284af8b25edb4fc6391dd160c886712c49a55ef2a1eca3da",
+    "tests/test_lfm3_sanitizer_harness.py": "ccabf88f7349fb6834fae3b8b9261bde135a1d775ecb7c44ba6f996d8f846194",
+    "tools/benchmark_lfm3.py": "91776a7c142af70c31757542899a1d0ee83b21efd67fbdf47e97b3bbecbaff8f",
+    "tools/check_lfm3_context.py": "5e6dc18350671c975fcbb9b0627b82681d836016f0a6accb5b9d299370cf786e",
+    "tools/check_lfm3_sanitizer.py": "7f23bcde9b65fca7bfd1f18b77ee324058ade8056bde12e83a2a21cf02ea8d60",
+    "tools/lfm3_reference.py": "5eb6dd93ccc18f9874d40db2bf303d88847af3faff14512e47f9b89ff3ca894a"
+  },
+  "complete_integrated_initcheck": false,
+  "initcheck_disposition": "blocked by reproduced cuBLAS output tracking; not credited as passed",
+  "final_source_frozen_benchmark_pending": true
+}

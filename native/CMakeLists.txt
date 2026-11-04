@@ -30,6 +30,9 @@ set_target_properties(liquid-native PROPERTIES
 )
 
 if(LIQUID_LFM3_OPS_TESTS)
+  add_executable(lfm3-projection-probe tests/lfm3_projection_probe.cu)
+  target_link_libraries(lfm3-projection-probe PRIVATE CUDA::cudart CUDA::cublas)
+  set_target_properties(lfm3-projection-probe PROPERTIES CUDA_ARCHITECTURES 110)
   add_library(lfm3_ops SHARED tests/lfm3_ops_bridge.cu)
   target_include_directories(lfm3_ops PRIVATE include)
   target_compile_features(lfm3_ops PRIVATE cuda_std_20)

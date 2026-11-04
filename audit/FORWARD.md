@@ -27,8 +27,10 @@ Use of the new runner requires `--experimental`.
   reduction, with BF16 cast before weight multiplication and residual addition.
 - Attention uses BF16 cuBLAS QK/PV products and a native causal/windowed softmax.
   This is an eager-style reference path, not an SDPA or FlashAttention kernel.
-  The persistent softmax reduction schedule follows ATen for the short contexts
-  tested; correctness throughout the full 4096-slot capacity is not implied.
+  Persistent reduction is used through 2048 columns; the ATen register/block
+  reduction is used above that. The expanded nine-case suite verifies bitwise
+  vocabulary logits through the 4096-slot limit. This does not imply universal
+  exactness for every prompt or SDPA parity.
 - Loader still uploads all checkpoint payloads, including unused non-text weights.
 
 ## Validation and remediations
@@ -65,12 +67,14 @@ free-running choices match; exact-logit reset, stopping, suppression and eight
 invalid-request checks pass. Evidence: `validation/forward-v3/`. Comparisons were
 also rerun with the stronger `--require-exact` gate and per-trace SHA-256 records.
 
-The host suite passes 118 tests, including eight acceptance-comparator regressions.
-The current suite additionally requests final-slot cache filling; that newly added
-capacity variant has not yet been executed and is not credited to the saved v3 run.
-Integrated sanitizer completion and the longer warmed benchmark remain pending at
-this commit. Benchmark acceptance requires the same binary hash as the correctness
-suite and exact generated IDs. Earlier failed candidate reports remain on Thor in
+The combined host suite now passes 327 tests. Final-slot cache filling is verified
+in the later forward-v5 and context-v3 evidence, not retroactively credited to v3.
+The 86-token warmed benchmark passed exact greedy comparisons for the `af0a0db7...`
+candidate; the later full-context runtime requires a fresh hash-matched measurement.
+Integrated initcheck is blocked by a separately reproduced cuBLAS output tracking
+limitation. See `audit/ACCEPTANCE.md`; no complete sanitizer pass is claimed.
+Benchmark acceptance requires the same binary hash as the correctness suite and
+exact generated IDs. Earlier failed candidate reports remain on Thor in
 `build/forward-baseline-pedantic`, `build/forward-gates-v1`, `build/forward-gates-v2`,
 and the preserved pre-normalization comparison reports.
 

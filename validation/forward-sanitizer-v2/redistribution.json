@@ -1,0 +1,20 @@
+{
+  "scope": "Isolated test-tool downloads under build/; no system CUDA or driver changes",
+  "platform": "linux-sbsa",
+  "packages": [
+    {
+      "url": "https://developer.download.nvidia.com/compute/cuda/redist/cuda_sanitizer_api/linux-sbsa/cuda_sanitizer_api-linux-sbsa-13.1.118-archive.tar.xz",
+      "sha256": "1dc68ccb146032bcdc9d932569c865d68e3966ecf136940ca38fd7d5abfda4ac",
+      "reported_sanitizer_version": "2025.4.1.0",
+      "projection_initcheck_clean": false
+    },
+    {
+      "url": "https://developer.download.nvidia.com/compute/cuda/redist/cuda_sanitizer_api/linux-sbsa/cuda_sanitizer_api-linux-sbsa-13.3.27-archive.tar.xz",
+      "sha256": "0624446464032a03f07a786330986b7d9148526258efedb1684ffe3bfa8e3d0d",
+      "reported_sanitizer_version": "2026.2.0.0",
+      "projection_initcheck_clean": false
+    }
+  ],
+  "tested_cublas_reported_version": 130100,
+  "suppression_or_output_initialization_used": false
+}

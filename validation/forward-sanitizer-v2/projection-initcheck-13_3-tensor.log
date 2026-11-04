@@ -1,0 +1,17 @@
+========= COMPUTE-SANITIZER
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at read_output(const __nv_bfloat16 *, __nv_bfloat16 *, unsigned long)+0x100
+=========     by thread (96,0,0) in block (0,0,0)
+=========     Address 0x1c476000c0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x1d93] in lfm3-projection-probe
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at read_output(const __nv_bfloat16 *, __nv_bfloat16 *, unsigned long)+0x100
+=========     by thread (97,0,0) in block (0,0,0)
+=========     Address 0x1c476000c2
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x1d93] in lfm3-projection-probe
+========= 
+========= ERROR SUMMARY: 128 errors
+========= ERROR SUMMARY: 126 errors were not printed. Use --print-limit option to adjust the number of printed errors

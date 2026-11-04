@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import time
+import sys
 
 import torch
 import transformers
@@ -20,6 +21,8 @@ def main():
     p.add_argument("--length", type=int, help="Repeat/truncate content tokens to this length (boundary tests)")
     p.add_argument("--no-trace", action="store_true")
     p.add_argument("--benchmark", action="store_true", help="Three warmed manual-greedy runs with traces disabled")
+    p.add_argument("--input-ids-file", type=Path, help="Replay input_ids from a saved native request")
+    p.add_argument("--trace-first-layers", type=int, default=24, help="Limit diagnostic activation capture, not model execution")
     args = p.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     model = AutoModelForMultimodalLM.from_pretrained(
@@ -33,6 +36,16 @@ def main():
         {"role": "user", "content": args.prompt},
     ], add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt")
     input_ids = inputs["input_ids"].to("cuda")
+    if args.input_ids_file:
+        if args.length:
+            raise ValueError("input-ids-file and length are mutually exclusive")
+        saved = json.loads(args.input_ids_file.read_text())["input_ids"]
+        if not isinstance(saved, list) or not 1 <= len(saved) <= 4096 or any(
+                type(x) is not int or not 0 <= x < backbone.config.vocab_size for x in saved):
+            raise ValueError("invalid replay input_ids")
+        input_ids = torch.tensor([saved], device="cuda")
+    if not 1 <= args.trace_first_layers <= len(backbone.layers):
+        raise ValueError("invalid trace-first-layers")
     if args.length:
         content = processor.tokenizer.encode(args.prompt, add_special_tokens=False)
         input_ids = torch.tensor([(content * (args.length // len(content) + 1))[:args.length]], device="cuda")
@@ -55,10 +68,29 @@ def main():
             save(name, output[0] if isinstance(output, tuple) else output)
         return capture
 
+    # Capture actual eager attention boundaries without replacing its arithmetic.
+    attention_layer = next(layer for layer in backbone.layers if layer.is_attention_layer)
+    implementation = sys.modules[type(attention_layer.self_attn).__module__]
+    original_attention = implementation.eager_attention_forward
+
+    def traced_attention(module, query, key, value, *positional, **keyword):
+        result = original_attention(module, query, key, value, *positional, **keyword)
+        if module.layer_idx < args.trace_first_layers:
+            prefix = f"layers.{module.layer_idx}.self_attn."
+            save(prefix + "q_rotary", query.transpose(1, 2))
+            save(prefix + "k_rotary", key[:, :, -query.shape[-2]:].transpose(1, 2))
+            save(prefix + "attended", result[0])
+            save(prefix + "probabilities", result[1])
+        return result
+
+    implementation.eager_attention_forward = traced_attention
+
     handles = [backbone.embed_tokens.register_forward_hook(hook("embed")),
                backbone.embedding_norm.register_forward_hook(hook("final_norm")),
                model.lm_head.register_forward_hook(hook("logits"))]
     for i, layer in enumerate(backbone.layers):
+        if i >= args.trace_first_layers:
+            continue
         prefix = f"layers.{i}."
         for attr in ("operator_norm", "ffn_norm", "feed_forward"):
             handles.append(getattr(layer, attr).register_forward_hook(hook(prefix + attr)))
@@ -104,6 +136,7 @@ def main():
                 break
     for h in handles:
         h.remove()
+    implementation.eager_attention_forward = original_attention
     trace_enabled = False
     request = dict(input_ids=input_ids[0].tolist(), teacher_ids=generated[:-1],
                    suppress_tokens=suppress, stop_tokens=eos, capacity=min(4096, max(512, input_ids.shape[1] + args.tokens)),

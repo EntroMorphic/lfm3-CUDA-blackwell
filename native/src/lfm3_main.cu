@@ -70,6 +70,20 @@ __global__ void swiglu(const bf16* a, const bf16* b, bf16* out, size_t n) {
     out[i] = __hmul(__float2bfloat16_rn(__fmul_rn(x, sigmoid)), b[i]);
   }
 }
+__global__ void rotary_from_frequencies(bf16* x,const int* positions,const float* inverse,
+                                        int rows,int heads,int dim,int pairs) {
+  const size_t i=size_t(blockIdx.x)*blockDim.x+threadIdx.x;
+  if(i>=size_t(rows)*heads*(dim/2)) return;
+  const int d=i%(dim/2);
+  if(d>=pairs) return;
+  const size_t h=i/(dim/2),base=h*dim+d;
+  const float angle=__fmul_rn(float(positions[h/heads]),inverse[d]);
+  const float cosine=__bfloat162float(__float2bfloat16_rn(cosf(angle)));
+  const float sine=__bfloat162float(__float2bfloat16_rn(sinf(angle)));
+  const float a=__bfloat162float(x[base]),b=__bfloat162float(x[base+dim/2]);
+  x[base]=__float2bfloat16_rn(__fadd_rn(__fmul_rn(a,cosine),-__fmul_rn(b,sine)));
+  x[base+dim/2]=__float2bfloat16_rn(__fadd_rn(__fmul_rn(b,cosine),__fmul_rn(a,sine)));
+}
 __global__ void scatter(const bf16* k, const bf16* v, bf16* kc, bf16* vc,
                         int rows, int heads, int dim, int capacity, int start) {
   size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -79,7 +93,7 @@ __global__ void scatter(const bf16* k, const bf16* v, bf16* kc, bf16* vc,
     kc[dst] = k[i]; vc[dst] = v[i];
   }
 }
-__global__ void probabilities(const bf16* scores,bf16* probs,int rows,int end,int start,int window,int dim) {
+__global__ void probabilities(const bf16* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start) {
   const int row=blockIdx.x%rows,tid=threadIdx.x;
   const size_t base=size_t(blockIdx.x)*end;
   const int position=start+row;
@@ -92,7 +106,7 @@ __global__ void probabilities(const bf16* scores,bf16* probs,int rows,int end,in
   for(int i=0;i<iterations;++i) {
     int t=tid+i*32;
     float x=-INFINITY;
-    if(t<end && t>=begin && t<=position)
+    if(t<end && t+key_start>=begin && t+key_start<=position)
       x=__bfloat162float(__float2bfloat16_rn(__fmul_rn(__bfloat162float(scores[base+t]),rsqrtf(float(dim)))));
     elements[i]=x; maximum=fmaxf(maximum,x);
   }
@@ -106,6 +120,50 @@ __global__ void probabilities(const bf16* scores,bf16* probs,int rows,int end,in
     int t=tid+i*32;
     if(t<end) probs[base+t]=__float2bfloat16_rn(elements[i]/sum);
   }
+}
+template<bool Maximum> __device__ float block_softmax_reduce(float value,float* shared) {
+  const int tid=threadIdx.x,lane=tid%32;
+  for(int offset=16;offset;offset/=2) {
+    const float other=__shfl_down_sync(0xffffffff,value,offset);
+    value=Maximum?fmaxf(value,other):__fadd_rn(value,other);
+  }
+  __syncthreads();
+  if(lane==0) shared[tid/32]=value;
+  __syncthreads();
+  if(tid<32) {
+    value=shared[tid];
+    for(int offset=16;offset;offset/=2) {
+      const float other=__shfl_down_sync(0xffffffff,value,offset);
+      value=Maximum?fmaxf(value,other):__fadd_rn(value,other);
+    }
+    if(tid==0) shared[0]=value;
+  }
+  __syncthreads();
+  return shared[0];
+}
+// ATen FP32 forward switches from persistent warp to register/block at 2049.
+// See native/third_party/PYTORCH_LICENSE and audit/CONTEXT.md for attribution.
+__global__ void probabilities_large(const bf16* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start) {
+  const int tid=threadIdx.x,row=blockIdx.x%rows,position=start+row;
+  const int begin=window?max(0,position-window+1):0;
+  const size_t base=size_t(blockIdx.x)*end;
+  float elements[4];
+  float maximum=-3.402823466e38f;
+  for(int i=0;i<4;++i) {
+    const int t=tid+i*1024;
+    float value=-INFINITY;
+    if(t<end && t+key_start>=begin && t+key_start<=position)
+      value=__bfloat162float(__float2bfloat16_rn(__fmul_rn(__bfloat162float(scores[base+t]),rsqrtf(float(dim)))));
+    elements[i]=value;
+    if(t<end) maximum=fmaxf(maximum,value);
+  }
+  __shared__ float shared[32];
+  maximum=block_softmax_reduce<true>(maximum,shared);
+  float sum=0;
+  for(int i=0;i<4;++i) if(tid+i*1024<end) sum=__fadd_rn(sum,expf(elements[i]-maximum));
+  sum=block_softmax_reduce<false>(sum,shared);
+  for(int i=0;i<4;++i) if(tid+i*1024<end)
+    probs[base+tid+i*1024]=__float2bfloat16_rn(expf(elements[i]-maximum)/sum);
 }
 unsigned grid(size_t n) { return (n + 255) / 256; }
 lfm::Json read_json(const std::string& path) {
@@ -140,7 +198,9 @@ class Runner {
   Buffer<const bf16*> pointer_a, pointer_b;
   Buffer<bf16*> pointer_c;
   std::vector<std::unique_ptr<Buffer<bf16>>> keys, values, states;
+  std::vector<std::unique_ptr<Buffer<float>>> frequencies;
   std::string trace;
+  bool trace_logits_only = false;
   int step = 0, cursor = 0;
 
   Runner(const std::string& directory, lfm::ModelConfig cfg)
@@ -168,10 +228,19 @@ class Runner {
         weight(p+"self_attn.gate_proj.weight", {s.query_heads,s.hidden});
         keys.emplace_back(new Buffer<bf16>(s.kv_layer_stride())); values.emplace_back(new Buffer<bf16>(s.kv_layer_stride()));
         states.emplace_back(nullptr);
+        frequencies.emplace_back(new Buffer<float>(s.head_dim/2));
+        std::vector<float> inverse(s.head_dim/2,0.0f);
+        const auto spec=config.layer_specs[i];
+        // The checkpoint builds arange/pow/reciprocal on CPU, then transfers.
+        // GPU powf differs by an ULP at some frequencies (observable at pos850).
+        for(int d=0;d<spec.rotary_pairs;++d)
+          inverse[d]=1.0f/::powf(spec.rope_theta,float(2*d)/s.head_dim);
+        cuda_check(cudaMemcpy(frequencies.back()->p,inverse.data(),inverse.size()*sizeof(float),cudaMemcpyHostToDevice));
       } else {
         weight(p+"conv.conv.weight", {s.hidden,1,7}); weight(p+"conv.in_proj.weight", {3*s.hidden,s.hidden});
         weight(p+"conv.out_proj.weight", {s.hidden,s.hidden});
         keys.emplace_back(nullptr); values.emplace_back(nullptr); states.emplace_back(new Buffer<bf16>(size_t(s.hidden)*7));
+        frequencies.emplace_back(nullptr);
       }
     }
     blas_check(cublasCreate(&blas));
@@ -200,7 +269,7 @@ class Runner {
     }
   }
   void dump(const std::string& name, const bf16* ptr, size_t n) {
-    if (trace.empty()) return;
+    if (trace.empty() || (trace_logits_only && name!="logits")) return;
     std::vector<bf16> data(n);
     cuda_check(cudaMemcpy(data.data(),ptr,n*sizeof(bf16),cudaMemcpyDeviceToHost));
     std::ofstream f(trace+"/"+std::to_string(step)+"."+name+".bf16",std::ios::binary);
@@ -218,11 +287,14 @@ class Runner {
     norm<<<rows,norm_threads(rows,width)>>>(x,w(weight_name),out,width,s.epsilon);
   }
   void attention(int layer,int rows,int window) {
-    const int end=cursor+rows;
+    // Dynamic sliding cache returns only its last window for one-token decode.
+    // Masking a larger product is mathematically equivalent, but not BF16-equivalent.
+    const int key_start=(rows==1 && window>0)?std::max(0,cursor+rows-window):0;
+    const int end=cursor+rows-key_start;
     std::vector<const bf16*> ap(s.query_heads),bp(s.query_heads);
     std::vector<bf16*> cp(s.query_heads);
     for(int h=0;h<s.query_heads;++h) {
-      ap[h]=keys[layer]->p+size_t(h/(s.query_heads/s.kv_heads))*s.context*s.head_dim;
+      ap[h]=keys[layer]->p+(size_t(h/(s.query_heads/s.kv_heads))*s.context+key_start)*s.head_dim;
       bp[h]=q.p+h*s.head_dim;
       cp[h]=score_buffer.p+size_t(h)*rows*end;
     }
@@ -237,9 +309,11 @@ class Runner {
       reinterpret_cast<const void* const*>(pointer_a.p),CUDA_R_16BF,s.head_dim,
       reinterpret_cast<const void* const*>(pointer_b.p),CUDA_R_16BF,s.hidden,&beta,
       reinterpret_cast<void* const*>(pointer_c.p),CUDA_R_16BF,end,s.query_heads,CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));
-    probabilities<<<rows*s.query_heads,32>>>(score_buffer.p,probability_buffer.p,rows,end,cursor,window,s.head_dim);
+    if(end<=2048) probabilities<<<rows*s.query_heads,32>>>(score_buffer.p,probability_buffer.p,rows,end,cursor,window,s.head_dim,key_start);
+    else probabilities_large<<<rows*s.query_heads,1024>>>(score_buffer.p,probability_buffer.p,rows,end,cursor,window,s.head_dim,key_start);
+    dump("layers."+std::to_string(layer)+".self_attn.probabilities",probability_buffer.p,size_t(s.query_heads)*rows*end);
     for(int h=0;h<s.query_heads;++h) {
-      ap[h]=values[layer]->p+size_t(h/(s.query_heads/s.kv_heads))*s.context*s.head_dim;
+      ap[h]=values[layer]->p+(size_t(h/(s.query_heads/s.kv_heads))*s.context+key_start)*s.head_dim;
       bp[h]=probability_buffer.p+size_t(h)*rows*end;
       cp[h]=attended.p+h*s.head_dim;
     }
@@ -279,11 +353,12 @@ class Runner {
         linear(at+"v_proj.weight",normalized.p,v.p,rows,s.hidden,s.kv_width());
         normalize(q.p,at+"q_norm.weight",q.p,rows*s.query_heads,s.head_dim);
         normalize(k.p,at+"k_norm.weight",k.p,rows*s.kv_heads,s.head_dim);
-        lfm::lfm3::rotary<<<grid(size_t(rows)*s.hidden/2),256>>>(q.p,positions.p,rows,s.query_heads,s.head_dim,spec.rotary_pairs,spec.rope_theta);
-        lfm::lfm3::rotary<<<grid(size_t(rows)*s.kv_width()/2),256>>>(k.p,positions.p,rows,s.kv_heads,s.head_dim,spec.rotary_pairs,spec.rope_theta);
+        rotary_from_frequencies<<<grid(size_t(rows)*s.hidden/2),256>>>(q.p,positions.p,frequencies[layer]->p,rows,s.query_heads,s.head_dim,spec.rotary_pairs);
+        rotary_from_frequencies<<<grid(size_t(rows)*s.kv_width()/2),256>>>(k.p,positions.p,frequencies[layer]->p,rows,s.kv_heads,s.head_dim,spec.rotary_pairs);
         dump(at+"q_rotary",q.p,size_t(rows)*s.hidden); dump(at+"k_rotary",k.p,size_t(rows)*s.kv_width());
         scatter<<<grid(size_t(rows)*s.kv_width()),256>>>(k.p,v.p,keys[layer]->p,values[layer]->p,rows,s.kv_heads,s.head_dim,s.context,cursor);
         attention(layer,rows,spec.window);
+        dump(at+"attended",attended.p,size_t(rows)*s.hidden);
         linear(at+"gate_proj.weight",normalized.p,gates.p,rows,s.hidden,s.query_heads);
         lfm::lfm3::head_gate<<<grid(size_t(rows)*s.hidden),256>>>(attended.p,gates.p,gated.p,size_t(rows)*s.hidden,s.head_dim);
         dump(at+"gated",gated.p,size_t(rows)*s.hidden);
@@ -352,33 +427,40 @@ int main(int argc,char** argv) try {
     stop.push_back(special("text_end_token_id"));
   }
   int count=request.has("max_new_tokens")?request.at("max_new_tokens").integer():0;
+  int warmups=request.has("warmup_runs")?request.at("warmup_runs").integer():0;
+  if(warmups>10) throw std::runtime_error("at most 10 warmup runs");
+  const bool check_reset=request.has("check_reset") && request.at("check_reset").boolean();
+  const bool trace_logits_only=request.has("trace_logits_only") && request.at("trace_logits_only").boolean();
   if(input.empty() || input.size()>size_t(capacity) || count>capacity || forced.size()>size_t(capacity) ||
      input.size()+std::max(size_t(count?count-1:0),forced.size())>size_t(capacity) || (count && !forced.empty()))
     throw std::runtime_error("invalid or overflowing prefill/decode request");
   if(std::set<int>(suppress.begin(),suppress.end()).size()==size_t(cfg.shape.vocabulary))
     throw std::runtime_error("cannot suppress whole vocabulary");
   Runner runner(argv[2],cfg);
+  runner.trace_logits_only=trace_logits_only;
   if(request.has("trace_directory")) {
     runner.trace=request.at("trace_directory").string();
     if(!runner.trace.empty()) std::filesystem::create_directories(runner.trace);
   }
   auto now=[] { return std::chrono::steady_clock::now(); };
   auto elapsed=[](auto a,auto b) { return std::chrono::duration<double>(b-a).count(); };
-  int warmups=request.has("warmup_runs")?request.at("warmup_runs").integer():0;
-  if(warmups>10) throw std::runtime_error("at most 10 warmup runs");
   const std::string trace_directory=runner.trace;
   runner.trace.clear();
   for(int run=0;run<warmups;++run) {
     auto warm_scores=runner.forward(input);
     for(int token:forced) warm_scores=runner.forward({token});
-    // Exercise decode GEMMs, independently of how generation later stops.
-    if(forced.empty() && count>1) runner.forward({0});
+    // Warm precisely the same greedy workload as the timed run, not one decode.
+    if(forced.empty()) for(int t=0;t<count;++t) {
+      for(int id:suppress) warm_scores[id]=-INFINITY;
+      int token=int(std::max_element(warm_scores.begin(),warm_scores.end())-warm_scores.begin());
+      if(std::find(stop.begin(),stop.end(),token)!=stop.end() || t==count-1) break;
+      warm_scores=runner.forward({token});
+    }
     runner.reset();
   }
   runner.trace=trace_directory;
   auto begin=now(); auto scores=runner.forward(input); auto prefill_end=now();
   std::vector<std::vector<float>> checkpoints;
-  const bool check_reset=request.has("check_reset") && request.at("check_reset").boolean();
   if(check_reset) checkpoints.push_back(scores);
   std::vector<int> generated;
   std::vector<int> argmax;

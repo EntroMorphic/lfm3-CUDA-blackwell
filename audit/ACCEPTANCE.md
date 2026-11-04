@@ -1,0 +1,102 @@
+# Text-inference acceptance iteration
+
+This ledger separates verified native behavior from tool limitations. An open
+external validation limitation is **not** a clean full-sanitizer certificate.
+
+## Priority 1 — typed prompt to native text
+
+Closed for the supported single-turn, batch-one, greedy interface. Commit
+`d86d657` adds `tools/lfm3_chat.py`, 68 host regressions, and an actual Thor smoke
+result. Local user-facing artifacts: `../tmp/chat-smoke-001/`.
+
+Red-team cases cover malformed/mismatched native responses, modality leakage,
+stopping, bounds, process failure/timeout, JSON ambiguity and output overwrite.
+Language-model inference is entirely native; the official Python processor does
+formatting/tokenization/decoding and loads its auxiliary audio codec. This is not
+native-tokenizer parity, batched serving or multimodal inference.
+
+## Priority 2 — acceptance and throughput
+
+Remediated benchmark issues: the native warmup originally exercised just one
+decode while the reference warmed a full greedy sequence; it now warms the full
+requested sequence. Gate validation cannot pass vacuously on empty cases or
+nonboolean flags, cannot be disabled by Python `-O`, and requires exact numerical
+evidence for the measured binary. Timing/call counts, stop/suppression policy,
+every measured sequence, length mismatches, finite values and unchanged binary
+identity are checked. The benchmark harness has 102 host regressions.
+
+The `af0a0db7...` candidate passed a three-sample, warmed, 86-token comparison with
+all generated IDs equal to Transformers eager: median native decode 39.45 tok/s,
+Transformers eager 33.05 tok/s. Raw evidence: `validation/benchmark-eager-v2/`.
+These are synchronized backend-specific batch-one loops, not isolated kernels,
+best-SDPA comparisons or universal speedup claims. Later runtime revisions require
+their own hash-matched correctness/benchmark evidence.
+
+### Open external limitation: initcheck output tracking
+
+The integrated CUDA 13.0 sanitizer run passed memcheck and racecheck; synccheck
+passed with NVIDIA NVJET excluded because of its previously reproduced internal
+instrumentation failure. Initcheck reported uninitialized convolution inputs and
+was stopped rather than credited as passed.
+
+`lfm3-projection-probe` isolates the producer/consumer boundary with no checkpoint:
+
+- A CUDA-fill producer plus the same CUDA consumer passes initcheck.
+- An intentionally missing producer is detected, validating the negative control.
+- A cuBLAS BF16 GEMM produces the correct 128 sampled values, but initcheck labels
+  those values uninitialized at the consumer. No output initialization, host
+  roundtrip, custom-kernel exclusion or suppression is used to conceal this.
+
+The reproduction persists with Compute Sanitizer 2025.3.1, 2025.4.1, and 2026.2.0;
+enabling tensor-op checks on the latter did not resolve it. Tested cuBLAS reports
+version 130100 on Thor. Isolated sanitizer downloads were SHA-256 verified; no
+system CUDA/driver installation was changed.
+
+`check_lfm3_sanitizer.py` now runs positive/negative producer controls before a
+potentially very slow integrated initcheck. It records `passed: false` and
+`blocked-cuBLAS-output-tracking` on the reproduced condition, exits 86, and
+preserves the logs. It cannot credit missing logs, internal errors, failed
+controls or incorrect producer values as a clean result. Six host regressions
+verify this fail-closed behavior. Evidence: `validation/forward-sanitizer-v2/`.
+
+**Disposition:** bounded numerical/native inference acceptance can be measured,
+but complete integrated global-memory initialization coverage remains blocked by
+this reproduced library/tool interaction. Reporting this as “pristine” would be
+incorrect.
+
+## Priority 3 — cache/context red-team
+
+The stricter context suite found and retained these failures:
+
+1. A 256-token prefill matched exactly but the next sliding decode did not.
+   Native masked a larger attention product while Transformers cropped to the
+   last 256 keys/values. Native now matches the physical decode product width.
+2. A 1024-token prefill exposed RoPE frequency construction differences. The
+   checkpoint constructs inverse frequencies on CPU; native recomputed with GPU
+   `powf`. At frequency 18, a one-ULP difference changes BF16 cosine at position
+   850. Native now constructs FP32 frequencies on CPU before upload.
+3. Source review established a separate ATen FP32 softmax register/block reduction
+   above 2048 columns. A 1024-thread, two-stage shuffle-down path now covers that
+   range; shorter rows retain the persistent XOR reduction.
+4. `warmup_runs`, `check_reset`, and logits-only tracing flags must be validated
+   before checkpoint upload. Config-only negative requests test that order.
+
+`check_lfm3_context.py` tests capacities 1/2, convolution handoff, 255/256/257
+windows, 1024+2, 4095+1, and 4096 prefill with exact-logit reset and final-slot
+checks. Twelve overflow/type controls use a configuration with **no weights** to
+prove rejection before loading. Strict bitwise comparisons are never silently
+relaxed. Reusable oracles are hashed before native execution; failures preserve
+case, step and partial evidence. Logits-only tracing avoids multi-GB activation
+copies and unsafe sink workarounds.
+
+The source-frozen `cabeb776...` candidate passed all nine context cases:
+**19 complete vocabulary-logit vectors (2,432,000 BF16 values) bitwise equal** to
+the pinned eager oracle, with exact-logit reset and all twelve pre-upload controls.
+Saved evidence: `validation/context-v3/`; the failed predecessor is preserved in
+`validation/context-failed-v2/`. Raw oracle vectors remain in the Thor build tree;
+the checked-in manifest records their SHA-256 values and explicit weight identity.
+
+The combined host suite passes **327 tests** (`validation/host-acceptance-iteration1.log`).
+The new full-context runtime is awaiting its final broad activation regression,
+hash-matched warmed benchmark, and long-context sanitizer record. Earlier metrics
+and sanitizer results remain pinned to their earlier candidate hashes.
