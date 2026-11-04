@@ -1,0 +1,766 @@
+{
+  "status": "passed",
+  "worker_sha256": "1f3401db47f5facf4978668ea41d9614bb2601e798fec6d96c1ea099234cc94b",
+  "source_sha256": {
+    "check_lfm3_soak.py": "35b237565a2551d80b31fd39d549931413fa267792205ad6a2079cb107c8df83",
+    "lfm3_server.py": "1acb93103024b9ad90bf07716ad0a11a5a3a4e41ba678d3c0a04e5bd80e0eaa8",
+    "lfm3_worker_client.py": "32f700ee58e992798771473b8f323843ddbecc7cdc79ecefc8550f4c104d55c7"
+  },
+  "cycles_requested": 30,
+  "samples": [
+    {
+      "cycle": 0,
+      "elapsed_seconds": 47.670301022000785,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 1,
+      "elapsed_seconds": 60.821520350000355,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 2,
+      "elapsed_seconds": 73.9209939229986,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 3,
+      "elapsed_seconds": 86.99125806200027,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 4,
+      "elapsed_seconds": 106.60784311599855,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 5,
+      "elapsed_seconds": 119.67497053400075,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 6,
+      "elapsed_seconds": 132.7424890959992,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 7,
+      "elapsed_seconds": 145.9012493099981,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 8,
+      "elapsed_seconds": 159.05450144000133,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 9,
+      "elapsed_seconds": 178.7006116199991,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 10,
+      "elapsed_seconds": 191.81459898100002,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 11,
+      "elapsed_seconds": 204.8603296529982,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 12,
+      "elapsed_seconds": 217.97215673900064,
+      "server": {
+        "rss_bytes": 297492480,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 13,
+      "elapsed_seconds": 231.1399457689986,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 14,
+      "elapsed_seconds": 250.99678105099883,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 15,
+      "elapsed_seconds": 264.2668590739995,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 16,
+      "elapsed_seconds": 277.6076780000003,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 17,
+      "elapsed_seconds": 290.87363779099906,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835573760,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 18,
+      "elapsed_seconds": 304.1347309390003,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4835966976,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 19,
+      "elapsed_seconds": 323.91952068200044,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4838588416,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 20,
+      "elapsed_seconds": 337.04658176799785,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4855234560,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 21,
+      "elapsed_seconds": 350.252817624998,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4857987072,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 22,
+      "elapsed_seconds": 363.3306686809992,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4857987072,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 23,
+      "elapsed_seconds": 376.3781294629989,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4857987072,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 24,
+      "elapsed_seconds": 395.9404429919996,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4857987072,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 25,
+      "elapsed_seconds": 408.98598869800117,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4857987072,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 26,
+      "elapsed_seconds": 422.04540368000016,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4857987072,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 27,
+      "elapsed_seconds": 435.31593888600037,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4857987072,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 28,
+      "elapsed_seconds": 448.5864401250001,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4857987072,
+        "descriptors": 42
+      }
+    },
+    {
+      "cycle": 29,
+      "elapsed_seconds": 468.42387072199926,
+      "server": {
+        "rss_bytes": 299327488,
+        "descriptors": 7
+      },
+      "worker": {
+        "rss_bytes": 4857987072,
+        "descriptors": 42
+      }
+    }
+  ],
+  "latencies": [
+    {
+      "cycle": 0,
+      "sampled": false,
+      "seconds": 6.549326378000842,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 0,
+      "sampled": true,
+      "seconds": 6.514823558998614,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 1,
+      "sampled": false,
+      "seconds": 6.579519613998855,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 1,
+      "sampled": true,
+      "seconds": 6.5685493769997265,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 2,
+      "sampled": false,
+      "seconds": 6.5607151280019025,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 2,
+      "sampled": true,
+      "seconds": 6.535377544998482,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 3,
+      "sampled": false,
+      "seconds": 6.51613920499949,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 3,
+      "sampled": true,
+      "seconds": 6.550725282999338,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 4,
+      "sampled": false,
+      "seconds": 6.541153460002533,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 4,
+      "sampled": true,
+      "seconds": 6.529506409999158,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 5,
+      "sampled": false,
+      "seconds": 6.532898606001254,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 5,
+      "sampled": true,
+      "seconds": 6.530651134002255,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 6,
+      "sampled": false,
+      "seconds": 6.512394759000017,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 6,
+      "sampled": true,
+      "seconds": 6.552215299001546,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 7,
+      "sampled": false,
+      "seconds": 6.550050620997354,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 7,
+      "sampled": true,
+      "seconds": 6.605131238000467,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 8,
+      "sampled": false,
+      "seconds": 6.574945810996724,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 8,
+      "sampled": true,
+      "seconds": 6.5743657870007155,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 9,
+      "sampled": false,
+      "seconds": 6.550885611999547,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 9,
+      "sampled": true,
+      "seconds": 6.554073085997516,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 10,
+      "sampled": false,
+      "seconds": 6.569404662001034,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 10,
+      "sampled": true,
+      "seconds": 6.541213759999664,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 11,
+      "sampled": false,
+      "seconds": 6.5318398639974475,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 11,
+      "sampled": true,
+      "seconds": 6.510391292998975,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 12,
+      "sampled": false,
+      "seconds": 6.5582701380008075,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 12,
+      "sampled": true,
+      "seconds": 6.550635371000681,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 13,
+      "sampled": false,
+      "seconds": 6.5664052559986885,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 13,
+      "sampled": true,
+      "seconds": 6.5980943069989735,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 14,
+      "sampled": false,
+      "seconds": 6.602079607000633,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 14,
+      "sampled": true,
+      "seconds": 6.621363802001724,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 15,
+      "sampled": false,
+      "seconds": 6.629019789997983,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 15,
+      "sampled": true,
+      "seconds": 6.637223247002112,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 16,
+      "sampled": false,
+      "seconds": 6.663466773999971,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 16,
+      "sampled": true,
+      "seconds": 6.673726684999565,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 17,
+      "sampled": false,
+      "seconds": 6.650989675999881,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 17,
+      "sampled": true,
+      "seconds": 6.611507732002792,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 18,
+      "sampled": false,
+      "seconds": 6.632387371999357,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 18,
+      "sampled": true,
+      "seconds": 6.624794253002619,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 19,
+      "sampled": false,
+      "seconds": 6.6180705379993015,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 19,
+      "sampled": true,
+      "seconds": 6.589449715000228,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 20,
+      "sampled": false,
+      "seconds": 6.55922722700052,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 20,
+      "sampled": true,
+      "seconds": 6.563094815999648,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 21,
+      "sampled": false,
+      "seconds": 6.620778883003368,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 21,
+      "sampled": true,
+      "seconds": 6.5813510619991575,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 22,
+      "sampled": false,
+      "seconds": 6.581770070999482,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 22,
+      "sampled": true,
+      "seconds": 6.491750413999398,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 23,
+      "sampled": false,
+      "seconds": 6.536739490002219,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 23,
+      "sampled": true,
+      "seconds": 6.505922517000727,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 24,
+      "sampled": false,
+      "seconds": 6.472241785999358,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 24,
+      "sampled": true,
+      "seconds": 6.491534502001741,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 25,
+      "sampled": false,
+      "seconds": 6.513926794999861,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 25,
+      "sampled": true,
+      "seconds": 6.5275452280002355,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 26,
+      "sampled": false,
+      "seconds": 6.487559092001902,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 26,
+      "sampled": true,
+      "seconds": 6.567941784000141,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 27,
+      "sampled": false,
+      "seconds": 6.61735351400057,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 27,
+      "sampled": true,
+      "seconds": 6.649578519998613,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 28,
+      "sampled": false,
+      "seconds": 6.63016890200015,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 28,
+      "sampled": true,
+      "seconds": 6.635681766001653,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 29,
+      "sampled": false,
+      "seconds": 6.595403546001762,
+      "generated_tokens": 86
+    },
+    {
+      "cycle": 29,
+      "sampled": true,
+      "seconds": 6.5956297339980665,
+      "generated_tokens": 86
+    }
+  ],
+  "limits": {
+    "warm_rss_growth_bytes": 33554432,
+    "warm_fd_growth": 2
+  },
+  "scope": "finite serialized HTTP soak, host/worker RSS+FD plateau and end-to-end latency; NOT GPU-memory, batching, cancellation or universal performance acceptance",
+  "baseline": {
+    "cycle": -1,
+    "elapsed_seconds": 34.60200769099902,
+    "server": {
+      "rss_bytes": 297492480,
+      "descriptors": 7
+    },
+    "worker": {
+      "rss_bytes": 4835573760,
+      "descriptors": 42
+    }
+  },
+  "elapsed_seconds": 468.4379091740011,
+  "latency_summary": {
+    "greedy": {
+      "count": 30,
+      "median_seconds": 6.5635601920002955,
+      "p95_seconds": 6.650989675999881,
+      "median_end_to_end_tokens_per_second": 13.102645132258754
+    },
+    "topk1_sampled": {
+      "count": 30,
+      "median_seconds": 6.565518299999894,
+      "p95_seconds": 6.649578519998613,
+      "median_end_to_end_tokens_per_second": 13.09873738376472
+    }
+  }
+}
