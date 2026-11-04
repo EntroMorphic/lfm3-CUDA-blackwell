@@ -1,9 +1,7 @@
-"""Local official processor -> experimental native CUDA -> decoded text.
+"""Local tokenizer-only frontend -> experimental native CUDA -> decoded text.
 
-No Transformers language model is loaded. The official processor may load its
-bundled audio codec even for text-only use; it does not perform text inference.
+No Transformers language model, AutoProcessor, or audio codec is loaded.
 Native chat-tokenizer parity is not claimed.
-Only use trusted local checkpoint code (AutoProcessor requires remote-code trust).
 """
 import argparse
 import json
@@ -13,6 +11,12 @@ from pathlib import Path
 import stat
 import subprocess
 import sys
+import tempfile
+
+try:
+    from lfm3_text_frontend import load_frontend, validate_messages
+except ModuleNotFoundError:
+    from tools.lfm3_text_frontend import load_frontend, validate_messages
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,7 +40,7 @@ def token_ids(value, name, vocabulary, maximum):
     return [integer(token, name, 0, vocabulary - 1) for token in value]
 
 
-def read_json(path):
+def read_json(path, *, object_required=True):
     # Reject response symlinks/FIFOs and oversized files before reading into RAM.
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     with os.fdopen(fd, "rb") as stream:
@@ -82,7 +86,7 @@ def read_json(path):
         result = json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
     except RecursionError as exc:
         raise ValueError("JSON nesting exceeds supported depth") from exc
-    if not isinstance(result, dict):
+    if object_required and not isinstance(result, dict):
         raise ValueError("expected JSON object")
     return result
 
@@ -106,40 +110,60 @@ def policy(config):
     return vocabulary, sorted(set(suppress)), sorted(set(stop))
 
 
-def load_processor(checkpoint):
-    # Import lazily: host-only contract tests need neither Transformers nor torch.
-    from transformers import AutoProcessor
-
-    return AutoProcessor.from_pretrained(
-        str(checkpoint), local_files_only=True, trust_remote_code=True,
-    )
+SAMPLING_DEFAULTS = dict(do_sample=False, temperature=1.0, top_k=0, top_p=1.0,
+                         min_p=0.0, repetition_penalty=1.0, seed=0)
 
 
-def make_request(processor, prompt, system, config, capacity, count):
-    integer(capacity, "capacity", 1, 4096)
-    integer(count, "max_new_tokens", 1, 4096)
-    if not prompt.strip() or len((prompt + system).encode("utf-8")) > MAX_TEXT_BYTES:
-        raise ValueError("prompt must be nonblank; combined prompt/system limit is 65536 UTF-8 bytes")
+def sampling_options(options, vocabulary):
+    result = dict(SAMPLING_DEFAULTS)
+    if options is not None:
+        if set(options) - set(result):
+            raise ValueError("unknown sampling option")
+        result.update(options)
+    if type(result["do_sample"]) is not bool:
+        raise ValueError("do_sample must be boolean")
+    integer(result["top_k"], "top_k", 0, vocabulary)
+    integer(result["seed"], "seed", 0, 2**31 - 1)
+    for key in ("temperature", "top_p", "min_p", "repetition_penalty"):
+        value = result[key]
+        if (type(value) not in (int, float) or not -sys.float_info.max <= value <= sys.float_info.max
+                or not math.isfinite(value) or value < 0 or (key != "min_p" and value == 0)
+                or (key in ("top_p", "min_p") and value > 1)):
+            raise ValueError(f"invalid {key}")
+    return result
+
+
+def make_request(frontend, prompt, system, config, capacity, count, *, messages=None, sampling=None):
+    integer(capacity, "capacity", 1, 32768)
+    integer(count, "max_new_tokens", 1, 32768)
+    if messages is None:
+        if not prompt.strip() or len((prompt + system).encode("utf-8")) > MAX_TEXT_BYTES:
+            raise ValueError("prompt must be nonblank; combined prompt/system limit is 65536 UTF-8 bytes")
+        messages = [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
+    messages = validate_messages(messages)
     vocabulary, suppress, stop = policy(config)
-    messages = [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
-    encoded = processor.apply_chat_template(
-        messages, add_generation_prompt=True, tokenize=True, return_dict=True,
-    )
-    ids = encoded.get("input_ids")
-    if isinstance(ids, list) and len(ids) == 1 and isinstance(ids[0], list):
-        ids = ids[0]
+    sampling = sampling_options(sampling, vocabulary)
+    ids = frontend.encode_messages(messages, capacity, count)
     ids = token_ids(ids, "input_ids", vocabulary, capacity)
-    if not ids or len(ids) + count - 1 > capacity:
+    if not ids or len(ids) + count > capacity:
         raise ValueError("prompt plus generation exceeds native cache capacity; no truncation performed")
     if set(ids) & set(suppress):
         raise ValueError("multimodal placeholder input is unsupported in text-only mode")
-    return dict(input_ids=ids, max_new_tokens=count, capacity=capacity,
-                suppress_tokens=suppress, stop_tokens=stop)
+    request = dict(input_ids=ids, max_new_tokens=count, capacity=capacity,
+                   suppress_tokens=suppress, stop_tokens=stop, **sampling)
+    if capacity > 4096:
+        request["experimental_long_context"] = True
+    return request
 
 
 def validate_response(response, request, vocabulary):
     if response.get("backend") != "native-cuda-experimental":
         raise ValueError("unexpected native backend")
+    if any(key in response for key in ("sampling_policy", "sampled_policy", "sampling")):
+        raise ValueError("unsupported native sampling metadata")
+    for key in ("do_sample", "seed"):
+        if key not in response or type(response[key]) is not type(request[key]) or response[key] != request[key]:
+            raise ValueError(f"native {key} does not match request")
     echoed = token_ids(response.get("input_ids"), "response input_ids", vocabulary, request["capacity"])
     if echoed != request["input_ids"]:
         raise ValueError("native input_ids do not match request")
@@ -159,13 +183,36 @@ def validate_response(response, request, vocabulary):
     return generated[:-1] if generated[-1] in stops else generated
 
 
+def json_bytes(value):
+    return (json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
+
+
 def write_json(path, value):
-    with path.open("x", encoding="utf-8") as stream:
-        json.dump(value, stream, indent=2, ensure_ascii=False, allow_nan=False)
-        stream.write("\n")
+    payload = json_bytes(value)
+    with path.open("xb") as stream:
+        stream.write(payload)
 
 
-def run(args, processor=None):
+def publish_success(output, metadata, text):
+    # Finish serialization before opening any success artifact. Stage both files
+    # before exclusive hard-link publication (never overwrite an existing path).
+    payloads = {"response.json": json_bytes(metadata), "text.txt": (text + "\n").encode("utf-8")}
+    published = []
+    try:
+        with tempfile.TemporaryDirectory(prefix=".success-", dir=output) as staging:
+            for name, payload in payloads.items():
+                (Path(staging) / name).write_bytes(payload)
+            for name in payloads:
+                destination = output / name
+                os.link(Path(staging) / name, destination)
+                published.append(destination)
+    except BaseException:
+        for destination in reversed(published):
+            destination.unlink()
+        raise
+
+
+def run(args, frontend=None):
     checkpoint = args.checkpoint.resolve(strict=True)
     executable = args.executable.resolve(strict=True)
     if not executable.is_file() or not os.access(executable, os.X_OK):
@@ -176,20 +223,31 @@ def run(args, processor=None):
     if args.output.exists() or args.output.is_symlink():
         raise ValueError("output directory already exists; choose a fresh path")
     config = read_json(checkpoint / "config.json")
-    integer(args.capacity, "capacity", 1, 4096)
-    integer(args.max_new_tokens, "max_new_tokens", 1, 4096)
+    integer(args.capacity, "capacity", 1, 32768)
+    integer(args.max_new_tokens, "max_new_tokens", 1, 32768)
+    if args.max_new_tokens >= args.capacity:
+        raise ValueError("capacity must fit a nonempty prompt plus max_new_tokens")
+    sampling = sampling_options({key: getattr(args, key, default)
+                                 for key, default in SAMPLING_DEFAULTS.items()}, policy(config)[0])
+    messages_path = getattr(args, "messages", None)
+    messages = None
     prompt = args.prompt
-    if prompt is None:
+    if messages_path is not None:
+        if prompt is not None or args.system != "Respond with text.":
+            raise ValueError("--messages cannot be combined with --prompt or a custom --system")
+        messages = validate_messages(read_json(messages_path, object_required=False))
+    elif prompt is None:
         raw = sys.stdin.buffer.read(MAX_TEXT_BYTES + 1)
         if len(raw) > MAX_TEXT_BYTES:
             raise ValueError("stdin prompt exceeds 65536 bytes")
         prompt = raw.decode("utf-8")
-    if not prompt.strip() or len((prompt + args.system).encode("utf-8")) > MAX_TEXT_BYTES:
+    if messages is None and (not prompt.strip() or len((prompt + args.system).encode("utf-8")) > MAX_TEXT_BYTES):
         raise ValueError("blank or oversized prompt/system text")
     policy(config)
-    if processor is None:
-        processor = load_processor(checkpoint)
-    request = make_request(processor, prompt, args.system, config, args.capacity, args.max_new_tokens)
+    if frontend is None:
+        frontend = load_frontend(checkpoint)
+    request = make_request(frontend, prompt, args.system, config, args.capacity, args.max_new_tokens,
+                           messages=messages, sampling=sampling)
     args.output.mkdir(mode=0o700, parents=True, exist_ok=False)
     output = args.output.resolve()
     write_json(output / "request.json", request)
@@ -201,16 +259,18 @@ def run(args, processor=None):
                    stderr=subprocess.DEVNULL)
     response = read_json(output / "output.json")
     ids = validate_response(response, request, policy(config)[0])
-    text = processor.tokenizer.decode(ids, skip_special_tokens=True)
+    text = frontend.decode(ids, skip_special_tokens=True)
     if not isinstance(text, str) or len(text.encode("utf-8")) > MAX_JSON_BYTES:
         raise ValueError("invalid or oversized decoded text")
-    write_json(output / "response.json", dict(
-        backend="native-cuda-experimental", preprocessing="official-local-AutoProcessor",
+    metadata = dict(
+        backend="native-cuda-experimental", preprocessing="official-local-tokenizer-only",
         native_tokenizer_parity=False, generated_ids=response["generated_ids"], text=text,
         finish_reason="stop" if len(ids) < len(response["generated_ids"]) else "length",
-    ))
-    with (output / "text.txt").open("x", encoding="utf-8") as stream:
-        stream.write(text + "\n")
+        requested_sampling=sampling, torch_rng_parity=False,
+    )
+    for key in ("do_sample", "seed"):
+        metadata[key] = response[key]
+    publish_success(output, metadata, text)
     return text
 
 
@@ -219,10 +279,19 @@ def main():
     parser.add_argument("--checkpoint", type=Path, required=True, help="trusted local checkpoint directory")
     parser.add_argument("--executable", type=Path, default=ROOT / "build/cmake/liquid-lfm3")
     parser.add_argument("--output", type=Path, required=True, help="new artifact directory (must not exist)")
-    parser.add_argument("--prompt", help="user text; if omitted, read bounded UTF-8 stdin")
+    inputs = parser.add_mutually_exclusive_group()
+    inputs.add_argument("--prompt", help="user text; if omitted, read bounded UTF-8 stdin")
+    inputs.add_argument("--messages", type=Path, help="JSON array of complete text conversation history")
     parser.add_argument("--system", default="Respond with text.")
     parser.add_argument("--max-new-tokens", type=int, default=64)
     parser.add_argument("--capacity", type=int, default=4096)
+    parser.add_argument("--do-sample", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--temperature", type=float, default=1.0)
+    parser.add_argument("--top-k", type=int, default=0)
+    parser.add_argument("--top-p", type=float, default=1.0)
+    parser.add_argument("--min-p", type=float, default=0.0)
+    parser.add_argument("--repetition-penalty", type=float, default=1.0)
+    parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--timeout", type=float, default=300)
     args = parser.parse_args()
     try:

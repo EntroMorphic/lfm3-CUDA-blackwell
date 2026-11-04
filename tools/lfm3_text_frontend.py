@@ -80,6 +80,9 @@ def validate_messages(messages):
                     raise ValueError("content parts must be text-only {type: text, text: string}")
                 total_bytes += _text(part["text"], "content part")
                 parts.append(dict(part))
+            # The checkpoint template concatenates parts without separators.
+            # Individually harmless fragments can form a reserved delimiter.
+            _text("".join(part["text"] for part in parts), "joined content")
             copied["content"] = parts
         else:
             raise ValueError("content must be a string or a list of text parts; multimodal input is unsupported")

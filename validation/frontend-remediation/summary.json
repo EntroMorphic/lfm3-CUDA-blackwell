@@ -1,0 +1,23 @@
+{
+  "status": "host remediations verified; GPU valid-path smoke predates final parser/publication fixes",
+  "host_tests_passed": 449,
+  "frontend_tests_passed": 52,
+  "launcher_tests_passed": 121,
+  "real_tokenizer_control_response_replayed": true,
+  "real_tokenizer_split_role_delimiter_rejected": true,
+  "sampling_metadata_acknowledgment_required": true,
+  "success_artifacts_staged_and_rollback_tested": true,
+  "source_sha256": {
+    "tools/lfm3_chat.py": "fb7d37efe64dcb917c86da4170cd6e6dee8174178d1a9ac69d1f83b6c8d8ca9f",
+    "tools/lfm3_text_frontend.py": "2f4ed0f779fb7ac5264a8305d3decd94cf78f445f493244f06daada21f2cdf1e",
+    "tests/test_lfm3_chat.py": "6142824186fec2b1169ac3fc86351f9e5806a0b79a5fdd29337feb2a9dc1f583",
+    "tests/test_lfm3_text_frontend.py": "2c9c67bd2bc8eb5c7b17d42c5f1ddc1f6ade91f8901708949d372638dd8718ee"
+  },
+  "native_binary_of_prior_valid_path_smokes": "85028f2ab4354c8833885bf967132a223a225be9adecf810452e21cb2e05c16c",
+  "remaining_gates": [
+    "post-remediation native smoke",
+    "persistent sessions",
+    "GPU batching/concurrency",
+    "32K sanitizer/initcheck"
+  ]
+}

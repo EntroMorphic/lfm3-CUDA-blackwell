@@ -36,6 +36,9 @@ or execute checkpoint Python. Imports are lazy for host-only tests. Transformers
   nontext content parts, reserved `<|...|>` placeholders, and the template's
   continuation sentinel. These are deliberate scope constraints, not silent
   approximations of official tool or multimodal behavior.
+  Text-part lists are also validated after concatenation, exactly as rendered by
+  the template: splitting a delimiter or continuation sentinel across parts
+  cannot bypass validation or inject a new role.
 - Plain tool responses are supported for importing textual histories; this is
   **not** a tool-execution frontend. No schemas or call generation are supported.
 - Input text has a separate 4 MiB aggregate UTF-8 safety bound and at most 4096
@@ -77,5 +80,9 @@ The local actual-tokenizer tests independently check exact headers, Unicode
 round-trip, historical reasoning stripping, tool merge rendering, and direct
 tokenizer-template token equality for all six cases.
 
-Existing launcher files are intentionally unchanged. Launcher integration and
-native allocation/serving support remain separate work.
+Review-remediation host verification: **52 frontend tests passed** separately,
+including every two-fragment split of role-injection delimiters, a multimodal
+placeholder and the continuation sentinel (with an intervening empty part).
+Benign Unicode text parts remain preserved. The launcher suite independently
+passed **121 tests**; the combined host suite passed **449 tests**. No new
+SSH/GPU or official-processor validation was performed for these fixes.

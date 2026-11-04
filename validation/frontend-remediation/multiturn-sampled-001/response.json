@@ -1,0 +1,25 @@
+{
+  "backend": "native-cuda-experimental",
+  "preprocessing": "official-local-tokenizer-only",
+  "native_tokenizer_parity": false,
+  "generated_ids": [
+    75,
+    682,
+    1868,
+    124900
+  ],
+  "text": "cobalt",
+  "finish_reason": "stop",
+  "requested_sampling": {
+    "do_sample": true,
+    "temperature": 0.7,
+    "top_k": 42,
+    "top_p": 0.963,
+    "min_p": 0.0,
+    "repetition_penalty": 1.0,
+    "seed": 42
+  },
+  "torch_rng_parity": false,
+  "do_sample": true,
+  "seed": 42
+}
