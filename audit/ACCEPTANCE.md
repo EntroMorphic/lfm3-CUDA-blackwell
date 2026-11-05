@@ -14,6 +14,13 @@ with fixed RSS/FD/device-wide memory and post-close recovery bounds. Final
 standalone scratch memcheck passes zero errors; upper memcheck times out900s.
 Integrated racecheck and cuBLAS initcheck remain open. No full acceptance is claimed.
 
+A subsequent bounded long-prefill candidate (`LONG_PREFILL_WORK.md`) preserves
+all6890 short bitwise checks and73 grouped checks, passes unchanged independent
+32K SDPA tolerances/argmax/reset, and repeats both five-fixture standalone matrices.
+It closes standalone upper memcheck with zero errors in177.11s on probe345f1ded;
+original900s timeout evidence is not erased. Integrated tool and new-binary serving
+regression/resource gates remain separately tracked.
+
 ### Prior standalone and single-serving increments
 
 The prior standalone increment: paired decode passes five fixtures in both normal

@@ -1,0 +1,2 @@
+{"seconds": 0.0013929009983257856, "processes": [{"pid": 12831, "state": "R", "user_ticks": 0, "system_ticks": 0, "rss_bytes": 4980736}], "system_memory": {"MemAvailable_bytes": 101962752000, "SwapFree_bytes": 0}}
+{"seconds": 2.00321375799831, "processes": [{"pid": 12831, "state": "R", "user_ticks": 83, "system_ticks": 59, "rss_bytes": 4867809280}], "system_memory": {"MemAvailable_bytes": 101381963776, "SwapFree_bytes": 0}}

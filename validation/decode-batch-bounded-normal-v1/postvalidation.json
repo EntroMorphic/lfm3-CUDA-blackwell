@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "binary_sha256": "345f1ded5278fe257b80bc2b17bb85318bbb9c848648c9e8ce10dad5adbd514e",
+  "reference_mode": "normal",
+  "comparisons": 209,
+  "sanitizer_sha256": null,
+  "source_sha256": {
+    "native/src/lfm3_main.cu": "08ccb7d7712cb005781143c3eb52b828eaae9b5033a271047d3c371f878aee61",
+    "native/include/lfm/text_attention_tiles.hpp": "a1e35118cc7cb7c02f23650dd6fc4ba2d2a62eb233c1a590815e683554327016",
+    "native/src/lfm3_decode_batch.cuh": "ff7b29fb9d286b197076ce7670b4ee75aef43c110f74a4bc52ef62b6edcf51d8",
+    "native/tests/lfm3_decode_batch_probe.cu": "d3c3ae832a37ba756b635ec11d2680278ea6ddeb6d991dcfb4385680ccaa77da"
+  },
+  "full_serving_accepted": false
+}

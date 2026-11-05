@@ -3,6 +3,7 @@
 #include <lfm/safetensors.hpp>
 #include <lfm/lfm3_ops.cuh>
 #include <lfm/text_serving_limits.hpp>
+#include <lfm/text_attention_tiles.hpp>
 #include <lfm/text_sampling.hpp>
 #include <lfm/handle_setup.hpp>
 #include <cublas_v2.h>
@@ -298,8 +299,9 @@ class Runner {
   void attention_tile(int layer,int rows,int window,int first,int total_rows) {
     // Dynamic sliding cache returns only its last window for one-token decode.
     // Masking a larger product is mathematically equivalent, but not BF16-equivalent.
-    const int key_start=(total_rows==1 && window>0)?std::max(0,cursor+rows-window):0;
-    const int end=cursor+total_rows-key_start;
+    const auto range=lfm::text::attention_key_range(s.context,cursor,total_rows,first,rows,window);
+    const int key_start=range.begin;
+    const int end=range.span();
     std::vector<const bf16*> ap(s.query_heads),bp(s.query_heads);
     std::vector<bf16*> cp(s.query_heads);
     for(int h=0;h<s.query_heads;++h) {

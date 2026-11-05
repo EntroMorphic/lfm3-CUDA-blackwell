@@ -111,3 +111,12 @@ failed status remains preserved in
 `validation/decode-batch-final-memcheck-scratch-v3/`; the76MB raw log is retained
 losslessly as gzip with original/compressed hashes. The subsequent no-dump scratch
 zero-error run—not reinterpreting that failed summary—establishes scratch memcheck.
+
+The later long-prefill runtime change has independent unchanged SDPA/eager/grouped
+numerical evidence (`LONG_PREFILL_WORK.md`). New probe `345f1ded...` then passes
+strict scratch **and upper** memcheck in
+`validation/decode-batch-bounded-memcheck-v1/`, upper177.11s with zero errors.
+This resolves the standalone upper memcheck gate for the changed program, not by
+waiving the original timeout. Full original fixtures and normal reference/cache
+checks remain. Integrated32K tools, worker-dispatch instrumentation and initcheck
+remain separately required.

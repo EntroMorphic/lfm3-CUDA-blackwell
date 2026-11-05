@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "binary_sha256": "345f1ded5278fe257b80bc2b17bb85318bbb9c848648c9e8ce10dad5adbd514e",
+  "sanitizer_sha256": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+  "reference_mode": "normal",
+  "records": [
+    {
+      "fixture": "scratch",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/decode-batch-bounded-memcheck-v1/scratch.sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/decode-batch-bounded-memcheck-v1/scratch",
+        "scratch"
+      ],
+      "owned_process_group": 12894,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 14.944154010998318,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "upper",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/decode-batch-bounded-memcheck-v1/upper.sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/decode-batch-bounded-memcheck-v1/upper",
+        "upper"
+      ],
+      "owned_process_group": 12911,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 177.1143705329996,
+      "group_cleanup_complete": true
+    }
+  ],
+  "not_run": [],
+  "worker_integration": false
+}

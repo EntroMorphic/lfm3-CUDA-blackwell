@@ -1,0 +1,3 @@
+{"seconds": 0.0014374099991982803, "processes": [{"pid": 12868, "state": "R", "user_ticks": 0, "system_ticks": 0, "rss_bytes": 4980736}], "system_memory": {"MemAvailable_bytes": 101053632512, "SwapFree_bytes": 0}}
+{"seconds": 2.0031427970025106, "processes": [{"pid": 12868, "state": "R", "user_ticks": 90, "system_ticks": 55, "rss_bytes": 4911099904}], "system_memory": {"MemAvailable_bytes": 100489113600, "SwapFree_bytes": 0}}
+{"seconds": 4.004794026001036, "processes": [], "system_memory": {"MemAvailable_bytes": 101020094464, "SwapFree_bytes": 0}}
