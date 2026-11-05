@@ -1,0 +1,37 @@
+{
+  "status": "timeout",
+  "hashes": {
+    "binary": "ad757f347a4651292541b72b8ea3af2c41c5673c332e525eb05f8133330d0772",
+    "sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "request": "87579252b405cb69ce9b71b3f0a284b643b35799ce42ff95a2f4ad16b3fe3335",
+    "expected": "0cdb9a2a5e0814fce75b0f58c8d577c6135276af37ecff10695206927dc41bf7"
+  },
+  "command": [
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+    "--tool",
+    "racecheck",
+    "--error-exitcode",
+    "86",
+    "--dump-kernel-launches",
+    "--print-session-details",
+    "--print-limit",
+    "0",
+    "--racecheck-num-workers",
+    "0",
+    "--log-file",
+    "/workspace/liquid-CUDA/build/racecheck32k-diagnostic-v4/racecheck.log",
+    "/workspace/liquid-CUDA/build/cmake/liquid-lfm3",
+    "--experimental",
+    "/workspace/models/LFM3-Omni-2B",
+    "/workspace/liquid-CUDA/build/racecheck32k-diagnostic-v4/request.json",
+    "/workspace/liquid-CUDA/build/racecheck32k-diagnostic-v4/native.json"
+  ],
+  "sanitizer_version": "NVIDIA (R) Compute Sanitizer\nCopyright (c) 2020-2026 NVIDIA Corporation\nVersion 2026.4.0.0 (build 39022338) (public-release)\n",
+  "scope": "full32768-token prefill; all kernel launches instrumented; no decode, initcheck or batching acceptance inferred",
+  "owned_process_group": 10298,
+  "returncode": null,
+  "timed_out": true,
+  "seconds": 60.022654120999505,
+  "hashes_stable": true,
+  "group_cleanup_complete": true
+}

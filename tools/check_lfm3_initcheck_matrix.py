@@ -5,10 +5,14 @@ import json
 import os
 from pathlib import Path
 import re
-import signal
 import subprocess
 import sys
 import time
+
+try:
+    from lfm3_owned_process import OwnedJob, owned_main
+except ModuleNotFoundError:
+    from tools.lfm3_owned_process import OwnedJob, owned_main
 
 
 def classify(mode, returncode, sanitizer_log, application_log, timed_out=False):
@@ -27,6 +31,7 @@ def classify(mode, returncode, sanitizer_log, application_log, timed_out=False):
     return "unexpected-failure"
 
 
+@owned_main
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sanitizer", type=Path, action="append", required=True)
@@ -72,17 +77,12 @@ def main():
                 start = time.monotonic()
                 timed_out = False
                 with app.open("w") as stream:
-                    process = subprocess.Popen(command, env=env, stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
+                    owner = OwnedJob()
                     try:
-                        code = process.wait(timeout=args.timeout)
-                    except subprocess.TimeoutExpired:
-                        timed_out = True
-                        try:
-                            os.killpg(process.pid, signal.SIGKILL)
-                        except ProcessLookupError:
-                            pass
-                        process.wait(timeout=10)
-                        code = None
+                        owner.start(command, env=env, stdout=stream, stderr=subprocess.STDOUT)
+                        code, timed_out = owner.wait(args.timeout)
+                    finally:
+                        owner.close()
                 text = log.read_text(errors="replace") if log.exists() else ""
                 state = classify(mode, code, text, app.read_text(errors="replace"), timed_out)
                 report["records"].append(dict(tool=index, rows=rows, width=width, mode=mode, command=command,

@@ -5,6 +5,16 @@ external validation limitation is **not** a clean full-sanitizer certificate.
 
 ## Current text-serving status (later increments)
 
+Latest standalone increment: paired decode passes five fixtures in both normal
+and compact reference modes,209 bitwise-logit/full-cache comparisons per mode.
+See `BATCHING.md` and `OWNED_GPU_JOBS.md`. This is **not integrated service
+batching**. The complete host suite at this increment passes722 tests, with
+follow-up diagnostic regressions bringing the final suite to724 passing tests.
+Clean serialized32K SDPA
+evidence is `validation/context32k-fastpath-v4/`; the overlapped v3 is explicitly
+non-accepting. Initcheck, upper-bound paired memcheck and integrated racecheck
+remain unresolved; the latest300-second timeout is not a pass.
+
 The historical batch-one milestones below are preserved. The codec-free frontend,
 seeded sampling, fixed32K numerical checks, resident cache isolation and local
 authenticated HTTP service now have separate evidence. The current HTTP increment

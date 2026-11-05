@@ -15,6 +15,14 @@ independent stochastic replay. True paired decode is still a standalone prototyp
 not worker/service batching; long soak/GPU-resource/performance and integrated
 sanitizer gates remain open.
 
+Paired-decode progress: the standalone normal/compact five-fixture gates now pass
+bitwise logits, complete physical caches, lane retirement/reversal and32K capacity
+boundaries. See `BATCHING.md`. Hardened fixture controllers cover termination,
+startup/setup failures and group cleanup; failed/overlapped evidence is preserved
+in `OWNED_GPU_JOBS.md`. Next implementation work remains explicit grouped worker
+dispatch and per-lane cancellation/sampler/lease ownership; the current RPC client
+and HTTP owner are serialized and must not be labeled batched serving.
+
 Requested scope: text preprocessing/decoding, native generation with sampling,
 multi-turn sessions, batching/concurrency, and the model-card context maximum.
 Existing bounded experimental acceptance is preserved, not generalized silently.

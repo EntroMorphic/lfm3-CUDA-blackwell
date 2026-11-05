@@ -1,0 +1,449 @@
+========= COMPUTE-SANITIZER
+========= Process ID:             10306
+========= Created:                2026-Nov-05 01:02:02
+========= System OS:              Linux (L4T 64bit)
+========= OS build:               #1 SMP PREEMPT Thu Sep 25 15:19:42 PDT 2025
+========= System CPU:             Neoverse-V3AE
+========= CPU architecture:       ARM64
+========= Computer Name:          bb3189c1e439
+========= Target application:     /workspace/liquid-CUDA/build/cmake/liquid-lfm3 --experimental /workspace/models/LFM3-Omni-2B /workspace/liquid-CUDA/build/racecheck32k-diagnostic-v4/request.json /workspace/liquid-CUDA/build/racecheck32k-diagnostic-v4/native.json
+========= CUDA version:           13.0
+========= Display Driver version: 580.00
+========= 
+========= Launch #1
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6725embedEPK13__nv_bfloat16PKiPS0_ii
+=========   Grid:   (262144, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x17373] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #2
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (32768, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x170e7] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #3
+=========   Kernel: nvjet_sm110_tst_128x160_64x8_2x1_2cta_v_bz_TNT
+=========   Grid:   (9840, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x157ef] in liquid-lfm3
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x15f53] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #4
+=========   Kernel: _ZN3lfm4lfm320convolution7_prefillEPK13__nv_bfloat16S3_PS1_S4_iii
+=========   Grid:   (262144, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1750f] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #5
+=========   Kernel: nvjet_sm110_tst_128x160_64x8_2x1_2cta_v_bz_TNT
+=========   Grid:   (3280, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x157ef] in liquid-lfm3
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x16083] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #6
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (32768, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x161eb] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #7
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (32768, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x17113] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #8
+=========   Kernel: nvjet_sm110_tst_128x256_64x6_2x1_2cta_v_bz_TNT
+=========   Grid:   (7680, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x16423] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #9
+=========   Kernel: nvjet_sm110_tst_128x256_64x6_2x1_2cta_v_bz_TNT
+=========   Grid:   (7680, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x164db] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #10
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6726swigluEPK13__nv_bfloat16S2_PS0_m
+=========   Grid:   (983040, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x165df] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #11
+=========   Kernel: nvjet_sm110_tst_128x160_64x8_2x1_2cta_v_bz_TNT
+=========   Grid:   (3280, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x166bf] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #12
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (32768, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1682b] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #13
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (32768, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x170e7] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #14
+=========   Kernel: nvjet_sm110_tst_128x160_64x8_2x1_2cta_v_bz_TNT
+=========   Grid:   (9840, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x157ef] in liquid-lfm3
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x15f53] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #15
+=========   Kernel: _ZN3lfm4lfm320convolution7_prefillEPK13__nv_bfloat16S3_PS1_S4_iii
+=========   Grid:   (262144, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1750f] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #16
+=========   Kernel: nvjet_sm110_tst_128x160_64x8_2x1_2cta_v_bz_TNT
+=========   Grid:   (3280, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x157ef] in liquid-lfm3
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x16083] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #17
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (32768, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x161eb] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #18
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (32768, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x17113] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #19
+=========   Kernel: nvjet_sm110_tst_128x256_64x6_2x1_2cta_v_bz_TNT
+=========   Grid:   (7680, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x16423] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #20
+=========   Kernel: nvjet_sm110_tst_128x256_64x6_2x1_2cta_v_bz_TNT
+=========   Grid:   (7680, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x164db] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #21
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6726swigluEPK13__nv_bfloat16S2_PS0_m
+=========   Grid:   (983040, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x165df] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #22
+=========   Kernel: nvjet_sm110_tst_128x160_64x8_2x1_2cta_v_bz_TNT
+=========   Grid:   (3280, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x166bf] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #23
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (32768, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1682b] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #24
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (32768, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x170e7] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #25
+=========   Kernel: nvjet_sm110_tst_128x160_64x8_2x1_2cta_v_bz_TNT
+=========   Grid:   (3280, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x157ef] in liquid-lfm3
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x16ae7] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #26
+=========   Kernel: nvjet_sm110_tst_128x160_64x8_2x1_2cta_v_bz_TNT
+=========   Grid:   (820, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x157ef] in liquid-lfm3
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x16b3b] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #27
+=========   Kernel: nvjet_sm110_tst_128x160_64x8_2x1_2cta_v_bz_TNT
+=========   Grid:   (820, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x157ef] in liquid-lfm3
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x16b8b] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #28
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (524288, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x172b7] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 
+========= Launch #29
+=========   Kernel: _ZN45_GLOBAL__N__ebf070c1_12_lfm3_main_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (131072, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x172e3] in liquid-lfm3
+=========         Host Frame: main [0x59cf] in liquid-lfm3
+========= 

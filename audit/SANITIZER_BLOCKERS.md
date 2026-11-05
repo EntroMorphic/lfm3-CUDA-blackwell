@@ -65,3 +65,30 @@ No launch filtering or force-blocking mode is permitted in the full-run gate.
 If partitioning is later required, its launch ledger must cover the union of
 **every** original launch and be reported as partitioned coverage, not a
 monolithic pass. A single slow launch still requires direct investigation.
+
+The all-launch2026.4 diagnostic in `validation/racecheck32k-diagnostic-v3/`
+timed out after300.02 seconds with stable binary/tool/request/reference hashes.
+No matching live GPU descendants remained after cleanup. It printed100 launches,
+ending at `probabilities_large`, but this is not reliable bottleneck localization:
+the default print limit was100. Its150 resource samples contain only the launcher,
+so their7.6MB peak cannot be represented as aggregate sanitizer/application RSS.
+Process-tree traversal did not observe the reparented children. No CPU/GPU-memory
+cause is established. The failed evidence is retained unchanged.
+
+The diagnostic now explicitly uses `--print-limit 0` (reporting only, no reduction
+in checking) and the same process-group resource sampler as the batch runner,
+including reparented live group members and host MemAvailable/SwapFree. A host
+regression verifies observation after the direct parent exits. A short bounded
+follow-up is diagnostic only; none of these changes closes racecheck acceptance.
+
+That corrected follow-up is retained in
+`validation/racecheck32k-diagnostic-v4/`:60.02-second timeout,29 printed launches,
+three observed group members, peak aggregate RSS7.395GiB and minimum host
+MemAvailable91.551GiB. The final printed launch is a normalization kernel; the
+CUDA target accumulated9652 user and247 system clock ticks by the last58-second
+sample. This indicates substantial host CPU work but does not isolate a single
+slow launch, GPU-memory cause or sanitizer defect. Hashes stayed stable and group
+cleanup completed; independent post-run inspection found no matching live GPU
+descendants. Neither the short diagnostic nor the prior300/1200-second timeout
+is an acceptance pass. Further tuning should measure analysis-worker counts or
+complete-launch partitions with a full coverage ledger, not repeat blind waits.
