@@ -1,0 +1,17 @@
+{
+  "full_acceptance": false,
+  "paired": [
+    {
+      "mode": "normal",
+      "comparisons": 209,
+      "original_assertions_replayed": true
+    },
+    {
+      "mode": "compact",
+      "comparisons": 209,
+      "original_assertions_replayed": true
+    }
+  ],
+  "eager_checks": 6890,
+  "runner_hashes_verified": true
+}

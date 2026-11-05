@@ -1,0 +1,9 @@
+{
+  "max_relative_rms": 0.02,
+  "max_logit_error": 0.5,
+  "require_exact": true,
+  "all_traces_bitwise_equal": true,
+  "teacher_argmax_exact": true,
+  "checks": 530,
+  "failures": []
+}

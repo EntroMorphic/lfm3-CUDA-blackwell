@@ -5,6 +5,8 @@
 #include <cuda_bf16.h>
 #include <cuda_runtime.h>
 #include <cstdio>
+#include <cstdint>
+#include <algorithm>
 #include <map>
 #include <stdexcept>
 #include <tuple>
@@ -47,9 +49,11 @@ class Linear {
   void run(cublasHandle_t original,const __nv_bfloat16* w,const __nv_bfloat16* x,__nv_bfloat16* out,int n,int k,int m){
     const auto p=plan(m,n,k);
     if(!p.native){float alpha=1,beta=0;blas(cublasGemmEx(original,CUBLAS_OP_T,CUBLAS_OP_N,m,n,k,&alpha,w,CUDA_R_16BF,k,x,CUDA_R_16BF,k,&beta,out,CUDA_R_16BF,m,CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));return;}
-    int pm=(m+15)/16*16,pn=(n+15)/16*16;size_t required=size_t(pm)*pn*p.parts;
+    int pm=(m+15)/16*16,pn=n<=8?8:(n+15)/16*16;size_t required=size_t(pm)*pn*p.parts;
     if(required>capacity){if(scratch){cuda(cudaFree(scratch));scratch=nullptr;capacity=0;}cuda(cudaMalloc(&scratch,required*sizeof(float)));capacity=required;}
-    wmma_partials<<<dim3(pm/16,pn/16,p.parts),32>>>(w,x,scratch,m,n,k,pn,pm,p.parts);cuda(cudaGetLastError());
+    if(n<=8){int warps=std::min(4,pm/16);mma_thin_partials<<<dim3((pm/16+warps-1)/warps,1,p.parts),32*warps>>>(w,x,scratch,m,n,k,pn,pm,p.parts);}
+    else wmma_partials<<<dim3(pm/16,pn/16,p.parts),32>>>(w,x,scratch,m,n,k,pn,pm,p.parts);
+    cuda(cudaGetLastError());
     size_t count=size_t(m)*n;wmma_finish<<<(count+255)/256,256>>>(scratch,out,count,m,n,pm,pn,p.parts);cuda(cudaGetLastError());
   }
 };

@@ -171,8 +171,8 @@ IDs, missing output and timeout.
   text matrix tensors; see `wmma-operand-alignment-v1.json`. The indexed loader
   independently places tensors on256-byte boundaries. New tail fixtures cover
   m1/17/63/65, n1/2/7/8/9/17, K16/32/48/64, partition counts1/2/3/4, matrix tails,
-  whole-warp retirement, partially populated last blocks and both paths. No v4
-  GPU pass is credited here until the separate runs finish.
+  whole-warp retirement, partially populated last blocks and both paths. Completed
+  v4 results and their remaining limitations are recorded below.
 
 Evidence: `wmma-runtime-forward-v3`, `wmma-runtime-forward-v4`,
 `wmma-runtime-sanitizers-v2`, `wmma-runtime-sanitizers-v3`,
@@ -182,7 +182,48 @@ eager evidence before either binary runs. Racecheck parsing requires its own
 canonical hazard footer and treats warnings as non-clean; missing or contradictory
 footers cannot become zero-hazard results.
 
-## Still required
+## v4 completed matrix; production unchanged
+
+The aligned-load candidate single is
+`81df4deae203b3cd646bfa1827317389e900a981e8d9db72dd26725a413799d0`;
+worker is `1bfe0929b505fbca029b0581b4b173dc499119a70c6049e82434796456342902`.
+`validation/wmma-runtime-source-v4/` freezes the complete generated mirror,
+binary identities, original kernel/helper and execution runners. The generator
+ran locally; its local source is preserved with that mirror. The completed parent
+`wmma-v4-gates.json` records stable start/end binary and runner hashes.
+
+Verified on v4, without transferring earlier binaries' credit:
+
+- Six synthetic tail fixtures under all four tools:24 exact observations.
+- All6890 unchanged eager checks, nine exact context cases through4096.
+- Normal and compact paired matrices:209 comparisons each, independently replayed
+  with the original assertions (`wmma-v4-local-replay.json`).
+- Grouped worker:73 bitwise full-vocabulary steps and independent sampling replay.
+- All three32K SDPA cases with unchanged limits, argmax and reset assertions.
+  All four complete saved native logit files also match production bitwise;
+  see `wmma-runtime-32k-v4/original-native-replay.json`.
+- Four-token integrated initcheck5.893s, unexcluded synccheck2.325s,
+  memcheck6.745s and racecheck28.229s: exact application output and zero errors;
+  racecheck also has zero hazards/warnings. These are scoped checks only.
+- Host suite:1287 passed (`host-wmma-candidate-v4.log`).
+
+Balanced warmed AB/BA20 samples per binary remain a performance failure for
+promotion: original median prefill0.02844955s/decode0.378834s; v4
+prefill0.111122s/decode1.305875s. Median paired decode slowdown is
+**3.445809175593137**. All measured responses retain the expected IDs.
+Raw/decoded actual responses are in project-root
+`../tmp/wmma-runtime-candidate-v4/`; original responses remain intact.
+
+Full32768-prefill all-launch racecheck is pending in
+`build/wmma-runtime-upper-racecheck-v4`, with900s deadline, one analysis worker,
+32GiB owned-RSS budget and16GiB minimum host availability. Only a completed clean
+run allows the parent to launch the upper initcheck/synccheck/memcheck stage.
+`build/wmma-v4-upper-gates.json` records the parent commands. No timeout, resource
+guard stop, missing application result or missing canonical footer is acceptance.
+The diagnostic container remains owned and running for that job; cleanup and
+production/library hash revalidation must be recorded after it finishes.
+
+## Remaining release gates
 
 No production promotion, upper-context sanitizer certificate or full racecheck
 completion is implied. Legacy serving/cancellation, balanced performance,

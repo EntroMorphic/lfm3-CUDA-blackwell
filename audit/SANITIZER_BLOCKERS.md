@@ -32,6 +32,14 @@ not vendor confirmation of this instruction/configuration.
 
 ## Native remediation candidate
 
+Latest v4 passes all four scoped integrated tools (including unexcluded
+synccheck/racecheck),6890 unchanged eager checks and numerical32K coverage.
+This does not resolve production's historical checker failures or establish
+full32768 sanitizer coverage. The all-launch guarded upper job remains pending;
+the candidate also measures3.445809175593137x slower decode in balanced warmed
+testing and is not promoted. Frozen v4 sources/results and limitations are in
+`WMMA_REMEDIATION.md`.
+
 An isolated WMMA linear backend now passes6890 original exact eager checks, nine
 exact context fixtures through4096, and the original four-token request under
 initcheck, unexcluded synccheck and memcheck. It reproduces the measured split-K

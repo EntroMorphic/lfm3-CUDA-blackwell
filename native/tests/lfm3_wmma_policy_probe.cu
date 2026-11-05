@@ -3,6 +3,7 @@
 #include <cuda_runtime.h>
 #include <mma.h>
 #include <cstdint>
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -18,20 +19,57 @@ __global__ void wmma_partials(const bf16* w,const bf16* x,float* partial,int m,i
   __shared__ __align__(32) bf16 left[256],right[256];
   int lane=int(threadIdx.x),row=int(blockIdx.x)*16,col=int(blockIdx.y)*16;
   int start=int(blockIdx.z)*(k/parts),end=start+k/parts;
+  const bool full_left=row+16<=m,full_right=col+16<=n;
   wm::fragment<wm::matrix_a,16,16,16,bf16,wm::row_major> a;
   wm::fragment<wm::matrix_b,16,16,16,bf16,wm::col_major> b;
   wm::fragment<wm::accumulator,16,16,16,float> sum;
   wm::fill_fragment(sum,0.0f);
   for(int base=start;base<end;base+=16){
-    for(int i=lane;i<256;i+=32){
-      int wr=row+i/16,wk=base+i%16,xc=col+i/16,xk=base+i%16;
-      left[i]=wr<m?w[size_t(wr)*k+wk]:__float2bfloat16_rn(0.0f);
-      right[i]=xc<n?x[size_t(xc)*k+xk]:__float2bfloat16_rn(0.0f);
+    // Load complete aligned tiles directly into fragments. Shared memory is
+    // needed only for input-tail padding, not as a compulsory staging copy.
+    if(!full_left||!full_right){
+      for(int i=lane;i<256;i+=32){
+        int wr=row+i/16,wk=base+i%16,xc=col+i/16,xk=base+i%16;
+        if(!full_left)left[i]=wr<m?w[size_t(wr)*k+wk]:__float2bfloat16_rn(0.0f);
+        if(!full_right)right[i]=xc<n?x[size_t(xc)*k+xk]:__float2bfloat16_rn(0.0f);
+      }
+      __syncwarp();
     }
-    __syncwarp();wm::load_matrix_sync(a,left,16);wm::load_matrix_sync(b,right,16);
+    if(full_left)wm::load_matrix_sync(a,w+size_t(row)*k+base,k);
+    else wm::load_matrix_sync(a,left,16);
+    if(full_right)wm::load_matrix_sync(b,x+size_t(col)*k+base,k);
+    else wm::load_matrix_sync(b,right,16);
     wm::mma_sync(sum,a,b,sum);__syncwarp();
   }
   wm::store_matrix_sync(partial+size_t(blockIdx.z)*padded_m*padded_n+size_t(row)*padded_n+col,sum,padded_n,wm::mem_row_major);
+}
+__device__ __forceinline__ uint32_t bf16_pair(const bf16* p){
+  // cudaMalloc alignment, K/partition multiples of16, and even BF16 pair
+  // offsets guarantee four-byte alignment. Preserve the raw operand bits.
+  uint32_t bits;asm volatile("ld.global.u32 %0, [%1];":"=r"(bits):"l"(p));return bits;
+}
+// PTX m16n8k16 row/column fragment layout. Each warp owns sixteen output rows;
+// four independent warps share a block without shared memory or CTA barriers.
+__global__ void mma_thin_partials(const bf16* w,const bf16* x,float* partial,int m,int n,int k,int padded_n,int padded_m,int parts){
+  int lane=int(threadIdx.x)&31,warp=int(threadIdx.x)/32;
+  int row=(int(blockIdx.x)*(int(blockDim.x)/32)+warp)*16;
+  if(row>=m)return; // Entire warp retires; no block-wide synchronization follows.
+  int group=lane/4,t=lane%4,start=int(blockIdx.z)*(k/parts),end=start+k/parts;
+  float c0=0,c1=0,c2=0,c3=0;
+  for(int base=start;base<end;base+=16){
+    int offset=base+2*t;
+    uint32_t a0=row+group<m?bf16_pair(w+size_t(row+group)*k+offset):0;
+    uint32_t a1=row+group+8<m?bf16_pair(w+size_t(row+group+8)*k+offset):0;
+    uint32_t a2=row+group<m?bf16_pair(w+size_t(row+group)*k+offset+8):0;
+    uint32_t a3=row+group+8<m?bf16_pair(w+size_t(row+group+8)*k+offset+8):0;
+    uint32_t b0=group<n?bf16_pair(x+size_t(group)*k+offset):0;
+    uint32_t b1=group<n?bf16_pair(x+size_t(group)*k+offset+8):0;
+    asm volatile("mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 {%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%0,%1,%2,%3};"
+                 :"+f"(c0),"+f"(c1),"+f"(c2),"+f"(c3):"r"(a0),"r"(a1),"r"(a2),"r"(a3),"r"(b0),"r"(b1));
+  }
+  size_t head=size_t(blockIdx.z)*padded_m*padded_n;
+  if(row+group<m){size_t offset=head+size_t(row+group)*padded_n+2*t;partial[offset]=c0;partial[offset+1]=c1;}
+  if(row+group+8<m){size_t offset=head+size_t(row+group+8)*padded_n+2*t;partial[offset]=c2;partial[offset+1]=c3;}
 }
 __global__ void wmma_finish(const float* p,bf16* out,size_t count,int m,int n,int padded_m,int padded_n,int parts){
   size_t i=size_t(blockIdx.x)*blockDim.x+threadIdx.x;if(i>=count)return;
@@ -46,12 +84,14 @@ int main(int argc,char** argv)try{
   int n=number(argv[1]),k=number(argv[2]),m=number(argv[3]),parts=number(argv[4]);
   if(n<1||n>4096||m<1||m>128000||k<16||k>32768||parts<1||parts>16||k%parts||(k/parts)%16||uint64_t(m)*k>300000000)throw std::runtime_error("bounded aligned shape required");
   auto w=read(argv[5],size_t(m)*k*2),x=read(argv[6],size_t(n)*k*2),expected=read(argv[7],size_t(m)*n*2);
-  int pm=(m+15)/16*16,pn=(n+15)/16*16;bf16 *a,*b,*c,*sink;float* partial;
+  int pm=(m+15)/16*16,pn=n<=8?8:(n+15)/16*16;bf16 *a,*b,*c,*sink;float* partial;
   check(cudaMalloc(&a,w.size()));check(cudaMalloc(&b,x.size()));check(cudaMalloc(&c,expected.size()));check(cudaMalloc(&sink,expected.size()));
   check(cudaMalloc(&partial,size_t(pm)*pn*parts*sizeof(float)));
   check(cudaMemcpy(a,w.data(),w.size(),cudaMemcpyHostToDevice));check(cudaMemcpy(b,x.data(),x.size(),cudaMemcpyHostToDevice));
   std::printf("{\"configuration\":true,\"rows\":%d,\"input\":%d,\"output\":%d,\"splits\":%d,\"output_initialized\":false,\"full_acceptance\":false}\n",n,k,m,parts);std::fflush(stdout);
-  wmma_partials<<<dim3(pm/16,pn/16,parts),32>>>(a,b,partial,m,n,k,pn,pm,parts);check(cudaGetLastError());
+  if(n<=8){int warps=std::min(4,pm/16);mma_thin_partials<<<dim3((pm/16+warps-1)/warps,1,parts),32*warps>>>(a,b,partial,m,n,k,pn,pm,parts);}
+  else wmma_partials<<<dim3(pm/16,pn/16,parts),32>>>(a,b,partial,m,n,k,pn,pm,parts);
+  check(cudaGetLastError());
   size_t count=size_t(m)*n;wmma_finish<<<(count+255)/256,256>>>(partial,c,count,m,n,pm,pn,parts);check(cudaGetLastError());
   wmma_consume<<<(count+255)/256,256>>>(c,sink,count);check(cudaGetLastError());
   std::vector<char> actual(expected.size()),consumed(expected.size());check(cudaMemcpy(actual.data(),c,actual.size(),cudaMemcpyDeviceToHost));check(cudaMemcpy(consumed.data(),sink,consumed.size(),cudaMemcpyDeviceToHost));

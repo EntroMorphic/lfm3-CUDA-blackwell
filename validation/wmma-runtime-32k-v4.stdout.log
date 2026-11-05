@@ -1,0 +1,69 @@
+Loading weights:   0%|          | 0/665 [00:00<?, ?it/s]Loading weights:  31%|███       | 203/665 [00:00<00:00, 1876.52it/s]Loading weights:  59%|█████▉    | 391/665 [00:00<00:00, 633.72it/s] Loading weights:  74%|███████▍  | 494/665 [00:00<00:00, 566.40it/s]Loading weights:  86%|████████▌ | 571/665 [00:00<00:00, 593.04it/s]Loading weights: 100%|██████████| 665/665 [00:00<00:00, 703.76it/s]
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+{
+  "status": "passed",
+  "binary_sha256": "81df4deae203b3cd646bfa1827317389e900a981e8d9db72dd26725a413799d0",
+  "reference_backend": "Transformers SDPA",
+  "native_backend": "native tiled eager-bf16",
+  "torch": "2.10.0+cu130",
+  "transformers": "5.22.1",
+  "max_logit_error": 0.5,
+  "max_relative_rms": 0.02,
+  "cases": [
+    {
+      "case": "prefill8192",
+      "logits": [
+        {
+          "step": 0,
+          "max_abs": 0.125,
+          "relative_rms": 0.0023639085702598095,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        }
+      ],
+      "reset_exact": true,
+      "passed": true
+    },
+    {
+      "case": "decode_into32768",
+      "logits": [
+        {
+          "step": 0,
+          "max_abs": 0.125,
+          "relative_rms": 0.0021698621567338705,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        },
+        {
+          "step": 1,
+          "max_abs": 0.15625,
+          "relative_rms": 0.0031099559273570776,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        }
+      ],
+      "reset_exact": true,
+      "passed": true
+    },
+    {
+      "case": "prefill32768",
+      "logits": [
+        {
+          "step": 0,
+          "max_abs": 0.125,
+          "relative_rms": 0.00271318550221622,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        }
+      ],
+      "reset_exact": true,
+      "passed": true
+    }
+  ],
+  "limitations": "Not eager bitwise parity; finite fixed fixtures; no performance claim",
+  "location": "prefill32768:native"
+}

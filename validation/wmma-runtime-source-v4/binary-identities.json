@@ -1,0 +1,5 @@
+{
+  "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/liquid-lfm3": "81df4deae203b3cd646bfa1827317389e900a981e8d9db72dd26725a413799d0",
+  "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/liquid-lfm3-worker": "1bfe0929b505fbca029b0581b4b173dc499119a70c6049e82434796456342902",
+  "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/lfm3-decode-batch-probe": "a9d76ece26434cc4087125d9938bf6428d15ee7505af5ae766bd08aa8eaf524c"
+}

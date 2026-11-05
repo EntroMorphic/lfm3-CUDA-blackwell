@@ -1,0 +1,95 @@
+{
+  "status": "passed",
+  "binary_sha256": "a9d76ece26434cc4087125d9938bf6428d15ee7505af5ae766bd08aa8eaf524c",
+  "sanitizer_sha256": null,
+  "reference_mode": "compact",
+  "records": [
+    {
+      "fixture": "scratch",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/wmma-runtime-paired-compact-v4/scratch",
+        "scratch",
+        "compact"
+      ],
+      "owned_process_group": 3976,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 12.95803960300691,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "sliding",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/wmma-runtime-paired-compact-v4/sliding",
+        "sliding",
+        "compact"
+      ],
+      "owned_process_group": 3981,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 11.327257200013264,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "softmax",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/wmma-runtime-paired-compact-v4/softmax",
+        "softmax",
+        "compact"
+      ],
+      "owned_process_group": 3986,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 31.25373548299831,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "tiled",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/wmma-runtime-paired-compact-v4/tiled",
+        "tiled",
+        "compact"
+      ],
+      "owned_process_group": 3991,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 52.45147673400061,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "upper",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/wmma-runtime-paired-compact-v4/upper",
+        "upper",
+        "compact"
+      ],
+      "owned_process_group": 3996,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 78.01358856799197,
+      "group_cleanup_complete": true
+    }
+  ],
+  "not_run": [],
+  "worker_integration": false
+}

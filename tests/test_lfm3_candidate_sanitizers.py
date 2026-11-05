@@ -9,6 +9,19 @@ sys.path.insert(0,str(ROOT/'tools'))
 import check_lfm3_candidate_sanitizers as gate
 
 
+@pytest.mark.parametrize('text,total',[
+    ('========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)\n',0),
+    ('========= RACECHECK SUMMARY: 1 hazards displayed (0 errors, 1 warnings)\n',1),
+    ('========= RACECHECK SUMMARY: 0 hazards displayed (1 errors, 0 warnings)\n',1),
+    ('========= ERROR SUMMARY: 0 errors\n',None),
+    ('',None),
+    ('========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)\n'*2,None),
+    ('========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)\n========= ERROR SUMMARY: 1 errors\n',None),
+])
+def test_racecheck_requires_its_own_footer_and_zero_warnings(text,total):
+    assert gate.checker_total(text,'racecheck')==total
+
+
 @pytest.mark.parametrize('fault',['','no-footer','duplicate-footer','internal','wrong-ids','missing-output','timeout'])
 def test_integrated_screen_requires_checker_and_original_application(tmp_path,monkeypatch,fault):
     request=dict(input_ids=[1],max_new_tokens=2,check_reset=True)

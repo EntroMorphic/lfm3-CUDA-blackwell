@@ -14,6 +14,15 @@ from check_lfm3_sanitizer import native_result
 from lfm3_owned_process import owned_main
 
 
+def checker_total(log,tool):
+    errors=re.findall(r'(?m)^=+\s+ERROR SUMMARY: (\d+) errors\s*$',log)
+    if tool!='racecheck':return int(errors[0]) if len(errors)==1 else None
+    races=re.findall(r'(?m)^=+\s+RACECHECK SUMMARY: (\d+) hazards displayed \((\d+) errors, (\d+) warnings\)\s*$',log)
+    if len(races)!=1 or len(errors)>1 or (errors and int(errors[0])):return None
+    hazards,errors_count,warnings=map(int,races[0])
+    return max(hazards,errors_count+warnings)
+
+
 @owned_main
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -44,8 +53,7 @@ def main():
             code,timed=run_owned(cmd,env,a.output/(tool+'.stdout.log'),a.timeout)
             r.update(returncode=code,timed_out=timed,seconds=time.monotonic()-start,group_cleanup_complete=True)
             log=(a.output/(tool+'.log')).read_text() if (a.output/(tool+'.log')).exists() else ''
-            totals=re.findall(r'(?m)^=+\s+ERROR SUMMARY: (\d+) errors\s*$',log)
-            r['errors']=int(totals[0]) if len(totals)==1 else None;r['internal_error']='Internal Sanitizer Error' in log
+            r['errors']=checker_total(log,tool);r['internal_error']='Internal Sanitizer Error' in log
             try:r['application']=native_result(a.output/(tool+'.json'),request,expected);r['application_ok']=True
             except (OSError,ValueError,KeyError,TypeError) as e:r['application_ok']=False;r['application_error']=str(e)
             r['clean']=not timed and code==0 and r['errors']==0 and not r['internal_error'] and r['application_ok']

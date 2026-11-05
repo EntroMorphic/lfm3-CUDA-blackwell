@@ -65,6 +65,16 @@ are unchanged. See `BOUNDARY_OBSERVER.md` and `TMA_STORE_FINDINGS.md`.
 
 ### Native ordinary-store remediation candidate (not promoted)
 
+Latest v4 candidate `81df4dea...` independently passes6890 eager checks, nine
+exact context fixtures, both209-comparison paired matrices,73 grouped-worker
+steps, three32K SDPA cases and all four scoped sanitizers without exclusions.
+Its four complete32K logit outputs match production bitwise. However, balanced
+warmed20-sample AB/BA measurement shows **3.445809175593137x decode slowdown**.
+Full32768-prefill guarded sanitizer coverage is pending, and HTTP/cancellation,
+grouped performance, soak and deployment gates have not been repeated for v4.
+Production is unchanged; full acceptance remains false. See `WMMA_REMEDIATION.md`
+for exact hashes, frozen sources, scope and pending cleanup.
+
 `WMMA_REMEDIATION.md` records an isolated native WMMA linear path that preserves
 the measured split-K arithmetic while avoiding the vendor TMA stores. Candidate
 single `d6ed2fef...` passes all6890 unchanged eager checks and all nine exact

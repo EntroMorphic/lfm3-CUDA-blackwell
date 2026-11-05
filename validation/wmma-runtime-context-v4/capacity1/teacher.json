@@ -1,0 +1,1 @@
+{"backend":"native-cuda-experimental","attention":"eager-bf16","input_ids":[7061],"generated_ids":[],"teacher_argmax":[7061],"prefill_seconds":0.154228,"decode_seconds":0.00140717,"decode_forward_calls":0,"reset_checked":true,"reset_exact_logits_ok":true,"warmup_runs":0,"tracing":true,"do_sample":false,"seed":0}
