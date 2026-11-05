@@ -1,0 +1,42 @@
+{
+  "status": "passed",
+  "worker_sha256": "842a46f18a7038006ac4ef685d3526e3455262507a376b4021ef36b9e96e1ebb",
+  "source_sha256": {
+    "check_lfm3_soak.py": "35b237565a2551d80b31fd39d549931413fa267792205ad6a2079cb107c8df83",
+    "lfm3_server.py": "0947c4353e0f271fab73c97254cee7a27625beaa6db21b66b16bf97a020bf108",
+    "lfm3_worker_client.py": "00c0815dd8a040ce38bdbe4033870e2e4e03ea65dd90fccd7bbff73254394832"
+  },
+  "cycles_requested": 30,
+  "limits": {
+    "warm_rss_growth_bytes": 33554432,
+    "warm_fd_growth": 2
+  },
+  "scope": "finite serialized HTTP soak, host/worker RSS+FD plateau and end-to-end latency; NOT GPU-memory, batching, cancellation or universal performance acceptance",
+  "baseline": {
+    "cycle": -1,
+    "elapsed_seconds": 17.197602765998454,
+    "server": {
+      "rss_bytes": 297963520,
+      "descriptors": 7
+    },
+    "worker": {
+      "rss_bytes": 4830314496,
+      "descriptors": 42
+    }
+  },
+  "elapsed_seconds": 180.4753810379989,
+  "latency_summary": {
+    "greedy": {
+      "count": 30,
+      "median_seconds": 2.4688640710010077,
+      "p95_seconds": 2.5126309689985646,
+      "median_end_to_end_tokens_per_second": 34.833833506731324
+    },
+    "topk1_sampled": {
+      "count": 30,
+      "median_seconds": 2.467357087502023,
+      "p95_seconds": 2.495298855999863,
+      "median_end_to_end_tokens_per_second": 34.85510890807753
+    }
+  }
+}

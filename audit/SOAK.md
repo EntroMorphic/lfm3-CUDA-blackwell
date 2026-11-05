@@ -34,3 +34,24 @@ Inspection found the worker's deterministic choices unnecessarily used the full
 128K long-double sort/softmax sampler path. A separately tested O(vocabulary)
 argmax fast path is being developed; any throughput improvement must be measured
 on the same workload after numerical replay, not inferred from the code change.
+
+## Same-workload fast-path confirmation
+
+`validation/http-soak-fastpath-v2/` passes the unchanged30-cycle workload and
+fixed resource bounds on worker `842a46f1...`, after cancellation and deterministic
+sampling fast paths. Native stochastic logit replay,32K budget checks and all6890
+batch-one exact comparisons also pass for that candidate/runtime increment.
+
+- Elapsed 180.48 seconds including warmup. Greedy median 2.4689 seconds,
+  p95 2.5126; top-k1 sampled median 2.4674, p95 2.4953. Median end-to-end throughput:
+  34.83 and 34.86 tokens/second respectively.
+- Maximum warm RSS growth: server131,072 bytes, worker0 bytes. No descriptor
+  growth for either process. Every86-token response remains exact.
+- Observed median speed ratio versus the first identical-workload run:2.659x.
+  Server/client cancellation code changed too, so this is not isolated causal
+  attribution to the sampler or a universal performance claim.
+
+The greedy/top-k1 sample path now scans logits instead of sorting/normalizing the
+entire vocabulary; its strict validations and RNG draw contract remain verified.
+Actual text: `../tmp/http-soak-fastpath-v2/control-response.txt`. Full-serving GPU
+batching, longer soak, GPU-memory/resource and sanitizer acceptance remain open.

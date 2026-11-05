@@ -1,0 +1,17 @@
+{
+  "status": "same finite workload observed improvement",
+  "metrics": {
+    "server": {
+      "max_rss_growth_bytes": 131072,
+      "max_fd_growth": 0
+    },
+    "worker": {
+      "max_rss_growth_bytes": 0,
+      "max_fd_growth": 0
+    }
+  },
+  "greedy_old_seconds": 6.5635601920002955,
+  "greedy_new_seconds": 2.4688640710010077,
+  "observed_median_speed_ratio": 2.6585344527854393,
+  "limitations": "Server/client/cancellation source changed too; not isolated fastpath attribution, standalone decode comparison, GPU-memory or sustained-load SLA"
+}
