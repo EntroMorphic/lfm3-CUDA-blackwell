@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "cycles": 610,
+  "soak_seconds": 600.1480073979983,
+  "worker_sha256": "184f14b7806a45bc914bc4eff306637d2b6fced7e180dfc69d5b79af712b53cf",
+  "metrics": {
+    "server": {
+      "max_rss_growth_bytes": 262144,
+      "max_fd_growth": 0
+    },
+    "worker": {
+      "max_rss_growth_bytes": 0,
+      "max_fd_growth": 0
+    },
+    "gpu": {
+      "max_free_drop_bytes": 0,
+      "post_close_free_delta_from_empty_baseline": 60973056,
+      "scope": "device-wide unified CUDA memory; not per-worker attribution"
+    }
+  },
+  "paired_endpoint": "explicit fixed-two-lane group; no automatic coalescing",
+  "full_serving_accepted": false
+}

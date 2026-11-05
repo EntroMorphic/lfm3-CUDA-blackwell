@@ -73,5 +73,35 @@ measured groups show median0.8612s versus1.3238s for a serial pair (74.3 versus
 universal batching speedup or sustained-load certificate. Actual text is copied
 to `../tmp/http-grouped-smoke-v1/`.
 
-The extended60-cycle/600-second run remains separate. Upper-bound memcheck and
+The extended60-cycle/600-second run is recorded separately below. Upper-bound memcheck and
 integrated racecheck/initcheck remain open regardless of these numerical passes.
+
+Follow-up gate strengthening: the initial live group-cancel fixture began after
+reset, so its retained committed history was empty. It established cancellation
+and peer behavior, but not preservation of a nonempty prior group-lane history.
+The gate now keeps a completed serial history before cancellation and requires
+unchanged nonzero transcript/committed counts alongside zero physical state.
+Six host counterexamples cover that distinction. Fresh GPU revalidation is
+required for the strengthened assertion; original v1 evidence is not rewritten.
+
+## Extended grouped soak: accepted finite workload
+
+`validation/http-grouped-soak-v2/` passes **610 cycles over600.15 measured
+seconds** on worker `184f14b7...`. Every measured group returns the exact32-token
+control for each lane; reset/invalid-second-lane and live cancellation/recovery
+paths are also checked. Fixed predeclared budgets were not changed.
+
+- Maximum warm RSS growth: server262,144 bytes, worker0. Descriptor growth0
+  for both processes.
+- No observed CUDA-free-memory decrease from the warm resident baseline. After
+  closing both sessions, free memory is60,973,056 bytes above the empty-session
+  warm baseline, within the fixed recovery requirement. These are device-wide
+  Thor/unified-memory observations, not precise per-worker allocation attribution.
+- Median measured group0.8679s,73.74 aggregate tokens/s over610 samples. Five
+  serial-pair baseline samples have median1.3355s,47.92 aggregate tokens/s.
+  Workload and source/binary hashes are explicit; no universal throughput/SLA
+  claim or automatic batching of independent arrivals is implied.
+
+Actual outputs are copied to `../tmp/http-grouped-soak-v2/`. This closes the
+specified ten-minute grouped resource workload, not arbitrary-duration stability
+or the unresolved integrated sanitizer gates.

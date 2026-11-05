@@ -8,8 +8,12 @@ checks against Transformers SDPA; short-context exact checks remain separate.
 The resident worker passes finite persistent-KV isolation and 32K budget gates.
 The authenticated loopback HTTP service also passes finite native and admission
 gates. Cooperative token-boundary cancellation and a finite host-resource soak
-also pass. This is **not yet full-serving acceptance**: worker/service GPU batching,
-long-soak/GPU-resource/performance and the complete sanitizer gate remain open. See
+also pass. Explicit fixed-two-lane worker/HTTP GPU batching now passes integrated
+serial/logit/cancellation/32K and authenticated smoke gates; it does not automatically
+coalesce independent requests. See `audit/GROUPED_SERVING.md`.
+An extended grouped resource soak passes610 cycles over600 measured seconds.
+This is **not yet full-serving acceptance**: complete sanitizer gates remain
+unresolved, and subsequent runtime candidates need fresh hash-matched validation. See
 [`audit/TEXT_SERVING_ROADMAP.md`](audit/TEXT_SERVING_ROADMAP.md) for current evidence
 and deliberately unclaimed features. Historical milestone details follow.
 

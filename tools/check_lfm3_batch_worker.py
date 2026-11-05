@@ -66,6 +66,16 @@ def compare_traces(root, serial, grouped, count):
     return count
 
 
+def validate_cancelled_history(before, after):
+    if (type(before.get('transcript_tokens')) is not int or before['transcript_tokens']<1 or
+        type(before.get('committed_consumed_tokens')) is not int or before['committed_consumed_tokens']<1):
+        raise AssertionError('cancellation fixture needs a nonempty committed history')
+    if (after.get('cache_valid') is not False or type(after.get('consumed_tokens')) is not int or after['consumed_tokens']!=0 or
+        after.get('inflight') is not False or after.get('transcript_tokens')!=before['transcript_tokens'] or
+        after.get('committed_consumed_tokens')!=before['committed_consumed_tokens']):
+        raise AssertionError('cancelled group lost committed history or retained physical state')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
@@ -173,7 +183,8 @@ def main():
         reset()
         cancel_lanes = [dict(lane, max_new_tokens=32) for lane in lanes]
         serial = [call(dict(op="generate", **lane)) for lane in cancel_lanes]
-        reset()
+        # Keep nonempty committed histories: a cancelled fresh prefill must not
+        # erase them, even though the prompt forces physical cache replacement.
         history = call(dict(op="inspect", session_id="B"))
         target = worker.sequence+1
         proof = trace_root/str(target)/"lane1/2.logits.bf16"
@@ -192,8 +203,7 @@ def main():
             not 2 <= len(b.get("generated_ids", [])) < 32 or b["generated_ids"] != serial[1]["generated_ids"][:len(b["generated_ids"])]):
             raise AssertionError("targeted cancellation damaged lane outputs")
         after = call(dict(op="inspect", session_id="B"))
-        if after["cache_valid"] or after["consumed_tokens"] or after["transcript_tokens"] != history["transcript_tokens"]:
-            raise AssertionError("cancelled group lane retained physical cache or changed committed history")
+        validate_cancelled_history(history,after)
         # A late tagged frame must never abort a later single RPC.
         os.write(worker.cancel_write_fd, struct.pack("<Q", (2<<32)|target))
         recovered = call(dict(op="generate", **cancel_lanes[1]))

@@ -5,7 +5,18 @@ external validation limitation is **not** a clean full-sanitizer certificate.
 
 ## Current text-serving status (later increments)
 
-Latest standalone increment: paired decode passes five fixtures in both normal
+Current integrated increment: explicit grouped worker/HTTP decoding is verified
+for worker `184f14b7...`, with905 passing host tests,73 independent full-logit-bit
+steps, non-greedy sampler replay, lane retirement/reuse/EOS/cancellation/recovery
+and aggregate32K. Authenticated HTTP grouping/cancellation/resource smoke passes.
+See `GROUPED_SERVING.md`. The extended grouped soak passes610 cycles over600s
+with fixed RSS/FD/device-wide memory and post-close recovery bounds. Final
+standalone scratch memcheck passes zero errors; upper memcheck times out900s.
+Integrated racecheck and cuBLAS initcheck remain open. No full acceptance is claimed.
+
+### Prior standalone and single-serving increments
+
+The prior standalone increment: paired decode passes five fixtures in both normal
 and compact reference modes,209 bitwise-logit/full-cache comparisons per mode.
 See `BATCHING.md` and `OWNED_GPU_JOBS.md`. This is **not integrated service
 batching**. The complete host suite at this increment passes722 tests, with

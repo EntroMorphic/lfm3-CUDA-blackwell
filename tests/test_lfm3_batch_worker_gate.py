@@ -45,3 +45,17 @@ def test_trace_comparison_is_full_bitwise_and_rejects_escape(tmp_path):
     (tmp_path/'2/lane0/0.logits.bf16').write_bytes(b'\0\x80'+b'\0\0'*127999)
     with pytest.raises(AssertionError):gate.compare_traces(tmp_path,1,'2/lane0',1)
     with pytest.raises(AssertionError):gate.compare_traces(tmp_path,1,'../elsewhere',1)
+
+
+@pytest.mark.parametrize('damage',[None,'empty-before','lost-transcript','lost-committed','retained-cache','inflight'])
+def test_cancelled_group_preserves_nonempty_committed_history(damage):
+    before=dict(transcript_tokens=30,committed_consumed_tokens=29)
+    after=dict(before,cache_valid=False,consumed_tokens=0,inflight=False)
+    if damage=='empty-before':before.update(transcript_tokens=0,committed_consumed_tokens=0);after.update(before)
+    elif damage=='lost-transcript':after['transcript_tokens']=0
+    elif damage=='lost-committed':after['committed_consumed_tokens']=0
+    elif damage=='retained-cache':after['consumed_tokens']=3
+    elif damage=='inflight':after['inflight']=True
+    if damage:
+        with pytest.raises(AssertionError):gate.validate_cancelled_history(before,after)
+    else:gate.validate_cancelled_history(before,after)

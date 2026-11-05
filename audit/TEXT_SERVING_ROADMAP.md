@@ -1,5 +1,12 @@
 # Full text-serving acceptance target
 
+Current increment: `GROUPED_SERVING.md` records real fixed-two-lane native/HTTP
+group dispatch,905 host passes and actual grouped parity/cancellation/aggregate32K
+plus authenticated HTTP smoke. It closes the prior standalone-only limitation
+for that explicit interface, not automatic microbatching. Extended grouped resource
+soak and complete sanitizer acceptance remain separate. Earlier increment notes
+below preserve their historical scope and binaries.
+
 Latest red-team increment: `REDTEAM_ROUND2.md`. RPC reply correlation and frontend
 absolute deadlines were remediated; HTTP negative fixtures and resident stochastic
 replay were strengthened.575 increment-scoped host tests and native resident/HTTP
