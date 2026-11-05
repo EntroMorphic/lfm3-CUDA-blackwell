@@ -1,0 +1,37 @@
+{
+  "tool_version": "cuobjdump: NVIDIA (R) fat binary listing tool\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Thu_Aug_14_07:31:26_PM_PDT_2025\nCuda compilation tools, release 13.0, V13.0.85\nBuild cuda_13.0.r13.0/compiler.36400806_0\n",
+  "records": [
+    {
+      "label": "producer",
+      "command": [
+        "/usr/local/cuda/bin/cuobjdump",
+        "--dump-sass",
+        "--function",
+        "nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT",
+        "/workspace/liquid-CUDA/build/boundary-observer-v2/gemm-0/module-0.cubin"
+      ],
+      "compiler_image": "sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f",
+      "returncode": 0,
+      "cubin_sha256": "99fed3a84c356fb8b96a32bff51df0808c49131f033de9d139de976b5ef54892",
+      "function": "nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT",
+      "sass_sha256": "5ce85835c8ba67b73ba96ca30b528cb89533e53b55889510eac33f1c8c43d4c0"
+    },
+    {
+      "label": "reducer",
+      "command": [
+        "/usr/local/cuda/bin/cuobjdump",
+        "--dump-sass",
+        "--function",
+        "_ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_",
+        "/workspace/liquid-CUDA/build/boundary-observer-v2/gemm-0/module-1.cubin"
+      ],
+      "compiler_image": "sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f",
+      "returncode": 0,
+      "cubin_sha256": "595b0ad14d1aa3bdf2a6e2b13baff6691a203558bf58185ba5222577b30031c5",
+      "function": "_ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_",
+      "sass_sha256": "d9d6e8caaa459d4bc3f3815bd0561ed9b28135f1402dfdf46e5a14c5f1415fe0"
+    }
+  ],
+  "scope": "static instructions in captured launched images; not a dynamic instruction trace",
+  "prior_root_artifact_directory_writable_by_host_user": false
+}

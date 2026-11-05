@@ -17,6 +17,19 @@ acceptance runs. The original full-consumer default 257-row instrumented case
 timed out and remains incomplete. Synccheck and racecheck are not resolved by
 these findings; no vendor-confirmed root cause or workaround is claimed.
 
+### Subsequent instruction-isolating measurements
+
+`BOUNDARY_OBSERVER.md` records calibrated, synchronized pre-reduction snapshots:
+all12,288 expected workspace words are correct before reduction in three runs.
+`TMA_STORE_FINDINGS.md` records a no-cuBLAS4-D tensor-store reproduction with
+distinct outputs and read-only preimages: all12,288 words physically change to
+correct values yet initcheck reports downstream reads uninitialized. Ordinary
+stores do not. The same binary's six memcheck and six synccheck cases are clean,
+without exclusions. This does not resolve full-runtime internal synccheck failure,
+prove original internal-read ordering, or complete32K racecheck. The documented
+unsupported tensormap/tcgen05 limitation is consistent with these results but is
+not vendor confirmation of this instruction/configuration.
+
 ## Initcheck sanitizer-only version/shape matrix
 
 `tools/check_lfm3_initcheck_matrix.py` holds the checkpoint-free probe binary,

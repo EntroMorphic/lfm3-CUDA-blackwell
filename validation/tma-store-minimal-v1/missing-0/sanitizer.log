@@ -1,0 +1,31 @@
+========= COMPUTE-SANITIZER
+========= Uninitialized __global__ memory read of size 4 bytes
+=========     at consume_store(const float *, float *)+0x80
+=========     by thread (64,0,0) in block (0,0,0)
+=========     Address 0x1c43600100
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x2d73] in lfm3-tma-store-probe
+========= 
+========= Uninitialized __global__ memory read of size 4 bytes
+=========     at consume_store(const float *, float *)+0x80
+=========     by thread (65,0,0) in block (0,0,0)
+=========     Address 0x1c43600104
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x2d73] in lfm3-tma-store-probe
+========= 
+========= Uninitialized __global__ memory read of size 4 bytes
+=========     at consume_store(const float *, float *)+0x80
+=========     by thread (66,0,0) in block (0,0,0)
+=========     Address 0x1c43600108
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x2d73] in lfm3-tma-store-probe
+========= 
+========= Uninitialized __global__ memory read of size 4 bytes
+=========     at consume_store(const float *, float *)+0x80
+=========     by thread (67,0,0) in block (0,0,0)
+=========     Address 0x1c4360010c
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x2d73] in lfm3-tma-store-probe
+========= 
+========= ERROR SUMMARY: 13824 errors
+========= ERROR SUMMARY: 13820 errors were not printed. Use --print-limit option to adjust the number of printed errors

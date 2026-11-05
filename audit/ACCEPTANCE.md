@@ -11,7 +11,7 @@ All historical failures below retain their original artifact/binary scope.
 
 | Gate | Current evidence |
 | --- | --- |
-| Host suite |1209 passed, `validation/host-bedrock-final-v3.log`|
+| Host suite |1245 passed, `validation/host-boundary-final-v3.log`|
 | Original eager activations |6890 exact checks, `forward-bounded-prefill-v1`|
 | Full eager context through4096 |9 fixtures, zero tolerances,19 full-vocabulary logit steps, exact reset and12 pre-weight rejections, `context-full-bounded-release-v2`|
 | Independent32K SDPA |Unchanged0.5 max-error/0.02 relative-RMS limits, exact argmax/reset, `context32k-bounded-prefill-v1`|
@@ -54,7 +54,14 @@ shows 23,222 scratch bytes physically change during GEMM, while a post-completio
 host read is still reported uninitialized. Two scratch-seeded diagnostics select
 the same kernels and produce the same bytes without those reports; they are
 **not acceptance fixes**. Exact instruction-level tracking and internal-read
-ordering remain unresolved. Separate synccheck/racecheck gates are unchanged.
+ordering remain unresolved in the original execution. A calibrated SDK observer
+finds all expected scratch partials **before reduction** in three explicitly
+synchronized diagnostics. A no-cuBLAS4-D TMA store reproduces physically changed,
+correct output reported uninitialized; ordinary stores are clean, and the same
+minimal binary completes memcheck/synccheck cleanly. This is consistent with
+NVIDIA's documented unsupported tensormap/tcgen05 coverage, not vendor-confirmed
+attribution or a production waiver. Full-runtime synccheck and32K racecheck gates
+are unchanged. See `BOUNDARY_OBSERVER.md` and `TMA_STORE_FINDINGS.md`.
 
 ### Prior standalone and single-serving increments
 

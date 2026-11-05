@@ -1,0 +1,18 @@
+{
+  "binary_sha256": "034ac1babdd2fca9987921ac78ea6c4f0a4dc8c0ed6e8330b9da5b1bbf588d74",
+  "command": [
+    "/usr/local/cuda/bin/cuobjdump",
+    "--dump-sass",
+    "/workspace/liquid-CUDA/build/cmake-boundary-tma-v2/lfm3-tma-store-probe"
+  ],
+  "compiler_image": "sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f",
+  "sass_sha256": "4ae262b62ce332b2b2cc50b3659b39fb196ae6c7ec67e33f1846703b72de7c16",
+  "selected_static_instruction_lines": [
+    "/*00a0*/                   STG.E desc[UR4][R4.64], R3 ;                        /* 0x0000000304007986 */",
+    "/*0160*/                   FENCE.VIEW.ASYNC.S ;                                /* 0x00000000000073c6 */",
+    "/*0210*/                   UTMASTG.4D [UR8], [UR4] ;                           /* 0x00000008040073b5 */",
+    "/*0220*/                   UTMACMDFLUSH ;                                      /* 0x00000000000079b7 */",
+    "/*0290*/                   STG.E desc[UR4][R2.64], R7 ;                        /* 0x0000000702007986 */"
+  ],
+  "scope": "static image of minimal producer/consumer; no instruction execution counts"
+}

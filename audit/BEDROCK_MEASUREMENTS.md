@@ -4,6 +4,19 @@ Production runtime and original probes remain unchanged. New code is confined to
 an EXCLUDE_FROM_ALL standalone target and its measurement runner/tests. No driver,
 BSP, global library or serving math change is made.
 
+## Subsequent boundary and instruction-isolation evidence
+
+`BOUNDARY_OBSERVER.md` adds calibrated GPU observations with explicit boundary
+synchronization: all12,288 expected scratch words are correct before reduction
+in three runs. Captured producer SASS contains `UTMASTG.4D`; the reported reducer
+offset is a global load. Static instructions are not dynamic execution counts.
+`TMA_STORE_FINDINGS.md` adds a no-cuBLAS4-D TMA-store reproduction, distinct values,
+physical pre/post changes, and clean minimal memcheck/synccheck observations on
+the same binary. This is consistent with NVIDIA's documented unsupported
+tensormap/tcgen05 initcheck coverage, not exact vendor attribution or proof of
+original unsynchronized ordering. Production gates remain unchanged. Historical
+statements below retain the evidence scope/time at which they were recorded.
+
 ## Questions
 
 1. Do producer and consumer outputs match an independent CPU oracle over every

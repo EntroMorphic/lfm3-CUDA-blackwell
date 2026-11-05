@@ -1,0 +1,8 @@
+{"subscribe_result":0,"mode":"control","read_only":true,"boundary_synchronization":true}
+{"workspace_allocation":77399588864,"bytes":8519680,"candidates":1}
+{"module_image":"module-0.cubin","module":187650840327312,"bytes":12432}
+{"launch_begin":"_Z23boundary_control_reducePKfPfi","grid_id":4,"module":187650840327312,"stream":0,"grid":[48,1,1],"block":[256,1,1],"cluster":[0,0,0]}
+{"error":"reducer order/count mismatch"}
+{"launch_begin":"_Z24boundary_control_consumePKfPfi","grid_id":5,"module":187650840327312,"stream":0,"grid":[48,1,1],"block":[256,1,1],"cluster":[0,0,0]}
+{"error":"consumer order/count mismatch"}
+{"observer_complete":true,"initialized":true,"failed":true,"workspace_candidates":1,"control_buffer_count":2,"captures":0,"launches":2,"module_images":1,"full_acceptance":false}

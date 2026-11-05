@@ -1,0 +1,19 @@
+{
+  "checked_utc": "2026-11-05T20:47:44.683730+00:00",
+  "matching_gpu_processes": [],
+  "binary_sha256": {
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/cmake-bounded-prefill-v1/liquid-lfm3": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/cmake-bounded-prefill-v1/liquid-lfm3-worker": "1aa1e0c2f3c3ebc0153f156ff403b8b16ba943a4da2cca78303f6fc1d0adc2c9",
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/cmake-boundary-tma-v2/lfm3-tma-store-probe": "034ac1babdd2fca9987921ac78ea6c4f0a4dc8c0ed6e8330b9da5b1bbf588d74"
+  },
+  "container_id": "0d697f295fc7750142521f17c896c6c070bbef9763c11df4ec97bcd8c7d67baa",
+  "container_running": false,
+  "memory_limit": 51539607552,
+  "memory_swap_limit": 51539607552,
+  "additional_unchanged_sha256": {
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/racecheck-pinned-libs-v1/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/racecheck-pinned-libs-v1/libcublas.so.13": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b",
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/racecheck-pinned-libs-v1/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/cmake-bounded-prefill-v1/lfm3-decode-batch-probe": "345f1ded5278fe257b80bc2b17bb85318bbb9c848648c9e8ce10dad5adbd514e"
+  }
+}

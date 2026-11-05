@@ -1,0 +1,2 @@
+{"configuration":true,"method":"ordinary","elements":12288,"rank":4,"dimensions":[128,1,1,96],"strides":[512,512,512],"box":[128,1,1,1],"runtime":13000,"driver":13000,"output_initialized":false,"bias":1025,"preimage":true}
+{"complete":true,"elements":12288,"method":"ordinary"}

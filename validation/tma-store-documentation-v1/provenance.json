@@ -1,0 +1,9 @@
+{
+  "url": "https://docs.nvidia.com/compute-sanitizer/ReleaseNotes/index.html",
+  "retrieved_utc": "2026-11-05T20:45:07.989447+00:00",
+  "sha256": "c9be0c94a1fbeedbb05374f420a61480fbeb0b432f7990baecad5f2066de2188",
+  "page_version": "2026.4.0",
+  "page_last_updated": "Nov 04, 2026",
+  "section": "Known Limitations",
+  "quote": "Some tensormap and tcgen05 instructions accessing global memory are not currently supported, which may result in initcheck false positives."
+}

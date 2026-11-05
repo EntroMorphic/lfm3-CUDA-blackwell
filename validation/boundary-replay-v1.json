@@ -1,0 +1,1099 @@
+{
+  "status": "replayed",
+  "full_acceptance": false,
+  "checks": [
+    {
+      "check": "GPU calibration snapshots offline replay",
+      "snapshots": 6
+    },
+    {
+      "check": "gemm-0 partial replay",
+      "words": 12288,
+      "final_output_files_local": true,
+      "final_producer_consumer_bitwise_match": true
+    },
+    {
+      "check": "gemm-1 partial replay",
+      "words": 12288,
+      "final_output_files_local": true,
+      "final_producer_consumer_bitwise_match": true
+    },
+    {
+      "check": "gemm-2 partial replay",
+      "words": 12288,
+      "final_output_files_local": true,
+      "final_producer_consumer_bitwise_match": true
+    },
+    {
+      "check": "tma-store-minimal-v1 canonical totals and all available complete outputs replay",
+      "cases": 7
+    },
+    {
+      "check": "tma-store-distinct-v2 canonical totals and all available complete outputs replay",
+      "cases": 7
+    },
+    {
+      "check": "tma-store-preimage-v3 canonical totals and all available complete outputs replay",
+      "cases": 3
+    },
+    {
+      "check": "tma-store-memcheck-v4 canonical totals and all available complete outputs replay",
+      "cases": 6
+    },
+    {
+      "check": "tma-store-synccheck-v4 canonical totals and all available complete outputs replay",
+      "cases": 6
+    },
+    {
+      "check": "all five completed frozen-source identities replay"
+    },
+    {
+      "check": "complete untruncated preimage report classifications replay",
+      "ordinary_host": 1536,
+      "tma_host": 3072,
+      "tma_consumer": 12288
+    }
+  ],
+  "files": {
+    "validation/boundary-observer-v1/probe.ldd.log": {
+      "bytes": 839,
+      "sha256": "a9559ff9b1094c8aa0b8862a2aeaacfc6f52818f114fcc5043b1d18a0f6e299c"
+    },
+    "validation/boundary-observer-v1/observer.ldd.log": {
+      "bytes": 807,
+      "sha256": "99a1c9c0c1b5437133cb0d5b13957f05dcba23c891ffd1414068621e945c67d4"
+    },
+    "validation/boundary-observer-v1/summary.json": {
+      "bytes": 17440,
+      "sha256": "da5949f14b9c55cdb4723bec25aeb170d1a496be4a835473ee0bd22724fc6927"
+    },
+    "validation/boundary-observer-v1/calibration-positive/observer.jsonl": {
+      "bytes": 89,
+      "sha256": "e1e16831f9a7552cc2ae01a5876efbd74552374eb21bc30852f3556f1e1e5ac1"
+    },
+    "validation/boundary-observer-v1/calibration-positive/application.log": {
+      "bytes": 92,
+      "sha256": "ddeb5fcb18ff55bcc8a93dc27a8fbac8c0cc7502380664aa20f8cd57e6818861"
+    },
+    "validation/boundary-observer-v1/frozen-source/check_lfm3_boundary.py": {
+      "bytes": 11828,
+      "sha256": "f358ce363307d66a982f8e8e5fe9216283c1968e71426773347e3547c85e63b5"
+    },
+    "validation/boundary-observer-v1/frozen-source/lfm3_boundary_control.cu": {
+      "bytes": 1910,
+      "sha256": "d15f80f69b21f69bb2fc2cbfa6329e8d1b21e3afb1514143af56d292867e6377"
+    },
+    "validation/boundary-observer-v1/frozen-source/lfm3_boundary_observer.cpp": {
+      "bytes": 10168,
+      "sha256": "9a9b71246b7114341ef65e27a1620fa160d0cdfa5c2531a71bd990db0241b8f0"
+    },
+    "validation/boundary-observer-v2/probe.ldd.log": {
+      "bytes": 839,
+      "sha256": "00ee2137c228ad5cd9ae8b79e1f0b769bf07f04471fba373d7de9493ddc08fb9"
+    },
+    "validation/boundary-observer-v2/observer.ldd.log": {
+      "bytes": 807,
+      "sha256": "ad4e39ba21fc9bf190c8fc20fc729b74a39db32f3f36153e041f7f3642aa9091"
+    },
+    "validation/boundary-observer-v2/summary.json": {
+      "bytes": 44404,
+      "sha256": "783958d7cc115da9845e86d696d5e34dd3948dcaf59ed4c0ab498e6eb627b3fd"
+    },
+    "validation/boundary-observer-v2/gemm-1/before_reducer.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "validation/boundary-observer-v2/gemm-1/observer.jsonl": {
+      "bytes": 2017,
+      "sha256": "becf234886752e105c3cea2ea6641122603f9e794a4fdd3dfba1d747316f4ceb"
+    },
+    "validation/boundary-observer-v2/gemm-1/before_producer.bin": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/boundary-observer-v2/gemm-1/application.log": {
+      "bytes": 1273,
+      "sha256": "970c3332a3de1d38451eae66dba77131d27c0a66f2d990f4142986330548b41c"
+    },
+    "validation/boundary-observer-v2/gemm-1/before_consumer.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "validation/boundary-observer-v2/gemm-2/before_reducer.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "validation/boundary-observer-v2/gemm-2/observer.jsonl": {
+      "bytes": 2017,
+      "sha256": "42fbb4cac5574df3150b1eebe7def92998d652bdaff4f58cd3cf2da052523898"
+    },
+    "validation/boundary-observer-v2/gemm-2/before_producer.bin": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/boundary-observer-v2/gemm-2/application.log": {
+      "bytes": 1273,
+      "sha256": "6ec154a2f7b66667b10468f0e0c9a503c770a8dfa845d9978b95bf5fcece3255"
+    },
+    "validation/boundary-observer-v2/gemm-2/before_consumer.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "validation/boundary-observer-v2/calibration-positive/before_reducer_output.bin": {
+      "bytes": 49152,
+      "sha256": "295f7f2021bfd167a6823d55f50524de28502e6ac64e61093304ee6906210c69"
+    },
+    "validation/boundary-observer-v2/calibration-positive/before_reducer.bin": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/boundary-observer-v2/calibration-positive/before_consumer_sink.bin": {
+      "bytes": 49152,
+      "sha256": "b80f99d3d8fba32668b805e1ebc052301d2a5b11ee5725615242569e11be827e"
+    },
+    "validation/boundary-observer-v2/calibration-positive/observer.jsonl": {
+      "bytes": 2186,
+      "sha256": "ddb28bac88a5f6bd4064f7d76a099c181be128d2fac9490fb7d7f3c33ddf4abe"
+    },
+    "validation/boundary-observer-v2/calibration-positive/before_producer.bin": {
+      "bytes": 49152,
+      "sha256": "bce9b3e25cf4af0f2081d022b4c09b326f3604ecb8565607044c7ee6aa68580a"
+    },
+    "validation/boundary-observer-v2/calibration-positive/application.log": {
+      "bytes": 55,
+      "sha256": "306a7072c76203724120000aa6ea7deec47a04dc9425862dba90f18621e563b9"
+    },
+    "validation/boundary-observer-v2/calibration-positive/before_consumer_output.bin": {
+      "bytes": 49152,
+      "sha256": "f3f1601d4679aa269197124dd640304b48df0256efe6a1547771a207b7024778"
+    },
+    "validation/boundary-observer-v2/calibration-positive/before_consumer.bin": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/boundary-observer-v2/calibration-missing/observer.jsonl": {
+      "bytes": 798,
+      "sha256": "3b7aba28d627fb4751576235be0efac297a02d1040ff8584705cae9b5930a557"
+    },
+    "validation/boundary-observer-v2/calibration-missing/application.log": {
+      "bytes": 58,
+      "sha256": "e8697b7662302b40270196388e61dbe28e94dc7297282e91ed84755befb0a263"
+    },
+    "validation/boundary-observer-v2/gemm-0/before_reducer.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "validation/boundary-observer-v2/gemm-0/observer.jsonl": {
+      "bytes": 2017,
+      "sha256": "a7e554b9d54ce84528f0c24aef387b76e68d80406efdc4424c497c9cb51edb2e"
+    },
+    "validation/boundary-observer-v2/gemm-0/before_producer.bin": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/boundary-observer-v2/gemm-0/application.log": {
+      "bytes": 1273,
+      "sha256": "94de4c0393ee829eeefd4af02ffc8ed8a8d883fd8825cc7961852160bd2364c3"
+    },
+    "validation/boundary-observer-v2/gemm-0/before_consumer.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "validation/boundary-observer-v2/frozen-source/check_lfm3_projection_bedrock.py": {
+      "bytes": 18094,
+      "sha256": "1294889aea89e2530d30445cacced068861d57b5822e17dc6e2998fd4b8936eb"
+    },
+    "validation/boundary-observer-v2/frozen-source/check_lfm3_boundary.py": {
+      "bytes": 12262,
+      "sha256": "e26de8bf84ec331fdb3cfd4f3eef94742462fe7bd0ae8e77729c740ac0ab297d"
+    },
+    "validation/boundary-observer-v2/frozen-source/check_lfm3_cublas_modes.py": {
+      "bytes": 11284,
+      "sha256": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640"
+    },
+    "validation/boundary-observer-v2/frozen-source/lfm3_owned_process.py": {
+      "bytes": 6144,
+      "sha256": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd"
+    },
+    "validation/boundary-observer-v2/frozen-source/lfm3_boundary_control.cu": {
+      "bytes": 1910,
+      "sha256": "d15f80f69b21f69bb2fc2cbfa6329e8d1b21e3afb1514143af56d292867e6377"
+    },
+    "validation/boundary-observer-v2/frozen-source/lfm3_boundary_observer.cpp": {
+      "bytes": 10168,
+      "sha256": "9a9b71246b7114341ef65e27a1620fa160d0cdfa5c2531a71bd990db0241b8f0"
+    },
+    "validation/boundary-disassembly-v1/producer.sass.txt": {
+      "bytes": 213815,
+      "sha256": "5ce85835c8ba67b73ba96ca30b528cb89533e53b55889510eac33f1c8c43d4c0"
+    },
+    "validation/boundary-disassembly-v1/disassembly.json": {
+      "bytes": 2044,
+      "sha256": "6a0bdd93feafee5e768d98e7cb6c354ad88907177d4d48968714cfeb9e45c279"
+    },
+    "validation/boundary-disassembly-v1/producer.sass.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "validation/boundary-disassembly-v1/minimal-v2-disassembly.json": {
+      "bytes": 1113,
+      "sha256": "3ae5e9b45cc7d2388da1e415017009e6d4adc6828cb525b53315a3f6d72389c8"
+    },
+    "validation/boundary-disassembly-v1/reducer.sass.txt": {
+      "bytes": 197549,
+      "sha256": "d9d6e8caaa459d4bc3f3815bd0561ed9b28135f1402dfdf46e5a14c5f1415fe0"
+    },
+    "validation/boundary-disassembly-v1/reducer.sass.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "validation/boundary-disassembly-v1/minimal-v2.sass.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "validation/boundary-disassembly-v1/minimal-v2.sass.txt": {
+      "bytes": 18445,
+      "sha256": "4ae262b62ce332b2b2cc50b3659b39fb196ae6c7ec67e33f1846703b72de7c16"
+    },
+    "validation/tma-store-minimal-v1/ldd.log": {
+      "bytes": 1585,
+      "sha256": "8b31f1690459708a8838ead672a6b07d7f53aa0c990b513cfbe1631f8da13924"
+    },
+    "validation/tma-store-minimal-v1/summary.json": {
+      "bytes": 16242,
+      "sha256": "e985a14e453fd170598ce6d139ac2a7c7bbbacf3e7ab164024458c0c93eda113"
+    },
+    "validation/tma-store-minimal-v1/expected.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/ordinary-2/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-minimal-v1/ordinary-2/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/ordinary-2/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-minimal-v1/ordinary-2/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/ordinary-2/application.log": {
+      "bytes": 250,
+      "sha256": "776a1388a6098e265d3269540d384c776d54e5a693c299338ae1e835e3e82eba"
+    },
+    "validation/tma-store-minimal-v1/tma4d-1/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-minimal-v1/tma4d-1/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/tma4d-1/sanitizer.log": {
+      "bytes": 1662,
+      "sha256": "5104e1e9cfa6480204b9d752e1f3a5518b2df302f4a00f701e134a1af9659ad9"
+    },
+    "validation/tma-store-minimal-v1/tma4d-1/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/tma4d-1/application.log": {
+      "bytes": 244,
+      "sha256": "fc174680952a157c16cb6477e43b147087710e6375e68da8baff1344c95af9f9"
+    },
+    "validation/tma-store-minimal-v1/ordinary-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-minimal-v1/ordinary-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/ordinary-0/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-minimal-v1/ordinary-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/ordinary-0/application.log": {
+      "bytes": 250,
+      "sha256": "776a1388a6098e265d3269540d384c776d54e5a693c299338ae1e835e3e82eba"
+    },
+    "validation/tma-store-minimal-v1/missing-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-minimal-v1/missing-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/tma-store-minimal-v1/missing-0/sanitizer.log": {
+      "bytes": 1662,
+      "sha256": "3c9d3b6b4313f5c3907f0ec08c04f560c3a68d76acf5bd8f9c66a7176a2cab58"
+    },
+    "validation/tma-store-minimal-v1/missing-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/tma-store-minimal-v1/missing-0/application.log": {
+      "bytes": 248,
+      "sha256": "a336599e9743ae20ea7ba01856adc2c665944148388644d62e285b4d849ecc9e"
+    },
+    "validation/tma-store-minimal-v1/tma4d-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-minimal-v1/tma4d-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/tma4d-0/sanitizer.log": {
+      "bytes": 1662,
+      "sha256": "5104e1e9cfa6480204b9d752e1f3a5518b2df302f4a00f701e134a1af9659ad9"
+    },
+    "validation/tma-store-minimal-v1/tma4d-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/tma4d-0/application.log": {
+      "bytes": 244,
+      "sha256": "fc174680952a157c16cb6477e43b147087710e6375e68da8baff1344c95af9f9"
+    },
+    "validation/tma-store-minimal-v1/tma4d-2/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-minimal-v1/tma4d-2/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/tma4d-2/sanitizer.log": {
+      "bytes": 1662,
+      "sha256": "5104e1e9cfa6480204b9d752e1f3a5518b2df302f4a00f701e134a1af9659ad9"
+    },
+    "validation/tma-store-minimal-v1/tma4d-2/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/tma4d-2/application.log": {
+      "bytes": 244,
+      "sha256": "fc174680952a157c16cb6477e43b147087710e6375e68da8baff1344c95af9f9"
+    },
+    "validation/tma-store-minimal-v1/ordinary-1/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-minimal-v1/ordinary-1/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/ordinary-1/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-minimal-v1/ordinary-1/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "1a894bb7abafd55c6b2ffe6b008f454014d2dbc071bfe2b5ae9918ad01941253"
+    },
+    "validation/tma-store-minimal-v1/ordinary-1/application.log": {
+      "bytes": 250,
+      "sha256": "776a1388a6098e265d3269540d384c776d54e5a693c299338ae1e835e3e82eba"
+    },
+    "validation/tma-store-minimal-v1/frozen-source/check_lfm3_tma_store.py": {
+      "bytes": 5848,
+      "sha256": "fcc3b7f55d8e3adc2875ff8656a24a0897f945d588b765479118a628d7ae788e"
+    },
+    "validation/tma-store-minimal-v1/frozen-source/lfm3_tma_store_probe.cu": {
+      "bytes": 3834,
+      "sha256": "885d6d09c8d0d6eeaa88a1b39fb3a87552c67ec002403d70efd17230bc7e5c38"
+    },
+    "validation/tma-store-distinct-v2/ldd.log": {
+      "bytes": 1585,
+      "sha256": "daaa2e4c2871126f82e1931dd3913a26537bd4f4278005d11f809612f16c93c6"
+    },
+    "validation/tma-store-distinct-v2/summary.json": {
+      "bytes": 18382,
+      "sha256": "d54d5d43077b34077a056f309021df5c026f5ac3e10e139dc31b97e8efea28f7"
+    },
+    "validation/tma-store-distinct-v2/ordinary-2/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-distinct-v2/ordinary-2/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "d74ac47ffcc99d9579cba9910367008905a591beb34490a1eac9a0ea26159a7c"
+    },
+    "validation/tma-store-distinct-v2/ordinary-2/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-distinct-v2/ordinary-2/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "d74ac47ffcc99d9579cba9910367008905a591beb34490a1eac9a0ea26159a7c"
+    },
+    "validation/tma-store-distinct-v2/ordinary-2/application.log": {
+      "bytes": 279,
+      "sha256": "d9fb8e5c933748a511ecd4bb5eb2ce94700ec295cbb4af5345d02f9d4297192f"
+    },
+    "validation/tma-store-distinct-v2/ordinary-2/expected.f32": {
+      "bytes": 49152,
+      "sha256": "d74ac47ffcc99d9579cba9910367008905a591beb34490a1eac9a0ea26159a7c"
+    },
+    "validation/tma-store-distinct-v2/tma4d-1/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-distinct-v2/tma4d-1/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "7d72527668c5a3641db8f61053685e719e8bbc91389ed61ab2d3a76bead594c1"
+    },
+    "validation/tma-store-distinct-v2/tma4d-1/sanitizer.log": {
+      "bytes": 1662,
+      "sha256": "bd7f8b91e828ce22b5ba2fc7f30e4cbce69749c2e1ca509fd4609ed40ab286d8"
+    },
+    "validation/tma-store-distinct-v2/tma4d-1/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "7d72527668c5a3641db8f61053685e719e8bbc91389ed61ab2d3a76bead594c1"
+    },
+    "validation/tma-store-distinct-v2/tma4d-1/application.log": {
+      "bytes": 273,
+      "sha256": "9d97716d179ec434daee4c1cd9207518c2a57f06f1794254ac2b98ecb0475325"
+    },
+    "validation/tma-store-distinct-v2/tma4d-1/expected.f32": {
+      "bytes": 49152,
+      "sha256": "7d72527668c5a3641db8f61053685e719e8bbc91389ed61ab2d3a76bead594c1"
+    },
+    "validation/tma-store-distinct-v2/ordinary-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-distinct-v2/ordinary-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-distinct-v2/ordinary-0/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-distinct-v2/ordinary-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-distinct-v2/ordinary-0/application.log": {
+      "bytes": 279,
+      "sha256": "614cca8f4a1c6377c2c7f54b1287543a5934cf2e4038b792af8ecf9cca73e12f"
+    },
+    "validation/tma-store-distinct-v2/ordinary-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-distinct-v2/missing-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-distinct-v2/missing-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/tma-store-distinct-v2/missing-0/sanitizer.log": {
+      "bytes": 1662,
+      "sha256": "2bb471d4e0fbac768fcd4545b74e5602d3c7400bd3fbb5d77ce459ecd1818bdb"
+    },
+    "validation/tma-store-distinct-v2/missing-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/tma-store-distinct-v2/missing-0/application.log": {
+      "bytes": 277,
+      "sha256": "a6a73497c5b90da8a8ff17dd4ed8d21b6f9317aba0dc54c44a5eac4dcff99df4"
+    },
+    "validation/tma-store-distinct-v2/missing-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "7e05a34b97bbff96dc43552a322646397d6f62498157f2260b599723086b352b"
+    },
+    "validation/tma-store-distinct-v2/tma4d-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-distinct-v2/tma4d-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "9a2d8961327ffe8b33473c305ebb8dae8479b6945965716f7a670f958415d4a0"
+    },
+    "validation/tma-store-distinct-v2/tma4d-0/sanitizer.log": {
+      "bytes": 1662,
+      "sha256": "bd7f8b91e828ce22b5ba2fc7f30e4cbce69749c2e1ca509fd4609ed40ab286d8"
+    },
+    "validation/tma-store-distinct-v2/tma4d-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "9a2d8961327ffe8b33473c305ebb8dae8479b6945965716f7a670f958415d4a0"
+    },
+    "validation/tma-store-distinct-v2/tma4d-0/application.log": {
+      "bytes": 273,
+      "sha256": "3d3a6ec2472391267c97dc42537e255aeed9505e76fe371e8e29acbc7f0250d1"
+    },
+    "validation/tma-store-distinct-v2/tma4d-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "9a2d8961327ffe8b33473c305ebb8dae8479b6945965716f7a670f958415d4a0"
+    },
+    "validation/tma-store-distinct-v2/tma4d-2/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-distinct-v2/tma4d-2/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "99ede8e335cc6eb8b19e557fa72c2147b5c3a84b90043d3a6b2827ec61b75816"
+    },
+    "validation/tma-store-distinct-v2/tma4d-2/sanitizer.log": {
+      "bytes": 1662,
+      "sha256": "bd7f8b91e828ce22b5ba2fc7f30e4cbce69749c2e1ca509fd4609ed40ab286d8"
+    },
+    "validation/tma-store-distinct-v2/tma4d-2/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "99ede8e335cc6eb8b19e557fa72c2147b5c3a84b90043d3a6b2827ec61b75816"
+    },
+    "validation/tma-store-distinct-v2/tma4d-2/application.log": {
+      "bytes": 273,
+      "sha256": "c34a46cbb5b5c528d3fbbae49a86c0d689177c537b6b35a989c58408b4b4f8aa"
+    },
+    "validation/tma-store-distinct-v2/tma4d-2/expected.f32": {
+      "bytes": 49152,
+      "sha256": "99ede8e335cc6eb8b19e557fa72c2147b5c3a84b90043d3a6b2827ec61b75816"
+    },
+    "validation/tma-store-distinct-v2/ordinary-1/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-distinct-v2/ordinary-1/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-distinct-v2/ordinary-1/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-distinct-v2/ordinary-1/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-distinct-v2/ordinary-1/application.log": {
+      "bytes": 279,
+      "sha256": "2fddfc94645dc00434f98bba9279b5bf652a2bbcf2ba2e131e0b866c03e25051"
+    },
+    "validation/tma-store-distinct-v2/ordinary-1/expected.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-distinct-v2/frozen-source/check_lfm3_tma_store.py": {
+      "bytes": 6819,
+      "sha256": "3be45677f0fbbcf83c118a4eac335bca36a5257d689aa9e64407f57e55acce63"
+    },
+    "validation/tma-store-distinct-v2/frozen-source/check_lfm3_cublas_modes.py": {
+      "bytes": 11284,
+      "sha256": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640"
+    },
+    "validation/tma-store-distinct-v2/frozen-source/lfm3_tma_store_probe.cu": {
+      "bytes": 4521,
+      "sha256": "ee954d9c07ee99d3388aa49f0f668b52b91a13deb7c2a5a55dd99fa9545c2819"
+    },
+    "validation/tma-store-distinct-v2/frozen-source/lfm3_owned_process.py": {
+      "bytes": 6144,
+      "sha256": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd"
+    },
+    "validation/tma-store-preimage-v3/ldd.log": {
+      "bytes": 1585,
+      "sha256": "e46ab802ae81960ec6bd0a152bdf333ff38ca4fd2b94f27dffbc8a07ab7d777a"
+    },
+    "validation/tma-store-preimage-v3/summary.json": {
+      "bytes": 12668,
+      "sha256": "fcc385982957b45a9598e400f617f954938426e3211cde48a82780bbc1a729b5"
+    },
+    "validation/tma-store-preimage-v3/ordinary-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-preimage-v3/ordinary-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-preimage-v3/ordinary-0/sanitizer.log": {
+      "bytes": 491585,
+      "sha256": "38a74fc42110855815db33d4404f18b670f423a659d6822ed138bafe3303d009"
+    },
+    "validation/tma-store-preimage-v3/ordinary-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-preimage-v3/ordinary-0/output.before.bin": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/tma-store-preimage-v3/ordinary-0/application.log": {
+      "bytes": 278,
+      "sha256": "a255ce6a2e63659cdc99356cd11aba1c1095ef74691237613e3c3625ec492fab"
+    },
+    "validation/tma-store-preimage-v3/ordinary-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-preimage-v3/missing-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-preimage-v3/missing-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/tma-store-preimage-v3/missing-0/sanitizer.log": {
+      "bytes": 5530114,
+      "sha256": "f9cf824c74c41cafa751489de40b600a53cb791dd87d398cbbadbf744e9a4a0a"
+    },
+    "validation/tma-store-preimage-v3/missing-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/tma-store-preimage-v3/missing-0/output.before.bin": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/tma-store-preimage-v3/missing-0/application.log": {
+      "bytes": 276,
+      "sha256": "fd5c428c8011dd924f6c48fd26f9ef2b87117d9c621365b8789c6ba8a7f52733"
+    },
+    "validation/tma-store-preimage-v3/missing-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "7e05a34b97bbff96dc43552a322646397d6f62498157f2260b599723086b352b"
+    },
+    "validation/tma-store-preimage-v3/tma4d-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-preimage-v3/tma4d-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-preimage-v3/tma4d-0/sanitizer.log": {
+      "bytes": 5530114,
+      "sha256": "108cafaa600932a1b27f1b0f5a9520353b4c686ff8bd2f87c9bae29ac1bd066b"
+    },
+    "validation/tma-store-preimage-v3/tma4d-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-preimage-v3/tma4d-0/output.before.bin": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "validation/tma-store-preimage-v3/tma4d-0/application.log": {
+      "bytes": 272,
+      "sha256": "fce9db3898398c8488137700c48f39e67c872cbb0f6ef6b1dd89c405319e0846"
+    },
+    "validation/tma-store-preimage-v3/tma4d-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-preimage-v3/frozen-source/check_lfm3_tma_store.py": {
+      "bytes": 6819,
+      "sha256": "3be45677f0fbbcf83c118a4eac335bca36a5257d689aa9e64407f57e55acce63"
+    },
+    "validation/tma-store-preimage-v3/frozen-source/check_lfm3_cublas_modes.py": {
+      "bytes": 11284,
+      "sha256": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640"
+    },
+    "validation/tma-store-preimage-v3/frozen-source/lfm3_tma_store_probe.cu": {
+      "bytes": 4521,
+      "sha256": "ee954d9c07ee99d3388aa49f0f668b52b91a13deb7c2a5a55dd99fa9545c2819"
+    },
+    "validation/tma-store-preimage-v3/frozen-source/lfm3_owned_process.py": {
+      "bytes": 6144,
+      "sha256": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd"
+    },
+    "validation/tma-store-memcheck-v4/ldd.log": {
+      "bytes": 1585,
+      "sha256": "99e0dfbb3b69e5d68c766ba73bc9f2d5b7db558dce6dd753cda03b218233816b"
+    },
+    "validation/tma-store-memcheck-v4/summary.json": {
+      "bytes": 17182,
+      "sha256": "45227cb77e573eaeb1ac7309936bf4c2aa782c8bf17e5c40fea4e8c1c5e68eed"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-2/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-2/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-2/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-2/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-2/application.log": {
+      "bytes": 279,
+      "sha256": "2fddfc94645dc00434f98bba9279b5bf652a2bbcf2ba2e131e0b866c03e25051"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-2/expected.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-1/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-1/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "9a2d8961327ffe8b33473c305ebb8dae8479b6945965716f7a670f958415d4a0"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-1/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-1/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "9a2d8961327ffe8b33473c305ebb8dae8479b6945965716f7a670f958415d4a0"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-1/application.log": {
+      "bytes": 273,
+      "sha256": "3d3a6ec2472391267c97dc42537e255aeed9505e76fe371e8e29acbc7f0250d1"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-1/expected.f32": {
+      "bytes": 49152,
+      "sha256": "9a2d8961327ffe8b33473c305ebb8dae8479b6945965716f7a670f958415d4a0"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "7e05a34b97bbff96dc43552a322646397d6f62498157f2260b599723086b352b"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-0/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "7e05a34b97bbff96dc43552a322646397d6f62498157f2260b599723086b352b"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-0/application.log": {
+      "bytes": 279,
+      "sha256": "2a77923adcffa69b00e1a00a323128bfeb08f2ab8d223147982c5a10e452b1eb"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "7e05a34b97bbff96dc43552a322646397d6f62498157f2260b599723086b352b"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "d74ac47ffcc99d9579cba9910367008905a591beb34490a1eac9a0ea26159a7c"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-0/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "d74ac47ffcc99d9579cba9910367008905a591beb34490a1eac9a0ea26159a7c"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-0/application.log": {
+      "bytes": 273,
+      "sha256": "b1c4a3646c87cd771d1cbcaf927f3e5c08f8c9ad4656d8649fe7f8dc08000b59"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "d74ac47ffcc99d9579cba9910367008905a591beb34490a1eac9a0ea26159a7c"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-2/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-2/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "7d72527668c5a3641db8f61053685e719e8bbc91389ed61ab2d3a76bead594c1"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-2/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-2/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "7d72527668c5a3641db8f61053685e719e8bbc91389ed61ab2d3a76bead594c1"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-2/application.log": {
+      "bytes": 273,
+      "sha256": "9d97716d179ec434daee4c1cd9207518c2a57f06f1794254ac2b98ecb0475325"
+    },
+    "validation/tma-store-memcheck-v4/tma4d-2/expected.f32": {
+      "bytes": 49152,
+      "sha256": "7d72527668c5a3641db8f61053685e719e8bbc91389ed61ab2d3a76bead594c1"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-1/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "cb16ac1f2bc3f1b030b796d88c6152e4430d970eb01dd6cf0af00f9290365e8f"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-1/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-1/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-1/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-1/application.log": {
+      "bytes": 279,
+      "sha256": "614cca8f4a1c6377c2c7f54b1287543a5934cf2e4038b792af8ecf9cca73e12f"
+    },
+    "validation/tma-store-memcheck-v4/ordinary-1/expected.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-memcheck-v4/frozen-source/check_lfm3_tma_store.py": {
+      "bytes": 7373,
+      "sha256": "43ae70031dbfb0c8e57132c92a1c97c5398c0c920a908a3442d573c7707b8014"
+    },
+    "validation/tma-store-memcheck-v4/frozen-source/check_lfm3_cublas_modes.py": {
+      "bytes": 11284,
+      "sha256": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640"
+    },
+    "validation/tma-store-memcheck-v4/frozen-source/lfm3_tma_store_probe.cu": {
+      "bytes": 4521,
+      "sha256": "ee954d9c07ee99d3388aa49f0f668b52b91a13deb7c2a5a55dd99fa9545c2819"
+    },
+    "validation/tma-store-memcheck-v4/frozen-source/lfm3_owned_process.py": {
+      "bytes": 6144,
+      "sha256": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd"
+    },
+    "validation/tma-store-synccheck-v4/ldd.log": {
+      "bytes": 1585,
+      "sha256": "f51762aad5b05643c8cd9022244240353f143c22e53da0e01750675caed22297"
+    },
+    "validation/tma-store-synccheck-v4/summary.json": {
+      "bytes": 17217,
+      "sha256": "569596a91ea66844573e27b7907ae3d2069605051562328dfde5f28363605630"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-2/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "3edff482a6ae713c13c382f20e9737b1ca523cd438ad54890d007af94eff918b"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-2/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-2/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-2/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-2/application.log": {
+      "bytes": 279,
+      "sha256": "2fddfc94645dc00434f98bba9279b5bf652a2bbcf2ba2e131e0b866c03e25051"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-2/expected.f32": {
+      "bytes": 49152,
+      "sha256": "a991252d141b885428ca0e6ff32a064e176cf705c094d6795c0dfe8bd611919b"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-1/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "3edff482a6ae713c13c382f20e9737b1ca523cd438ad54890d007af94eff918b"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-1/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "9a2d8961327ffe8b33473c305ebb8dae8479b6945965716f7a670f958415d4a0"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-1/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-1/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "9a2d8961327ffe8b33473c305ebb8dae8479b6945965716f7a670f958415d4a0"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-1/application.log": {
+      "bytes": 273,
+      "sha256": "3d3a6ec2472391267c97dc42537e255aeed9505e76fe371e8e29acbc7f0250d1"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-1/expected.f32": {
+      "bytes": 49152,
+      "sha256": "9a2d8961327ffe8b33473c305ebb8dae8479b6945965716f7a670f958415d4a0"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "3edff482a6ae713c13c382f20e9737b1ca523cd438ad54890d007af94eff918b"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "7e05a34b97bbff96dc43552a322646397d6f62498157f2260b599723086b352b"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-0/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "7e05a34b97bbff96dc43552a322646397d6f62498157f2260b599723086b352b"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-0/application.log": {
+      "bytes": 279,
+      "sha256": "2a77923adcffa69b00e1a00a323128bfeb08f2ab8d223147982c5a10e452b1eb"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "7e05a34b97bbff96dc43552a322646397d6f62498157f2260b599723086b352b"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-0/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "3edff482a6ae713c13c382f20e9737b1ca523cd438ad54890d007af94eff918b"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-0/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "d74ac47ffcc99d9579cba9910367008905a591beb34490a1eac9a0ea26159a7c"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-0/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-0/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "d74ac47ffcc99d9579cba9910367008905a591beb34490a1eac9a0ea26159a7c"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-0/application.log": {
+      "bytes": 273,
+      "sha256": "b1c4a3646c87cd771d1cbcaf927f3e5c08f8c9ad4656d8649fe7f8dc08000b59"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-0/expected.f32": {
+      "bytes": 49152,
+      "sha256": "d74ac47ffcc99d9579cba9910367008905a591beb34490a1eac9a0ea26159a7c"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-2/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "3edff482a6ae713c13c382f20e9737b1ca523cd438ad54890d007af94eff918b"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-2/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "7d72527668c5a3641db8f61053685e719e8bbc91389ed61ab2d3a76bead594c1"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-2/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-2/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "7d72527668c5a3641db8f61053685e719e8bbc91389ed61ab2d3a76bead594c1"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-2/application.log": {
+      "bytes": 273,
+      "sha256": "9d97716d179ec434daee4c1cd9207518c2a57f06f1794254ac2b98ecb0475325"
+    },
+    "validation/tma-store-synccheck-v4/tma4d-2/expected.f32": {
+      "bytes": 49152,
+      "sha256": "7d72527668c5a3641db8f61053685e719e8bbc91389ed61ab2d3a76bead594c1"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-1/output.tensormap.bin": {
+      "bytes": 128,
+      "sha256": "3edff482a6ae713c13c382f20e9737b1ca523cd438ad54890d007af94eff918b"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-1/output.producer.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-1/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-1/output.consumer.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-1/application.log": {
+      "bytes": 279,
+      "sha256": "614cca8f4a1c6377c2c7f54b1287543a5934cf2e4038b792af8ecf9cca73e12f"
+    },
+    "validation/tma-store-synccheck-v4/ordinary-1/expected.f32": {
+      "bytes": 49152,
+      "sha256": "25e0d253f021da245cf01ea7641c0826e5d14814449f04b74ba7620d823ae3f7"
+    },
+    "validation/tma-store-synccheck-v4/frozen-source/check_lfm3_tma_store.py": {
+      "bytes": 7373,
+      "sha256": "43ae70031dbfb0c8e57132c92a1c97c5398c0c920a908a3442d573c7707b8014"
+    },
+    "validation/tma-store-synccheck-v4/frozen-source/check_lfm3_cublas_modes.py": {
+      "bytes": 11284,
+      "sha256": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640"
+    },
+    "validation/tma-store-synccheck-v4/frozen-source/lfm3_tma_store_probe.cu": {
+      "bytes": 4521,
+      "sha256": "ee954d9c07ee99d3388aa49f0f668b52b91a13deb7c2a5a55dd99fa9545c2819"
+    },
+    "validation/tma-store-synccheck-v4/frozen-source/lfm3_owned_process.py": {
+      "bytes": 6144,
+      "sha256": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd"
+    },
+    "validation/tma-store-documentation-v1/provenance.json": {
+      "bytes": 473,
+      "sha256": "d58a3324f6f169ebdaa67fa3f1766c503e545564a10fd793c0fd1789252160b7"
+    },
+    "validation/tma-store-documentation-v1/release-notes.html": {
+      "bytes": 87128,
+      "sha256": "c9be0c94a1fbeedbb05374f420a61480fbeb0b432f7990baecad5f2066de2188"
+    },
+    "validation/boundary-observer-v2/gemm-1/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "validation/boundary-observer-v2/gemm-1/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "validation/boundary-observer-v2/fixture/a.bf16": {
+      "bytes": 25165824,
+      "sha256": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed"
+    },
+    "validation/boundary-observer-v2/fixture/expected.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "validation/boundary-observer-v2/fixture/b.bf16": {
+      "bytes": 4096,
+      "sha256": "e4680ce9a7d241dd78f157a39923e63810b7ed5bc5fe6dcc7160fd9a7fb4c8b8"
+    },
+    "validation/boundary-observer-v2/gemm-2/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "validation/boundary-observer-v2/gemm-2/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "validation/boundary-observer-v2/gemm-0/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "validation/boundary-observer-v2/gemm-0/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    }
+  }
+}
