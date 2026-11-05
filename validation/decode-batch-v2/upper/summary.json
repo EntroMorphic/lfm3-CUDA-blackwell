@@ -1,0 +1,1 @@
+{"status":"passed","fixture":"upper","comparisons":5,"expected_comparisons":5,"paired_calls":1,"expected_paired_calls":1,"retired_checks":1,"expected_retired_checks":1,"reset_checks":0,"rejections":11,"dense_batch_rows":2,"worker_integration":false,"scope":"finite standalone exact serial decode parity only"}

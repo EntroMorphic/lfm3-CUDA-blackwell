@@ -1,0 +1,9 @@
+{
+  "status": "not accepted",
+  "scratch": "clean",
+  "upper": "600-second timeout; not a pass",
+  "launcher_defect": "subprocess.run killed only sanitizer leader and shell continued into next GPU job",
+  "owned_descendants_verified_and_killed": true,
+  "root_kill_required": "owned diagnostic group was root inside container",
+  "remediation": "wait_owned process-group cleanup plus fail-fast fixture runner with descendant and cleanup-failure tests"
+}

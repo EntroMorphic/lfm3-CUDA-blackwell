@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "binary_sha256": "db30e878bda12448a0892e34a4f1b7d438300af55d6da0662c4055706de516d9",
+  "sanitizer_sha256": null,
+  "reference_mode": "normal",
+  "records": [
+    {
+      "fixture": "scratch",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/cmake/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/decode-batch-final-runner-v5/scratch",
+        "scratch"
+      ],
+      "owned_process_group": 10243,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 5.144789339999988,
+      "group_cleanup_complete": true
+    }
+  ],
+  "not_run": [],
+  "worker_integration": false
+}

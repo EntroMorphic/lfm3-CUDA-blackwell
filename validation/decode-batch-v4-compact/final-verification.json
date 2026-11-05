@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "binary_sha256": "db30e878bda12448a0892e34a4f1b7d438300af55d6da0662c4055706de516d9",
+  "reference_mode": "compact",
+  "source_sha256": {
+    "native/src/lfm3_decode_batch.cuh": "ff7b29fb9d286b197076ce7670b4ee75aef43c110f74a4bc52ef62b6edcf51d8",
+    "native/tests/lfm3_decode_batch_probe.cu": "d3c3ae832a37ba756b635ec11d2680278ea6ddeb6d991dcfb4385680ccaa77da",
+    "native/src/lfm3_main.cu": "7169bd15dcc471322762a6c2569a54781b74c47828486c919fdcb0694af1fab7",
+    "native/CMakeLists.txt": "cafd05228b8059b021d32346ad4c0411918a9fb14b2cc9f38f6a7cb0f1c7f17f",
+    "tools/check_lfm3_decode_batch.py": "9436560bd2d94b6b758ffc2e860d9d65e9f6ad83f7bfe125bb3f3b05f8275574",
+    "tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd"
+  },
+  "host_tests": 724,
+  "worker_integration": false,
+  "full_serving_accepted": false
+}

@@ -1,0 +1,1854 @@
+========= COMPUTE-SANITIZER
+========= Process ID:             10228
+========= Created:                2026-Nov-05 00:44:42
+========= System OS:              Linux (L4T 64bit)
+========= OS build:               #1 SMP PREEMPT Thu Sep 25 15:19:42 PDT 2025
+========= System CPU:             Neoverse-V3AE
+========= CPU architecture:       ARM64
+========= Computer Name:          bb3189c1e439
+========= Target application:     /workspace/liquid-CUDA/build/cmake/lfm3-decode-batch-probe --experimental /workspace/models/LFM3-Omni-2B /workspace/liquid-CUDA/build/decode-batch-memcheck-v2-compact/upper upper compact
+========= CUDA version:           13.0
+========= Display Driver version: 580.00
+========= 
+========= Launch #1
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6725embedEPK13__nv_bfloat16PKiPS0_ii
+=========   Grid:   (8, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a263] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #2
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19fd7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #3
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (96, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x18f5f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #4
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (192, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x18f5f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #5
+=========   Kernel: _ZN3lfm4lfm320convolution7_prefillEPK13__nv_bfloat16S3_PS1_S4_iii
+=========   Grid:   (8, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a43b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #6
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_4x1_v_bz_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (4, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1908f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #7
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19173] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #8
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a003] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #9
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1932f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #10
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x193e7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #11
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6726swigluEPK13__nv_bfloat16S2_PS0_m
+=========   Grid:   (30, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x194eb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #12
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (80, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #13
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (64, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #14
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x196b3] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #15
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19fd7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #16
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (96, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x18f5f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #17
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (192, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x18f5f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #18
+=========   Kernel: _ZN3lfm4lfm320convolution7_prefillEPK13__nv_bfloat16S3_PS1_S4_iii
+=========   Grid:   (8, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a43b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #19
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_4x1_v_bz_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (4, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1908f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #20
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19173] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #21
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a003] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #22
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1932f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #23
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x193e7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #24
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6726swigluEPK13__nv_bfloat16S2_PS0_m
+=========   Grid:   (30, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x194eb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #25
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (80, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #26
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (64, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #27
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x196b3] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #28
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19fd7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #29
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_4x1_v_bz_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (4, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x199e3] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #30
+=========   Kernel: nvjet_sm110_tst_64x16_64x16_2x1_2cta_v_bz_splitK_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19a37] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #31
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (16, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19a37] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #32
+=========   Kernel: nvjet_sm110_tst_64x16_64x16_2x1_2cta_v_bz_splitK_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19a87] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #33
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (16, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19a87] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #34
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (16, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a223] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #35
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (4, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a1f7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #36
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb67223rotary_from_frequenciesEP13__nv_bfloat16PKiPKfiiii
+=========   Grid:   (4, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19c1f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #37
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb67223rotary_from_frequenciesEP13__nv_bfloat16PKiPKfiiii
+=========   Grid:   (1, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19c9b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #38
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6727scatterEPK13__nv_bfloat16S2_PS0_S3_iiiii
+=========   Grid:   (2, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19daf] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #39
+=========   Kernel: _ZN8internal5gemvx6kernelIii13__nv_bfloat16S2_S2_fLb0ELb1ELb1ELb0ELi6ELb0E18cublasGemvParamsExIi23cublasGemvTensorBatchedIKS2_ES6_S4_IS2_EfEEENSt9enable_ifIXntT5_EvE4typeET11_
+=========   Grid:   (1, 1, 16)
+=========   Block:  (16, 4, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernel [0x33c6ab] in libcuda.so.1
+=========         Host Frame:  [0x53e98ef] in libcublasLt.so.13
+=========         Host Frame:  [0x543fab3] in libcublasLt.so.13
+=========         Host Frame:  [0x199696b] in libcublasLt.so.13
+=========         Host Frame:  [0x186ed7b] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x1831bf] in libcublas.so.13
+=========         Host Frame:  [0x184687] in libcublas.so.13
+=========         Host Frame: cublasGemmBatchedEx [0xe0263] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::attention_tile(int, int, int, int, int) [0x18047] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19dff] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #40
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb67213probabilitiesEPK13__nv_bfloat16PS0_iiiiii
+=========   Grid:   (16, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::attention_tile(int, int, int, int, int) [0x18763] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19dff] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #41
+=========   Kernel: _Z13gemmk1_kernelIifLi256ELi5ELb0ELb0ELb0ELb0E23cublasGemvTensorBatchedIK13__nv_bfloat16ES3_S0_IS1_EfLi0EEv18cublasGemmk1ParamsIT0_T7_T8_T9_T10_N8biasTypeINS9_10value_typeESA_E4typeEE
+=========   Grid:   (4, 1, 16)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernel [0x33c6ab] in libcuda.so.1
+=========         Host Frame:  [0x53e98ef] in libcublasLt.so.13
+=========         Host Frame:  [0x543fab3] in libcublasLt.so.13
+=========         Host Frame:  [0x17f617b] in libcublasLt.so.13
+=========         Host Frame:  [0x17f855b] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x1831bf] in libcublas.so.13
+=========         Host Frame:  [0x184687] in libcublas.so.13
+=========         Host Frame: cublasGemmBatchedEx [0xe0263] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::attention_tile(int, int, int, int, int) [0x184c7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19dff] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #42
+=========   Kernel: nvjet_sm110_tst_64x8_64x16_1x1_h_bz_splitK_TNT
+=========   Grid:   (2, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (1, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19e87] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #43
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19e87] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #44
+=========   Kernel: _ZN3lfm4lfm39head_gateEPK13__nv_bfloat16S3_PS1_mi
+=========   Grid:   (8, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19f03] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #45
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_4x1_v_bz_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (4, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19f7b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #46
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19173] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #47
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a003] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #48
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1932f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #49
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x193e7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #50
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6726swigluEPK13__nv_bfloat16S2_PS0_m
+=========   Grid:   (30, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x194eb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #51
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (80, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #52
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (64, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #53
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x196b3] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #54
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19fd7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #55
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (96, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x18f5f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #56
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (192, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x18f5f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #57
+=========   Kernel: _ZN3lfm4lfm320convolution7_prefillEPK13__nv_bfloat16S3_PS1_S4_iii
+=========   Grid:   (8, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a43b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #58
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_4x1_v_bz_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (4, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1908f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #59
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19173] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #60
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a003] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #61
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1932f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #62
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x193e7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #63
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6726swigluEPK13__nv_bfloat16S2_PS0_m
+=========   Grid:   (30, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x194eb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #64
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (80, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #65
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (64, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #66
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x196b3] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #67
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19fd7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #68
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_4x1_v_bz_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (4, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x199e3] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #69
+=========   Kernel: nvjet_sm110_tst_64x16_64x16_2x1_2cta_v_bz_splitK_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19a37] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #70
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (16, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19a37] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #71
+=========   Kernel: nvjet_sm110_tst_64x16_64x16_2x1_2cta_v_bz_splitK_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19a87] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #72
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (16, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19a87] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #73
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (16, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a223] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #74
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (4, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a1f7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #75
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb67223rotary_from_frequenciesEP13__nv_bfloat16PKiPKfiiii
+=========   Grid:   (4, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19c1f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #76
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb67223rotary_from_frequenciesEP13__nv_bfloat16PKiPKfiiii
+=========   Grid:   (1, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19c9b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #77
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6727scatterEPK13__nv_bfloat16S2_PS0_S3_iiiii
+=========   Grid:   (2, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19daf] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #78
+=========   Kernel: _ZN8internal5gemvx6kernelIii13__nv_bfloat16S2_S2_fLb0ELb1ELb1ELb0ELi6ELb0E18cublasGemvParamsExIi23cublasGemvTensorBatchedIKS2_ES6_S4_IS2_EfEEENSt9enable_ifIXntT5_EvE4typeET11_
+=========   Grid:   (1, 1, 16)
+=========   Block:  (16, 4, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernel [0x33c6ab] in libcuda.so.1
+=========         Host Frame:  [0x53e98ef] in libcublasLt.so.13
+=========         Host Frame:  [0x543fab3] in libcublasLt.so.13
+=========         Host Frame:  [0x199696b] in libcublasLt.so.13
+=========         Host Frame:  [0x186ed7b] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x1831bf] in libcublas.so.13
+=========         Host Frame:  [0x184687] in libcublas.so.13
+=========         Host Frame: cublasGemmBatchedEx [0xe0263] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::attention_tile(int, int, int, int, int) [0x18047] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19dff] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #79
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb67213probabilitiesEPK13__nv_bfloat16PS0_iiiiii
+=========   Grid:   (16, 1, 1)
+=========   Block:  (32, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::attention_tile(int, int, int, int, int) [0x18763] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19dff] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #80
+=========   Kernel: _Z13gemmk1_kernelIifLi256ELi5ELb0ELb0ELb0ELb0E23cublasGemvTensorBatchedIK13__nv_bfloat16ES3_S0_IS1_EfLi0EEv18cublasGemmk1ParamsIT0_T7_T8_T9_T10_N8biasTypeINS9_10value_typeESA_E4typeEE
+=========   Grid:   (4, 1, 16)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernel [0x33c6ab] in libcuda.so.1
+=========         Host Frame:  [0x53e98ef] in libcublasLt.so.13
+=========         Host Frame:  [0x543fab3] in libcublasLt.so.13
+=========         Host Frame:  [0x17f617b] in libcublasLt.so.13
+=========         Host Frame:  [0x17f855b] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x1831bf] in libcublas.so.13
+=========         Host Frame:  [0x184687] in libcublas.so.13
+=========         Host Frame: cublasGemmBatchedEx [0xe0263] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::attention_tile(int, int, int, int, int) [0x184c7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19dff] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #81
+=========   Kernel: nvjet_sm110_tst_64x8_64x16_1x1_h_bz_splitK_TNT
+=========   Grid:   (2, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (1, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19e87] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #82
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19e87] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #83
+=========   Kernel: _ZN3lfm4lfm39head_gateEPK13__nv_bfloat16S3_PS1_mi
+=========   Grid:   (8, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19f03] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #84
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_4x1_v_bz_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (4, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19f7b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #85
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19173] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #86
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a003] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #87
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1932f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #88
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x193e7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #89
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6726swigluEPK13__nv_bfloat16S2_PS0_m
+=========   Grid:   (30, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x194eb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #90
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (80, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #91
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (64, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x195cb] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #92
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x196b3] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #93
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19fd7] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #94
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (96, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x18f5f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #95
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (192, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x18f5f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #96
+=========   Kernel: _ZN3lfm4lfm320convolution7_prefillEPK13__nv_bfloat16S3_PS1_S4_iii
+=========   Grid:   (8, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a43b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #97
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_4x1_v_bz_TNT
+=========   Grid:   (16, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (4, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::linear(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, __nv_bfloat16 const*, __nv_bfloat16*, int, int, int) [0x1747b] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1908f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #98
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x19173] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #99
+=========   Kernel: _ZN59_GLOBAL__N__a91ced69_26_lfm3_decode_batch_probe_cu_2f1bb6724normEPK13__nv_bfloat16S2_PS0_ifS2_
+=========   Grid:   (1, 1, 1)
+=========   Block:  (512, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1a003] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 
+========= Launch #100
+=========   Kernel: nvjet_sm110_tst_384x8_64x4_2x1_v_bz_TNT
+=========   Grid:   (20, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: (anonymous namespace)::Runner::forward(std::vector<int, std::allocator<int> > const&) [0x1932f] in lfm3-decode-batch-probe
+=========         Host Frame: (anonymous namespace)::Oracle::execute(std::vector<int, std::allocator<int> > const*) [0x1a9af] in lfm3-decode-batch-probe
+=========         Host Frame: main::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const [0xcc4f] in lfm3-decode-batch-probe
+=========         Host Frame: main [0x529b] in lfm3-decode-batch-probe
+========= 

@@ -1,0 +1,8 @@
+{
+  "status": "all records postvalidated against strengthened mode/geometry/coverage/bitwise schema",
+  "binary_sha256": "db30e878bda12448a0892e34a4f1b7d438300af55d6da0662c4055706de516d9",
+  "reference_mode": "compact",
+  "comparisons": 209,
+  "validator_sha256": "126a2a6e8092f732c0862900011bb50b2f657f798774bc5d8dd09ba4a42b3c7c",
+  "worker_integration": false
+}

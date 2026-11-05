@@ -37,6 +37,12 @@ set_target_properties(liquid-native PROPERTIES
 )
 
 if(LIQUID_LFM3_OPS_TESTS)
+  add_executable(lfm3-decode-batch-probe EXCLUDE_FROM_ALL tests/lfm3_decode_batch_probe.cu src/safetensors.cpp)
+  target_include_directories(lfm3-decode-batch-probe PRIVATE include)
+  target_compile_features(lfm3-decode-batch-probe PRIVATE cxx_std_20 cuda_std_20)
+  target_compile_options(lfm3-decode-batch-probe PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
+  target_link_libraries(lfm3-decode-batch-probe PRIVATE CUDA::cudart CUDA::cublas)
+  set_target_properties(lfm3-decode-batch-probe PROPERTIES CUDA_ARCHITECTURES 110)
   add_executable(lfm3-serving-ops-probe tests/lfm3_serving_ops_probe.cu src/safetensors.cpp)
   target_include_directories(lfm3-serving-ops-probe PRIVATE include)
   target_compile_features(lfm3-serving-ops-probe PRIVATE cxx_std_20 cuda_std_20)

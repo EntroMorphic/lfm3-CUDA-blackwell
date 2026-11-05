@@ -1,0 +1,6 @@
+{
+  "status": "not accepted due to GPU serialization violation",
+  "numerical_summary_preserved": true,
+  "cause": "orphaned upper-memcheck child remained active during this follow-up",
+  "rerun_required": true
+}

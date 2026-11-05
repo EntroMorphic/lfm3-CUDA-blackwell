@@ -1,0 +1,15 @@
+{
+  "status": "five standalone exact paired-decode fixtures passed",
+  "binary_sha256": "465d85013f6e40f6723d31ee15531f3f1007c8b0b2e71048616ebffd8ea4f369",
+  "comparisons": 209,
+  "paired_gpu_calls": 62,
+  "rejections": 55,
+  "retired_lane_checks": 67,
+  "source_sha256": {
+    "native/src/lfm3_decode_batch.cuh": "ff7b29fb9d286b197076ce7670b4ee75aef43c110f74a4bc52ef62b6edcf51d8",
+    "native/tests/lfm3_decode_batch_probe.cu": "d6505c06463673594f02ab6ececfd3cb9cda54a8a1df5d3ea4c4068e7e6a0f6f",
+    "native/src/lfm3_main.cu": "7169bd15dcc471322762a6c2569a54781b74c47828486c919fdcb0694af1fab7"
+  },
+  "worker_integration": false,
+  "full_serving_accepted": false
+}

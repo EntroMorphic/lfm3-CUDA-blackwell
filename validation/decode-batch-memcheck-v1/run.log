@@ -1,0 +1,86 @@
+scratch True
+Traceback (most recent call last):
+  File "<stdin>", line 8, in <module>
+  File "/usr/lib/python3.12/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2141, in _communicate
+    self.wait(timeout=self._remaining_time(endtime))
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer', '--tool', 'memcheck', '--error-exitcode', '86', '--log-file', '/workspace/liquid-CUDA/build/decode-batch-memcheck-v1/upper.sanitizer.log', '/workspace/liquid-CUDA/build/cmake/lfm3-decode-batch-probe', '--experimental', '/workspace/models/LFM3-Omni-2B', '/workspace/liquid-CUDA/build/decode-batch-memcheck-v1/upper', 'upper']' timed out after 599.9999769720016 seconds
+Loading weights:   0%|          | 0/665 [00:00<?, ?it/s]Loading weights:   9%|▊         | 58/665 [00:00<00:01, 546.84it/s]Loading weights:  17%|█▋        | 113/665 [00:00<00:01, 541.91it/s]Loading weights:  26%|██▌       | 174/665 [00:00<00:00, 546.66it/s]Loading weights:  34%|███▍      | 229/665 [00:00<00:01, 336.77it/s]Loading weights:  41%|████      | 271/665 [00:01<00:03, 113.15it/s]Loading weights:  45%|████▍     | 299/665 [00:01<00:03, 110.54it/s]Loading weights:  48%|████▊     | 321/665 [00:02<00:03, 104.97it/s]Loading weights:  51%|█████     | 339/665 [00:02<00:03, 95.27it/s] Loading weights:  53%|█████▎    | 354/665 [00:02<00:03, 98.08it/s]Loading weights:  55%|█████▌    | 368/665 [00:02<00:03, 97.59it/s]Loading weights:  57%|█████▋    | 381/665 [00:02<00:03, 93.69it/s]Loading weights:  59%|█████▉    | 392/665 [00:02<00:02, 95.72it/s]Loading weights:  61%|██████    | 403/665 [00:03<00:02, 88.62it/s]Loading weights:  62%|██████▏   | 413/665 [00:03<00:02, 90.15it/s]Loading weights:  64%|██████▍   | 426/665 [00:03<00:02, 93.35it/s]Loading weights:  66%|██████▌   | 436/665 [00:03<00:02, 87.80it/s]Loading weights:  68%|██████▊   | 450/665 [00:03<00:02, 94.46it/s]Loading weights:  69%|██████▉   | 460/665 [00:03<00:02, 87.95it/s]Loading weights:  71%|███████▏  | 474/665 [00:03<00:02, 94.62it/s]Loading weights:  73%|███████▎  | 484/665 [00:03<00:02, 88.11it/s]Loading weights:  75%|███████▍  | 498/665 [00:04<00:01, 94.37it/s]Loading weights:  76%|███████▋  | 508/665 [00:04<00:01, 87.72it/s]Loading weights:  78%|███████▊  | 522/665 [00:04<00:01, 94.11it/s]Loading weights:  81%|████████  | 538/665 [00:04<00:01, 108.83it/s]Loading weights:  86%|████████▌ | 572/665 [00:04<00:00, 167.21it/s]Loading weights:  92%|█████████▏| 614/665 [00:04<00:00, 234.10it/s]Loading weights:  97%|█████████▋| 648/665 [00:04<00:00, 263.03it/s]Loading weights: 100%|██████████| 665/665 [00:04<00:00, 139.51it/s]
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+{
+  "status": "passed",
+  "binary_sha256": "ad757f347a4651292541b72b8ea3af2c41c5673c332e525eb05f8133330d0772",
+  "reference_backend": "Transformers SDPA",
+  "native_backend": "native tiled eager-bf16",
+  "torch": "2.10.0+cu130",
+  "transformers": "5.22.1",
+  "max_logit_error": 0.5,
+  "max_relative_rms": 0.02,
+  "cases": [
+    {
+      "case": "prefill8192",
+      "logits": [
+        {
+          "step": 0,
+          "max_abs": 0.125,
+          "relative_rms": 0.0024953216779977083,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        }
+      ],
+      "reset_exact": true,
+      "passed": true
+    },
+    {
+      "case": "decode_into32768",
+      "logits": [
+        {
+          "step": 0,
+          "max_abs": 0.125,
+          "relative_rms": 0.002395542338490486,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        },
+        {
+          "step": 1,
+          "max_abs": 0.1875,
+          "relative_rms": 0.003130023367702961,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        }
+      ],
+      "reset_exact": true,
+      "passed": true
+    },
+    {
+      "case": "prefill32768",
+      "logits": [
+        {
+          "step": 0,
+          "max_abs": 0.125,
+          "relative_rms": 0.0028063072822988033,
+          "argmax_equal": true,
+          "bitwise_equal": false,
+          "passed": true
+        }
+      ],
+      "reset_exact": true,
+      "passed": true
+    }
+  ],
+  "limitations": "Not eager bitwise parity; finite fixed fixtures; no performance claim",
+  "location": "prefill32768:native"
+}

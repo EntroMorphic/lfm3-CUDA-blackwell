@@ -1,0 +1,102 @@
+{
+  "status": "passed",
+  "binary_sha256": "465d85013f6e40f6723d31ee15531f3f1007c8b0b2e71048616ebffd8ea4f369",
+  "records": [
+    {
+      "fixture": "scratch",
+      "returncode": 0,
+      "result": {
+        "status": "passed",
+        "fixture": "scratch",
+        "comparisons": 59,
+        "expected_comparisons": 59,
+        "paired_calls": 10,
+        "expected_paired_calls": 10,
+        "retired_checks": 35,
+        "expected_retired_checks": 35,
+        "reset_checks": 2,
+        "rejections": 11,
+        "dense_batch_rows": 2,
+        "worker_integration": false,
+        "scope": "finite standalone exact serial decode parity only"
+      }
+    },
+    {
+      "fixture": "sliding",
+      "returncode": 0,
+      "result": {
+        "status": "passed",
+        "fixture": "sliding",
+        "comparisons": 47,
+        "expected_comparisons": 47,
+        "paired_calls": 17,
+        "expected_paired_calls": 17,
+        "retired_checks": 9,
+        "expected_retired_checks": 9,
+        "reset_checks": 2,
+        "rejections": 11,
+        "dense_batch_rows": 2,
+        "worker_integration": false,
+        "scope": "finite standalone exact serial decode parity only"
+      }
+    },
+    {
+      "fixture": "softmax",
+      "returncode": 0,
+      "result": {
+        "status": "passed",
+        "fixture": "softmax",
+        "comparisons": 49,
+        "expected_comparisons": 49,
+        "paired_calls": 17,
+        "expected_paired_calls": 17,
+        "retired_checks": 11,
+        "expected_retired_checks": 11,
+        "reset_checks": 2,
+        "rejections": 11,
+        "dense_batch_rows": 2,
+        "worker_integration": false,
+        "scope": "finite standalone exact serial decode parity only"
+      }
+    },
+    {
+      "fixture": "tiled",
+      "returncode": 0,
+      "result": {
+        "status": "passed",
+        "fixture": "tiled",
+        "comparisons": 49,
+        "expected_comparisons": 49,
+        "paired_calls": 17,
+        "expected_paired_calls": 17,
+        "retired_checks": 11,
+        "expected_retired_checks": 11,
+        "reset_checks": 2,
+        "rejections": 11,
+        "dense_batch_rows": 2,
+        "worker_integration": false,
+        "scope": "finite standalone exact serial decode parity only"
+      }
+    },
+    {
+      "fixture": "upper",
+      "returncode": 0,
+      "result": {
+        "status": "passed",
+        "fixture": "upper",
+        "comparisons": 5,
+        "expected_comparisons": 5,
+        "paired_calls": 1,
+        "expected_paired_calls": 1,
+        "retired_checks": 1,
+        "expected_retired_checks": 1,
+        "reset_checks": 0,
+        "rejections": 11,
+        "dense_batch_rows": 2,
+        "worker_integration": false,
+        "scope": "finite standalone exact serial decode parity only"
+      }
+    }
+  ],
+  "worker_integration": false
+}

@@ -1,0 +1,90 @@
+{
+  "status": "passed",
+  "binary_sha256": "db30e878bda12448a0892e34a4f1b7d438300af55d6da0662c4055706de516d9",
+  "sanitizer_sha256": null,
+  "reference_mode": "normal",
+  "records": [
+    {
+      "fixture": "scratch",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/cmake/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/decode-batch-v3-normal/scratch",
+        "scratch"
+      ],
+      "owned_process_group": 10158,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 5.192504270002246,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "sliding",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/cmake/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/decode-batch-v3-normal/sliding",
+        "sliding"
+      ],
+      "owned_process_group": 10163,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 4.336731815001258,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "softmax",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/cmake/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/decode-batch-v3-normal/softmax",
+        "softmax"
+      ],
+      "owned_process_group": 10168,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 8.50557828700039,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "tiled",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/cmake/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/decode-batch-v3-normal/tiled",
+        "tiled"
+      ],
+      "owned_process_group": 10173,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 14.433870062999631,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "upper",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/cmake/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/decode-batch-v3-normal/upper",
+        "upper"
+      ],
+      "owned_process_group": 10178,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 43.98506604800059,
+      "group_cleanup_complete": true
+    }
+  ],
+  "not_run": [],
+  "worker_integration": false
+}

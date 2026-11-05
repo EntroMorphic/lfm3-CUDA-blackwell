@@ -1,0 +1,2 @@
+{"fixture":"upper","reference_mode":"compact","gpu_runner_owners":2,"capacities":[2,32766],"prompt_lengths":[1,32764],"expected_comparisons":5,"expected_paired_calls":1,"expected_retired_checks":1,"expected_rejections":11,"expected_reset_checks":0,"standard_six_step_sequence":false}
+{"case":"prefill","event":"begin"}
