@@ -58,7 +58,7 @@ def cases(suite):
 
 def invalid_requests():
     return [
-        ("capacity0", dict(input_ids=[1], capacity=0), "capacity must be 1..4096"),
+        ("capacity0", dict(input_ids=[1], capacity=0), "capacity must be 1..32768"),
         ("capacity4097", dict(input_ids=[1], capacity=4097), "capacity must be 1..4096"),
         ("prefill_overflow", dict(input_ids=[1, 2], capacity=1), "invalid or overflowing"),
         ("teacher_overflow", dict(input_ids=[1], teacher_ids=[2], capacity=1), "invalid or overflowing"),

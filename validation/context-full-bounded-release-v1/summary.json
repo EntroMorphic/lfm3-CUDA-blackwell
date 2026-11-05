@@ -1,0 +1,38 @@
+{
+  "status": "failed",
+  "suite": "full",
+  "cases": [],
+  "maximum4096_checked": false,
+  "atol": 0.0,
+  "rtol": 0.0,
+  "reuse_reference": null,
+  "requested_cases": [
+    "capacity1",
+    "decode2",
+    "conv7",
+    "window255",
+    "window256",
+    "window257",
+    "long1024",
+    "final4096",
+    "prefill4096"
+  ],
+  "location": {
+    "phase": "request_rejections",
+    "case": null,
+    "step": null
+  },
+  "binary_sha256": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+  "source_sha256": {
+    "config.json": "17e3792551ef56b37e85bbd1e6e968f70dc5b4b14c96f1339d0be85e0ba46875",
+    "modeling_lfm3.py": "e8cd5254ea99ce6bd731b57b10908c2e8b5010ce8315341f895a38484885eeab",
+    "lfm3_conv.py": "80d4a985382a22774212759248a6b4c737bfbf9c2a47b3dd7f797dda748e4bb4"
+  },
+  "failure": {
+    "type": "RuntimeError",
+    "message": "capacity0: did not reject before weights with expected diagnostic; see capacity0.log",
+    "phase": "request_rejections",
+    "case": null,
+    "step": null
+  }
+}

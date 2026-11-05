@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "binary_sha256": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+  "cases": 9,
+  "full_vocabulary_bitwise_logit_steps": 19,
+  "atol": 0,
+  "rtol": 0,
+  "preweight_rejections": 12,
+  "maximum4096_checked": true,
+  "reset_exact": true,
+  "full_acceptance": false
+}

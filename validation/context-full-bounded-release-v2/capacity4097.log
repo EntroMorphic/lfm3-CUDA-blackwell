@@ -1,0 +1,1 @@
+lfm3: capacity must be 1..4096 unless experimental_long_context is enabled (unaccepted 32K bring-up)

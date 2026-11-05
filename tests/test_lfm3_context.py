@@ -78,6 +78,9 @@ def test_rejection_requires_config_only_and_precise_diagnostics(tmp_path):
 
 def test_preupload_option_validation_diagnostics():
     requests = {name: (request, diagnostic) for name, request, diagnostic in context.invalid_requests()}
+    assert requests['capacity0'] == (dict(input_ids=[1], capacity=0), 'capacity must be 1..32768')
+    assert requests['capacity4097'][0] == dict(input_ids=[1], capacity=4097)
+    assert '1..4096' in requests['capacity4097'][1]
     assert requests["warmup_bool"] == (dict(input_ids=[1], warmup_runs=True),
                                        "configuration field must be a number")
     assert requests["warmup11"] == (dict(input_ids=[1], warmup_runs=11), "at most 10 warmup runs")
@@ -89,8 +92,8 @@ def test_preupload_option_validation_diagnostics():
 
 @pytest.mark.parametrize("returncode,stderr,write_output", [
     (1, "cannot open model.safetensors", False),
-    (0, "capacity must be 1..4096", False),
-    (1, "capacity must be 1..4096", True),
+    (0, "capacity must be 1..32768", False),
+    (1, "capacity must be 1..32768", True),
 ])
 def test_missing_weights_failure_is_not_request_validation(tmp_path, returncode, stderr, write_output):
     checkpoint = tmp_path / "checkpoint"
