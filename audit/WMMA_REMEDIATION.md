@@ -214,14 +214,22 @@ prefill0.111122s/decode1.305875s. Median paired decode slowdown is
 Raw/decoded actual responses are in project-root
 `../tmp/wmma-runtime-candidate-v4/`; original responses remain intact.
 
-Full32768-prefill all-launch racecheck is pending in
-`build/wmma-runtime-upper-racecheck-v4`, with900s deadline, one analysis worker,
-32GiB owned-RSS budget and16GiB minimum host availability. Only a completed clean
-run allows the parent to launch the upper initcheck/synccheck/memcheck stage.
-`build/wmma-v4-upper-gates.json` records the parent commands. No timeout, resource
-guard stop, missing application result or missing canonical footer is acceptance.
-The diagnostic container remains owned and running for that job; cleanup and
-production/library hash revalidation must be recorded after it finishes.
+Full32768-prefill all-launch racecheck **timed out after900.605s** with one
+analysis worker,32GiB owned-RSS budget and16GiB minimum host availability.
+It produced neither application JSON nor a canonical zero-hazard footer. The
+resource guard did not trigger; cgroup OOM/kill counters remained zero. Artifact
+hashes stayed stable and owned-group cleanup completed. The parent returned86
+and correctly did **not launch** upper initcheck/synccheck/memcheck. These tools
+remain untested at this upper fixture, not failed or clean by inference.
+Complete failure evidence and commands are preserved in
+`validation/wmma-runtime-upper-racecheck-v4/` and `wmma-v4-upper-gates.json`.
+
+An independent host process scan found no live inference or sanitizer processes.
+All three production binaries and all three pinned CUDA libraries retain their
+original SHA256 values. The owned `lfm3-policy-v1` container was stopped and
+verified exited (exit137 after Docker stop; `OOMKilled:false`). See
+`validation/wmma-v4-final-cleanup.json`. Production remains unchanged and full
+acceptance remains false; no timeout or incomplete checker result is waived.
 
 ## Remaining release gates
 

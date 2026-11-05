@@ -1,0 +1,77 @@
+{
+  "status": "timeout",
+  "full_acceptance": false,
+  "scoped_passed": false,
+  "resource_stopped": false,
+  "timed_out": true,
+  "returncode": null,
+  "owned_process_group": 4099,
+  "no_launch_filters": true,
+  "rss_budget_gib": 32.0,
+  "min_host_available_gib": 16.0,
+  "scope": "all launches; full32768 prefill only; no broader acceptance",
+  "start_hashes": {
+    "sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "binary": "81df4deae203b3cd646bfa1827317389e900a981e8d9db72dd26725a413799d0",
+    "request": "37196bdea7be573348e0fdc7dada40f20f76408d292ae6b36f5c610d63570657",
+    "expected_result": "d0bfa1931f038c4053a057880d7d3fa8787207a0b98da55054e0eef9f82e2440"
+  },
+  "command": [
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+    "--tool",
+    "racecheck",
+    "--error-exitcode",
+    "86",
+    "--print-limit",
+    "0",
+    "--racecheck-num-workers",
+    "1",
+    "--log-file",
+    "/workspace/liquid-CUDA/build/wmma-runtime-upper-racecheck-v4/racecheck.log",
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/liquid-lfm3",
+    "--experimental",
+    "/workspace/models/LFM3-Omni-2B",
+    "/workspace/liquid-CUDA/build/wmma-runtime-upper-racecheck-v4/request.json",
+    "/workspace/liquid-CUDA/build/wmma-runtime-upper-racecheck-v4/native.json"
+  ],
+  "cgroup_before": {
+    "path": "/sys/fs/cgroup",
+    "events": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "current": "7406215168",
+    "max": "51539607552",
+    "peak": "14369280000"
+  },
+  "application_ok": false,
+  "application_error": "[Errno 2] No such file or directory: '/workspace/liquid-CUDA/build/wmma-runtime-upper-racecheck-v4/native.json'",
+  "canonical_zero_summary": false,
+  "group_cleanup_complete": true,
+  "cgroup_after": {
+    "path": "/sys/fs/cgroup",
+    "events": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "current": "7408451584",
+    "max": "51539607552",
+    "peak": "14369280000"
+  },
+  "end_hashes": {
+    "sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "binary": "81df4deae203b3cd646bfa1827317389e900a981e8d9db72dd26725a413799d0",
+    "request": "37196bdea7be573348e0fdc7dada40f20f76408d292ae6b36f5c610d63570657",
+    "expected_result": "d0bfa1931f038c4053a057880d7d3fa8787207a0b98da55054e0eef9f82e2440"
+  },
+  "hashes_stable": true,
+  "seconds": 900.6051672450121
+}

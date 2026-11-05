@@ -1,0 +1,28 @@
+{
+  "full_acceptance": false,
+  "no_live_inference_or_sanitizer_processes": true,
+  "production_sha256": {
+    "liquid-lfm3": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+    "liquid-lfm3-worker": "1aa1e0c2f3c3ebc0153f156ff403b8b16ba943a4da2cca78303f6fc1d0adc2c9",
+    "lfm3-decode-batch-probe": "345f1ded5278fe257b80bc2b17bb85318bbb9c848648c9e8ce10dad5adbd514e"
+  },
+  "pinned_library_sha256": {
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/racecheck-pinned-libs-v1/libcublas.so.13": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b",
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/racecheck-pinned-libs-v1/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/racecheck-pinned-libs-v1/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63"
+  },
+  "container_id": "485d33ece0bbaca979b8b81b7129ed626b98731f11399e052453836c65413dbc",
+  "container_state": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 137,
+    "Error": "",
+    "StartedAt": "2026-11-05T21:12:46.171226256Z",
+    "FinishedAt": "2026-11-05T23:11:09.424795908Z"
+  }
+}

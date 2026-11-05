@@ -1,0 +1,37 @@
+{
+  "full_acceptance": false,
+  "records": [
+    {
+      "name": "wmma-runtime-upper-racecheck-v4",
+      "command": [
+        "/opt/venv/bin/python3",
+        "/workspace/liquid-CUDA/tools/check_lfm3_racecheck_guarded.py",
+        "--checkpoint",
+        "/workspace/models/LFM3-Omni-2B",
+        "--binary",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/build/liquid-lfm3",
+        "--sanitizer",
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--request",
+        "/workspace/liquid-CUDA/build/wmma-upper-fixture-v4/request.json",
+        "--expected-result",
+        "/workspace/liquid-CUDA/build/wmma-upper-fixture-v4/expected.json",
+        "--timeout",
+        "900",
+        "--num-workers",
+        "1",
+        "--rss-budget-gib",
+        "32",
+        "--min-host-available-gib",
+        "16",
+        "--output",
+        "/workspace/liquid-CUDA/build/wmma-runtime-upper-racecheck-v4"
+      ],
+      "status": "failed",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 900.7001395709958,
+      "group_cleanup_complete": true
+    }
+  ]
+}

@@ -35,7 +35,11 @@ not vendor confirmation of this instruction/configuration.
 Latest v4 passes all four scoped integrated tools (including unexcluded
 synccheck/racecheck),6890 unchanged eager checks and numerical32K coverage.
 This does not resolve production's historical checker failures or establish
-full32768 sanitizer coverage. The all-launch guarded upper job remains pending;
+full32768 sanitizer coverage. The all-launch guarded upper racecheck timed out
+at900.605s without application JSON or a canonical zero-hazard footer. No OOM or
+resource-guard stop occurred; upper initcheck/synccheck/memcheck were not launched.
+Owned descendants were independently checked absent and the container stopped;
+production binaries and pinned libraries retain their original hashes.
 the candidate also measures3.445809175593137x slower decode in balanced warmed
 testing and is not promoted. Frozen v4 sources/results and limitations are in
 `WMMA_REMEDIATION.md`.
