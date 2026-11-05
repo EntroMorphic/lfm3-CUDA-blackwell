@@ -1,0 +1,1 @@
+{"status": "measurement-completed", "metrics": {"baseline": {"median_prefill_seconds": 0.02873435, "median_decode_seconds": 0.3796655, "samples": 20}, "candidate": {"median_prefill_seconds": 0.11115, "median_decode_seconds": 1.341545, "samples": 20}}, "paired_candidate_over_baseline_decode": 3.530298008783833, "full_acceptance": false}

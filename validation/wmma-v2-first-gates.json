@@ -1,0 +1,80 @@
+{
+  "full_acceptance": false,
+  "records": [
+    {
+      "name": "wmma-policy-screen-v2",
+      "command": [
+        "/opt/venv/bin/python3",
+        "/workspace/liquid-CUDA/tools/check_lfm3_wmma_candidate.py",
+        "--checkpoint",
+        "/workspace/models/LFM3-Omni-2B/model.safetensors",
+        "--reference",
+        "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference",
+        "--binary",
+        "/workspace/liquid-CUDA/build/cmake-wmma-policy-v2/lfm3-wmma-policy-probe",
+        "--sanitizer",
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--library-dir",
+        "/pinned-cuda",
+        "--output",
+        "/workspace/liquid-CUDA/build/wmma-policy-screen-v2"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 4.130041174008511,
+      "group_cleanup_complete": true
+    },
+    {
+      "name": "wmma-runtime-forward-v3",
+      "command": [
+        "/opt/venv/bin/python3",
+        "/workspace/liquid-CUDA/tools/check_lfm3_forward.py",
+        "--checkpoint",
+        "/workspace/models/LFM3-Omni-2B",
+        "--binary",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v2/build/liquid-lfm3",
+        "--output",
+        "/workspace/liquid-CUDA/build/wmma-runtime-forward-v3"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 65.97614722201251,
+      "group_cleanup_complete": true
+    },
+    {
+      "name": "wmma-runtime-sanitizers-v2",
+      "command": [
+        "/opt/venv/bin/python3",
+        "/workspace/liquid-CUDA/tools/check_lfm3_candidate_sanitizers.py",
+        "--checkpoint",
+        "/workspace/models/LFM3-Omni-2B",
+        "--binary",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v2/build/liquid-lfm3",
+        "--sanitizer",
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--library-dir",
+        "/pinned-cuda",
+        "--request",
+        "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/single/generation-request.json",
+        "--expected-result",
+        "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/single/generation.json",
+        "--tools",
+        "initcheck",
+        "synccheck",
+        "memcheck",
+        "racecheck",
+        "--timeout",
+        "300",
+        "--output",
+        "/workspace/liquid-CUDA/build/wmma-runtime-sanitizers-v2"
+      ],
+      "status": "failed",
+      "returncode": 1,
+      "timed_out": false,
+      "seconds": 323.43348549200164,
+      "group_cleanup_complete": true
+    }
+  ]
+}

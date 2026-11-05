@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/workspace/liquid-CUDA/tools/check_lfm3_batch_worker.py", line 257, in <module>
+    main()
+  File "/workspace/liquid-CUDA/tools/lfm3_owned_process.py", line 80, in guarded
+    return function(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/liquid-CUDA/tools/check_lfm3_batch_worker.py", line 94, in main
+    oracle_hash=hashlib.sha256(args.oracle.read_bytes()).hexdigest()
+                               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1021, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/text-sampling-oracle'

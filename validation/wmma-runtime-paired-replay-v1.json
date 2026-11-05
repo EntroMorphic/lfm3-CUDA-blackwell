@@ -1,0 +1,17 @@
+{
+  "records": [
+    {
+      "mode": "normal",
+      "fixtures": 5,
+      "comparisons": 209,
+      "original_assertions_replayed": true
+    },
+    {
+      "mode": "compact",
+      "fixtures": 5,
+      "comparisons": 209,
+      "original_assertions_replayed": true
+    }
+  ],
+  "full_acceptance": false
+}

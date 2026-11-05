@@ -1,0 +1,34 @@
+{
+  "command": [
+    "/opt/venv/bin/python3",
+    "/workspace/liquid-CUDA/tools/check_lfm3_batch_worker.py",
+    "--checkpoint",
+    "/workspace/models/LFM3-Omni-2B",
+    "--worker",
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3-worker",
+    "--request",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/generation-request.json",
+    "--oracle",
+    "/workspace/liquid-CUDA/build/cmake/text-sampling-oracle",
+    "--long-request",
+    "/workspace/liquid-CUDA/build/context32k-bounded-prefill-v1/decode_into32768/request.json",
+    "--output",
+    "/workspace/liquid-CUDA/build/wmma-runtime-grouped-worker-v2"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 185.83391516600386,
+  "start_sha256": {
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3-worker": "d527aee01c90e2c4dbc6030a8093d5492c0b0e969f61f4cd20a7cd6d584a3137",
+    "/workspace/liquid-CUDA/build/cmake/text-sampling-oracle": "8ff4ee7c563beeacd09ba192245b2a40d1cca671016ce711930c74373dc9f0f0",
+    "/workspace/liquid-CUDA/tools/check_lfm3_batch_worker.py": "91e4566afb53c0deaa9c420f92b4f0ad78856ef783cc13df764ccd6a03bbf0a2"
+  },
+  "end_sha256": {
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3-worker": "d527aee01c90e2c4dbc6030a8093d5492c0b0e969f61f4cd20a7cd6d584a3137",
+    "/workspace/liquid-CUDA/build/cmake/text-sampling-oracle": "8ff4ee7c563beeacd09ba192245b2a40d1cca671016ce711930c74373dc9f0f0",
+    "/workspace/liquid-CUDA/tools/check_lfm3_batch_worker.py": "91e4566afb53c0deaa9c420f92b4f0ad78856ef783cc13df764ccd6a03bbf0a2"
+  },
+  "hashes_stable": true,
+  "group_cleanup_complete": true,
+  "full_acceptance": false
+}

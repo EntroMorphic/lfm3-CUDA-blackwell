@@ -1,0 +1,6 @@
+{"seconds": 0.0012776299990946427, "processes": [{"pid": 1335, "state": "R", "user_ticks": 0, "system_ticks": 0, "rss_bytes": 4456448}], "system_memory": {"MemAvailable_bytes": 113531482112, "SwapFree_bytes": 0}}
+{"seconds": 2.0025877820007736, "processes": [{"pid": 1335, "state": "S", "user_ticks": 40, "system_ticks": 36, "rss_bytes": 4783280128}], "system_memory": {"MemAvailable_bytes": 113082482688, "SwapFree_bytes": 0}}
+{"seconds": 4.003808403009316, "processes": [{"pid": 1335, "state": "S", "user_ticks": 62, "system_ticks": 44, "rss_bytes": 4815630336}], "system_memory": {"MemAvailable_bytes": 113002536960, "SwapFree_bytes": 0}}
+{"seconds": 6.0050235009985045, "processes": [{"pid": 1335, "state": "S", "user_ticks": 66, "system_ticks": 46, "rss_bytes": 4815630336}], "system_memory": {"MemAvailable_bytes": 113002536960, "SwapFree_bytes": 0}}
+{"seconds": 8.006429940011003, "processes": [{"pid": 1335, "state": "R", "user_ticks": 92, "system_ticks": 56, "rss_bytes": 4845035520}], "system_memory": {"MemAvailable_bytes": 112977895424, "SwapFree_bytes": 0}}
+{"seconds": 10.007783057008055, "processes": [{"pid": 1335, "state": "R", "user_ticks": 119, "system_ticks": 68, "rss_bytes": 4827471872}], "system_memory": {"MemAvailable_bytes": 112979771392, "SwapFree_bytes": 0}}

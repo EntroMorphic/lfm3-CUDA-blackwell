@@ -1,0 +1,91 @@
+{
+  "full_acceptance": false,
+  "records": [
+    {
+      "name": "wmma-runtime-32k-v1",
+      "command": [
+        "/opt/venv/bin/python3",
+        "/workspace/liquid-CUDA/tools/check_lfm3_32k.py",
+        "--checkpoint",
+        "/workspace/models/LFM3-Omni-2B",
+        "--binary",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3",
+        "--output",
+        "/workspace/liquid-CUDA/build/wmma-runtime-32k-v1"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 356.84007998400193,
+      "group_cleanup_complete": true
+    },
+    {
+      "name": "wmma-runtime-paired-normal-v1",
+      "command": [
+        "/opt/venv/bin/python3",
+        "/workspace/liquid-CUDA/tools/check_lfm3_decode_batch.py",
+        "--checkpoint",
+        "/workspace/models/LFM3-Omni-2B",
+        "--binary",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/lfm3-decode-batch-probe",
+        "--reference-mode",
+        "normal",
+        "--timeout",
+        "300",
+        "--output",
+        "/workspace/liquid-CUDA/build/wmma-runtime-paired-normal-v1"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 296.1332254070003,
+      "group_cleanup_complete": true
+    },
+    {
+      "name": "wmma-runtime-paired-compact-v1",
+      "command": [
+        "/opt/venv/bin/python3",
+        "/workspace/liquid-CUDA/tools/check_lfm3_decode_batch.py",
+        "--checkpoint",
+        "/workspace/models/LFM3-Omni-2B",
+        "--binary",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/lfm3-decode-batch-probe",
+        "--reference-mode",
+        "compact",
+        "--timeout",
+        "300",
+        "--output",
+        "/workspace/liquid-CUDA/build/wmma-runtime-paired-compact-v1"
+      ],
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 303.5345427690045,
+      "group_cleanup_complete": true
+    },
+    {
+      "name": "wmma-runtime-grouped-worker-v1",
+      "command": [
+        "/opt/venv/bin/python3",
+        "/workspace/liquid-CUDA/tools/check_lfm3_batch_worker.py",
+        "--checkpoint",
+        "/workspace/models/LFM3-Omni-2B",
+        "--worker",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3-worker",
+        "--request",
+        "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/generation-request.json",
+        "--oracle",
+        "/workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/text-sampling-oracle",
+        "--long-request",
+        "/workspace/liquid-CUDA/build/context32k-bounded-prefill-v1/decode_into32768/request.json",
+        "--output",
+        "/workspace/liquid-CUDA/build/wmma-runtime-grouped-worker-v1"
+      ],
+      "status": "failed",
+      "returncode": 1,
+      "timed_out": false,
+      "seconds": 0.1147746970091248,
+      "group_cleanup_complete": true
+    }
+  ]
+}

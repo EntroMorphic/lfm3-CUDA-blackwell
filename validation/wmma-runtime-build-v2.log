@@ -1,0 +1,53 @@
+-- The CXX compiler identification is GNU 13.3.0
+-- The CUDA compiler identification is NVIDIA 13.0.88 with host compiler GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /usr/local/cuda/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Found CUDAToolkit: /usr/local/cuda/targets/sbsa-linux/include;/usr/local/cuda/targets/sbsa-linux/include/cccl (found version "13.0.88")
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (4.3s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/liquid-CUDA/build/wmma-runtime-candidate-v2/build
+[ 33%] Building CUDA object CMakeFiles/liquid-lfm3.dir/native/src/lfm3_main.cu.o
+[ 66%] Building CXX object CMakeFiles/liquid-lfm3.dir/native/src/safetensors.cpp.o
+[100%] Linking CXX executable liquid-lfm3
+[100%] Built target liquid-lfm3
+[ 33%] Building CXX object CMakeFiles/liquid-lfm3-worker.dir/native/src/safetensors.cpp.o
+[ 66%] Building CUDA object CMakeFiles/liquid-lfm3-worker.dir/native/src/lfm3_worker.cu.o
+[100%] Linking CXX executable liquid-lfm3-worker
+[100%] Built target liquid-lfm3-worker
+[ 33%] Building CUDA object CMakeFiles/lfm3-decode-batch-probe.dir/native/tests/lfm3_decode_batch_probe.cu.o
+[ 66%] Building CXX object CMakeFiles/lfm3-decode-batch-probe.dir/native/src/safetensors.cpp.o
+[100%] Linking CXX executable lfm3-decode-batch-probe
+[100%] Built target lfm3-decode-batch-probe
+-- The CXX compiler identification is GNU 13.3.0
+-- The CUDA compiler identification is NVIDIA 13.0.88 with host compiler GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /usr/local/cuda/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Found CUDAToolkit: /usr/local/cuda/targets/sbsa-linux/include;/usr/local/cuda/targets/sbsa-linux/include/cccl (found version "13.0.88")
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (3.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/liquid-CUDA/build/cmake-wmma-policy-v2
+[ 50%] Building CUDA object CMakeFiles/lfm3-wmma-policy-probe.dir/tests/lfm3_wmma_policy_probe.cu.o
+[100%] Linking CUDA executable lfm3-wmma-policy-probe
+[100%] Built target lfm3-wmma-policy-probe

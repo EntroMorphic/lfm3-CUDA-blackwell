@@ -2,12 +2,16 @@
 
 ## Current disposition
 
-The isolated runtime candidate replaces the measured NVJET linear path with
+The first isolated runtime candidate (v1) replaces the measured NVJET linear path with
 native BF16 WMMA and ordinary global stores. It passes all **6,890 unchanged eager
 checks**, all **nine exact context fixtures through4096**, and integrated initcheck,
 unexcluded synccheck and memcheck on the original four-token single fixture.
-**Production is not switched and full acceptance remains false.** Upper-context,
-paired/worker, resource, performance and full32K racecheck acceptance are separate.
+It also passes the three32K SDPA cases, both five-fixture paired matrices and
+the integrated grouped-worker gate. **Production is not switched and full
+acceptance remains false.** Resource, balanced performance, upper sanitizer and
+full32K racecheck acceptance are separate. An input-load-only v2 optimization is
+recorded below; further revisions must repeat their own gates rather than inherit
+v1 evidence.
 
 Candidate single SHA256:
 `d6ed2fefc5e8691cb574b4468e91e9e1cd5361c605f66f5cdac50fb8450d288d`.
@@ -102,6 +106,18 @@ or a claim about external library modules.
   expected original application output, passes integrated initcheck (16.205s),
   unexcluded synccheck (2.727s), and memcheck (18.553s). These are scoped elapsed
   tool observations, not serving speed benchmarks.
+- Original32K SDPA gate:8192,32767+1 and32768 cases pass unchanged0.5 maximum-error
+  and0.02 relative-RMS bounds, exact argmax and reset. Observed maxima are0.15625
+  and0.0031099559273570776 respectively. All four complete native logit files
+  additionally match the original production binary's saved outputs **bitwise**.
+- Both normal and compact paired matrices pass all five fixtures and209 exact
+  comparisons per mode, including the upper capacity split.
+- Integrated grouped worker passes73 complete-vocabulary bitwise steps,
+  independent non-greedy logit replay, retirement/reuse/EOS, targeted cancellation,
+  recovery, stale tags and aggregate32K checks. The first worker attempt failed
+  before launching the worker because the oracle path was wrong. Its original
+  failure is kept; the retry uses `build/cmake/text-sampling-oracle` with the same
+  previously accepted SHA256 `8ff4ee7c563beeacd09ba192245b2a40d1cca671016ce711930c74373dc9f0f0`.
 
 Evidence: `wmma-runtime-forward-v2`, `wmma-runtime-context-v1`, and
 `wmma-runtime-sanitizers-v1`. The first forward attempt failed during reference
@@ -111,18 +127,65 @@ never reached native comparison. That failure is retained as
 `/workspace/tools/ptxas` path for both Triton assembler variables, with its hash
 pinned; no system tool replacement occurred.
 
+Additional evidence: `wmma-runtime-32k-v1` (356.840s),
+`wmma-runtime-paired-normal-v1` (296.133s),
+`wmma-runtime-paired-compact-v1` (303.535s), and
+`wmma-runtime-grouped-worker-v2` (185.834s). These are gate wall times, not throughput
+comparisons. Failure evidence is `wmma-runtime-grouped-worker-v1.stdout.log`.
+`wmma-runtime-32k-v1/original-native-replay.json` binds all four original/candidate
+complete logit hashes.
+
 Actual generation responses are copied to project-root
 `../tmp/wmma-runtime-candidate-v1/`, including decoded text linked to raw response
-hashes. The current host suite passes1267 tests
-(`validation/host-wmma-candidate-v2.log`), including fail-closed host models for
+hashes. The current host suite passes1287 tests
+(`validation/host-wmma-candidate-v4.log`), including fail-closed host models for
 missing/duplicate checker footers, internal checker errors, incorrect application
 IDs, missing output and timeout.
 
+## Subsequent revisions: measured, not silently promoted
+
+- **v2 — direct complete-tile input loads:** all6890 original checks and the
+  three scoped initcheck/synccheck/memcheck checks pass. Its scoped racecheck
+  times out at300.002s without application output or a canonical footer. The
+  timeout remains failed evidence in `wmma-runtime-sanitizers-v2`.
+- **v3 — register-only thin GEMM:** for rows1..8, use PTX
+  `mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32`, four independent warps
+  per block where geometry permits, and ordinary FP32 stores. No shared memory
+  is used by this thin producer. All6890 original eager checks pass again.
+  Scoped initcheck, unexcluded synccheck and memcheck pass; scoped racecheck
+  completes in28.323s with zero hazards/errors/warnings and exact application
+  output. This is **not** full32K racecheck acceptance.
+- **v3 cost:** a balanced warmed AB/BA experiment with20 samples per binary,
+  all original token IDs exact, measures median decode0.3796655s for the original
+  and1.341545s for v3. Median paired candidate/original decode ratio is
+  **3.530298008783833**. Median prefill is0.02873435s versus0.11115s. Model loading
+  and warmup are outside those native inference counters. This measured regression
+  prevents a silent production switch; correctness alone is not enough.
+- **v4 — aligned operand loads, under validation:** disassembly of the actual v3
+  image finds120 static `LDG.E.U8` sites in the thin producer, caused by the
+  four-byte `memcpy` bit loader. Static sites are not dynamic execution counts.
+  Replace that loader with `ld.global.u32`, preserving operand bits. CUDA
+  allocations and the validated K/partition multiples of16 plus even BF16
+  offsets guarantee the required four-byte alignment. Static inspection verifies
+  four-byte-aligned payload offsets and input widths divisible by16 for all154
+  text matrix tensors; see `wmma-operand-alignment-v1.json`. The indexed loader
+  independently places tensors on256-byte boundaries. New tail fixtures cover
+  m1/17/63/65, n1/2/7/8/9/17, K16/32/48/64, partition counts1/2/3/4, matrix tails,
+  whole-warp retirement, partially populated last blocks and both paths. No v4
+  GPU pass is credited here until the separate runs finish.
+
+Evidence: `wmma-runtime-forward-v3`, `wmma-runtime-forward-v4`,
+`wmma-runtime-sanitizers-v2`, `wmma-runtime-sanitizers-v3`,
+`wmma-runtime-racecheck-v3`, `wmma-runtime-benchmark-v1`, and
+`wmma-runtime-disassembly-v3`. The benchmark requires hash-matched complete6890
+eager evidence before either binary runs. Racecheck parsing requires its own
+canonical hazard footer and treats warnings as non-clean; missing or contradictory
+footers cannot become zero-hazard results.
+
 ## Still required
 
-No production promotion, full-runtime/upper-context sanitizer certificate or full
-racecheck completion is implied. Full32K independent SDPA, paired matrices,
-integrated grouped worker, legacy serving/cancellation, balanced performance,
+No production promotion, upper-context sanitizer certificate or full racecheck
+completion is implied. Legacy serving/cancellation, balanced performance,
 resource soak and upper sanitizer/racecheck gates must retain their original
 assertions and complete on the selected final binary. There are no suppressions,
 checker kernel exclusions, scratch seeds, pedantic math, system library changes,

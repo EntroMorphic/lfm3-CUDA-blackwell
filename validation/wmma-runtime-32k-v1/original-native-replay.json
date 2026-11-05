@@ -1,0 +1,38 @@
+{
+  "records": [
+    {
+      "case": "prefill8192",
+      "step": "0.logits.bf16",
+      "candidate_sha256": "0e49ead158bc70c739f91a79b2443a7964e06dbc6e2b845d5b5ddac61858d86a",
+      "original_native_sha256": "0e49ead158bc70c739f91a79b2443a7964e06dbc6e2b845d5b5ddac61858d86a",
+      "bitwise_equal": true,
+      "bytes": 256000
+    },
+    {
+      "case": "decode_into32768",
+      "step": "0.logits.bf16",
+      "candidate_sha256": "9ddbc19c4fb065677a48e4bad0048fbd2709bce78ea7abf021bbd52c4984ee66",
+      "original_native_sha256": "9ddbc19c4fb065677a48e4bad0048fbd2709bce78ea7abf021bbd52c4984ee66",
+      "bitwise_equal": true,
+      "bytes": 256000
+    },
+    {
+      "case": "decode_into32768",
+      "step": "1.logits.bf16",
+      "candidate_sha256": "540bcfd5ec6d65045584aa762bfe19186a88a6df1f577b05c90e2271af18d66e",
+      "original_native_sha256": "540bcfd5ec6d65045584aa762bfe19186a88a6df1f577b05c90e2271af18d66e",
+      "bitwise_equal": true,
+      "bytes": 256000
+    },
+    {
+      "case": "prefill32768",
+      "step": "0.logits.bf16",
+      "candidate_sha256": "7b480db32f8f0e77bfe565414e61ccef60fd890acf69b9fceaf6544eafa13c0c",
+      "original_native_sha256": "7b480db32f8f0e77bfe565414e61ccef60fd890acf69b9fceaf6544eafa13c0c",
+      "bitwise_equal": true,
+      "bytes": 256000
+    }
+  ],
+  "all_bitwise_equal": true,
+  "full_acceptance": false
+}

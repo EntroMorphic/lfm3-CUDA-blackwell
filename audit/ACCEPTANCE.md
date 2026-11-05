@@ -75,6 +75,16 @@ This is a real backend candidate, not scratch seeding or checker suppression.
 Production still uses the original hashes above. Upper/context/worker, performance,
 resource and full32K racecheck acceptance must not be inferred from this increment.
 
+The same v1 candidate also passes the unchanged three32K SDPA cases; all four
+complete native logit files additionally match the original binary bitwise. Both
+five-fixture paired matrices pass209 comparisons per mode. Its grouped worker
+`d527aee0...` passes73 exact full-logit steps, independent non-greedy replay and
+aggregate32K/cancellation/recovery checks. The first worker attempt used an absent
+oracle path and never launched; the corrected-path retry preserves the original
+oracle hash. Production promotion and performance/resource/upper-sanitizer/full
+racecheck acceptance remain separate. A newer input-load optimization must repeat
+its own gates rather than inheriting v1 results.
+
 ### Prior standalone and single-serving increments (historical)
 
 The prior standalone increment: paired decode passes five fixtures in both normal
