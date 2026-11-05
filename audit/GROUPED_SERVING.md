@@ -52,3 +52,26 @@ Neither these tools nor host tests waive sanitizer gates. Initcheck remains
 unresolved; no supported vendor BSP/tool pairing or bug confirmation is claimed.
 The checkpoint-free reproduction packet is prepared locally, not published.
 Actual GPU results must be appended before this increment is accepted.
+
+## Initial integrated GPU evidence
+
+Worker `184f14b7...` passes `validation/grouped-worker-v1/`:73 full-vocabulary
+BF16-bit comparisons against independently materialized serial traces, exact
+IDs, independent stochastic logit replay with a verified non-greedy choice,
+mixed lengths/policies, both retirement orders, reuse, EOS, invalid-second-lane
+pre-mutation rejection, observed live B cancellation while A completes, fresh
+recovery, pre-dispatch A cancellation, stale tagged-control rejection and
+aggregate capacities3+32765.347 raw traces remain on Thor; their full sizes and
+SHA256 are copied in `trace-manifest.json`. Local postvalidation independently
+matches all73 serial/group hash pairs without aliasing trace identities.
+
+Authenticated HTTP smoke also passes in `validation/http-grouped-smoke-v1/`,
+with exact32-token outputs, live per-lane cancellation, peer preservation and
+recovery, fixed warm RSS/FD/device-free budgets and post-close recovery. Five
+measured groups show median0.8612s versus1.3238s for a serial pair (74.3 versus
+48.3 aggregate tokens/s). These are short same-workload observations, not a
+universal batching speedup or sustained-load certificate. Actual text is copied
+to `../tmp/http-grouped-smoke-v1/`.
+
+The extended60-cycle/600-second run remains separate. Upper-bound memcheck and
+integrated racecheck/initcheck remain open regardless of these numerical passes.
