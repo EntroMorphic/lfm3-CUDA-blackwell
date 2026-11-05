@@ -1,0 +1,312 @@
+capacity1 PASS
+decode2 PASS
+conv7 PASS
+window255 PASS
+window256 PASS
+window257 PASS
+long1024 PASS
+final4096 PASS
+prefill4096 PASS
+{
+  "status": "passed",
+  "suite": "full",
+  "cases": [
+    {
+      "case": "capacity1",
+      "status": "passed",
+      "prefill": 1,
+      "decodes": 0,
+      "capacity": 1,
+      "logits": [
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        }
+      ],
+      "final_slot_consumed": true,
+      "reset_exact": true,
+      "greedy_checked": true,
+      "greedy_final_slot_consumed": true
+    },
+    {
+      "case": "decode2",
+      "status": "passed",
+      "prefill": 1,
+      "decodes": 1,
+      "capacity": 2,
+      "logits": [
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        }
+      ],
+      "final_slot_consumed": true,
+      "reset_exact": true,
+      "greedy_checked": false,
+      "greedy_final_slot_consumed": null
+    },
+    {
+      "case": "conv7",
+      "status": "passed",
+      "prefill": 6,
+      "decodes": 2,
+      "capacity": 8,
+      "logits": [
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        }
+      ],
+      "final_slot_consumed": true,
+      "reset_exact": true,
+      "greedy_checked": false,
+      "greedy_final_slot_consumed": null
+    },
+    {
+      "case": "window255",
+      "status": "passed",
+      "prefill": 255,
+      "decodes": 2,
+      "capacity": 257,
+      "logits": [
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        }
+      ],
+      "final_slot_consumed": true,
+      "reset_exact": true,
+      "greedy_checked": true,
+      "greedy_final_slot_consumed": true
+    },
+    {
+      "case": "window256",
+      "status": "passed",
+      "prefill": 256,
+      "decodes": 1,
+      "capacity": 257,
+      "logits": [
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        }
+      ],
+      "final_slot_consumed": true,
+      "reset_exact": true,
+      "greedy_checked": false,
+      "greedy_final_slot_consumed": null
+    },
+    {
+      "case": "window257",
+      "status": "passed",
+      "prefill": 257,
+      "decodes": 1,
+      "capacity": 258,
+      "logits": [
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        }
+      ],
+      "final_slot_consumed": true,
+      "reset_exact": true,
+      "greedy_checked": false,
+      "greedy_final_slot_consumed": null
+    },
+    {
+      "case": "long1024",
+      "status": "passed",
+      "prefill": 1024,
+      "decodes": 2,
+      "capacity": 1026,
+      "logits": [
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        }
+      ],
+      "final_slot_consumed": true,
+      "reset_exact": true,
+      "greedy_checked": false,
+      "greedy_final_slot_consumed": null
+    },
+    {
+      "case": "final4096",
+      "status": "passed",
+      "prefill": 4095,
+      "decodes": 1,
+      "capacity": 4096,
+      "logits": [
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        },
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        }
+      ],
+      "final_slot_consumed": true,
+      "reset_exact": true,
+      "greedy_checked": true,
+      "greedy_final_slot_consumed": true
+    },
+    {
+      "case": "prefill4096",
+      "status": "passed",
+      "prefill": 4096,
+      "decodes": 0,
+      "capacity": 4096,
+      "logits": [
+        {
+          "bitwise_equal": true,
+          "max_abs": 0.0,
+          "values": 128000
+        }
+      ],
+      "final_slot_consumed": true,
+      "reset_exact": true,
+      "greedy_checked": false,
+      "greedy_final_slot_consumed": null
+    }
+  ],
+  "maximum4096_checked": true,
+  "atol": 0.0,
+  "rtol": 0.0,
+  "reuse_reference": "/workspace/liquid-CUDA/build/context-full-bounded-release-v2",
+  "requested_cases": [
+    "capacity1",
+    "decode2",
+    "conv7",
+    "window255",
+    "window256",
+    "window257",
+    "long1024",
+    "final4096",
+    "prefill4096"
+  ],
+  "location": {
+    "phase": "complete",
+    "case": null,
+    "step": null
+  },
+  "binary_sha256": "d6ed2fefc5e8691cb574b4468e91e9e1cd5361c605f66f5cdac50fb8450d288d",
+  "source_sha256": {
+    "config.json": "17e3792551ef56b37e85bbd1e6e968f70dc5b4b14c96f1339d0be85e0ba46875",
+    "modeling_lfm3.py": "e8cd5254ea99ce6bd731b57b10908c2e8b5010ce8315341f895a38484885eeab",
+    "lfm3_conv.py": "80d4a985382a22774212759248a6b4c737bfbf9c2a47b3dd7f797dda748e4bb4"
+  },
+  "invalid_requests_rejected_before_weights": [
+    "capacity0",
+    "capacity4097",
+    "prefill_overflow",
+    "teacher_overflow",
+    "generation_overflow",
+    "max_prefill_overflow",
+    "max_decode_overflow",
+    "max_generation_overflow",
+    "warmup_bool",
+    "warmup11",
+    "reset_number",
+    "trace_logits_number"
+  ],
+  "reference": {
+    "torch": "2.10.0+cu130",
+    "transformers": "5.22.1",
+    "attention": "eager",
+    "dtype": "bfloat16",
+    "suppress_tokens": [
+      125012,
+      125015,
+      125029,
+      125030,
+      125031,
+      125032
+    ],
+    "stop_tokens": [
+      124900,
+      125014
+    ],
+    "layer_types": [
+      "conv",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv"
+    ],
+    "vocab": 128000
+  }
+}

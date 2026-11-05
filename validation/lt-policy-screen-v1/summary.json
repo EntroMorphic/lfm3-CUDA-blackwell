@@ -1,0 +1,35 @@
+{
+  "status": "incomplete",
+  "full_acceptance": false,
+  "records": [],
+  "scope": "layer0 projection only; not full eager acceptance",
+  "dependencies": {
+    "libcudart.so.13": "/pinned-cuda/libcudart.so.13",
+    "libcublasLt.so.13": "/pinned-cuda/libcublasLt.so.13",
+    "libstdc++.so.6": "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33",
+    "libgcc_s.so.1": "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1",
+    "libc.so.6": "/usr/lib/aarch64-linux-gnu/libc.so.6",
+    "libdl.so.2": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+    "libpthread.so.0": "/usr/lib/aarch64-linux-gnu/libpthread.so.0",
+    "librt.so.1": "/usr/lib/aarch64-linux-gnu/librt.so.1",
+    "libm.so.6": "/usr/lib/aarch64-linux-gnu/libm.so.6"
+  },
+  "error": "ambiguous tensor name",
+  "end_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe": "ff58c0489afb1eaf44e07172097b0a5971331d9b57dbb4f45ed75cac47abd0a9",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/tools/check_lfm3_lt_candidates.py": "f42ee457271c92e4c588687b1805cc0ed158c1dc2b8eac2f5f766ed4c2fe4c90",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/workspace/liquid-CUDA/native/tests/lfm3_lt_policy_probe.cu": "cef50d053e3f817b2ef4f7da5872510ac4ce9e75e057a26126878a1b3cf83624",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a"
+  },
+  "hashes_stable": true
+}

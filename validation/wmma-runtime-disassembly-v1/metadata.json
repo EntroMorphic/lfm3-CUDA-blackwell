@@ -1,0 +1,14 @@
+{
+  "binary_sha256": "d6ed2fefc5e8691cb574b4468e91e9e1cd5361c605f66f5cdac50fb8450d288d",
+  "compiler_image": "sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f",
+  "command": [
+    "/usr/local/cuda/bin/cuobjdump",
+    "--dump-sass",
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3"
+  ],
+  "stderr": "",
+  "sass_sha256": "a285da2872768aef4db457bebbc4c045447fba9bb3316861cb9a8d04b9c6ca07",
+  "tma_store_instruction_present": false,
+  "wmma_instruction_present": true,
+  "scope": "static candidate image, not dynamic counts; external cuBLAS modules not embedded"
+}

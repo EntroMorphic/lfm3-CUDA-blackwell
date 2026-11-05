@@ -63,7 +63,19 @@ NVIDIA's documented unsupported tensormap/tcgen05 coverage, not vendor-confirmed
 attribution or a production waiver. Full-runtime synccheck and32K racecheck gates
 are unchanged. See `BOUNDARY_OBSERVER.md` and `TMA_STORE_FINDINGS.md`.
 
-### Prior standalone and single-serving increments
+### Native ordinary-store remediation candidate (not promoted)
+
+`WMMA_REMEDIATION.md` records an isolated native WMMA linear path that preserves
+the measured split-K arithmetic while avoiding the vendor TMA stores. Candidate
+single `d6ed2fef...` passes all6890 unchanged eager checks and all nine exact
+context fixtures through4096. All6890 regenerated reference hashes also match the
+original reference files. Its original four-token fixture passes integrated
+initcheck, unexcluded synccheck and memcheck with exact original application output.
+This is a real backend candidate, not scratch seeding or checker suppression.
+Production still uses the original hashes above. Upper/context/worker, performance,
+resource and full32K racecheck acceptance must not be inferred from this increment.
+
+### Prior standalone and single-serving increments (historical)
 
 The prior standalone increment: paired decode passes five fixtures in both normal
 and compact reference modes,209 bitwise-logit/full-cache comparisons per mode.

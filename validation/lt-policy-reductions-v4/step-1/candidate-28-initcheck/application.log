@@ -1,0 +1,4 @@
+{"configuration":true,"rows":1,"input":2048,"output":6144,"algorithms":1,"workspace_bytes":8519680,"output_initialized":false,"full_acceptance":false}
+{"launch_candidate":0,"id":66,"split_k":2,"tile":393,"stages":35,"reduction":1}
+{"candidate":0,"supported":true,"checked":6144,"mismatches":0,"consumer_mismatches":0}
+{"complete":true,"executed":1,"exact":1,"full_acceptance":false}

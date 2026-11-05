@@ -1,0 +1,5319 @@
+{
+  "status": "screening-completed",
+  "full_acceptance": false,
+  "scan_only": true,
+  "records": [
+    {
+      "step": 1,
+      "rows": 1,
+      "candidates": [],
+      "scan": {
+        "command": [
+          "/workspace/liquid-CUDA/build/cmake-lt-policy-v2/lfm3-lt-policy-probe",
+          "1",
+          "2048",
+          "6144",
+          "/workspace/liquid-CUDA/build/lt-policy-split-scan-v3/weights.bf16",
+          "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16",
+          "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16",
+          "/workspace/liquid-CUDA/build/lt-policy-split-scan-v3/step-1/scan/output"
+        ],
+        "returncode": 0,
+        "timed_out": false,
+        "seconds": 1.5673208560037892,
+        "group_cleanup_complete": true
+      },
+      "scan_events": [
+        {
+          "configuration": true,
+          "rows": 1,
+          "input": 2048,
+          "output": 6144,
+          "algorithms": 326,
+          "workspace_bytes": 8519680,
+          "output_initialized": false,
+          "full_acceptance": false
+        },
+        {
+          "launch_candidate": 0,
+          "id": 66,
+          "split_k": 2,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 0,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 1,
+          "id": 66,
+          "split_k": 1,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 1,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 2,
+          "id": 66,
+          "split_k": 1,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 2,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 3,
+          "id": 66,
+          "split_k": 1,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 3,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 4,
+          "id": 66,
+          "split_k": 2,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 4,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 5,
+          "id": 66,
+          "split_k": 1,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 5,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 6,
+          "id": 66,
+          "split_k": 1,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 6,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 7,
+          "id": 66,
+          "split_k": 1,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 7,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 8,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 9,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 10,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 11,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 12,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 13,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "launch_candidate": 14,
+          "id": 16,
+          "split_k": 1,
+          "tile": 0,
+          "stages": 0,
+          "reduction": 0
+        },
+        {
+          "candidate": 14,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 15,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 16,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 17,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 18,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 19,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 20,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 21,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 22,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 23,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 24,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 25,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 26,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 27,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "launch_candidate": 28,
+          "id": 66,
+          "split_k": 2,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 28,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 29,
+          "id": 66,
+          "split_k": 2,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 29,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 30,
+          "id": 66,
+          "split_k": 4,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 30,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 31,
+          "id": 66,
+          "split_k": 4,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 31,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 32,
+          "id": 66,
+          "split_k": 4,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 32,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 33,
+          "id": 66,
+          "split_k": 8,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 33,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 34,
+          "id": 66,
+          "split_k": 8,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 34,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 35,
+          "id": 66,
+          "split_k": 8,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 35,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 36,
+          "id": 66,
+          "split_k": 16,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 36,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 37,
+          "id": 66,
+          "split_k": 16,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 37,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 38,
+          "id": 66,
+          "split_k": 16,
+          "tile": 393,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 38,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 39,
+          "id": 66,
+          "split_k": 2,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 39,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 40,
+          "id": 66,
+          "split_k": 2,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 40,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 41,
+          "id": 66,
+          "split_k": 2,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 41,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 42,
+          "id": 66,
+          "split_k": 4,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 42,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 43,
+          "id": 66,
+          "split_k": 4,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 43,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 44,
+          "id": 66,
+          "split_k": 4,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 44,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 45,
+          "id": 66,
+          "split_k": 8,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 45,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 46,
+          "id": 66,
+          "split_k": 8,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 46,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 47,
+          "id": 66,
+          "split_k": 8,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 47,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 48,
+          "id": 66,
+          "split_k": 16,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 48,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 49,
+          "id": 66,
+          "split_k": 16,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 49,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 50,
+          "id": 66,
+          "split_k": 16,
+          "tile": 537,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 50,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 51,
+          "id": 66,
+          "split_k": 2,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 51,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 52,
+          "id": 66,
+          "split_k": 2,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 52,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 53,
+          "id": 66,
+          "split_k": 2,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 53,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 54,
+          "id": 66,
+          "split_k": 4,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 54,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 55,
+          "id": 66,
+          "split_k": 4,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 55,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 56,
+          "id": 66,
+          "split_k": 4,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 56,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 57,
+          "id": 66,
+          "split_k": 8,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 57,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 58,
+          "id": 66,
+          "split_k": 8,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 58,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 59,
+          "id": 66,
+          "split_k": 8,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 59,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 60,
+          "id": 66,
+          "split_k": 16,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 60,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 61,
+          "id": 66,
+          "split_k": 16,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 61,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 62,
+          "id": 66,
+          "split_k": 16,
+          "tile": 539,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 62,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 63,
+          "id": 66,
+          "split_k": 2,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 63,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 64,
+          "id": 66,
+          "split_k": 2,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 64,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 65,
+          "id": 66,
+          "split_k": 2,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 65,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 66,
+          "id": 66,
+          "split_k": 4,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 66,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 67,
+          "id": 66,
+          "split_k": 4,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 67,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 68,
+          "id": 66,
+          "split_k": 4,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 68,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 69,
+          "id": 66,
+          "split_k": 8,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 69,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 70,
+          "id": 66,
+          "split_k": 8,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 70,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 71,
+          "id": 66,
+          "split_k": 8,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 71,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 72,
+          "id": 66,
+          "split_k": 16,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 72,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 73,
+          "id": 66,
+          "split_k": 16,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 73,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 74,
+          "id": 66,
+          "split_k": 16,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 74,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 75,
+          "id": 66,
+          "split_k": 2,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 75,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 76,
+          "id": 66,
+          "split_k": 2,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 76,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 77,
+          "id": 66,
+          "split_k": 4,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 77,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 78,
+          "id": 66,
+          "split_k": 4,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 78,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 79,
+          "id": 66,
+          "split_k": 4,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 79,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 80,
+          "id": 66,
+          "split_k": 8,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 80,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 81,
+          "id": 66,
+          "split_k": 8,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 81,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 82,
+          "id": 66,
+          "split_k": 8,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 82,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 83,
+          "id": 66,
+          "split_k": 16,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 83,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 84,
+          "id": 66,
+          "split_k": 16,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 84,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 85,
+          "id": 66,
+          "split_k": 16,
+          "tile": 486,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 85,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 86,
+          "id": 66,
+          "split_k": 2,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 86,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 87,
+          "id": 66,
+          "split_k": 2,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 87,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 88,
+          "id": 66,
+          "split_k": 2,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 88,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 89,
+          "id": 66,
+          "split_k": 4,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 89,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 90,
+          "id": 66,
+          "split_k": 4,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 90,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 91,
+          "id": 66,
+          "split_k": 4,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 91,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 92,
+          "id": 66,
+          "split_k": 8,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 92,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 93,
+          "id": 66,
+          "split_k": 8,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 93,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 94,
+          "id": 66,
+          "split_k": 8,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 94,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 95,
+          "id": 66,
+          "split_k": 16,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 95,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 96,
+          "id": 66,
+          "split_k": 16,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 96,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 97,
+          "id": 66,
+          "split_k": 16,
+          "tile": 448,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 97,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 98,
+          "id": 66,
+          "split_k": 2,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 98,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 99,
+          "id": 66,
+          "split_k": 2,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 99,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 100,
+          "id": 66,
+          "split_k": 2,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 100,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 101,
+          "id": 66,
+          "split_k": 4,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 101,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 102,
+          "id": 66,
+          "split_k": 4,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 102,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 103,
+          "id": 66,
+          "split_k": 4,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 103,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 104,
+          "id": 66,
+          "split_k": 8,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 104,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 105,
+          "id": 66,
+          "split_k": 8,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 105,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 106,
+          "id": 66,
+          "split_k": 8,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 106,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 107,
+          "id": 66,
+          "split_k": 16,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 107,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 108,
+          "id": 66,
+          "split_k": 16,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 108,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 109,
+          "id": 66,
+          "split_k": 16,
+          "tile": 450,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 109,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 110,
+          "id": 66,
+          "split_k": 2,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 110,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 111,
+          "id": 66,
+          "split_k": 2,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 111,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 112,
+          "id": 66,
+          "split_k": 2,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 112,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 113,
+          "id": 66,
+          "split_k": 4,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 113,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 114,
+          "id": 66,
+          "split_k": 4,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 114,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 115,
+          "id": 66,
+          "split_k": 4,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 115,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 116,
+          "id": 66,
+          "split_k": 8,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 116,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 117,
+          "id": 66,
+          "split_k": 8,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 117,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 118,
+          "id": 66,
+          "split_k": 8,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 118,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 119,
+          "id": 66,
+          "split_k": 16,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 119,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 120,
+          "id": 66,
+          "split_k": 16,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 120,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 121,
+          "id": 66,
+          "split_k": 16,
+          "tile": 573,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 121,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 122,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 123,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 124,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 125,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 126,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 127,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 128,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 129,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 130,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 131,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 132,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 133,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 134,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 135,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 136,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 137,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 138,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 139,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 140,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 141,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 142,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 143,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 144,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 145,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 146,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 147,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 148,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 149,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 150,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 151,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 152,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 153,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 154,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 155,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 156,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 157,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 158,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "launch_candidate": 159,
+          "id": 14,
+          "split_k": 2,
+          "tile": 0,
+          "stages": 0,
+          "reduction": 2
+        },
+        {
+          "candidate": 159,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 160,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 161,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "launch_candidate": 162,
+          "id": 14,
+          "split_k": 4,
+          "tile": 0,
+          "stages": 0,
+          "reduction": 2
+        },
+        {
+          "candidate": 162,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 163,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 164,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "launch_candidate": 165,
+          "id": 14,
+          "split_k": 8,
+          "tile": 0,
+          "stages": 0,
+          "reduction": 2
+        },
+        {
+          "candidate": 165,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 166,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 167,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "launch_candidate": 168,
+          "id": 14,
+          "split_k": 16,
+          "tile": 0,
+          "stages": 0,
+          "reduction": 2
+        },
+        {
+          "candidate": 168,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 169,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 170,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 171,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 172,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 173,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 174,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 175,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 176,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 177,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 178,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 179,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 180,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 181,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 182,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 183,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 184,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 185,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 186,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 187,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 188,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 189,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 190,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 191,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 192,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 193,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 194,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 195,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 196,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 197,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 198,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 199,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 200,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 201,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 202,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 203,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 204,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 205,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 206,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 207,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 208,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 209,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 210,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 211,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 212,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 213,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 214,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 215,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 216,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 217,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 218,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 219,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 220,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 221,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 222,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 223,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 224,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 225,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 226,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 227,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 228,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 229,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 230,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 231,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 232,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 233,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 234,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 235,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 236,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 237,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 238,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 239,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 240,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 241,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 242,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 243,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 244,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 245,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 246,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 247,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 248,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 249,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 250,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 251,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 252,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 253,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 254,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 255,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 256,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 257,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 258,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 259,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 260,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 261,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 262,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 263,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 264,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 265,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 266,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 267,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 268,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 269,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 270,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 271,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 272,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 273,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 274,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 275,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 276,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 277,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 278,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 279,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 280,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 281,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 282,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 283,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 284,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 285,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 286,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 287,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 288,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 289,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 290,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 291,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 292,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 293,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 294,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 295,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 296,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 297,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 298,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 299,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 300,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 301,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 302,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 303,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 304,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 305,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 306,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 307,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 308,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 309,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 310,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 311,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 312,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 313,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 314,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 315,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 316,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 317,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 318,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 319,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 320,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 321,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 322,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 323,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 324,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 325,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "complete": true,
+          "executed": 107,
+          "exact": 24,
+          "full_acceptance": false
+        }
+      ],
+      "exact_candidate_indices": [
+        0,
+        4,
+        28,
+        29,
+        39,
+        40,
+        41,
+        51,
+        52,
+        53,
+        63,
+        64,
+        65,
+        75,
+        76,
+        86,
+        87,
+        88,
+        98,
+        99,
+        100,
+        110,
+        111,
+        112
+      ]
+    },
+    {
+      "step": 0,
+      "rows": 34,
+      "candidates": [],
+      "scan": {
+        "command": [
+          "/workspace/liquid-CUDA/build/cmake-lt-policy-v2/lfm3-lt-policy-probe",
+          "34",
+          "2048",
+          "6144",
+          "/workspace/liquid-CUDA/build/lt-policy-split-scan-v3/weights.bf16",
+          "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.operator_norm.bf16",
+          "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.conv.in_proj.bf16",
+          "/workspace/liquid-CUDA/build/lt-policy-split-scan-v3/step-0/scan/output"
+        ],
+        "returncode": 0,
+        "timed_out": false,
+        "seconds": 0.5652726320113288,
+        "group_cleanup_complete": true
+      },
+      "scan_events": [
+        {
+          "configuration": true,
+          "rows": 34,
+          "input": 2048,
+          "output": 6144,
+          "algorithms": 327,
+          "workspace_bytes": 8519680,
+          "output_initialized": false,
+          "full_acceptance": false
+        },
+        {
+          "launch_candidate": 0,
+          "id": 66,
+          "split_k": 1,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 0,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 1,
+          "id": 66,
+          "split_k": 1,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 1,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 2,
+          "id": 66,
+          "split_k": 1,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 2,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 3,
+          "id": 66,
+          "split_k": 1,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 3,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 4,
+          "id": 66,
+          "split_k": 1,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 4,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 5,
+          "id": 66,
+          "split_k": 2,
+          "tile": 396,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 5,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 6,
+          "id": 66,
+          "split_k": 1,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 6,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 7,
+          "id": 66,
+          "split_k": 1,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 0
+        },
+        {
+          "candidate": 7,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 8,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 9,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 10,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 11,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 12,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 13,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "launch_candidate": 14,
+          "id": 16,
+          "split_k": 1,
+          "tile": 0,
+          "stages": 0,
+          "reduction": 0
+        },
+        {
+          "candidate": 14,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 220,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 15,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 16,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 17,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 18,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 19,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 20,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 21,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 22,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 23,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 24,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 25,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 26,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 27,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "launch_candidate": 28,
+          "id": 66,
+          "split_k": 2,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 28,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 29,
+          "id": 66,
+          "split_k": 2,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 29,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 30,
+          "id": 66,
+          "split_k": 2,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 30,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 31,
+          "id": 66,
+          "split_k": 4,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 31,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 32,
+          "id": 66,
+          "split_k": 4,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 32,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 33,
+          "id": 66,
+          "split_k": 4,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 33,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 34,
+          "id": 66,
+          "split_k": 8,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 34,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 35,
+          "id": 66,
+          "split_k": 8,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 35,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 36,
+          "id": 66,
+          "split_k": 8,
+          "tile": 247,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 36,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 37,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 38,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 39,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "launch_candidate": 40,
+          "id": 66,
+          "split_k": 2,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 40,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 41,
+          "id": 66,
+          "split_k": 2,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 41,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 42,
+          "id": 66,
+          "split_k": 2,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 42,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 43,
+          "id": 66,
+          "split_k": 4,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 43,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 44,
+          "id": 66,
+          "split_k": 4,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 44,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 45,
+          "id": 66,
+          "split_k": 4,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 45,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 46,
+          "id": 66,
+          "split_k": 8,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 46,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 47,
+          "id": 66,
+          "split_k": 8,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 47,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 48,
+          "id": 66,
+          "split_k": 8,
+          "tile": 541,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 48,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 49,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 50,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 51,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "launch_candidate": 52,
+          "id": 66,
+          "split_k": 2,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 52,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 53,
+          "id": 66,
+          "split_k": 2,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 53,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 54,
+          "id": 66,
+          "split_k": 2,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 54,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 55,
+          "id": 66,
+          "split_k": 4,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 55,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 56,
+          "id": 66,
+          "split_k": 4,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 56,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 57,
+          "id": 66,
+          "split_k": 4,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 57,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 58,
+          "id": 66,
+          "split_k": 8,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 58,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 59,
+          "id": 66,
+          "split_k": 8,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 59,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 60,
+          "id": 66,
+          "split_k": 8,
+          "tile": 542,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 60,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 61,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 62,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 63,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "launch_candidate": 64,
+          "id": 66,
+          "split_k": 2,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 64,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 65,
+          "id": 66,
+          "split_k": 2,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 65,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 66,
+          "id": 66,
+          "split_k": 2,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 66,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 67,
+          "id": 66,
+          "split_k": 4,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 67,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 68,
+          "id": 66,
+          "split_k": 4,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 68,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 69,
+          "id": 66,
+          "split_k": 4,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 69,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 70,
+          "id": 66,
+          "split_k": 8,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 70,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 71,
+          "id": 66,
+          "split_k": 8,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 71,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 72,
+          "id": 66,
+          "split_k": 8,
+          "tile": 543,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 72,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 73,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 74,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 75,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "launch_candidate": 76,
+          "id": 66,
+          "split_k": 2,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 76,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 77,
+          "id": 66,
+          "split_k": 2,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 77,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 78,
+          "id": 66,
+          "split_k": 2,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 78,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 79,
+          "id": 66,
+          "split_k": 4,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 79,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 80,
+          "id": 66,
+          "split_k": 4,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 80,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 81,
+          "id": 66,
+          "split_k": 4,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 81,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 82,
+          "id": 66,
+          "split_k": 8,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 82,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 83,
+          "id": 66,
+          "split_k": 8,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 83,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 84,
+          "id": 66,
+          "split_k": 8,
+          "tile": 263,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 84,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 85,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 86,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 87,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "launch_candidate": 88,
+          "id": 66,
+          "split_k": 2,
+          "tile": 396,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 88,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 89,
+          "id": 66,
+          "split_k": 2,
+          "tile": 396,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 89,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 90,
+          "id": 66,
+          "split_k": 4,
+          "tile": 396,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 90,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 91,
+          "id": 66,
+          "split_k": 4,
+          "tile": 396,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 91,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 92,
+          "id": 66,
+          "split_k": 4,
+          "tile": 396,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 92,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 93,
+          "id": 66,
+          "split_k": 8,
+          "tile": 396,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 93,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 94,
+          "id": 66,
+          "split_k": 8,
+          "tile": 396,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 94,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 95,
+          "id": 66,
+          "split_k": 8,
+          "tile": 396,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 95,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 96,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 97,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 98,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "launch_candidate": 99,
+          "id": 66,
+          "split_k": 2,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 99,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 100,
+          "id": 66,
+          "split_k": 2,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 100,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 101,
+          "id": 66,
+          "split_k": 2,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 101,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 102,
+          "id": 66,
+          "split_k": 4,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 102,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 103,
+          "id": 66,
+          "split_k": 4,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 103,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 104,
+          "id": 66,
+          "split_k": 4,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 104,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 105,
+          "id": 66,
+          "split_k": 8,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 105,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 106,
+          "id": 66,
+          "split_k": 8,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 106,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 107,
+          "id": 66,
+          "split_k": 8,
+          "tile": 452,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 107,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 108,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 109,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 110,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "launch_candidate": 111,
+          "id": 66,
+          "split_k": 2,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 111,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 112,
+          "id": 66,
+          "split_k": 2,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 112,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 113,
+          "id": 66,
+          "split_k": 2,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 113,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 114,
+          "id": 66,
+          "split_k": 4,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 114,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 115,
+          "id": 66,
+          "split_k": 4,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 115,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 116,
+          "id": 66,
+          "split_k": 4,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 116,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 205,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 117,
+          "id": 66,
+          "split_k": 8,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 1
+        },
+        {
+          "candidate": 117,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 118,
+          "id": 66,
+          "split_k": 8,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 2
+        },
+        {
+          "candidate": 118,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 119,
+          "id": 66,
+          "split_k": 8,
+          "tile": 544,
+          "stages": 35,
+          "reduction": 4
+        },
+        {
+          "candidate": 119,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 207,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 120,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 121,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 122,
+          "supported": false,
+          "status": 0
+        },
+        {
+          "candidate": 123,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 124,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 125,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 126,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 127,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 128,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 129,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 130,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 131,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 132,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 133,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 134,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 135,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 136,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 137,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 138,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 139,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 140,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 141,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 142,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 143,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 144,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 145,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 146,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 147,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 148,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 149,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 150,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 151,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 152,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 153,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 154,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 155,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 156,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 157,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 158,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 159,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 160,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 161,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 162,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 163,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 164,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 165,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 166,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 167,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 168,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 169,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 170,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 171,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 172,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 173,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 174,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 175,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 176,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 177,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 178,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 179,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 180,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 181,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 182,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 183,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 184,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 185,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 186,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 187,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 188,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 189,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 190,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 191,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 192,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 193,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 194,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 195,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 196,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 197,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 198,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 199,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 200,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 201,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 202,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 203,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 204,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 205,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 206,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 207,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 208,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 209,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 210,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 211,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 212,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 213,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 214,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 215,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 216,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 217,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 218,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 219,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 220,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 221,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 222,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 223,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 224,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 225,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 226,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 227,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 228,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 229,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 230,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 231,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 232,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 233,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 234,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 235,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 236,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 237,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 238,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 239,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 240,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 241,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 242,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 243,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 244,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 245,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 246,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 247,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 248,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 249,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 250,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 251,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 252,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 253,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 254,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 255,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 256,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 257,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 258,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 259,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 260,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 261,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 262,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 263,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 264,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 265,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 266,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 267,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 268,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 269,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 270,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 271,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 272,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 273,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 274,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 275,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 276,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 277,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 278,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 279,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 280,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 281,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 282,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 283,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 284,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 285,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 286,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 287,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 288,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 289,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 290,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 291,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 292,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 293,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 294,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 295,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 296,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 297,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 298,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 299,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 300,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 301,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 302,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 303,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 304,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 305,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 306,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 307,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 308,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 309,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 310,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 311,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 312,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 313,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 314,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 315,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 316,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 317,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 318,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 319,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 320,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 321,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 322,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 323,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 324,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 325,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 326,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "complete": true,
+          "executed": 80,
+          "exact": 7,
+          "full_acceptance": false
+        }
+      ],
+      "exact_candidate_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        6,
+        7
+      ]
+    }
+  ],
+  "scope": "layer0 projection only; not full eager acceptance",
+  "dependencies": {
+    "libcudart.so.13": "/pinned-cuda/libcudart.so.13",
+    "libcublasLt.so.13": "/pinned-cuda/libcublasLt.so.13",
+    "libstdc++.so.6": "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33",
+    "libgcc_s.so.1": "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1",
+    "libc.so.6": "/usr/lib/aarch64-linux-gnu/libc.so.6",
+    "libdl.so.2": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+    "libpthread.so.0": "/usr/lib/aarch64-linux-gnu/libpthread.so.0",
+    "librt.so.1": "/usr/lib/aarch64-linux-gnu/librt.so.1",
+    "libm.so.6": "/usr/lib/aarch64-linux-gnu/libm.so.6"
+  },
+  "weight": {
+    "name": "model.language_model.layers.0.conv.in_proj.weight",
+    "shape": [
+      6144,
+      2048
+    ],
+    "header_sha256": "99cf91c2889d46f47d4960a5259ede35ac64ec9700f973206e5a16d35c06eed4",
+    "tensor_sha256": "480955ead84ac3183e3bf6c659d166899641db57754045b98e0c462fe1b744af"
+  },
+  "start_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-lt-policy-v2/lfm3-lt-policy-probe": "e29c9689896ed9117e78e4d6680e295ce9e9145de0168697da921f9fa806d7d5",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/tools/check_lfm3_lt_candidates.py": "549097e7724706c9294af04b9d6494b408e9bed29ae6050d39f37fcefbd943bf",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/workspace/liquid-CUDA/native/tests/lfm3_lt_policy_probe.cu": "0a479688a9d6a94166c06f5c6256abd867cc217295b8c6738718b505abc4bbc5",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/workspace/liquid-CUDA/build/lt-policy-split-scan-v3/weights.bf16": "480955ead84ac3183e3bf6c659d166899641db57754045b98e0c462fe1b744af",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16": "cb7b691ed4248d690b28752f978b8bde0ef4fc3fbd3804b642eb079fe07a27d6",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16": "b2eaddf05831bdffbbf825a012b330794ae2c4d1d65a2da744b4794139f479d9",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.operator_norm.bf16": "08cc1fa8f1508aa40a4066602d21ee534691f69b1e5ceeef030a8010badb1b1f",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.conv.in_proj.bf16": "0b756f5efae1418595aeea8d63209401d41b5bd37060dedf407d9ef4fcd5d651"
+  },
+  "end_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-lt-policy-v2/lfm3-lt-policy-probe": "e29c9689896ed9117e78e4d6680e295ce9e9145de0168697da921f9fa806d7d5",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/tools/check_lfm3_lt_candidates.py": "549097e7724706c9294af04b9d6494b408e9bed29ae6050d39f37fcefbd943bf",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/workspace/liquid-CUDA/native/tests/lfm3_lt_policy_probe.cu": "0a479688a9d6a94166c06f5c6256abd867cc217295b8c6738718b505abc4bbc5",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/workspace/liquid-CUDA/build/lt-policy-split-scan-v3/weights.bf16": "480955ead84ac3183e3bf6c659d166899641db57754045b98e0c462fe1b744af",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16": "cb7b691ed4248d690b28752f978b8bde0ef4fc3fbd3804b642eb079fe07a27d6",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16": "b2eaddf05831bdffbbf825a012b330794ae2c4d1d65a2da744b4794139f479d9",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.operator_norm.bf16": "08cc1fa8f1508aa40a4066602d21ee534691f69b1e5ceeef030a8010badb1b1f",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.conv.in_proj.bf16": "0b756f5efae1418595aeea8d63209401d41b5bd37060dedf407d9ef4fcd5d651"
+  },
+  "hashes_stable": true
+}

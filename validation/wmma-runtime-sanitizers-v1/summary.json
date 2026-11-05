@@ -1,0 +1,220 @@
+{
+  "status": "scoped-passed",
+  "full_acceptance": false,
+  "kernel_exclusions": [],
+  "records": [
+    {
+      "tool": "initcheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/wmma-runtime-sanitizers-v1/initcheck.log",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/single/generation-request.json",
+        "/workspace/liquid-CUDA/build/wmma-runtime-sanitizers-v1/initcheck.json"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 16.2052729010029,
+      "group_cleanup_complete": true,
+      "errors": 0,
+      "internal_error": false,
+      "application": {
+        "input_ids": [
+          57892
+        ],
+        "generated_ids": [
+          348,
+          305,
+          305,
+          305
+        ],
+        "teacher_argmax": [
+          348
+        ]
+      },
+      "application_ok": true,
+      "clean": true
+    },
+    {
+      "tool": "synccheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "synccheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/wmma-runtime-sanitizers-v1/synccheck.log",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/single/generation-request.json",
+        "/workspace/liquid-CUDA/build/wmma-runtime-sanitizers-v1/synccheck.json"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 2.727008759000455,
+      "group_cleanup_complete": true,
+      "errors": 0,
+      "internal_error": false,
+      "application": {
+        "input_ids": [
+          57892
+        ],
+        "generated_ids": [
+          348,
+          305,
+          305,
+          305
+        ],
+        "teacher_argmax": [
+          348
+        ]
+      },
+      "application_ok": true,
+      "clean": true
+    },
+    {
+      "tool": "memcheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/wmma-runtime-sanitizers-v1/memcheck.log",
+        "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/single/generation-request.json",
+        "/workspace/liquid-CUDA/build/wmma-runtime-sanitizers-v1/memcheck.json"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 18.55300918300054,
+      "group_cleanup_complete": true,
+      "errors": 0,
+      "internal_error": false,
+      "application": {
+        "input_ids": [
+          57892
+        ],
+        "generated_ids": [
+          348,
+          305,
+          305,
+          305
+        ],
+        "teacher_argmax": [
+          348
+        ]
+      },
+      "application_ok": true,
+      "clean": true
+    }
+  ],
+  "dependencies": {
+    "libcudart.so.13": {
+      "path": "/pinned-cuda/libcudart.so.13",
+      "sha256": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63"
+    },
+    "libcublas.so.13": {
+      "path": "/pinned-cuda/libcublas.so.13",
+      "sha256": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b"
+    },
+    "libcublasLt.so.13": {
+      "path": "/pinned-cuda/libcublasLt.so.13",
+      "sha256": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9"
+    },
+    "libstdc++.so.6": {
+      "path": "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33",
+      "sha256": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4"
+    },
+    "libm.so.6": {
+      "path": "/usr/lib/aarch64-linux-gnu/libm.so.6",
+      "sha256": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a"
+    },
+    "libgcc_s.so.1": {
+      "path": "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1",
+      "sha256": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20"
+    },
+    "libc.so.6": {
+      "path": "/usr/lib/aarch64-linux-gnu/libc.so.6",
+      "sha256": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e"
+    },
+    "ld-linux-aarch64.so.1": {
+      "path": "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+      "sha256": "390027e5f45f236bd1838bc54bf464c5ff01d260ab9f8b415ea8276641bce505"
+    },
+    "libdl.so.2": {
+      "path": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+      "sha256": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4"
+    },
+    "libpthread.so.0": {
+      "path": "/usr/lib/aarch64-linux-gnu/libpthread.so.0",
+      "sha256": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353"
+    },
+    "librt.so.1": {
+      "path": "/usr/lib/aarch64-linux-gnu/librt.so.1",
+      "sha256": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e"
+    }
+  },
+  "start_sha256": {
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3": "d6ed2fefc5e8691cb574b4468e91e9e1cd5361c605f66f5cdac50fb8450d288d",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/single/generation-request.json": "b9b311fbde0e0ef779ebf805c3a46906453d0f0ff2e65984569a92d8d547774d",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/single/generation.json": "52ae08292f5577992e392697c7392d5f0a538184696b3f08fdf1eeecb4daf818",
+    "/workspace/liquid-CUDA/tools/check_lfm3_candidate_sanitizers.py": "db1ad2050e72c802bef1efd17620a320efdd078037336b3e3512ae971f230f3b",
+    "/workspace/liquid-CUDA/tools/check_lfm3_sanitizer.py": "4c3cb5de41ff587c1235c119e5dffd1c3b27676033b690475aac6e768b223c24",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublas.so.13": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1": "390027e5f45f236bd1838bc54bf464c5ff01d260ab9f8b415ea8276641bce505",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e"
+  },
+  "end_sha256": {
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3": "d6ed2fefc5e8691cb574b4468e91e9e1cd5361c605f66f5cdac50fb8450d288d",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/single/generation-request.json": "b9b311fbde0e0ef779ebf805c3a46906453d0f0ff2e65984569a92d8d547774d",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/single/generation.json": "52ae08292f5577992e392697c7392d5f0a538184696b3f08fdf1eeecb4daf818",
+    "/workspace/liquid-CUDA/tools/check_lfm3_candidate_sanitizers.py": "db1ad2050e72c802bef1efd17620a320efdd078037336b3e3512ae971f230f3b",
+    "/workspace/liquid-CUDA/tools/check_lfm3_sanitizer.py": "4c3cb5de41ff587c1235c119e5dffd1c3b27676033b690475aac6e768b223c24",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublas.so.13": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1": "390027e5f45f236bd1838bc54bf464c5ff01d260ab9f8b415ea8276641bce505",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e"
+  },
+  "hashes_stable": true
+}

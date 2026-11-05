@@ -1,0 +1,774 @@
+{
+  "status": "incomplete",
+  "full_acceptance": false,
+  "records": [
+    {
+      "step": 1,
+      "rows": 1,
+      "candidates": [
+        {
+          "index": 0,
+          "tools": {
+            "initcheck": {
+              "command": [
+                "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+                "--tool",
+                "initcheck",
+                "--error-exitcode",
+                "86",
+                "--print-limit",
+                "4",
+                "--log-file",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/candidate-0-initcheck/sanitizer.log",
+                "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe",
+                "1",
+                "2048",
+                "6144",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/weights.bf16",
+                "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16",
+                "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/candidate-0-initcheck/output",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/scan/output.0.algo.bin"
+              ],
+              "returncode": 86,
+              "timed_out": false,
+              "seconds": 6.292955106997397,
+              "group_cleanup_complete": true,
+              "errors": 12288,
+              "internal_error": false,
+              "whole_output_exact": true,
+              "clean": false
+            },
+            "synccheck": {
+              "command": [
+                "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+                "--tool",
+                "synccheck",
+                "--error-exitcode",
+                "86",
+                "--print-limit",
+                "4",
+                "--log-file",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/candidate-0-synccheck/sanitizer.log",
+                "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe",
+                "1",
+                "2048",
+                "6144",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/weights.bf16",
+                "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16",
+                "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/candidate-0-synccheck/output",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/scan/output.0.algo.bin"
+              ],
+              "returncode": 86,
+              "timed_out": false,
+              "seconds": 0.46540880600514356,
+              "group_cleanup_complete": true,
+              "errors": null,
+              "internal_error": true,
+              "whole_output_exact": true,
+              "clean": false
+            }
+          },
+          "small_case_clean": false
+        },
+        {
+          "index": 4,
+          "tools": {
+            "initcheck": {
+              "command": [
+                "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+                "--tool",
+                "initcheck",
+                "--error-exitcode",
+                "86",
+                "--print-limit",
+                "4",
+                "--log-file",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/candidate-4-initcheck/sanitizer.log",
+                "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe",
+                "1",
+                "2048",
+                "6144",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/weights.bf16",
+                "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16",
+                "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/candidate-4-initcheck/output",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/scan/output.4.algo.bin"
+              ],
+              "returncode": 86,
+              "timed_out": false,
+              "seconds": 5.941228278999915,
+              "group_cleanup_complete": true,
+              "errors": 12288,
+              "internal_error": false,
+              "whole_output_exact": true,
+              "clean": false
+            },
+            "synccheck": {
+              "command": [
+                "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+                "--tool",
+                "synccheck",
+                "--error-exitcode",
+                "86",
+                "--print-limit",
+                "4",
+                "--log-file",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/candidate-4-synccheck/sanitizer.log",
+                "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe",
+                "1",
+                "2048",
+                "6144",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/weights.bf16",
+                "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16",
+                "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/candidate-4-synccheck/output",
+                "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/scan/output.4.algo.bin"
+              ],
+              "returncode": 86,
+              "timed_out": false,
+              "seconds": 0.4666211720032152,
+              "group_cleanup_complete": true,
+              "errors": null,
+              "internal_error": true,
+              "whole_output_exact": true,
+              "clean": false
+            }
+          },
+          "small_case_clean": false
+        }
+      ],
+      "scan": {
+        "command": [
+          "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe",
+          "1",
+          "2048",
+          "6144",
+          "/workspace/liquid-CUDA/build/lt-policy-screen-v2/weights.bf16",
+          "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16",
+          "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16",
+          "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/scan/output"
+        ],
+        "returncode": 0,
+        "timed_out": false,
+        "seconds": 2.384231598000042,
+        "group_cleanup_complete": true
+      },
+      "scan_events": [
+        {
+          "configuration": true,
+          "rows": 1,
+          "input": 2048,
+          "output": 6144,
+          "algorithms": 28,
+          "workspace_bytes": 8519680,
+          "output_initialized": false,
+          "full_acceptance": false
+        },
+        {
+          "launch_candidate": 0,
+          "id": 66,
+          "split_k": 2,
+          "tile": 393,
+          "stages": 35
+        },
+        {
+          "candidate": 0,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 1,
+          "id": 66,
+          "split_k": 1,
+          "tile": 537,
+          "stages": 35
+        },
+        {
+          "candidate": 1,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 2,
+          "id": 66,
+          "split_k": 1,
+          "tile": 539,
+          "stages": 35
+        },
+        {
+          "candidate": 2,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 3,
+          "id": 66,
+          "split_k": 1,
+          "tile": 541,
+          "stages": 35
+        },
+        {
+          "candidate": 3,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 4,
+          "id": 66,
+          "split_k": 2,
+          "tile": 486,
+          "stages": 35
+        },
+        {
+          "candidate": 4,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 5,
+          "id": 66,
+          "split_k": 1,
+          "tile": 448,
+          "stages": 35
+        },
+        {
+          "candidate": 5,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 6,
+          "id": 66,
+          "split_k": 1,
+          "tile": 450,
+          "stages": 35
+        },
+        {
+          "candidate": 6,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 7,
+          "id": 66,
+          "split_k": 1,
+          "tile": 573,
+          "stages": 35
+        },
+        {
+          "candidate": 7,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 3,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 8,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 9,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 10,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 11,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 12,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 13,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "launch_candidate": 14,
+          "id": 16,
+          "split_k": 1,
+          "tile": 0,
+          "stages": 0
+        },
+        {
+          "candidate": 14,
+          "supported": true,
+          "checked": 6144,
+          "mismatches": 2,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 15,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 16,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 17,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 18,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 19,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 20,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 21,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 22,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 23,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 24,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 25,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 26,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 27,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "complete": true,
+          "executed": 9,
+          "exact": 2,
+          "full_acceptance": false
+        }
+      ],
+      "exact_candidate_indices": [
+        0,
+        4
+      ]
+    },
+    {
+      "step": 0,
+      "rows": 34,
+      "candidates": [
+        {
+          "index": 0,
+          "tools": {}
+        }
+      ],
+      "scan": {
+        "command": [
+          "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe",
+          "34",
+          "2048",
+          "6144",
+          "/workspace/liquid-CUDA/build/lt-policy-screen-v2/weights.bf16",
+          "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.operator_norm.bf16",
+          "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.conv.in_proj.bf16",
+          "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-0/scan/output"
+        ],
+        "returncode": 0,
+        "timed_out": false,
+        "seconds": 0.3160276349954074,
+        "group_cleanup_complete": true
+      },
+      "scan_events": [
+        {
+          "configuration": true,
+          "rows": 34,
+          "input": 2048,
+          "output": 6144,
+          "algorithms": 28,
+          "workspace_bytes": 8519680,
+          "output_initialized": false,
+          "full_acceptance": false
+        },
+        {
+          "launch_candidate": 0,
+          "id": 66,
+          "split_k": 1,
+          "tile": 247,
+          "stages": 35
+        },
+        {
+          "candidate": 0,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 1,
+          "id": 66,
+          "split_k": 1,
+          "tile": 541,
+          "stages": 35
+        },
+        {
+          "candidate": 1,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 2,
+          "id": 66,
+          "split_k": 1,
+          "tile": 542,
+          "stages": 35
+        },
+        {
+          "candidate": 2,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 3,
+          "id": 66,
+          "split_k": 1,
+          "tile": 543,
+          "stages": 35
+        },
+        {
+          "candidate": 3,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 4,
+          "id": 66,
+          "split_k": 1,
+          "tile": 263,
+          "stages": 35
+        },
+        {
+          "candidate": 4,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 5,
+          "id": 66,
+          "split_k": 2,
+          "tile": 396,
+          "stages": 35
+        },
+        {
+          "candidate": 5,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 192,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 6,
+          "id": 66,
+          "split_k": 1,
+          "tile": 452,
+          "stages": 35
+        },
+        {
+          "candidate": 6,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "launch_candidate": 7,
+          "id": 66,
+          "split_k": 1,
+          "tile": 544,
+          "stages": 35
+        },
+        {
+          "candidate": 7,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 0,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 8,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 9,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 10,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 11,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 12,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 13,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "launch_candidate": 14,
+          "id": 16,
+          "split_k": 1,
+          "tile": 0,
+          "stages": 0
+        },
+        {
+          "candidate": 14,
+          "supported": true,
+          "checked": 208896,
+          "mismatches": 220,
+          "consumer_mismatches": 0
+        },
+        {
+          "candidate": 15,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 16,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 17,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 18,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 19,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 20,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 21,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 22,
+          "supported": false,
+          "status": 8
+        },
+        {
+          "candidate": 23,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 24,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 25,
+          "supported": false,
+          "status": 15
+        },
+        {
+          "candidate": 26,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "candidate": 27,
+          "supported": false,
+          "status": 7
+        },
+        {
+          "complete": true,
+          "executed": 9,
+          "exact": 7,
+          "full_acceptance": false
+        }
+      ],
+      "exact_candidate_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        6,
+        7
+      ]
+    }
+  ],
+  "scope": "layer0 projection only; not full eager acceptance",
+  "dependencies": {
+    "libcudart.so.13": "/pinned-cuda/libcudart.so.13",
+    "libcublasLt.so.13": "/pinned-cuda/libcublasLt.so.13",
+    "libstdc++.so.6": "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33",
+    "libgcc_s.so.1": "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1",
+    "libc.so.6": "/usr/lib/aarch64-linux-gnu/libc.so.6",
+    "libdl.so.2": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+    "libpthread.so.0": "/usr/lib/aarch64-linux-gnu/libpthread.so.0",
+    "librt.so.1": "/usr/lib/aarch64-linux-gnu/librt.so.1",
+    "libm.so.6": "/usr/lib/aarch64-linux-gnu/libm.so.6"
+  },
+  "weight": {
+    "name": "model.language_model.layers.0.conv.in_proj.weight",
+    "shape": [
+      6144,
+      2048
+    ],
+    "header_sha256": "99cf91c2889d46f47d4960a5259ede35ac64ec9700f973206e5a16d35c06eed4",
+    "tensor_sha256": "480955ead84ac3183e3bf6c659d166899641db57754045b98e0c462fe1b744af"
+  },
+  "start_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe": "ff58c0489afb1eaf44e07172097b0a5971331d9b57dbb4f45ed75cac47abd0a9",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/tools/check_lfm3_lt_candidates.py": "d8372e4719a36dc7029869ddc04a5d9b3b8dfafbd28c25656f9205406b53f878",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/workspace/liquid-CUDA/native/tests/lfm3_lt_policy_probe.cu": "cef50d053e3f817b2ef4f7da5872510ac4ce9e75e057a26126878a1b3cf83624",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/workspace/liquid-CUDA/build/lt-policy-screen-v2/weights.bf16": "480955ead84ac3183e3bf6c659d166899641db57754045b98e0c462fe1b744af",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16": "cb7b691ed4248d690b28752f978b8bde0ef4fc3fbd3804b642eb079fe07a27d6",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16": "b2eaddf05831bdffbbf825a012b330794ae2c4d1d65a2da744b4794139f479d9",
+    "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/scan/output.0.algo.bin": "0394bbe37dbc6c3ee70dc96ed31dd021f3dbab35ea8715fbeca9946f844ab9bf",
+    "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/scan/output.4.algo.bin": "ef64f8a03bce51e52df24e5376b462f4da5da6eb9c4a3393799c3efa995e94eb",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.operator_norm.bf16": "08cc1fa8f1508aa40a4066602d21ee534691f69b1e5ceeef030a8010badb1b1f",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.conv.in_proj.bf16": "0b756f5efae1418595aeea8d63209401d41b5bd37060dedf407d9ef4fcd5d651",
+    "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-0/scan/output.0.algo.bin": "653ca7bb9283740c01ae9b46f26be3eed0af017dd953f7408fa24efef3e62dc3"
+  },
+  "failed_execution": {
+    "command": [
+      "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+      "--tool",
+      "initcheck",
+      "--error-exitcode",
+      "86",
+      "--print-limit",
+      "4",
+      "--log-file",
+      "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-0/candidate-0-initcheck/sanitizer.log",
+      "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe",
+      "34",
+      "2048",
+      "6144",
+      "/workspace/liquid-CUDA/build/lt-policy-screen-v2/weights.bf16",
+      "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.operator_norm.bf16",
+      "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.conv.in_proj.bf16",
+      "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-0/candidate-0-initcheck/output",
+      "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-0/scan/output.0.algo.bin"
+    ],
+    "returncode": null,
+    "timed_out": true,
+    "seconds": 60.00269170499814,
+    "group_cleanup_complete": true
+  },
+  "error": "bounded tool/application did not complete",
+  "end_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-lt-policy-v1/lfm3-lt-policy-probe": "ff58c0489afb1eaf44e07172097b0a5971331d9b57dbb4f45ed75cac47abd0a9",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/tools/check_lfm3_lt_candidates.py": "d8372e4719a36dc7029869ddc04a5d9b3b8dfafbd28c25656f9205406b53f878",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/workspace/liquid-CUDA/native/tests/lfm3_lt_policy_probe.cu": "cef50d053e3f817b2ef4f7da5872510ac4ce9e75e057a26126878a1b3cf83624",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/workspace/liquid-CUDA/build/lt-policy-screen-v2/weights.bf16": "480955ead84ac3183e3bf6c659d166899641db57754045b98e0c462fe1b744af",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.operator_norm.bf16": "cb7b691ed4248d690b28752f978b8bde0ef4fc3fbd3804b642eb079fe07a27d6",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/1.layers.0.conv.in_proj.bf16": "b2eaddf05831bdffbbf825a012b330794ae2c4d1d65a2da744b4794139f479d9",
+    "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/scan/output.0.algo.bin": "0394bbe37dbc6c3ee70dc96ed31dd021f3dbab35ea8715fbeca9946f844ab9bf",
+    "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-1/scan/output.4.algo.bin": "ef64f8a03bce51e52df24e5376b462f4da5da6eb9c4a3393799c3efa995e94eb",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.operator_norm.bf16": "08cc1fa8f1508aa40a4066602d21ee534691f69b1e5ceeef030a8010badb1b1f",
+    "/workspace/liquid-CUDA/build/forward-bounded-prefill-v1/baseline/reference/0.layers.0.conv.in_proj.bf16": "0b756f5efae1418595aeea8d63209401d41b5bd37060dedf407d9ef4fcd5d651",
+    "/workspace/liquid-CUDA/build/lt-policy-screen-v2/step-0/scan/output.0.algo.bin": "653ca7bb9283740c01ae9b46f26be3eed0af017dd953f7408fa24efef3e62dc3"
+  },
+  "hashes_stable": true
+}

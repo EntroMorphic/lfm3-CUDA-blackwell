@@ -30,6 +30,16 @@ prove original internal-read ordering, or complete32K racecheck. The documented
 unsupported tensormap/tcgen05 limitation is consistent with these results but is
 not vendor confirmation of this instruction/configuration.
 
+## Native remediation candidate
+
+An isolated WMMA linear backend now passes6890 original exact eager checks, nine
+exact context fixtures through4096, and the original four-token request under
+initcheck, unexcluded synccheck and memcheck. It reproduces the measured split-K
+arithmetic using ordinary stores instead of preinitializing vendor scratch. See
+`WMMA_REMEDIATION.md`. Production is not promoted; original production blockers
+and full32K racecheck remain open. The historical vendor probe matrix below still
+fails and is not relabeled clean because a different backend works.
+
 ## Initcheck sanitizer-only version/shape matrix
 
 `tools/check_lfm3_initcheck_matrix.py` holds the checkpoint-free probe binary,

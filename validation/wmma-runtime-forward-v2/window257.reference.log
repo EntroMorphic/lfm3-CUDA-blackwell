@@ -1,0 +1,13 @@
+Loading weights:   0%|          | 0/665 [00:00<?, ?it/s]Loading weights:  31%|███       | 203/665 [00:00<00:00, 1911.69it/s]Loading weights:  59%|█████▉    | 395/665 [00:00<00:00, 630.96it/s] Loading weights:  75%|███████▌  | 499/665 [00:00<00:00, 549.89it/s]Loading weights:  89%|████████▊ | 590/665 [00:00<00:00, 615.58it/s]Loading weights: 100%|██████████| 665/665 [00:00<00:00, 699.54it/s]
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Loading weights:   0%|          | 0/203 [00:00<?, ?it/s]Loading weights: 100%|██████████| 203/203 [00:00<00:00, 7353.60it/s]
+{
+  "attention": "eager",
+  "generated_ids": [
+    2223,
+    43709,
+    91506,
+    373
+  ],
+  "text": " might reflective recursion be"
+}

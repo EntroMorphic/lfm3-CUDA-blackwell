@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/workspace/liquid-CUDA/tools/check_lfm3_forward.py", line 97, in <module>
+    main()
+  File "/workspace/liquid-CUDA/tools/check_lfm3_forward.py", line 37, in main
+    run([sys.executable, tools / "lfm3_reference.py", "--checkpoint", args.checkpoint,
+  File "/workspace/liquid-CUDA/tools/check_lfm3_forward.py", line 27, in run
+    raise RuntimeError(f"command failed ({result.returncode}): see {log}")
+RuntimeError: command failed (1): see /workspace/liquid-CUDA/build/wmma-runtime-forward-v1/baseline.reference.log

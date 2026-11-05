@@ -1,0 +1,32 @@
+{
+  "command": [
+    "/opt/venv/bin/python3",
+    "/workspace/liquid-CUDA/tools/check_lfm3_context.py",
+    "--checkpoint",
+    "/workspace/models/LFM3-Omni-2B",
+    "--binary",
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3",
+    "--output",
+    "/workspace/liquid-CUDA/build/wmma-runtime-context-v1",
+    "--suite",
+    "full",
+    "--reuse-reference",
+    "/workspace/liquid-CUDA/build/context-full-bounded-release-v2",
+    "--timeout",
+    "180"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "seconds": 82.69745843599958,
+  "start_sha256": {
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3": "d6ed2fefc5e8691cb574b4468e91e9e1cd5361c605f66f5cdac50fb8450d288d",
+    "/workspace/liquid-CUDA/tools/check_lfm3_context.py": "4a479ad4fa8e0bc0d092b41a2c9627bbc6b3f9ba5e211d3c7cf2b080ad8f0603"
+  },
+  "end_sha256": {
+    "/workspace/liquid-CUDA/build/wmma-runtime-candidate-v1/build/liquid-lfm3": "d6ed2fefc5e8691cb574b4468e91e9e1cd5361c605f66f5cdac50fb8450d288d",
+    "/workspace/liquid-CUDA/tools/check_lfm3_context.py": "4a479ad4fa8e0bc0d092b41a2c9627bbc6b3f9ba5e211d3c7cf2b080ad8f0603"
+  },
+  "hashes_stable": true,
+  "group_cleanup_complete": true,
+  "full_acceptance": false
+}
