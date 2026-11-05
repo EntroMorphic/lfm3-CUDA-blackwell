@@ -1,0 +1,9 @@
+{
+  "packet_path": "/tmp/user/1000/opencode/lfm3-vendor-initcheck-packet-v2",
+  "packet_manifest_sha256": "5d6027823f5f55129bbb2e5c70c5e71dbc7eba6494fe933e79df0834853ba6fc",
+  "packet_verified": true,
+  "tests_passed": 16,
+  "evidence_status": "failed-controls-or-tool",
+  "integrated_initcheck_accepted": false,
+  "external_publication": false
+}

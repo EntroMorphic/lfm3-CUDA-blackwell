@@ -1,0 +1,9 @@
+{
+  "platform": "Linux-6.8.12-tegra-aarch64-with-glibc2.39",
+  "/etc/nv_tegra_release": "# R38 (release), REVISION: 2.2, GCID: 42205042, BOARD: generic, EABI: aarch64, DATE: Thu Sep 25 22:47:11 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia\nINSTALL_TYPE=\n",
+  "/proc/driver/nvidia/version": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  TempVersion  Release Build  (bugfix_main)  (buildbrain@b93eb89d-1ffc-4b76-8cef-fa02a33b010d-s7bv-ff8js)  Thu Sep 25 15:33:42 PDT 2025\nGCC version:  gcc version 13.2.0 (crosstool-NG 1.26.0) \n",
+  "nvcc": "OCI runtime exec failed: exec failed: unable to start container process: exec: \"/usr/local/cuda/bin/nvcc\": stat /usr/local/cuda/bin/nvcc: no such file or directory\n",
+  "build_image": "entromorphic-dev-viz:r38.3.arm64-sbsa-cu130-24.04",
+  "build_image_nvcc": "Cuda compilation tools, release 13.0, V13.0.88; Build cuda_13.0.r13.0/compiler.36424714_0",
+  "supported_bsp_tool_pair_established": false
+}
