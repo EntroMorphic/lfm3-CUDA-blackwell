@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagnostic_only": true,
+  "full_acceptance": false,
+  "status": "generated_not_built_or_validated",
+  "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA",
+  "required_before_runtime_use": "All 6890 eager checks, unchanged original exact gates",
+  "expected_eager_checks": 6890,
+  "goldens_may_change": false,
+  "failure_policy": "Keep failed evidence; unsupported math API or any bitwise failure is failure",
+  "build_policy": {
+    "cuda_architectures": "110",
+    "cxx_standard": 20,
+    "cuda_standard": 20,
+    "cuda_flags": [
+      "-O3",
+      "--fmad=false"
+    ],
+    "relaxed_constexpr": false,
+    "production_modified": false
+  },
+  "files": {
+    "native/src/lfm3_main.cu": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/src/lfm3_main.cu",
+      "original_sha256": "08ccb7d7712cb005781143c3eb52b828eaae9b5033a271047d3c371f878aee61",
+      "copied_sha256": "08ccb7d7712cb005781143c3eb52b828eaae9b5033a271047d3c371f878aee61",
+      "modified_sha256": "aa308cb5fdc9e1aff0d8f1c9d19d248490c86da89d4a5bdb47841615155ce497",
+      "replacements": {
+        "CUBLAS_COMPUTE_32F": {
+          "replacement": "CUBLAS_COMPUTE_32F_PEDANTIC",
+          "count": 3
+        },
+        "CUBLAS_GEMM_DEFAULT_TENSOR_OP": {
+          "replacement": "CUBLAS_GEMM_DEFAULT",
+          "count": 3
+        },
+        "CUBLAS_DEFAULT_MATH": {
+          "replacement": "CUBLAS_PEDANTIC_MATH",
+          "count": 1
+        }
+      }
+    },
+    "native/src/lfm3_worker.cu": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/src/lfm3_worker.cu",
+      "original_sha256": "4c862165cbeca640a233fbcb70f7dc8a5f4abb687851d766b4377ee38e5857ff",
+      "copied_sha256": "4c862165cbeca640a233fbcb70f7dc8a5f4abb687851d766b4377ee38e5857ff",
+      "modified_sha256": "4c862165cbeca640a233fbcb70f7dc8a5f4abb687851d766b4377ee38e5857ff",
+      "replacements": {}
+    },
+    "native/src/lfm3_decode_batch.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/src/lfm3_decode_batch.cuh",
+      "original_sha256": "ff7b29fb9d286b197076ce7670b4ee75aef43c110f74a4bc52ef62b6edcf51d8",
+      "copied_sha256": "ff7b29fb9d286b197076ce7670b4ee75aef43c110f74a4bc52ef62b6edcf51d8",
+      "modified_sha256": "edb5755b7bc5b7059bc618c0815d1efb2bbeb84e550d855a929fc3b47ecbf50d",
+      "replacements": {
+        "CUBLAS_COMPUTE_32F": {
+          "replacement": "CUBLAS_COMPUTE_32F_PEDANTIC",
+          "count": 2
+        },
+        "CUBLAS_GEMM_DEFAULT_TENSOR_OP": {
+          "replacement": "CUBLAS_GEMM_DEFAULT",
+          "count": 2
+        }
+      }
+    },
+    "native/src/safetensors.cpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/src/safetensors.cpp",
+      "original_sha256": "27a95da46ed4f7fa43918ba20b8d287affb5fbe47c5c42fc8fa3be3ae2bcded6",
+      "copied_sha256": "27a95da46ed4f7fa43918ba20b8d287affb5fbe47c5c42fc8fa3be3ae2bcded6",
+      "modified_sha256": "27a95da46ed4f7fa43918ba20b8d287affb5fbe47c5c42fc8fa3be3ae2bcded6",
+      "replacements": {}
+    },
+    "LICENSE": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/LICENSE",
+      "original_sha256": "4ff6d8f17a653dca3982918a3674a917430e1344063a1072392d13923aa8f047",
+      "copied_sha256": "4ff6d8f17a653dca3982918a3674a917430e1344063a1072392d13923aa8f047",
+      "modified_sha256": "4ff6d8f17a653dca3982918a3674a917430e1344063a1072392d13923aa8f047",
+      "replacements": {}
+    },
+    "native/third_party/PYTORCH_LICENSE": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/third_party/PYTORCH_LICENSE",
+      "original_sha256": "2895745b4f5b9fda415da072b9e3b63373056793867835c0c9159118f14a7a68",
+      "copied_sha256": "2895745b4f5b9fda415da072b9e3b63373056793867835c0c9159118f14a7a68",
+      "modified_sha256": "2895745b4f5b9fda415da072b9e3b63373056793867835c0c9159118f14a7a68",
+      "replacements": {}
+    },
+    "native/tests/lfm3_decode_batch_probe.cu": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/tests/lfm3_decode_batch_probe.cu",
+      "original_sha256": "d3c3ae832a37ba756b635ec11d2680278ea6ddeb6d991dcfb4385680ccaa77da",
+      "copied_sha256": "d3c3ae832a37ba756b635ec11d2680278ea6ddeb6d991dcfb4385680ccaa77da",
+      "modified_sha256": "d3c3ae832a37ba756b635ec11d2680278ea6ddeb6d991dcfb4385680ccaa77da",
+      "replacements": {}
+    },
+    "native/include/lfm/allocation_metrics.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/allocation_metrics.hpp",
+      "original_sha256": "0c3c0a85fd1acae928a6e085cf2878beb0253c0b63df1f4662f94a78d0d52ff6",
+      "copied_sha256": "0c3c0a85fd1acae928a6e085cf2878beb0253c0b63df1f4662f94a78d0d52ff6",
+      "modified_sha256": "0c3c0a85fd1acae928a6e085cf2878beb0253c0b63df1f4662f94a78d0d52ff6",
+      "replacements": {}
+    },
+    "native/include/lfm/argmax.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/argmax.cuh",
+      "original_sha256": "04b8ab0da7b9a9330e418a7d8fe519679903cc70649c481de82f0d0dd766b39e",
+      "copied_sha256": "04b8ab0da7b9a9330e418a7d8fe519679903cc70649c481de82f0d0dd766b39e",
+      "modified_sha256": "04b8ab0da7b9a9330e418a7d8fe519679903cc70649c481de82f0d0dd766b39e",
+      "replacements": {}
+    },
+    "native/include/lfm/attention.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/attention.cuh",
+      "original_sha256": "c0a9a6346075806d4b481620539c633d421a4e0ab08fa4b65117523962b9144e",
+      "copied_sha256": "c0a9a6346075806d4b481620539c633d421a4e0ab08fa4b65117523962b9144e",
+      "modified_sha256": "c0a9a6346075806d4b481620539c633d421a4e0ab08fa4b65117523962b9144e",
+      "replacements": {}
+    },
+    "native/include/lfm/attention_candidates.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/attention_candidates.cuh",
+      "original_sha256": "d7d14de17141d2f8a7fb129ba5f14a411f0a9df41b4cced19013b8daf7403d6d",
+      "copied_sha256": "d7d14de17141d2f8a7fb129ba5f14a411f0a9df41b4cced19013b8daf7403d6d",
+      "modified_sha256": "d7d14de17141d2f8a7fb129ba5f14a411f0a9df41b4cced19013b8daf7403d6d",
+      "replacements": {}
+    },
+    "native/include/lfm/batch_sampler.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/batch_sampler.cuh",
+      "original_sha256": "d1d00feed88da96da6590927dc8d68b89aaea375bae2e90c58fa12aabd01d23f",
+      "copied_sha256": "d1d00feed88da96da6590927dc8d68b89aaea375bae2e90c58fa12aabd01d23f",
+      "modified_sha256": "d1d00feed88da96da6590927dc8d68b89aaea375bae2e90c58fa12aabd01d23f",
+      "replacements": {}
+    },
+    "native/include/lfm/checkpoint_path.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/checkpoint_path.hpp",
+      "original_sha256": "fb04b72e041342b08683a276dd1dc23d897a81a89901f53ec1d67c147de1e95d",
+      "copied_sha256": "fb04b72e041342b08683a276dd1dc23d897a81a89901f53ec1d67c147de1e95d",
+      "modified_sha256": "fb04b72e041342b08683a276dd1dc23d897a81a89901f53ec1d67c147de1e95d",
+      "replacements": {}
+    },
+    "native/include/lfm/compact_attention.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/compact_attention.cuh",
+      "original_sha256": "ecd6c25ca8ace61fcc65dc3cc70ba0ed2e3eff30e2e0f34b84f6e8c35a218c37",
+      "copied_sha256": "ecd6c25ca8ace61fcc65dc3cc70ba0ed2e3eff30e2e0f34b84f6e8c35a218c37",
+      "modified_sha256": "ecd6c25ca8ace61fcc65dc3cc70ba0ed2e3eff30e2e0f34b84f6e8c35a218c37",
+      "replacements": {}
+    },
+    "native/include/lfm/decode_tuning.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/decode_tuning.cuh",
+      "original_sha256": "1050b958343b2b6fa95aab9299e350267727951c549015966727b4f2e99a668d",
+      "copied_sha256": "1050b958343b2b6fa95aab9299e350267727951c549015966727b4f2e99a668d",
+      "modified_sha256": "1050b958343b2b6fa95aab9299e350267727951c549015966727b4f2e99a668d",
+      "replacements": {}
+    },
+    "native/include/lfm/dynamic_attention.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/dynamic_attention.cuh",
+      "original_sha256": "ba693baddd6e2f6afea14eb696f2751a653e3f88487609c591b5113ab085265f",
+      "copied_sha256": "ba693baddd6e2f6afea14eb696f2751a653e3f88487609c591b5113ab085265f",
+      "modified_sha256": "ba693baddd6e2f6afea14eb696f2751a653e3f88487609c591b5113ab085265f",
+      "replacements": {}
+    },
+    "native/include/lfm/handle_setup.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/handle_setup.hpp",
+      "original_sha256": "c8c051ad9661c07bad22aacb8f1c105e4af270ab812bc773601c085f11911bd6",
+      "copied_sha256": "c8c051ad9661c07bad22aacb8f1c105e4af270ab812bc773601c085f11911bd6",
+      "modified_sha256": "c8c051ad9661c07bad22aacb8f1c105e4af270ab812bc773601c085f11911bd6",
+      "replacements": {}
+    },
+    "native/include/lfm/inference_metrics.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/inference_metrics.hpp",
+      "original_sha256": "d50d8f9c03b0f3cf2cb66574a42b75eb038f9af00fbe62a1c45469344782eb90",
+      "copied_sha256": "d50d8f9c03b0f3cf2cb66574a42b75eb038f9af00fbe62a1c45469344782eb90",
+      "modified_sha256": "d50d8f9c03b0f3cf2cb66574a42b75eb038f9af00fbe62a1c45469344782eb90",
+      "replacements": {}
+    },
+    "native/include/lfm/lfm3_ops.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/lfm3_ops.cuh",
+      "original_sha256": "3fc0ec6a05e3643d90b1824498560287152588c15390e2950a314d6e8606366a",
+      "copied_sha256": "3fc0ec6a05e3643d90b1824498560287152588c15390e2950a314d6e8606366a",
+      "modified_sha256": "3fc0ec6a05e3643d90b1824498560287152588c15390e2950a314d6e8606366a",
+      "replacements": {}
+    },
+    "native/include/lfm/math_attention.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/math_attention.cuh",
+      "original_sha256": "ea191769b52732502f7cc1a6484cc054e9d52c0ddaff46553dd7f8c0ffaed3fb",
+      "copied_sha256": "ea191769b52732502f7cc1a6484cc054e9d52c0ddaff46553dd7f8c0ffaed3fb",
+      "modified_sha256": "ea191769b52732502f7cc1a6484cc054e9d52c0ddaff46553dd7f8c0ffaed3fb",
+      "replacements": {}
+    },
+    "native/include/lfm/model_config.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/model_config.hpp",
+      "original_sha256": "4bcb41ef95526f0aa26b1f421f067b64375f075565b79796b533b3a5e3aebfcf",
+      "copied_sha256": "4bcb41ef95526f0aa26b1f421f067b64375f075565b79796b533b3a5e3aebfcf",
+      "modified_sha256": "4bcb41ef95526f0aa26b1f421f067b64375f075565b79796b533b3a5e3aebfcf",
+      "replacements": {}
+    },
+    "native/include/lfm/moe.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/moe.cuh",
+      "original_sha256": "bb213fc27c30473cdc43537cd1d89ca7d75cae399f9aad5997129312ec8b94e6",
+      "copied_sha256": "bb213fc27c30473cdc43537cd1d89ca7d75cae399f9aad5997129312ec8b94e6",
+      "modified_sha256": "bb213fc27c30473cdc43537cd1d89ca7d75cae399f9aad5997129312ec8b94e6",
+      "replacements": {}
+    },
+    "native/include/lfm/parity_attention.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/parity_attention.cuh",
+      "original_sha256": "14d5f3ad3fa26104762332867a1096e2d9406d65f1364d022c378f846552f97a",
+      "copied_sha256": "14d5f3ad3fa26104762332867a1096e2d9406d65f1364d022c378f846552f97a",
+      "modified_sha256": "14d5f3ad3fa26104762332867a1096e2d9406d65f1364d022c378f846552f97a",
+      "replacements": {}
+    },
+    "native/include/lfm/profiling.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/profiling.hpp",
+      "original_sha256": "d4e8348564de7f78ef6cb6f6e5dd9ab6ba579ab300bde886f23502c307fc8242",
+      "copied_sha256": "d4e8348564de7f78ef6cb6f6e5dd9ab6ba579ab300bde886f23502c307fc8242",
+      "modified_sha256": "d4e8348564de7f78ef6cb6f6e5dd9ab6ba579ab300bde886f23502c307fc8242",
+      "replacements": {}
+    },
+    "native/include/lfm/resident_protocol.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/resident_protocol.hpp",
+      "original_sha256": "97eb4891285b56224f25a69381d5cd031e2536d5c70fd640ead2d77ab8741657",
+      "copied_sha256": "97eb4891285b56224f25a69381d5cd031e2536d5c70fd640ead2d77ab8741657",
+      "modified_sha256": "97eb4891285b56224f25a69381d5cd031e2536d5c70fd640ead2d77ab8741657",
+      "replacements": {}
+    },
+    "native/include/lfm/rmsnorm.cuh": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/rmsnorm.cuh",
+      "original_sha256": "ad8e8083de1b10976acfec38fd1676ecaed5291a49a13eb9355c6c6a4704609e",
+      "copied_sha256": "ad8e8083de1b10976acfec38fd1676ecaed5291a49a13eb9355c6c6a4704609e",
+      "modified_sha256": "ad8e8083de1b10976acfec38fd1676ecaed5291a49a13eb9355c6c6a4704609e",
+      "replacements": {}
+    },
+    "native/include/lfm/safetensors.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/safetensors.hpp",
+      "original_sha256": "90445d37042920cd6f37c8b78ab0328cc88ff8ee4143a3242c21e0fabdfa67f1",
+      "copied_sha256": "90445d37042920cd6f37c8b78ab0328cc88ff8ee4143a3242c21e0fabdfa67f1",
+      "modified_sha256": "90445d37042920cd6f37c8b78ab0328cc88ff8ee4143a3242c21e0fabdfa67f1",
+      "replacements": {}
+    },
+    "native/include/lfm/text_attention_tiles.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/text_attention_tiles.hpp",
+      "original_sha256": "a1e35118cc7cb7c02f23650dd6fc4ba2d2a62eb233c1a590815e683554327016",
+      "copied_sha256": "a1e35118cc7cb7c02f23650dd6fc4ba2d2a62eb233c1a590815e683554327016",
+      "modified_sha256": "a1e35118cc7cb7c02f23650dd6fc4ba2d2a62eb233c1a590815e683554327016",
+      "replacements": {}
+    },
+    "native/include/lfm/text_batch_cancellation.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/text_batch_cancellation.hpp",
+      "original_sha256": "29eb58050ee3a8650d76644aa77bab89bd44cdb3598452199aa57677a220597f",
+      "copied_sha256": "29eb58050ee3a8650d76644aa77bab89bd44cdb3598452199aa57677a220597f",
+      "modified_sha256": "29eb58050ee3a8650d76644aa77bab89bd44cdb3598452199aa57677a220597f",
+      "replacements": {}
+    },
+    "native/include/lfm/text_cancellation.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/text_cancellation.hpp",
+      "original_sha256": "9843d5c1d89ea5a885bb85084ca8caf698d34c7ad3d630905175704933c37a80",
+      "copied_sha256": "9843d5c1d89ea5a885bb85084ca8caf698d34c7ad3d630905175704933c37a80",
+      "modified_sha256": "9843d5c1d89ea5a885bb85084ca8caf698d34c7ad3d630905175704933c37a80",
+      "replacements": {}
+    },
+    "native/include/lfm/text_sampling.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/text_sampling.hpp",
+      "original_sha256": "89e5c6b6cd20aace6d4d3709c53d70acd62187a87110cddb41206f78bddd4716",
+      "copied_sha256": "89e5c6b6cd20aace6d4d3709c53d70acd62187a87110cddb41206f78bddd4716",
+      "modified_sha256": "89e5c6b6cd20aace6d4d3709c53d70acd62187a87110cddb41206f78bddd4716",
+      "replacements": {}
+    },
+    "native/include/lfm/text_serving_limits.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/text_serving_limits.hpp",
+      "original_sha256": "8e6072563e90b63f3d67dd3292c212f54bedc222a34fd0dc736494c42585a985",
+      "copied_sha256": "8e6072563e90b63f3d67dd3292c212f54bedc222a34fd0dc736494c42585a985",
+      "modified_sha256": "8e6072563e90b63f3d67dd3292c212f54bedc222a34fd0dc736494c42585a985",
+      "replacements": {}
+    },
+    "native/include/lfm/text_sessions.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/text_sessions.hpp",
+      "original_sha256": "421b84d99b37847744980791c811dd42568aa5ab6375506b4d7c77b50aece2b9",
+      "copied_sha256": "421b84d99b37847744980791c811dd42568aa5ab6375506b4d7c77b50aece2b9",
+      "modified_sha256": "421b84d99b37847744980791c811dd42568aa5ab6375506b4d7c77b50aece2b9",
+      "replacements": {}
+    },
+    "native/include/lfm/tokenizer.hpp": {
+      "source_origin": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/tokenizer.hpp",
+      "original_sha256": "55963084ed7dfeefc7bb6e0a26c048d4b26c9e56ab2a6423c7b33606086c1d09",
+      "copied_sha256": "55963084ed7dfeefc7bb6e0a26c048d4b26c9e56ab2a6423c7b33606086c1d09",
+      "modified_sha256": "55963084ed7dfeefc7bb6e0a26c048d4b26c9e56ab2a6423c7b33606086c1d09",
+      "replacements": {}
+    }
+  },
+  "original_cmake_sha256": "b131dafe85155461bfc4a35f177cc19f24f06a73b50019afec032a7467b6bfe9",
+  "generated_files": {
+    "CMakeLists.txt": {
+      "sha256": "beda958af4bb55b457f230aacd393e6e7916b04e5d69dce5c50db48c9f5fe55b"
+    }
+  }
+}

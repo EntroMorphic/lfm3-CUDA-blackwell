@@ -1,0 +1,13 @@
+{
+  "status": "failed; not adopted",
+  "pedantic_binary_sha256": "a723ebd5a30aac6b1c8e19387b4aa8a9e84ef6da4d98d99491f48f2528e87b85",
+  "production_default_single_sha256": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+  "baseline_checks": 4240,
+  "failed_baseline_checks": 4205,
+  "required_eager_checks": 6890,
+  "all6890_accepted": false,
+  "teacher_argmax_exact": true,
+  "reason": "PEDANTIC changes activation/logit bits; mandatory original exact gate failed",
+  "policy": "no golden/tolerance changes, fallback or production adoption",
+  "full_serving_accepted": false
+}
