@@ -1,0 +1,77 @@
+{
+  "status": "timeout",
+  "full_acceptance": false,
+  "scoped_passed": false,
+  "resource_stopped": false,
+  "timed_out": true,
+  "returncode": null,
+  "owned_process_group": 45,
+  "no_launch_filters": true,
+  "rss_budget_gib": 32.0,
+  "min_host_available_gib": 16.0,
+  "scope": "all launches; full32768 prefill only; no broader acceptance",
+  "start_hashes": {
+    "sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "binary": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+    "request": "87579252b405cb69ce9b71b3f0a284b643b35799ce42ff95a2f4ad16b3fe3335",
+    "expected_result": "0cdb9a2a5e0814fce75b0f58c8d577c6135276af37ecff10695206927dc41bf7"
+  },
+  "command": [
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+    "--tool",
+    "racecheck",
+    "--error-exitcode",
+    "86",
+    "--print-limit",
+    "0",
+    "--racecheck-num-workers",
+    "1",
+    "--log-file",
+    "/workspace/liquid-CUDA/build/racecheck32k-guarded-v2/racecheck.log",
+    "/workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/liquid-lfm3",
+    "--experimental",
+    "/workspace/models/LFM3-Omni-2B",
+    "/workspace/liquid-CUDA/build/racecheck32k-guarded-v2/request.json",
+    "/workspace/liquid-CUDA/build/racecheck32k-guarded-v2/native.json"
+  ],
+  "cgroup_before": {
+    "path": "/sys/fs/cgroup",
+    "events": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "current": "220508160",
+    "max": "51539607552",
+    "peak": "225431552"
+  },
+  "application_ok": false,
+  "application_error": "[Errno 2] No such file or directory: '/workspace/liquid-CUDA/build/racecheck32k-guarded-v2/native.json'",
+  "canonical_zero_summary": false,
+  "group_cleanup_complete": true,
+  "cgroup_after": {
+    "path": "/sys/fs/cgroup",
+    "events": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "current": "27156172800",
+    "max": "51539607552",
+    "peak": "27157561344"
+  },
+  "end_hashes": {
+    "sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "binary": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+    "request": "87579252b405cb69ce9b71b3f0a284b643b35799ce42ff95a2f4ad16b3fe3335",
+    "expected_result": "0cdb9a2a5e0814fce75b0f58c8d577c6135276af37ecff10695206927dc41bf7"
+  },
+  "hashes_stable": true,
+  "seconds": 900.039743753001
+}

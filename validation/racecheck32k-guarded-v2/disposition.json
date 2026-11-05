@@ -1,0 +1,13 @@
+{
+  "status": "timeout; not accepted",
+  "seconds": 900.039743753001,
+  "application_output_missing": true,
+  "peak_owned_group_rss_bytes": 31331758080,
+  "minimum_host_available_bytes": 90010324992,
+  "cgroup_peak_bytes": 27157561344,
+  "new_oom_events": false,
+  "artifact_hashes_stable": true,
+  "independent_postrun_no_matching_descendants": true,
+  "temporary_container_stopped": true,
+  "full_acceptance": false
+}

@@ -32,7 +32,10 @@ racecheck. Synccheck reports internal untracked NVJET launches despite correct
 application output. Default initcheck remains blocked with old/new official cuBLAS;
 pedantic math was rejected by4205 original baseline bitwise failures, not adopted.
 The unbounded racecheck attempt was kernel-correlated global-OOM, not a zero-hazard
-pass. Memory-capped follow-up evidence is tracked in `RACECHECK_MEMORY.md`.
+pass. Its memory-capped, single-analysis-worker follow-up also remains non-accepting:
+900.04s timeout without application JSON, no OOM/guard trip, stable hashes and
+verified descendant cleanup. Both temporary containers are stopped. See
+`RACECHECK_MEMORY.md`; no full32K racecheck pass or completed coverage is established.
 
 Explicit `/generate_batch` is real fixed-two-lane GPU batching; automatic
 coalescing/streaming and kernel/prefill preemption are not claimed. See

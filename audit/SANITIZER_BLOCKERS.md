@@ -120,3 +120,16 @@ This resolves the standalone upper memcheck gate for the changed program, not by
 waiving the original timeout. Full original fixtures and normal reference/cache
 checks remain. Integrated32K tools, worker-dispatch instrumentation and initcheck
 remain separately required.
+
+## Memory-capped racecheck follow-up
+
+The optimized full32K unbounded attempt was kernel-correlated global-OOM, with
+missing application output despite a zero-hazard footer. The fresh hard-capped
+temporary-container run in `validation/racecheck32k-guarded-v2/` avoids OOM but
+times out at900.04s with only a sanitizer banner and no application JSON. One
+analysis worker does not reduce launch coverage, but incomplete execution cannot
+establish coverage or race freedom. Hashes stay stable, cleanup is independently
+verified, and both temporary containers are stopped. Full acceptance remains
+blocked by racecheck, production initcheck and unexcluded synccheck. Further
+vendor submission or system/BSP maintenance requires explicit authorization;
+neither has been performed. See `RACECHECK_MEMORY.md` for exact resource evidence.

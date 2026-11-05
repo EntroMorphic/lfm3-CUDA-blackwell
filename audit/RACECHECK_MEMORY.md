@@ -82,5 +82,16 @@ driver library. Evidence in `validation/racecheck32k-guarded-v1/` is not coverag
 That container was stopped. A fresh v2 explicitly exposes NVIDIA devices/compute
 libraries; `cuDriverGetVersion` reports13000 and `cuInit` succeeds. Its dedicated
 container manifest is retained in `validation/racecheck32k-guarded-v2/`.
-V2 is a separate bounded run; no completed numerical or racecheck acceptance may
-be inferred from setup success or a running resource log.
+V2 completed as **timeout, not accepted**, after900.04s without native application
+JSON. Its sanitizer log contains only the banner, so no completed coverage or
+zero-hazard result is established. Start/end artifact hashes are stable, no guard
+tripped, and all OOM counters remain zero. Peak aggregate owned-group RSS is
+31,331,758,080 bytes (shared pages may be double-counted); cgroup peak is
+27,157,561,344 bytes. Minimum observed host MemAvailable is90,010,324,992 bytes.
+
+Owned-group cleanup completed and independent host inspection found no matching
+live sanitizer/application descendants. The temporary v2 container was stopped;
+both temporary containers and all failed evidence are retained. Production
+container, drivers, BSP and serving libraries remain unchanged. This resolves
+the unsafe unbounded retry pattern, **not** the full32K racecheck acceptance gate.
+Do not repeat a longer blind run or credit incomplete instrumentation as clean.
