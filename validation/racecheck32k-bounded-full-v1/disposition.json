@@ -1,0 +1,8 @@
+{
+  "status": "failed-global-OOM",
+  "tool_returncode": 9,
+  "application_output_missing": true,
+  "kernel_correlated": true,
+  "zero_hazard_footer_is_pass": false,
+  "full_acceptance": false
+}

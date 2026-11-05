@@ -5,21 +5,40 @@ external validation limitation is **not** a clean full-sanitizer certificate.
 
 ## Current text-serving status (later increments)
 
-Current integrated increment: explicit grouped worker/HTTP decoding is verified
-for worker `184f14b7...`, with905 passing host tests,73 independent full-logit-bit
-steps, non-greedy sampler replay, lane retirement/reuse/EOS/cancellation/recovery
-and aggregate32K. Authenticated HTTP grouping/cancellation/resource smoke passes.
-See `GROUPED_SERVING.md`. The extended grouped soak passes610 cycles over600s
-with fixed RSS/FD/device-wide memory and post-close recovery bounds. Final
-standalone scratch memcheck passes zero errors; upper memcheck times out900s.
-Integrated racecheck and cuBLAS initcheck remain open. No full acceptance is claimed.
+**Full acceptance remains false.** Current default-math single `e436191d...`,
+worker `1aa1e0c2...` and paired probe `345f1ded...` have the following verified gates.
+All historical failures below retain their original artifact/binary scope.
 
-A subsequent bounded long-prefill candidate (`LONG_PREFILL_WORK.md`) preserves
-all6890 short bitwise checks and73 grouped checks, passes unchanged independent
-32K SDPA tolerances/argmax/reset, and repeats both five-fixture standalone matrices.
-It closes standalone upper memcheck with zero errors in177.11s on probe345f1ded;
-original900s timeout evidence is not erased. Integrated tool and new-binary serving
-regression/resource gates remain separately tracked.
+| Gate | Current evidence |
+| --- | --- |
+| Host suite |1128 passed, `validation/host-release-final-v3.log`|
+| Original eager activations |6890 exact checks, `forward-bounded-prefill-v1`|
+| Full eager context through4096 |9 fixtures, zero tolerances,19 full-vocabulary logit steps, exact reset and12 pre-weight rejections, `context-full-bounded-release-v2`|
+| Independent32K SDPA |Unchanged0.5 max-error/0.02 relative-RMS limits, exact argmax/reset, `context32k-bounded-prefill-v1`|
+| Integrated grouped execution |73 exact logit steps, independent non-greedy replay, retirement/reuse/EOS/cancellation/recovery, nonempty history and aggregate32K, `grouped-worker-bounded-prefill-v2`|
+| Standalone paired matrices |Five fixtures and209 comparisons in each normal/compact mode|
+| Memcheck |Standalone scratch and upper (177.11s), actual grouped worker, and integrated full32K all clean|
+| Serving regressions |Resident32K/sampling, scalar cancellation and three eight-client HTTP admission rounds pass|
+| Final grouped soak |561 exact groups over600.12s, fixed RSS/FD/device-wide memory and recovery limits, `http-bounded-grouped-soak-v4`|
+| Balanced benchmark |20 warmed AB/BA samples per mode, numerical/source hashes bound; median paired wall ratio1.62445, `http-group-benchmark-v1`|
+
+The first full-context attempt stopped on a stale capacity-zero diagnostic string;
+its failed evidence is preserved in `context-full-bounded-release-v1`. Only that
+message expectation was updated for the32768 limit. Nonzero exit/no output/pre-weight
+rejection assertions and all zero numerical tolerances remain unchanged.
+
+**Open required gates:** production initcheck, unexcluded synccheck and full32K
+racecheck. Synccheck reports internal untracked NVJET launches despite correct
+application output. Default initcheck remains blocked with old/new official cuBLAS;
+pedantic math was rejected by4205 original baseline bitwise failures, not adopted.
+The unbounded racecheck attempt was kernel-correlated global-OOM, not a zero-hazard
+pass. Memory-capped follow-up evidence is tracked in `RACECHECK_MEMORY.md`.
+
+Explicit `/generate_batch` is real fixed-two-lane GPU batching; automatic
+coalescing/streaming and kernel/prefill preemption are not claimed. See
+`GROUPED_SERVING.md`, `GROUP_BENCHMARK.md`, `LONG_PREFILL_WORK.md` and
+`INTEGRATED_SANITIZER_RUNNER.md`. Checkpoint-free vendor evidence is prepared
+locally; no external publication, driver/BSP replacement or waiver is authorized.
 
 ### Prior standalone and single-serving increments
 

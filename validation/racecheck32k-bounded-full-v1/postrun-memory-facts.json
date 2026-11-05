@@ -1,0 +1,9 @@
+{
+  "/sys/fs/cgroup/memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 1\noom_group_kill 0\n",
+  "/sys/fs/cgroup/memory.peak": "119604572160\n",
+  "/sys/fs/cgroup/memory.max": "max\n",
+  "/sys/fs/cgroup/memory.current": "239316992\n",
+  "/sys/fs/cgroup/memory.swap.max": "max\n",
+  "kernel_log_access": "dmesg: read kernel buffer failed: Operation not permitted",
+  "qualification": "post-run diagnostics only; counters have no pre-run baseline and do not alone establish attribution"
+}

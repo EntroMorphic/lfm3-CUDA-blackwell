@@ -1,5 +1,11 @@
 # Full text-serving acceptance target
 
+**Consolidated current release gates:** `ACCEPTANCE.md` records1128 host passes,
+exact full eager-context4096, independent32K SDPA, actual grouped-worker memcheck,
+final561-cycle/600-second grouped resource soak and balanced20-per-mode AB/BA
+benchmark. Production initcheck, unexcluded synccheck and complete32K racecheck
+remain unresolved. Lower-count/standalone-only notes below are historical.
+
 Current increment: `GROUPED_SERVING.md` records real fixed-two-lane native/HTTP
 group dispatch,905 host passes and actual grouped parity/cancellation/aggregate32K
 plus authenticated HTTP smoke. It closes the prior standalone-only limitation

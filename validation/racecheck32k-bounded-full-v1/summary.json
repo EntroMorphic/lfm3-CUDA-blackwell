@@ -1,0 +1,59 @@
+{
+  "passed": false,
+  "full_acceptance": false,
+  "scoped_passed": false,
+  "diagnostic_only": true,
+  "selected_tools": [
+    "racecheck"
+  ],
+  "numeric_reference": "expected-result",
+  "initcheck_status": "not-run-diagnostic-only",
+  "controls_ok": false,
+  "synccheck_nvjet_excluded": false,
+  "records": [
+    {
+      "name": "racecheck",
+      "tool": "racecheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/racecheck32k-bounded-full-v1/racecheck.log",
+        "/workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/liquid-lfm3",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/bringup-32768-request.json",
+        "/workspace/liquid-CUDA/build/racecheck32k-bounded-full-v1/racecheck.json"
+      ],
+      "returncode": 9,
+      "timed_out": false,
+      "clean": false,
+      "application_ok": false,
+      "application_error": "[Errno 2] No such file or directory: '/workspace/liquid-CUDA/build/racecheck32k-bounded-full-v1/racecheck.json'",
+      "group_cleanup_complete": true
+    }
+  ],
+  "start_hashes": {
+    "binary": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+    "probe": "a77d4028d0d1113455803708436489fc60e9ed1d50472a10cb40df9a60fba2d0",
+    "sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "request": "87579252b405cb69ce9b71b3f0a284b643b35799ce42ff95a2f4ad16b3fe3335",
+    "expected_result": "0cdb9a2a5e0814fce75b0f58c8d577c6135276af37ecff10695206927dc41bf7"
+  },
+  "end_hashes": {
+    "binary": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+    "probe": "a77d4028d0d1113455803708436489fc60e9ed1d50472a10cb40df9a60fba2d0",
+    "sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "request": "87579252b405cb69ce9b71b3f0a284b643b35799ce42ff95a2f4ad16b3fe3335",
+    "expected_result": "0cdb9a2a5e0814fce75b0f58c8d577c6135276af37ecff10695206927dc41bf7"
+  },
+  "hashes_stable": true,
+  "identity_errors": {},
+  "binary_sha256": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+  "probe_sha256": "a77d4028d0d1113455803708436489fc60e9ed1d50472a10cb40df9a60fba2d0"
+}

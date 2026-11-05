@@ -1,0 +1,12 @@
+{
+  "kernel_lines": [
+    "Nov 04 19:38:53 thunderopolis kernel: Out of memory: Killed process 118327 (liquid-lfm3) total-vm:273497628kB, anon-rss:116214448kB, file-rss:23168kB, shmem-rss:124672kB, UID:0 pgtables:241008kB oom_score_adj:0",
+    "Nov 04 19:38:53 thunderopolis kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=docker-bb3189c1e439a3a2fda695bdba5aaf3eee31c53302a56e6ff10b71f72df57ca4.scope,mems_allowed=0,global_oom,task_memcg=/system.slice/docker-bb3189c1e439a3a2fda695bdba5aaf3eee31c53302a56e6ff10b71f72df57ca4.scope,task=liquid-lfm3,pid=118327,uid=0",
+    "Nov 04 19:38:53 thunderopolis kernel: liquid-lfm3 invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0"
+  ],
+  "container_id": "bb3189c1e439a3a2fda695bdba5aaf3eee31c53302a56e6ff10b71f72df57ca4",
+  "base_image_id": "sha256:2a9b0054deac9e70b38e31bfdc0b789a4918af50a07e9832263c47bcbc5b08da",
+  "runtime": "nvidia",
+  "racecheck_log_mtime": "2026-11-04T19:38:56.391264",
+  "cause": "kernel OOM kill of liquid-lfm3 in matching dev-container cgroup; zero-hazard footer is not acceptance"
+}
