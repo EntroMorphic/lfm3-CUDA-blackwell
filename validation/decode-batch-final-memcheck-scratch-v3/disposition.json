@@ -1,0 +1,9 @@
+{
+  "status": "diagnostic only; strict memcheck gate failed",
+  "raw_log_sha256": "878085b5e23154abe6db3be87d2c289710f17f49f487217f7da62eb9d32593b3",
+  "lossless_gzip_sha256": "429bb367c585b991be6e1a2f500f2be0c52fb043d8f62fa748bd0c48c71f3ba8",
+  "raw_bytes": 76010336,
+  "printed_launch_records": 49754,
+  "error_summary": 49754,
+  "interpretation": "No invalid-access diagnostic established from dump; launch records appear counted in summary. Rerun without dump required; no acceptance waiver."
+}

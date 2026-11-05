@@ -92,3 +92,22 @@ cleanup completed; independent post-run inspection found no matching live GPU
 descendants. Neither the short diagnostic nor the prior300/1200-second timeout
 is an acceptance pass. Further tuning should measure analysis-worker counts or
 complete-launch partitions with a full coverage ledger, not repeat blind waits.
+
+## Final paired-binary memcheck follow-up
+
+`validation/decode-batch-final-memcheck-v4/` uses final probe `db30e878...` and
+strict normal reporting (no launch dump). Scratch **passes zero errors** in15.48
+seconds. The unchanged upper-bound normal fixture times out after900.00 seconds;
+that case remains open. Group cleanup and independent process inspection confirm
+no live matching descendants before subsequent GPU work. Peak observed aggregate
+upper RSS is5,105,082,368 bytes and minimum host MemAvailable100,019,904,512 bytes;
+neither value establishes a GPU-memory cause.
+
+The earlier final scratch run with unlimited launch dumps completed the numerical
+fixture but returned86 and printed49,754 launch records and49,754 summary errors.
+No invalid-access report was established from that log. This appears to be a
+reporting/counting interaction, not clean instrumentation evidence. Its strict
+failed status remains preserved in
+`validation/decode-batch-final-memcheck-scratch-v3/`; the76MB raw log is retained
+losslessly as gzip with original/compressed hashes. The subsequent no-dump scratch
+zero-error run—not reinterpreting that failed summary—establishes scratch memcheck.

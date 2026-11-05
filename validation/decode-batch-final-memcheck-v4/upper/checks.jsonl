@@ -1,0 +1,3 @@
+{"fixture":"upper","reference_mode":"normal","gpu_runner_owners":4,"capacities":[2,32766],"prompt_lengths":[1,32764],"expected_comparisons":5,"expected_paired_calls":1,"expected_retired_checks":1,"expected_rejections":11,"expected_reset_checks":0,"standard_six_step_sequence":false}
+{"case":"prefill","event":"begin"}
+{"case":"prefill-A","exact_logits":true,"logit_comparison":"float_bits","exact_full_cache":true,"cache_bytes":417792,"first_cache_mismatch_word":208896,"vocabulary":128000,"first_mismatch":128000,"id":11,"expected_id":11,"cursor":1,"expected_cursor":1}

@@ -1,0 +1,10 @@
+{
+  "status": "scratch accepted; upper timeout not accepted",
+  "binary_sha256": "db30e878bda12448a0892e34a4f1b7d438300af55d6da0662c4055706de516d9",
+  "scratch_zero_errors": true,
+  "upper_timeout_seconds": 900.0036828510019,
+  "peak_upper_aggregate_rss_bytes": 5105082368,
+  "minimum_host_available_bytes": 100019904512,
+  "all_groups_cleaned": true,
+  "postinspection_no_live_descendants": true
+}

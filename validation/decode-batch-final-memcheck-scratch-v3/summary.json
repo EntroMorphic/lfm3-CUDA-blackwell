@@ -1,0 +1,37 @@
+{
+  "status": "failed",
+  "binary_sha256": "db30e878bda12448a0892e34a4f1b7d438300af55d6da0662c4055706de516d9",
+  "sanitizer_sha256": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+  "reference_mode": "normal",
+  "records": [
+    {
+      "fixture": "scratch",
+      "status": "failed",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/decode-batch-final-memcheck-scratch-v3/scratch.sanitizer.log",
+        "--dump-kernel-launches",
+        "--print-session-details",
+        "--print-limit",
+        "0",
+        "/workspace/liquid-CUDA/build/cmake/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/decode-batch-final-memcheck-scratch-v3/scratch",
+        "scratch"
+      ],
+      "owned_process_group": 10334,
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 56.21734535500218,
+      "group_cleanup_complete": true
+    }
+  ],
+  "not_run": [],
+  "worker_integration": false
+}
