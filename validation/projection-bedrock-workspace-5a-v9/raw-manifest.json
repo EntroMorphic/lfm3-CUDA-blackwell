@@ -1,0 +1,113 @@
+{
+  "files": {
+    "ldd.log": {
+      "bytes": 839,
+      "sha256": "86a9038b6ff8be2ed48d8b53855350243db00c7fb51b5d3fa25c002c77cbea95"
+    },
+    "case-003/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-003/output.workspace.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "case-003/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-003/application.log": {
+      "bytes": 1447,
+      "sha256": "f507131a6284eaba2c5d3094567f6756fb4ab6cbd7175582ed7d476d5353cbb2"
+    },
+    "case-003/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "case-002/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-002/output.workspace.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "case-002/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-002/application.log": {
+      "bytes": 1447,
+      "sha256": "a8aa9b9d2582f3c0022106611d12b2c3512d7d1fd67cdeed7b8d3138f5accec7"
+    },
+    "case-002/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "case-004/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-004/output.workspace.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "case-004/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-004/application.log": {
+      "bytes": 1447,
+      "sha256": "c3c3968bb21b13792533f1e56e890262884510294ecc0cc71e5eb8f36bee6c3e"
+    },
+    "case-004/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "case-001/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a"
+    },
+    "case-001/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a"
+    },
+    "case-001/application.log": {
+      "bytes": 1281,
+      "sha256": "703819c663ec41d508670488535dbc9a434bf4559455baa48eacf3ab68b7e628"
+    },
+    "case-001/sanitizer.log": {
+      "bytes": 1816,
+      "sha256": "ec5f848cf0b2b4b4e1dad2bd011b14e9180e6f0ab35d1fa7358a9aedb1108bca"
+    },
+    "case-000/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+    },
+    "case-000/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+    },
+    "case-000/application.log": {
+      "bytes": 1280,
+      "sha256": "2223760d0ac90196aebe2e6f14bc75e64620fe4d0b43449d221a1ba95da55bb7"
+    },
+    "case-000/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "fixture-asymmetric-1/a.bf16": {
+      "bytes": 25165824,
+      "sha256": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed"
+    },
+    "fixture-asymmetric-1/b.bf16": {
+      "bytes": 4096,
+      "sha256": "e4680ce9a7d241dd78f157a39923e63810b7ed5bc5fe6dcc7160fd9a7fb4c8b8"
+    },
+    "fixture-asymmetric-1/expected.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    }
+  },
+  "raw_arrays_retained_remotely": true
+}

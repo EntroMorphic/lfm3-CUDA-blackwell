@@ -1,0 +1,31 @@
+========= COMPUTE-SANITIZER
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at consume_all(const __nv_bfloat16 *, __nv_bfloat16 *, unsigned long)+0x100
+=========     by thread (32,0,0) in block (0,0,0)
+=========     Address 0x1c44e01040
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x47db] in lfm3-projection-bedrock-probe
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at consume_all(const __nv_bfloat16 *, __nv_bfloat16 *, unsigned long)+0x100
+=========     by thread (33,0,0) in block (0,0,0)
+=========     Address 0x1c44e01042
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x47db] in lfm3-projection-bedrock-probe
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at consume_all(const __nv_bfloat16 *, __nv_bfloat16 *, unsigned long)+0x100
+=========     by thread (34,0,0) in block (0,0,0)
+=========     Address 0x1c44e01044
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x47db] in lfm3-projection-bedrock-probe
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at consume_all(const __nv_bfloat16 *, __nv_bfloat16 *, unsigned long)+0x100
+=========     by thread (35,0,0) in block (0,0,0)
+=========     Address 0x1c44e01046
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x47db] in lfm3-projection-bedrock-probe
+========= 
+========= ERROR SUMMARY: 6528 errors
+========= ERROR SUMMARY: 6524 errors were not printed. Use --print-limit option to adjust the number of printed errors

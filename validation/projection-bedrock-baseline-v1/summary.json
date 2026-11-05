@@ -1,0 +1,17 @@
+{
+  "status": "failed",
+  "full_acceptance": false,
+  "phase": "baseline",
+  "records": [],
+  "scope": "whole-output diagnostic; no kernel-selection or root-cause inference",
+  "error": "ValueError: dependency resolution failed",
+  "end_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe": "fc07ac9e72b9c4c0330b57815a75175861dbf7ec04989445dc0a477e7e1dc18e",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/native/tests/lfm3_projection_bedrock_probe.cu": "6a9f941e84ad8d484bb88a4e22e97e1cec1c98530908adf57ee9abb94c78cbd8",
+    "/workspace/liquid-CUDA/tools/check_lfm3_projection_bedrock.py": "c76c87bfe9eb14d08b86cf0bf3b7e9c29f352c254d049dfbc11004419bd8bc14",
+    "/workspace/liquid-CUDA/tools/check_lfm3_cublas_modes.py": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd"
+  },
+  "hashes_stable": true
+}

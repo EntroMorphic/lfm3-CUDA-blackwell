@@ -1,0 +1,224 @@
+{
+  "status": "available measurements rechecked; no acceptance",
+  "measurement_status": "measurement-completed",
+  "whole_output_comparisons": [
+    {
+      "case": 1,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        }
+      }
+    },
+    {
+      "case": 2,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        }
+      }
+    },
+    {
+      "case": 3,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        }
+      }
+    },
+    {
+      "case": 4,
+      "rows": 257,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "852bce5113759ead6bfa67780ed69866f305b10f46f042146c637a3730b3200c"
+        },
+        "consumer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "852bce5113759ead6bfa67780ed69866f305b10f46f042146c637a3730b3200c"
+        }
+      }
+    },
+    {
+      "case": 5,
+      "rows": 257,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "852bce5113759ead6bfa67780ed69866f305b10f46f042146c637a3730b3200c"
+        },
+        "consumer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "852bce5113759ead6bfa67780ed69866f305b10f46f042146c637a3730b3200c"
+        }
+      }
+    },
+    {
+      "case": 6,
+      "rows": 257,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "852bce5113759ead6bfa67780ed69866f305b10f46f042146c637a3730b3200c"
+        },
+        "consumer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "852bce5113759ead6bfa67780ed69866f305b10f46f042146c637a3730b3200c"
+        }
+      }
+    },
+    {
+      "case": 7,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        }
+      }
+    },
+    {
+      "case": 8,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        }
+      }
+    },
+    {
+      "case": 9,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        }
+      }
+    },
+    {
+      "case": 10,
+      "rows": 257,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+        },
+        "consumer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+        }
+      }
+    },
+    {
+      "case": 11,
+      "rows": 257,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+        },
+        "consumer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+        }
+      }
+    },
+    {
+      "case": 12,
+      "rows": 257,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+        },
+        "consumer": {
+          "checked_elements": 1579008,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+        }
+      }
+    }
+  ],
+  "hashes_stable": true,
+  "full_acceptance": false
+}

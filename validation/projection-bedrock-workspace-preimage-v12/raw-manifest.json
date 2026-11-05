@@ -1,0 +1,77 @@
+{
+  "files": {
+    "ldd.log": {
+      "bytes": 839,
+      "sha256": "48494a7918d63b0b6845d6be3f922b80c4ec122863ac0bd01c42319c129ad428"
+    },
+    "case-002/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-002/output.workspace.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "case-002/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-002/output.workspace-before.bin": {
+      "bytes": 49152,
+      "sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606"
+    },
+    "case-002/application.log": {
+      "bytes": 1529,
+      "sha256": "95b2e09b4360597ba55192a6bc3a7278f2af92c2339d7d608d649efe491bc137"
+    },
+    "case-002/sanitizer.log": {
+      "bytes": 21487911,
+      "sha256": "9bbef4256a0692bc92af550ab3ba11b7df2e1d3f2bba4d470d7e0617574238ab"
+    },
+    "case-001/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a"
+    },
+    "case-001/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a"
+    },
+    "case-001/application.log": {
+      "bytes": 1281,
+      "sha256": "c0c6909384a8d64ee2ad02f538d303b28e2e3b532f65e768aac268a7d09bc214"
+    },
+    "case-001/sanitizer.log": {
+      "bytes": 1816,
+      "sha256": "284f4c97df12f6ff02d4bebddb9f75f7483bc8810aaf6200c3f1a8d7de38d8be"
+    },
+    "case-000/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+    },
+    "case-000/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+    },
+    "case-000/application.log": {
+      "bytes": 1280,
+      "sha256": "5b5a1a9055f032f2d4e583a2701d863681aff458c39c1d7a2ab96e32d3a750f0"
+    },
+    "case-000/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "fixture-asymmetric-1/a.bf16": {
+      "bytes": 25165824,
+      "sha256": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed"
+    },
+    "fixture-asymmetric-1/b.bf16": {
+      "bytes": 4096,
+      "sha256": "e4680ce9a7d241dd78f157a39923e63810b7ed5bc5fe6dcc7160fd9a7fb4c8b8"
+    },
+    "fixture-asymmetric-1/expected.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    }
+  },
+  "raw_arrays_retained_remotely": true
+}

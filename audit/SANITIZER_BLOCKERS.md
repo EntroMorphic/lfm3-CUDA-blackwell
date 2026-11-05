@@ -4,6 +4,19 @@ Neither a timeout nor correct sampled output is a full sanitizer pass. No output
 preinitialization, instruction suppression, selected-block coverage reduction or
 disabled checking was used.
 
+## Latest measurement-only localization
+
+`BEDROCK_MEASUREMENTS.md` and `validation/bedrock-consolidated-v1.json` narrow
+the one-row initcheck symptom to the NVJET split-K/reduction workspace path.
+Whole-output checks, isolated API settings, complete diagnostic launch traces,
+allocation mapping and workspace before/after snapshots are measured separately.
+They establish a physical-write/initialization-report discrepancy after GEMM,
+but not the precise untracked instruction or freedom from an internal ordering
+defect. Scratch seeding occurs only in labeled diagnostics, never production or
+acceptance runs. The original full-consumer default 257-row instrumented case
+timed out and remains incomplete. Synccheck and racecheck are not resolved by
+these findings; no vendor-confirmed root cause or workaround is claimed.
+
 ## Initcheck sanitizer-only version/shape matrix
 
 `tools/check_lfm3_initcheck_matrix.py` holds the checkpoint-free probe binary,

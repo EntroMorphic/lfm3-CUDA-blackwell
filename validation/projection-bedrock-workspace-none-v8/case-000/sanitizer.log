@@ -1,0 +1,23 @@
+========= COMPUTE-SANITIZER
+========= Host API memory access error at host access to 0x1c45000000 of size 49152 bytes
+=========     Uninitialized access to 0x1c45000000 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: main [0x4b9b] in lfm3-projection-bedrock-probe
+========= 
+========= Host API memory access error at host access to 0x1c45000000 of size 49152 bytes
+=========     Uninitialized access to 0x1c45000020 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: main [0x4b9b] in lfm3-projection-bedrock-probe
+========= 
+========= Host API memory access error at host access to 0x1c45000000 of size 49152 bytes
+=========     Uninitialized access to 0x1c45000040 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: main [0x4b9b] in lfm3-projection-bedrock-probe
+========= 
+========= Host API memory access error at host access to 0x1c45000000 of size 49152 bytes
+=========     Uninitialized access to 0x1c45000060 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: main [0x4b9b] in lfm3-projection-bedrock-probe
+========= 
+========= ERROR SUMMARY: 1536 errors
+========= ERROR SUMMARY: 1532 errors were not printed. Use --print-limit option to adjust the number of printed errors

@@ -1,0 +1,166 @@
+{
+  "status": "saved observations revalidated",
+  "full_acceptance": false,
+  "numerical_gemm_observations": 12,
+  "factorial_error_totals": {
+    "default/tensor/default": [
+      12288,
+      12288,
+      12288
+    ],
+    "default/tensor/pedantic": [
+      12288,
+      12288,
+      12288
+    ],
+    "default/default/default": [
+      12288,
+      12288,
+      12288
+    ],
+    "default/default/pedantic": [
+      12288,
+      12288,
+      12288
+    ],
+    "pedantic/tensor/default": [
+      0,
+      0,
+      0
+    ],
+    "pedantic/tensor/pedantic": [
+      0,
+      0,
+      0
+    ],
+    "pedantic/default/default": [
+      0,
+      0,
+      0
+    ],
+    "pedantic/default/pedantic": [
+      0,
+      0,
+      0
+    ]
+  },
+  "reported_workspace_reads": {
+    "count": 12288,
+    "read_bytes": 4,
+    "first_offset": 0,
+    "last_offset": 49148
+  },
+  "kernel_sequence": [
+    "nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT",
+    "_ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_",
+    "_Z11consume_allPK13__nv_bfloat16PS_m"
+  ],
+  "workspace_seed_observations": [
+    {
+      "seed": "none",
+      "repeat": 0,
+      "bytes": 49152,
+      "fp32_words": 12288,
+      "reference_word_mismatches": 0,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    {
+      "seed": "none",
+      "repeat": 1,
+      "bytes": 49152,
+      "fp32_words": 12288,
+      "reference_word_mismatches": 0,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    {
+      "seed": "none",
+      "repeat": 2,
+      "bytes": 49152,
+      "fp32_words": 12288,
+      "reference_word_mismatches": 0,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    {
+      "seed": "a5",
+      "repeat": 0,
+      "bytes": 49152,
+      "fp32_words": 12288,
+      "reference_word_mismatches": 0,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    {
+      "seed": "a5",
+      "repeat": 1,
+      "bytes": 49152,
+      "fp32_words": 12288,
+      "reference_word_mismatches": 0,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    {
+      "seed": "a5",
+      "repeat": 2,
+      "bytes": 49152,
+      "fp32_words": 12288,
+      "reference_word_mismatches": 0,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    {
+      "seed": "5a",
+      "repeat": 0,
+      "bytes": 49152,
+      "fp32_words": 12288,
+      "reference_word_mismatches": 0,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    {
+      "seed": "5a",
+      "repeat": 1,
+      "bytes": 49152,
+      "fp32_words": 12288,
+      "reference_word_mismatches": 0,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    {
+      "seed": "5a",
+      "repeat": 2,
+      "bytes": 49152,
+      "fp32_words": 12288,
+      "reference_word_mismatches": 0,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    }
+  ],
+  "seed_trace_counts": {
+    "none": {
+      "device_read_reports": 12288,
+      "host_api_reports": 1536,
+      "printed_launches": 3
+    },
+    "a5": {
+      "device_read_reports": 0,
+      "host_api_reports": 0,
+      "printed_launches": 3
+    },
+    "5a": {
+      "device_read_reports": 0,
+      "host_api_reports": 0,
+      "printed_launches": 3
+    }
+  },
+  "workspace_preimage": {
+    "bytes": 49152,
+    "fp32_words": 12288,
+    "reference_word_mismatches": 0,
+    "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2",
+    "preimage_all_zero": true,
+    "changed_bytes": 23222,
+    "changed_fp32_words": 12152,
+    "host_api_reports_before_first_launch": 1536,
+    "host_api_reports_after_last_launch": 1536
+  },
+  "unknowns": [
+    "exact instruction/write-tracking mechanism",
+    "whether internal reads include an ordering defect",
+    "completed default257-row whole-consumer initcheck",
+    "separate synccheck and full32K racecheck root causes"
+  ]
+}

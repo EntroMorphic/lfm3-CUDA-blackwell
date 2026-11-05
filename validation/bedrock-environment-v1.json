@@ -1,0 +1,23 @@
+{
+  "container_id": "035a401fb28f7caea40d2511fc0aaadab1bcd232593b216e259d249f19d53525",
+  "image": "sha256:2a9b0054deac9e70b38e31bfdc0b789a4918af50a07e9832263c47bcbc5b08da",
+  "runtime": "nvidia",
+  "memory_limit": 51539607552,
+  "memory_swap_limit": 51539607552,
+  "cgroup": {
+    "events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+    "max": "51539607552\n",
+    "peak": "1257009152\n",
+    "swap.max": "0\n"
+  },
+  "production_binaries": {
+    "liquid-lfm3": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+    "liquid-lfm3-worker": "1aa1e0c2f3c3ebc0153f156ff403b8b16ba943a4da2cca78303f6fc1d0adc2c9",
+    "lfm3-decode-batch-probe": "345f1ded5278fe257b80bc2b17bb85318bbb9c848648c9e8ce10dad5adbd514e"
+  },
+  "no_matching_live_gpu_descendants": true,
+  "host_bsp": "# R38 (release), REVISION: 2.2, GCID: 42205042, BOARD: generic, EABI: aarch64, DATE: Thu Sep 25 22:47:11 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia\nINSTALL_TYPE=\n",
+  "kernel_module": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  TempVersion  Release Build  (bugfix_main)  (buildbrain@b93eb89d-1ffc-4b76-8cef-fa02a33b010d-s7bv-ff8js)  Thu Sep 25 15:33:42 PDT 2025\nGCC version:  gcc version 13.2.0 (crosstool-NG 1.26.0) \n",
+  "scope": "diagnostic-only, production binaries unchanged",
+  "temporary_container_stopped": true
+}

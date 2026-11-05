@@ -1,0 +1,62 @@
+{
+  "status": "available measurements rechecked; no acceptance",
+  "measurement_status": "failed",
+  "whole_output_comparisons": [
+    {
+      "case": 2,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        }
+      }
+    },
+    {
+      "case": 3,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        }
+      }
+    },
+    {
+      "case": 4,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "882c456ac286d87c234440356c8c4472b5b3b851578952e94acb13a92e3d5bb9"
+        }
+      }
+    }
+  ],
+  "hashes_stable": true,
+  "full_acceptance": false
+}

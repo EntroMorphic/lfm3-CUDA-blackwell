@@ -1,0 +1,113 @@
+{
+  "files": {
+    "ldd.log": {
+      "bytes": 839,
+      "sha256": "36440831cb83146b51534a07fa7ac5e5696fa03cb32b92e8c3d09cac31dc2f82"
+    },
+    "case-003/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-003/output.workspace.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "case-003/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-003/application.log": {
+      "bytes": 1369,
+      "sha256": "674294d794470fa93727853caf3c53ef7d1669750ab8048ebf125415d55a3e84"
+    },
+    "case-003/sanitizer.log": {
+      "bytes": 6842,
+      "sha256": "de9e471a4a409a4c83273cb19c923a1cb38a73d343e1482fa9a29cae76c13322"
+    },
+    "case-002/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-002/output.workspace.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "case-002/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-002/application.log": {
+      "bytes": 1369,
+      "sha256": "02c6acf74ab6d921280a54bf13adce74562d3d2bde9397eca1a410c628395e5b"
+    },
+    "case-002/sanitizer.log": {
+      "bytes": 6842,
+      "sha256": "de9e471a4a409a4c83273cb19c923a1cb38a73d343e1482fa9a29cae76c13322"
+    },
+    "case-004/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-004/output.workspace.bin": {
+      "bytes": 49152,
+      "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+    },
+    "case-004/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-004/application.log": {
+      "bytes": 1369,
+      "sha256": "11cb66447c8eb23b93556ba2ccd5256ee1af35c5e9836bf634595ed5a2133ed5"
+    },
+    "case-004/sanitizer.log": {
+      "bytes": 6846,
+      "sha256": "ed8157b74edda57a3cb16f009286406ae3741af612c8480e5b83f9e4afbbd5be"
+    },
+    "case-001/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a"
+    },
+    "case-001/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a"
+    },
+    "case-001/application.log": {
+      "bytes": 1281,
+      "sha256": "a1f57aecac38238c0efec84ae2ccc9c88f86dff478383fa928333945b32681e2"
+    },
+    "case-001/sanitizer.log": {
+      "bytes": 1816,
+      "sha256": "c5a248704b06c950245e0688295d8c793b544366b924e61518be746dd24a3cb3"
+    },
+    "case-000/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+    },
+    "case-000/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+    },
+    "case-000/application.log": {
+      "bytes": 1280,
+      "sha256": "2c6e1dd8990fbf671d5424bffedd273e53b738ad21279e6c652ae20b55fd755a"
+    },
+    "case-000/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "fixture-asymmetric-1/a.bf16": {
+      "bytes": 25165824,
+      "sha256": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed"
+    },
+    "fixture-asymmetric-1/b.bf16": {
+      "bytes": 4096,
+      "sha256": "e4680ce9a7d241dd78f157a39923e63810b7ed5bc5fe6dcc7160fd9a7fb4c8b8"
+    },
+    "fixture-asymmetric-1/expected.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    }
+  },
+  "raw_arrays_retained_remotely": true
+}

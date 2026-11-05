@@ -1,0 +1,44 @@
+========= COMPUTE-SANITIZER
+========= Process ID:             805
+========= Created:                2026-Nov-05 19:10:28
+========= System OS:              Linux (L4T 64bit)
+========= OS build:               #1 SMP PREEMPT Thu Sep 25 15:19:42 PDT 2025
+========= System CPU:             Neoverse-V3AE
+========= CPU architecture:       ARM64
+========= Computer Name:          035a401fb28f
+========= Target application:     /workspace/liquid-CUDA/build/cmake-bedrock-mapped-v2/lfm3-projection-bedrock-probe gemm 1 2048 pedantic tensor default /workspace/liquid-CUDA/build/projection-bedrock-launches-row1-v6/fixture-asymmetric-1/a.bf16 /workspace/liquid-CUDA/build/projection-bedrock-launches-row1-v6/fixture-asymmetric-1/b.bf16 /workspace/liquid-CUDA/build/projection-bedrock-launches-row1-v6/case-003/output none
+========= CUDA version:           13.0
+========= Display Driver version: 580.00
+========= 
+========= Launch #1
+=========   Kernel: _Z17gemv2T_kernel_valIii13__nv_bfloat16S0_S0_fLi128ELi16ELi4ELi4ELb0ELb0E18cublasGemvParamsExIi30cublasGemvTensorStridedBatchedIKS0_ES4_S2_IS0_EfEEvT11_T4_S8_
+=========   Grid:   (768, 1, 1)
+=========   Block:  (128, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernel [0x33c6ab] in libcuda.so.1
+=========         Host Frame:  [0x53e98ef] in libcublasLt.so.13
+=========         Host Frame:  [0x543fab3] in libcublasLt.so.13
+=========         Host Frame:  [0x1867813] in libcublasLt.so.13
+=========         Host Frame:  [0x186fc83] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: main [0x4683] in lfm3-projection-bedrock-probe
+========= 
+========= Launch #2
+=========   Kernel: _Z11consume_allPK13__nv_bfloat16PS_m
+=========   Grid:   (24, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: consume_all(__nv_bfloat16 const*, __nv_bfloat16*, unsigned long) [0x532b] in lfm3-projection-bedrock-probe
+=========         Host Frame: main [0x47db] in lfm3-projection-bedrock-probe
+========= 
+========= ERROR SUMMARY: 2 errors

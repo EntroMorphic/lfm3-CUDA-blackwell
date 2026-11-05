@@ -1,0 +1,10 @@
+{"stage":"before_cuda_setup","host_monotonic_us":90144573010}
+{"configuration":true,"producer":"gemm","rows":1,"width":2048,"compute":"default","algo":"tensor","math":"default","sync":"none","compute_enum":68,"algo_enum":99,"actual_math_enum":0,"default_stream":true,"cublas":130100,"driver":13000,"runtime":13000,"sm_major":11,"sm_minor":0,"workspace_bytes":8519680}
+{"stage":"before_producer_submission","host_monotonic_us":90144665431}
+{"stage":"producer_submission_returned","host_monotonic_us":90144726751}
+{"stage":"before_consumer_submission","host_monotonic_us":90144726785}
+{"stage":"consumer_submission_returned","host_monotonic_us":90144726888}
+{"stage":"before_consumer_blocking_download","host_monotonic_us":90144726931}
+{"stage":"consumer_blocking_download_returned","host_monotonic_us":90144726979}
+{"stage":"producer_blocking_download_returned","host_monotonic_us":90144727007}
+{"complete":true,"outputs":6144,"consumer_elements":6144}

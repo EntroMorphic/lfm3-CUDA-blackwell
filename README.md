@@ -15,7 +15,7 @@ An extended grouped resource soak passes610 cycles over600 measured seconds.
 This is **not yet full-serving acceptance**: complete sanitizer gates remain
 unresolved, and subsequent runtime candidates need fresh hash-matched validation. See
 [`audit/ACCEPTANCE.md`](audit/ACCEPTANCE.md) for the consolidated current gate ledger
-(1128 host tests, exact eager-context4096, numerical32K and balanced benchmark).
+(1209 host tests, exact eager-context4096, numerical32K and balanced benchmark).
 Production initcheck, unexcluded synccheck and complete32K racecheck remain open. See
 [`audit/TEXT_SERVING_ROADMAP.md`](audit/TEXT_SERVING_ROADMAP.md) for current evidence
 and deliberately unclaimed features. Historical milestone details follow.

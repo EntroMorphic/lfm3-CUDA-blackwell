@@ -1,0 +1,622 @@
+{
+  "status": "measurement-completed",
+  "full_acceptance": false,
+  "phase": "isolate",
+  "records": [
+    {
+      "index": 0,
+      "producer": "kernel",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/case-000/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-scratch-v3/lfm3-projection-bedrock-probe",
+        "kernel",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/case-000/output",
+        "none"
+      ],
+      "status": "measured",
+      "workspace_seed": "none",
+      "workspace_dump_bytes": 0,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.4160140669991961,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true,
+        "launch_dump_diagnostic": false,
+        "printed_launches": 0,
+        "printed_kernel_names": []
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "kernel",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680,
+          "workspace_seed": "none",
+          "workspace_dump_bytes": 0
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 91204532103
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 91204654288
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 91204654856
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 91204654860
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 91204655014
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 91204655049
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 91204655189
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 91204655240
+          }
+        ],
+        "allocations": [
+          {
+            "allocation": "a",
+            "base": 121389449216,
+            "bytes": 25165824
+          },
+          {
+            "allocation": "b",
+            "base": 121414615040,
+            "bytes": 4096
+          },
+          {
+            "allocation": "c",
+            "base": 121414619136,
+            "bytes": 12288
+          },
+          {
+            "allocation": "d",
+            "base": 121414631424,
+            "bytes": 12288
+          },
+          {
+            "allocation": "workspace",
+            "base": 121416712192,
+            "bytes": 8519680
+          }
+        ]
+      },
+      "reported_read_addresses": [],
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+      }
+    },
+    {
+      "index": 1,
+      "producer": "missing",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/case-001/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-scratch-v3/lfm3-projection-bedrock-probe",
+        "missing",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/case-001/output",
+        "none"
+      ],
+      "status": "measured",
+      "workspace_seed": "none",
+      "workspace_dump_bytes": 0,
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 2.574574799000402,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 6528,
+        "consumer_read_report": true,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true,
+        "launch_dump_diagnostic": false,
+        "printed_launches": 0,
+        "printed_kernel_names": []
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "missing",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680,
+          "workspace_seed": "none",
+          "workspace_dump_bytes": 0
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 91204957073
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 91205079716
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 91205079717
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 91205079718
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 91205080309
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 91205080352
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 91207073065
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 91207161288
+          }
+        ],
+        "allocations": [
+          {
+            "allocation": "a",
+            "base": 121389449216,
+            "bytes": 25165824
+          },
+          {
+            "allocation": "b",
+            "base": 121414615040,
+            "bytes": 4096
+          },
+          {
+            "allocation": "c",
+            "base": 121414619136,
+            "bytes": 12288
+          },
+          {
+            "allocation": "d",
+            "base": 121414631424,
+            "bytes": 12288
+          },
+          {
+            "allocation": "workspace",
+            "base": 121416712192,
+            "bytes": 8519680
+          }
+        ]
+      },
+      "reported_read_addresses": [
+        {
+          "address": 121414619264,
+          "read_bytes": 2,
+          "matches": [
+            {
+              "allocation": "c",
+              "offset_bytes": 128
+            }
+          ]
+        },
+        {
+          "address": 121414619266,
+          "read_bytes": 2,
+          "matches": [
+            {
+              "allocation": "c",
+              "offset_bytes": 130
+            }
+          ]
+        },
+        {
+          "address": 121414619268,
+          "read_bytes": 2,
+          "matches": [
+            {
+              "allocation": "c",
+              "offset_bytes": 132
+            }
+          ]
+        },
+        {
+          "address": 121414619270,
+          "read_bytes": 2,
+          "matches": [
+            {
+              "allocation": "c",
+              "offset_bytes": 134
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--dump-kernel-launches",
+        "--print-session-details",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "0",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/case-002/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-scratch-v3/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/case-002/output",
+        "none",
+        "a5",
+        "49152"
+      ],
+      "status": "measured",
+      "workspace_seed": "a5",
+      "workspace_dump_bytes": 49152,
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 0.6667959070036886,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 3,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true,
+        "launch_dump_diagnostic": true,
+        "printed_launches": 3,
+        "printed_kernel_names": [
+          "nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT",
+          "_ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_",
+          "_Z11consume_allPK13__nv_bfloat16PS_m"
+        ]
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680,
+          "workspace_seed": "a5",
+          "workspace_dump_bytes": 49152
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 91207539520
+          },
+          {
+            "stage": "diagnostic_workspace_seed_submitted",
+            "host_monotonic_us": 91207842162
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 91207842221
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 91207938092
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 91207938128
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 91207939528
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 91207939581
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 91207939792
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 91207939850
+          },
+          {
+            "stage": "workspace_postcompletion_download_returned",
+            "host_monotonic_us": 91207940245
+          }
+        ],
+        "allocations": [
+          {
+            "allocation": "a",
+            "base": 121389449216,
+            "bytes": 25165824
+          },
+          {
+            "allocation": "b",
+            "base": 121414615040,
+            "bytes": 4096
+          },
+          {
+            "allocation": "c",
+            "base": 121414619136,
+            "bytes": 12288
+          },
+          {
+            "allocation": "d",
+            "base": 121414631424,
+            "bytes": 12288
+          },
+          {
+            "allocation": "workspace",
+            "base": 121416712192,
+            "bytes": 8519680
+          }
+        ]
+      },
+      "workspace_postcompletion": {
+        "bytes": 49152,
+        "sha256": "cc2e740d70885ee2d9e4ae6d1b1987dd10c04df8f43401bea6a2af64ef4237b2"
+      },
+      "reported_read_addresses": [],
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    }
+  ],
+  "instrumentation": "initcheck",
+  "launch_capture_diagnostic": true,
+  "workspace_seed": "a5",
+  "workspace_dump_bytes": 49152,
+  "scope": "whole-output diagnostic; no kernel-selection or root-cause inference",
+  "start_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-bedrock-scratch-v3/lfm3-projection-bedrock-probe": "ae7093ab044e25c90af33e58aac283d744f1939a84f24e74aae6409ba56b7f1f",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/native/tests/lfm3_projection_bedrock_probe.cu": "9d7169a3ca47b4a80643cc5155d3a04d84bc55628b627a77556570a4abe4ae45",
+    "/workspace/liquid-CUDA/tools/check_lfm3_projection_bedrock.py": "c1eec949eee11bf1e2b7ae7abdea649d2d0b9f61fe0d8b8714b73acd7c3962d5",
+    "/workspace/liquid-CUDA/tools/check_lfm3_cublas_modes.py": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublas.so.13": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1": "390027e5f45f236bd1838bc54bf464c5ff01d260ab9f8b415ea8276641bce505",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/a.bf16": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed",
+    "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/b.bf16": "e4680ce9a7d241dd78f157a39923e63810b7ed5bc5fe6dcc7160fd9a7fb4c8b8",
+    "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/expected.bf16": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+  },
+  "dependencies": {
+    "libcudart.so.13": {
+      "path": "/pinned-cuda/libcudart.so.13",
+      "sha256": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63"
+    },
+    "libcublas.so.13": {
+      "path": "/pinned-cuda/libcublas.so.13",
+      "sha256": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b"
+    },
+    "libstdc++.so.6": {
+      "path": "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33",
+      "sha256": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4"
+    },
+    "libgcc_s.so.1": {
+      "path": "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1",
+      "sha256": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20"
+    },
+    "libc.so.6": {
+      "path": "/usr/lib/aarch64-linux-gnu/libc.so.6",
+      "sha256": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e"
+    },
+    "ld-linux-aarch64.so.1": {
+      "path": "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+      "sha256": "390027e5f45f236bd1838bc54bf464c5ff01d260ab9f8b415ea8276641bce505"
+    },
+    "libdl.so.2": {
+      "path": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+      "sha256": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4"
+    },
+    "libpthread.so.0": {
+      "path": "/usr/lib/aarch64-linux-gnu/libpthread.so.0",
+      "sha256": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353"
+    },
+    "librt.so.1": {
+      "path": "/usr/lib/aarch64-linux-gnu/librt.so.1",
+      "sha256": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e"
+    },
+    "libm.so.6": {
+      "path": "/usr/lib/aarch64-linux-gnu/libm.so.6",
+      "sha256": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a"
+    },
+    "libcublasLt.so.13": {
+      "path": "/pinned-cuda/libcublasLt.so.13",
+      "sha256": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9"
+    }
+  },
+  "ld_library_path": "/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia",
+  "planned_cases": 3,
+  "observed_gemm_cases": 1,
+  "observed_gemm_cases_with_numerical_mismatch": 0,
+  "observed_gemm_cases_with_sanitizer_errors": null,
+  "end_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-bedrock-scratch-v3/lfm3-projection-bedrock-probe": "ae7093ab044e25c90af33e58aac283d744f1939a84f24e74aae6409ba56b7f1f",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/native/tests/lfm3_projection_bedrock_probe.cu": "9d7169a3ca47b4a80643cc5155d3a04d84bc55628b627a77556570a4abe4ae45",
+    "/workspace/liquid-CUDA/tools/check_lfm3_projection_bedrock.py": "c1eec949eee11bf1e2b7ae7abdea649d2d0b9f61fe0d8b8714b73acd7c3962d5",
+    "/workspace/liquid-CUDA/tools/check_lfm3_cublas_modes.py": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublas.so.13": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1": "390027e5f45f236bd1838bc54bf464c5ff01d260ab9f8b415ea8276641bce505",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/a.bf16": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed",
+    "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/b.bf16": "e4680ce9a7d241dd78f157a39923e63810b7ed5bc5fe6dcc7160fd9a7fb4c8b8",
+    "/workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/expected.bf16": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+  },
+  "hashes_stable": true
+}

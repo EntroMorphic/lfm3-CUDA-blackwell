@@ -1,0 +1,65 @@
+========= COMPUTE-SANITIZER
+========= Process ID:             1266
+========= Created:                2026-Nov-05 19:20:41
+========= System OS:              Linux (L4T 64bit)
+========= OS build:               #1 SMP PREEMPT Thu Sep 25 15:19:42 PDT 2025
+========= System CPU:             Neoverse-V3AE
+========= CPU architecture:       ARM64
+========= Computer Name:          035a401fb28f
+========= Target application:     /workspace/liquid-CUDA/build/cmake-bedrock-scratch-v3/lfm3-projection-bedrock-probe gemm 1 2048 default tensor default /workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/a.bf16 /workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/fixture-asymmetric-1/b.bf16 /workspace/liquid-CUDA/build/projection-bedrock-workspace-trace-a5-v10/case-002/output none a5 49152
+========= CUDA version:           13.0
+========= Display Driver version: 580.00
+========= 
+========= Launch #1
+=========   Kernel: nvjet_sm110_tst_128x8_64x12_2x1_v_bz_splitK_TNT
+=========   Grid:   (96, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Cluster: (2, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x28d4dcb] in libcublasLt.so.13
+=========         Host Frame:  [0x2a09f37] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: main [0x4893] in lfm3-projection-bedrock-probe
+========= 
+========= Launch #2
+=========   Kernel: _ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0EfS1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_
+=========   Grid:   (192, 1, 1)
+=========   Block:  (32, 16, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: cuLaunchKernelEx [0x33c76f] in libcuda.so.1
+=========         Host Frame:  [0x53e9b2f] in libcublasLt.so.13
+=========         Host Frame:  [0x543fc8f] in libcublasLt.so.13
+=========         Host Frame:  [0x17b3617] in libcublasLt.so.13
+=========         Host Frame:  [0x2a0a193] in libcublasLt.so.13
+=========         Host Frame:  [0xe1cd6b] in libcublasLt.so.13
+=========         Host Frame:  [0xf3c777] in libcublasLt.so.13
+=========         Host Frame: cublasLtTSTMatmul [0xf6ae27] in libcublasLt.so.13
+=========         Host Frame:  [0x1b307f] in libcublas.so.13
+=========         Host Frame:  [0x1b4e5b] in libcublas.so.13
+=========         Host Frame:  [0x182b73] in libcublas.so.13
+=========         Host Frame:  [0x36941b] in libcublas.so.13
+=========         Host Frame:  [0x369a63] in libcublas.so.13
+=========         Host Frame: cublasGemmEx [0xe0d8b] in libcublas.so.13
+=========         Host Frame: main [0x4893] in lfm3-projection-bedrock-probe
+========= 
+========= Launch #3
+=========   Kernel: _Z11consume_allPK13__nv_bfloat16PS_m
+=========   Grid:   (24, 1, 1)
+=========   Block:  (256, 1, 1)
+=========   Stream: 0x0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: consume_all(__nv_bfloat16 const*, __nv_bfloat16*, unsigned long) [0x571f] in lfm3-projection-bedrock-probe
+=========         Host Frame: main [0x49eb] in lfm3-projection-bedrock-probe
+========= 
+========= ERROR SUMMARY: 3 errors

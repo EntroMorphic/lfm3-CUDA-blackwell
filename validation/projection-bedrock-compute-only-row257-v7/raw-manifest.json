@@ -1,0 +1,113 @@
+{
+  "files": {
+    "ldd.log": {
+      "bytes": 839,
+      "sha256": "4a60f493612406ef5d63f01fd62d72a9acd373fdb79f83a22109da94130c474a"
+    },
+    "case-003/output.consumer.bf16": {
+      "bytes": 3158016,
+      "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+    },
+    "case-003/output.producer.bf16": {
+      "bytes": 3158016,
+      "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+    },
+    "case-003/application.log": {
+      "bytes": 1245,
+      "sha256": "d448e82b29c4b561fd0e5913707e8d3219a8c687ad78ec506304ea93e1c6dcd7"
+    },
+    "case-003/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "case-002/output.consumer.bf16": {
+      "bytes": 3158016,
+      "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+    },
+    "case-002/output.producer.bf16": {
+      "bytes": 3158016,
+      "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+    },
+    "case-002/application.log": {
+      "bytes": 1245,
+      "sha256": "6085d514526f067dfb661da524e91d011919ac9bc471ecad099e6a5d6095d5cf"
+    },
+    "case-002/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "case-004/output.consumer.bf16": {
+      "bytes": 3158016,
+      "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+    },
+    "case-004/output.producer.bf16": {
+      "bytes": 3158016,
+      "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+    },
+    "case-004/application.log": {
+      "bytes": 1245,
+      "sha256": "899c62f421c586814dbc46c5edd8156da184e47826601ddda5b69e812a8b0344"
+    },
+    "case-004/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    },
+    "case-001/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a"
+    },
+    "case-001/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a"
+    },
+    "case-001/application.log": {
+      "bytes": 1232,
+      "sha256": "266e08555a06bea061570767eec664af55239973764db98f5277c6371acbf535"
+    },
+    "case-001/sanitizer.log": {
+      "bytes": 1816,
+      "sha256": "22ddf91e835392f188e4accb3d4c48498b0f7a0db356084cf0808ba9a897b29f"
+    },
+    "fixture-asymmetric-257/a.bf16": {
+      "bytes": 25165824,
+      "sha256": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed"
+    },
+    "fixture-asymmetric-257/b.bf16": {
+      "bytes": 1052672,
+      "sha256": "c73bf5f3454a240edb0ae051dda3bdb2b6781d56d71a158e88f80c05b91e7f23"
+    },
+    "fixture-asymmetric-257/expected.bf16": {
+      "bytes": 3158016,
+      "sha256": "188fa05b5bb9384af1115994226f7076a255660f7aa0cf5a3eb164ca34e0aa7c"
+    },
+    "fixture-control-1/a.bf16": {
+      "bytes": 25165824,
+      "sha256": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed"
+    },
+    "fixture-control-1/b.bf16": {
+      "bytes": 4096,
+      "sha256": "e4680ce9a7d241dd78f157a39923e63810b7ed5bc5fe6dcc7160fd9a7fb4c8b8"
+    },
+    "fixture-control-1/expected.bf16": {
+      "bytes": 12288,
+      "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+    },
+    "case-000/output.consumer.bf16": {
+      "bytes": 12288,
+      "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+    },
+    "case-000/output.producer.bf16": {
+      "bytes": 12288,
+      "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+    },
+    "case-000/application.log": {
+      "bytes": 1231,
+      "sha256": "dddbfe9738289751b612d3cd1229c2c19bc03aee5d20b21c92e69c6132fa3d70"
+    },
+    "case-000/sanitizer.log": {
+      "bytes": 62,
+      "sha256": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+    }
+  },
+  "raw_arrays_retained_remotely": true
+}

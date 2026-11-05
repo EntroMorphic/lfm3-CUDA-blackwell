@@ -1,0 +1,44 @@
+{
+  "status": "available measurements rechecked; no acceptance",
+  "measurement_status": "measurement-completed",
+  "whole_output_comparisons": [
+    {
+      "case": 2,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        }
+      }
+    },
+    {
+      "case": 3,
+      "rows": 1,
+      "comparisons": {
+        "producer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        },
+        "consumer": {
+          "checked_elements": 6144,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+        }
+      }
+    }
+  ],
+  "hashes_stable": true,
+  "full_acceptance": false
+}

@@ -1,0 +1,11 @@
+{
+  "lossless": true,
+  "entries": [
+    {
+      "path": "case-002/sanitizer.log",
+      "raw_bytes": 20477191,
+      "raw_sha256": "302289a12b6c007145919b4f1f31e4372d411b2f4367d564055baf559264d2e4",
+      "gzip_sha256": "278524e3f5e873dd4a6bb52cb6161f70e6fad76315c951a4aa07472754003c25"
+    }
+  ]
+}

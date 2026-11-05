@@ -1,0 +1,17 @@
+{"stage":"before_cuda_setup","host_monotonic_us":91053119441}
+{"stage":"diagnostic_workspace_seed_submitted","host_monotonic_us":91053246037}
+{"configuration":true,"producer":"gemm","rows":1,"width":2048,"compute":"default","algo":"tensor","math":"default","sync":"none","compute_enum":68,"algo_enum":99,"actual_math_enum":0,"default_stream":true,"cublas":130100,"driver":13000,"runtime":13000,"sm_major":11,"sm_minor":0,"workspace_bytes":8519680,"workspace_seed":"a5","workspace_dump_bytes":49152}
+{"allocation":"a","base":121389449216,"bytes":25165824}
+{"allocation":"b","base":121414615040,"bytes":4096}
+{"allocation":"c","base":121414619136,"bytes":12288}
+{"allocation":"d","base":121414631424,"bytes":12288}
+{"allocation":"workspace","base":121416712192,"bytes":8519680}
+{"stage":"before_producer_submission","host_monotonic_us":91053246083}
+{"stage":"producer_submission_returned","host_monotonic_us":91053315893}
+{"stage":"before_consumer_submission","host_monotonic_us":91053315929}
+{"stage":"consumer_submission_returned","host_monotonic_us":91053316345}
+{"stage":"before_consumer_blocking_download","host_monotonic_us":91053316386}
+{"stage":"consumer_blocking_download_returned","host_monotonic_us":91053316574}
+{"stage":"producer_blocking_download_returned","host_monotonic_us":91053316626}
+{"stage":"workspace_postcompletion_download_returned","host_monotonic_us":91053317013}
+{"complete":true,"outputs":6144,"consumer_elements":6144}

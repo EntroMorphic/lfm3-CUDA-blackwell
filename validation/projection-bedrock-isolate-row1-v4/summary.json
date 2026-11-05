@@ -1,0 +1,3213 @@
+{
+  "status": "measurement-completed",
+  "full_acceptance": false,
+  "phase": "isolate",
+  "records": [
+    {
+      "index": 0,
+      "producer": "kernel",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-000/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "kernel",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-000/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 2.5859912970045116,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "kernel",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90177799066
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90180057885
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90180058604
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90180058613
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90180058821
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90180058882
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90180059048
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90180059109
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "5e5d3199f40b7200751b6d81953cb94e8415dff55d3a73f8e2bc3485e2179694"
+      }
+    },
+    {
+      "index": 1,
+      "producer": "missing",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-001/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "missing",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-001/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 2.3254253729974153,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 6528,
+        "consumer_read_report": true,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "missing",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90180356160
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90180477738
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90180477740
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90180477741
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90180478350
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90180478389
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90182284306
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90182367582
+          }
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-002/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-002/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 5.79453292999824,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90182686052
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90182819506
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90182889070
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90182889109
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90188171006
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90188171141
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90188171725
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90188171884
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 3,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 1,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-003/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-003/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 5.675639434994082,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90188485607
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90188613241
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90188686034
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90188686072
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90193816242
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90193816377
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90193816672
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90193816757
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 4,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 2,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-004/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-004/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 6.598508094000863,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90194170614
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90194296378
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90194367707
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90194367742
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90200466552
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90200466679
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90200467731
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90200468124
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 5,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-005/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-005/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 5.190290402999381,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90200775487
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90200906033
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90200976804
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90200976837
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90205669279
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90205669429
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90205670045
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90205670427
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 6,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 1,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-006/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-006/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 5.8263788230106,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90205966161
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90206095023
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90206164895
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90206164934
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90211505683
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90211505814
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90211506088
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90211506165
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 7,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "tensor",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 2,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-007/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "tensor",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-007/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 5.690949850002653,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "tensor",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": 99,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90211801067
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90211926838
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90211998295
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90211998335
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90217190467
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90217190601
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90217191161
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90217191293
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 8,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "default",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-008/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "default",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-008/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 5.478691121999873,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "default",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": -1,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90217501771
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90217628091
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90217698668
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90217698707
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90222671580
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90222671758
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90222672076
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90222672149
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 9,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "default",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 1,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-009/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "default",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-009/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 5.492503243003739,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "default",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": -1,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90222984176
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90223111221
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90223180398
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90223180434
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90228165459
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90228165585
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90228165871
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90228165953
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 10,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "default",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 2,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-010/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "default",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-010/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 6.288267228999757,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "default",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": -1,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90228484324
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90228613372
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90228682388
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90228682429
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90234445150
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90234445282
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90234445578
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90234445661
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 11,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "default",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-011/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "default",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-011/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 5.49207829500665,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "default",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": -1,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90234782563
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90234912432
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90234983451
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90234983493
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90239970027
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90239970161
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90239970768
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90239971160
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 12,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "default",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 1,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-012/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "default",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-012/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 5.491695470002014,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "default",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": -1,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90240280882
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90240404328
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90240472799
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90240472837
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90245487334
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90245487466
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90245488075
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90245488490
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 13,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "default",
+        "algo": "default",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 2,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-013/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "default",
+        "default",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-013/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 86,
+      "timed_out": false,
+      "seconds": 6.7494270900060656,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 12288,
+        "consumer_read_report": false,
+        "internal_splitK_report": true,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "default",
+          "algo": "default",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 68,
+          "algo_enum": -1,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90245784721
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90245912125
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90245984369
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90245984407
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90252219848
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90252219928
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90252220141
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90252220199
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 14,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-014/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-014/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.46564949699677527,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90252539048
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90252660915
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90252723886
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90252723921
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90252730038
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90252730080
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90252730524
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90252730725
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 15,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 1,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-015/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-015/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.46706674399320036,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90253010082
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90253136508
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90253198651
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90253198686
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90253204641
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90253204687
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90253204855
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90253204952
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 16,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "tensor",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 2,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-016/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "tensor",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-016/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.4663819730048999,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "tensor",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": 99,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90253486779
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90253612368
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90253677980
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90253678021
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90253685692
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90253685739
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90253685936
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90253686003
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 17,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "tensor",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-017/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "tensor",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-017/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.4659612319956068,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "tensor",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": 99,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90253962348
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90254091408
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90254153982
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90254154014
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90254161253
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90254161295
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90254161447
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90254161498
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 18,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "tensor",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 1,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-018/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "tensor",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-018/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.4661394430004293,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "tensor",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": 99,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90254437980
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90254564170
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90254626278
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90254626314
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90254634540
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90254634582
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90254634741
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90254634793
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 19,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "tensor",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 2,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-019/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "tensor",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-019/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.5161993559886469,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "tensor",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": 99,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90254914323
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90255044148
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90255109668
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90255109707
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90255120830
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90255120874
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90255121050
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90255121106
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 20,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "default",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-020/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "default",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-020/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.46535709900490474,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "default",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": -1,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90255442199
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90255567943
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90255630649
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90255630684
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90255636243
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90255636285
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90255636439
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90255636491
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 21,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "default",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 1,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-021/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "default",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-021/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.4653819319937611,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "default",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": -1,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90255917461
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90256040904
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90256103573
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90256103607
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90256109279
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90256109320
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90256109474
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90256109525
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 22,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "default",
+        "math": "default",
+        "sync": "none"
+      },
+      "repeat": 2,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-022/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "default",
+        "default",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-022/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.4678097500000149,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "default",
+          "math": "default",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": -1,
+          "actual_math_enum": 0,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90256392562
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90256519120
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90256581963
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90256582003
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90256587731
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90256587772
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90256587934
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90256587985
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 23,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "default",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 0,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-023/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "default",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-023/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.4664367619989207,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "default",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": -1,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90256875981
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90257002997
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90257065561
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90257065595
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90257071236
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90257071277
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90257071438
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90257071489
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 24,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "default",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 1,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-024/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "default",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-024/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.46602065200568177,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "default",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": -1,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90257353326
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90257480362
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90257545217
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90257545253
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90257550837
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90257550879
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90257551034
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90257551085
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    },
+    {
+      "index": 25,
+      "producer": "gemm",
+      "pattern": "asymmetric",
+      "rows": 1,
+      "settings": {
+        "compute": "pedantic",
+        "algo": "default",
+        "math": "pedantic",
+        "sync": "none"
+      },
+      "repeat": 2,
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "initcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-025/sanitizer.log",
+        "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe",
+        "gemm",
+        "1",
+        "2048",
+        "pedantic",
+        "default",
+        "pedantic",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16",
+        "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/case-025/output",
+        "none"
+      ],
+      "status": "measured",
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 0.46643589400628116,
+      "group_cleanup_complete": true,
+      "sanitizer": {
+        "canonical_errors": 0,
+        "consumer_read_report": false,
+        "internal_splitK_report": false,
+        "internal_sanitizer_error": false,
+        "instrumented": true
+      },
+      "application": {
+        "configuration": {
+          "configuration": true,
+          "producer": "gemm",
+          "rows": 1,
+          "width": 2048,
+          "compute": "pedantic",
+          "algo": "default",
+          "math": "pedantic",
+          "sync": "none",
+          "compute_enum": 69,
+          "algo_enum": -1,
+          "actual_math_enum": 2,
+          "default_stream": true,
+          "cublas": 130100,
+          "driver": 13000,
+          "runtime": 13000,
+          "sm_major": 11,
+          "sm_minor": 0,
+          "workspace_bytes": 8519680
+        },
+        "complete": {
+          "complete": true,
+          "outputs": 6144,
+          "consumer_elements": 6144
+        },
+        "stages": [
+          {
+            "stage": "before_cuda_setup",
+            "host_monotonic_us": 90257829205
+          },
+          {
+            "stage": "before_producer_submission",
+            "host_monotonic_us": 90257956835
+          },
+          {
+            "stage": "producer_submission_returned",
+            "host_monotonic_us": 90258022795
+          },
+          {
+            "stage": "before_consumer_submission",
+            "host_monotonic_us": 90258022836
+          },
+          {
+            "stage": "consumer_submission_returned",
+            "host_monotonic_us": 90258029687
+          },
+          {
+            "stage": "before_consumer_blocking_download",
+            "host_monotonic_us": 90258029728
+          },
+          {
+            "stage": "consumer_blocking_download_returned",
+            "host_monotonic_us": 90258029898
+          },
+          {
+            "stage": "producer_blocking_download_returned",
+            "host_monotonic_us": 90258029951
+          }
+        ]
+      },
+      "producer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      },
+      "consumer_comparison": {
+        "checked_elements": 6144,
+        "mismatch_count": 0,
+        "first_mismatches": [],
+        "sha256": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+      }
+    }
+  ],
+  "instrumentation": "initcheck",
+  "scope": "whole-output diagnostic; no kernel-selection or root-cause inference",
+  "start_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe": "fc07ac9e72b9c4c0330b57815a75175861dbf7ec04989445dc0a477e7e1dc18e",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/native/tests/lfm3_projection_bedrock_probe.cu": "6a9f941e84ad8d484bb88a4e22e97e1cec1c98530908adf57ee9abb94c78cbd8",
+    "/workspace/liquid-CUDA/tools/check_lfm3_projection_bedrock.py": "e54e55d813df73aaa1d0061719f62b041e340d560d46975ffa8b4fb9f518bb22",
+    "/workspace/liquid-CUDA/tools/check_lfm3_cublas_modes.py": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublas.so.13": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1": "390027e5f45f236bd1838bc54bf464c5ff01d260ab9f8b415ea8276641bce505",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed",
+    "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16": "e4680ce9a7d241dd78f157a39923e63810b7ed5bc5fe6dcc7160fd9a7fb4c8b8",
+    "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/expected.bf16": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+  },
+  "dependencies": {
+    "libcudart.so.13": {
+      "path": "/pinned-cuda/libcudart.so.13",
+      "sha256": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63"
+    },
+    "libcublas.so.13": {
+      "path": "/pinned-cuda/libcublas.so.13",
+      "sha256": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b"
+    },
+    "libstdc++.so.6": {
+      "path": "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33",
+      "sha256": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4"
+    },
+    "libgcc_s.so.1": {
+      "path": "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1",
+      "sha256": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20"
+    },
+    "libc.so.6": {
+      "path": "/usr/lib/aarch64-linux-gnu/libc.so.6",
+      "sha256": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e"
+    },
+    "ld-linux-aarch64.so.1": {
+      "path": "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+      "sha256": "390027e5f45f236bd1838bc54bf464c5ff01d260ab9f8b415ea8276641bce505"
+    },
+    "libdl.so.2": {
+      "path": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+      "sha256": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4"
+    },
+    "libpthread.so.0": {
+      "path": "/usr/lib/aarch64-linux-gnu/libpthread.so.0",
+      "sha256": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353"
+    },
+    "librt.so.1": {
+      "path": "/usr/lib/aarch64-linux-gnu/librt.so.1",
+      "sha256": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e"
+    },
+    "libm.so.6": {
+      "path": "/usr/lib/aarch64-linux-gnu/libm.so.6",
+      "sha256": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a"
+    },
+    "libcublasLt.so.13": {
+      "path": "/pinned-cuda/libcublasLt.so.13",
+      "sha256": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9"
+    }
+  },
+  "ld_library_path": "/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia",
+  "planned_cases": 26,
+  "observed_gemm_cases": 24,
+  "observed_gemm_cases_with_numerical_mismatch": 0,
+  "observed_gemm_cases_with_sanitizer_errors": 12,
+  "end_sha256": {
+    "/workspace/liquid-CUDA/build/cmake-bedrock-v1/lfm3-projection-bedrock-probe": "fc07ac9e72b9c4c0330b57815a75175861dbf7ec04989445dc0a477e7e1dc18e",
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+    "/workspace/liquid-CUDA/native/tests/lfm3_projection_bedrock_probe.cu": "6a9f941e84ad8d484bb88a4e22e97e1cec1c98530908adf57ee9abb94c78cbd8",
+    "/workspace/liquid-CUDA/tools/check_lfm3_projection_bedrock.py": "e54e55d813df73aaa1d0061719f62b041e340d560d46975ffa8b4fb9f518bb22",
+    "/workspace/liquid-CUDA/tools/check_lfm3_cublas_modes.py": "6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640",
+    "/workspace/liquid-CUDA/tools/lfm3_owned_process.py": "c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd",
+    "/pinned-cuda/libcudart.so.13": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63",
+    "/pinned-cuda/libcublas.so.13": "7761d260387b95fa13b7ec101453abca45ef972d3e6ccc8bcf54251e1ac0470b",
+    "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4",
+    "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+    "/usr/lib/aarch64-linux-gnu/libc.so.6": "0f1905dc27dbc6715875c70527bc8da846a10084c9c483e9d8ff76dce8d69d0e",
+    "/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1": "390027e5f45f236bd1838bc54bf464c5ff01d260ab9f8b415ea8276641bce505",
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": "1c16b2692a155191c97d7fdc5ce937d37c242435f05745046a794a9832b16af4",
+    "/usr/lib/aarch64-linux-gnu/libpthread.so.0": "6f1ab9e7d7de142dc5e2feaf6d19faceff0a0f40d5e225c922899f5362b8c353",
+    "/usr/lib/aarch64-linux-gnu/librt.so.1": "93d0d5ab643b50ac1a61c2c7baf670e8aa94973fa5a2584d13db05295d5b5a0e",
+    "/usr/lib/aarch64-linux-gnu/libm.so.6": "5e0391562de36de323fb9cb0f2c1b6bd6d034c840b1dac018499f5fe4ded1b4a",
+    "/pinned-cuda/libcublasLt.so.13": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9",
+    "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/a.bf16": "a52f71c12a81126f02bd4051ff98de29b6e24d6ad3aaaa88b9b1e5d12a5307ed",
+    "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/b.bf16": "e4680ce9a7d241dd78f157a39923e63810b7ed5bc5fe6dcc7160fd9a7fb4c8b8",
+    "/workspace/liquid-CUDA/build/projection-bedrock-isolate-row1-v4/fixture-asymmetric-1/expected.bf16": "6a8ffe072cbc33ff917469e55d4dc1bffe8b8ec34099adbf7171295e8002f056"
+  },
+  "hashes_stable": true
+}
