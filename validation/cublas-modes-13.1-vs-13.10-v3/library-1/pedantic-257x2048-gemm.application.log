@@ -1,0 +1,4 @@
+CONFIG producer=gemm; rows=257; width=2048; mode=pedantic; compute=69; algo=-1; nvcc=13.0.88; cudart_build=13000; cublas_build=13.1.0.3
+LIBRARY cublas=131000; mode=pedantic
+MATH actual=2; mode=pedantic
+PASS: 128 sampled outputs of 1579008; producer=gemm; mode=pedantic; cublas=131000; numerical-only (not sanitizer acceptance)

@@ -1,0 +1,13 @@
+{
+  "status": "download/hash/extraction verified; not executed",
+  "manifest_url": "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_13.5.0.json",
+  "manifest_sha256": "401529e951b845788177f999c0756c520c4d0db1cd4cd05c0a295e331884b596",
+  "entry": {
+    "relative_path": "libcublas/linux-sbsa/libcublas-linux-sbsa-13.10.0.20-archive.tar.xz",
+    "sha256": "b3bd7cff0eeb8b114164534a5c92c1496917dac65653c4e51d29b63d55cd42d6",
+    "md5": "b8e8e2d0c0bf3018406f0752607aa505",
+    "size": "1114518548"
+  },
+  "version": "13.10.0.20",
+  "scope": "isolated userspace library diagnostic only; serving runtime, toolkit, driver and global environment unchanged; BSP compatibility not inferred"
+}

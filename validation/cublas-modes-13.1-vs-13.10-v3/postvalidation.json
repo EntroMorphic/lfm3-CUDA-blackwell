@@ -1,0 +1,14 @@
+{
+  "status": "completed; default-mode blocker persists",
+  "counts": {
+    "clean": 16,
+    "negative-control-detected": 12,
+    "downstream-tracking": 6,
+    "internal-splitK": 2
+  },
+  "all36cases": true,
+  "hashes_stable": true,
+  "serving_libraries_unchanged": true,
+  "integrated_initcheck_accepted": false,
+  "pedantic_runtime_accepted": false
+}
