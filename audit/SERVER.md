@@ -18,11 +18,26 @@ second, independently of forced-cleanup fallback. This closes the signal-mask
 defect; native HTTP evidence is recorded separately below when available.
 
 `tools/lfm3_server.py` adds an authenticated, IPv4-loopback-only HTTP wrapper
-around `liquid-lfm3-worker`. This is **not GPU batching**, a public-facing server,
+around `liquid-lfm3-worker`. It supports **explicit fixed two-lane decode groups**,
+not automatic/dynamic microbatching, a public-facing server,
 or evidence that the native GPU correctness gates passed. Every inference and
 lifecycle RPC runs through one serialized owner thread. Native weights are shared;
 each of at most two sessions has its own native KV/cache allocation. Aggregate
 reserved capacity is at most 32768 tokens, not 32768 per concurrent session.
+
+### Explicit-group host verification
+
+**228 host tests passed** across `test_lfm3_service_batching.py`,
+`test_lfm3_service_batch_redteam.py`,
+`test_lfm3_worker_batch_client.py`, `test_lfm3_server.py`,
+`test_lfm3_server_cancellation.py`, `test_lfm3_worker_client.py`,
+`test_lfm3_worker_cancellation.py`, `test_lfm3_server_sockets.py`,
+`test_lfm3_server_redteam.py`, and `test_lfm3_server_gate.py` (all in `tests/`).
+These use fake workers/frontends and local pipes/HTTP harnesses: they verify one
+group RPC, independent policies/cancellation/leases, strict accounting and
+malformed-second-lane rejection, deadline/backpressure bounds, authentication,
+framing and legacy serving compatibility. They do **not** establish actual GPU
+batching, native two-row GEMM correctness, throughput, or cancellation latency.
 
 ## Explicit startup (not run by the implementation/tests)
 
@@ -61,14 +76,38 @@ tool definitions/calls and multimodal inputs are not.
   `do_sample`, `seed`, `gpu_batching:false`, `cancelled`, `finish_reason` and
   `cache_valid`. Normal completion reports `cancelled:false`, `cache_valid:true`,
   and `finish_reason:"stop"` or `"length"`.
+* `POST /generate_batch` with `{"requests":[REQUEST_A,REQUEST_B]}`, where each
+  request is a standard `/generate` body for a distinct existing session. Both
+  bodies' metadata are validated before any native work, both leases are acquired
+  atomically before encoding, and encoding completes before one owner-queue job
+  submits one native `generate_batch` RPC (never two serial generation RPCs).
+  Returns `{"results":[REPLY_A,REPLY_B],"gpu_batching":BOOLEAN,
+  "paired_decode_calls":INTEGER}` in request order, without an outer `ok` field.
+  Each result has standard generation fields plus the same actual paired-call
+  count and batching flag. `gpu_batching` is true **iff** actual paired decode
+  calls are positive; capability alone is not evidence of paired execution.
+  Counts cannot exceed either lane's requested `max_new_tokens - 1`, either normal
+  lane's `len(generated_ids) - 1`, or a cancelled lane's `len(generated_ids)`.
+  When neither lane is cancelled the count must equal
+  `min(len(REPLY_A.generated_ids), len(REPLY_B.generated_ids)) - 1` exactly;
+  an EOS sampled during prefill therefore correctly permits zero paired calls.
+  Prefill remains serial. Decode can use the native two-row GEMM while both lanes
+  are active, then retire EOS/length/cancelled lanes independently and continue
+  the peer. Each lane retains its own sampler, seed, stop policy, cache and
+  cancellation event. No new sessions or extra capacity are allocated by batching.
 * `POST /sessions/ID/reset` with `{}` clears that cache but retains its allocation.
 * `POST /sessions/ID/close` with `{}` releases that session/allocation.
+  Reset/close acknowledgments (including idle/discard allocation closes) must
+  match the requested session whenever native includes a `session_id` field;
+  a mismatch fails the entire service closed. Omitted identity remains supported
+  for legacy protocol-2 replies, not treated as proof of a different identity.
 * `POST /sessions/ID/cancel` with `{}` requests cancellation of that session's
   currently leased generation; see the cooperative cancellation contract below.
 * `GET /health` is unauthenticated and returns only `ready` and
   `gpu_batching:false` (HTTP 503 after worker failure).
 
-There is no batch-input endpoint, streaming, automatic session history, or silent
+There is no automatic coalescing of separate `/generate` arrivals, streaming,
+automatic session history, or silent
 history truncation. Send the full conversation each time. The native worker checks
 the cached prefix and re-prefills on mismatch. The full rendered prompt plus
 **all requested** output tokens must fit the session capacity, capped at 32768.
@@ -95,6 +134,11 @@ are idempotent requests. Idle/finished sessions and create/reset/close leases re
 501 `cancellation_unavailable` before any cancellation event is set. The production
 CLI enables the transport capability with `cancellation=True`; normal calls remain
 compatible with legacy/fake workers without the cancellable-call interface.
+The CLI also requires `batching=True`: protocol-2 ready must advertise strict
+boolean `decode_batching:true`, while idle `gpu_batching` remains false. The
+transport constructor defaults to `batching=False` for legacy callers/handshakes;
+`supports_batching` reflects the actual ready capability, not the constructor
+request. A batch endpoint call with no capability returns 501.
 A transport notification failure returns 503 `cancellation_transport_failed`, not
 a successful acknowledgment; its already-set event may still be observed by the
 owner/transport. It does not authorize handler-thread cache mutation.
@@ -105,6 +149,14 @@ notification; it never resets a runner/cache or performs inference. Holding the
 lease identity stable through notification prevents an old request from targeting
 the next generation. The cancellable transport receives that same event so a
 request arriving before native dispatch/active registration is not lost.
+For explicit groups, both session identities are installed under the transport's
+active lock **before** the single group write; pre-set cancellation events are
+bridged independently. Control frames remain little-endian u64: single requests
+use their RPC ID; group lane index `i` (zero-based) uses
+`((i + 1) << 32) | rpc_id`. Repeated cancellation sends at most one frame per lane.
+Cancellation of an encoding/queued batch is passed to native as a pre-set lane
+event, allowing owner-side reset/abort without cancelling its peer. A 202 still
+acknowledges only intent, and ordinary completion may win.
 
 Before native generation, the owner observes cancellation and performs a validated
 native reset for that session only. Its terminal generation response is HTTP 200,
@@ -155,6 +207,14 @@ nonblocking admission lock held until that CPU job finishes. Encode and decode
 share this serialization; contention rejects new encoding with 429 rather than
 spawning threads. The generation deadline starts before frontend processing and
 the same absolute deadline covers encoding, owner-queue wait, and decoding.
+An explicit batch uses one shared absolute request deadline for both lanes (each
+therefore retains the same absolute encode/admission/decode bound). Both sequential
+encodes run in one serialized frontend job; both decodes likewise run in one job,
+checking expiry before proceeding to the next lane. Both native replies are fully
+validated before any decoding or response publication. A running native batch
+holds both leases through native completion even after its caller abandons the
+request; only the owner releases them. Frontend timeout never permits late GPU
+admission. Batch admission consumes one bounded queue slot, not one per lane.
 Expired encoding is never admitted to native execution. A slow encoder or decoder
 returns 504 to its waiting caller within the remaining budget; slow decoding also
 releases the native owner to handle other jobs at that deadline, without invalidating

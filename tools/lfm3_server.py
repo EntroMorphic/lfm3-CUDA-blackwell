@@ -1,4 +1,4 @@
-"""Experimental loopback-only HTTP text serving; serialized GPU inference, not batching."""
+"""Experimental loopback-only HTTP text serving with explicit two-lane decode batches."""
 import argparse
 from concurrent.futures import Future, TimeoutError as FutureTimeout
 from dataclasses import dataclass
@@ -18,11 +18,11 @@ import threading
 import time
 
 try:
-    from lfm3_chat import integer, make_request, policy, read_json, token_ids
+    from lfm3_chat import integer, make_request, policy, read_json, token_ids, sampling_options, validate_messages
     from lfm3_text_frontend import load_frontend
     from lfm3_worker_client import WorkerClient, WorkerFailure, strict_json
 except ModuleNotFoundError:
-    from tools.lfm3_chat import integer, make_request, policy, read_json, token_ids
+    from tools.lfm3_chat import integer, make_request, policy, read_json, token_ids, sampling_options, validate_messages
     from tools.lfm3_text_frontend import load_frontend
     from tools.lfm3_worker_client import WorkerClient, WorkerFailure, strict_json
 
@@ -213,7 +213,8 @@ class Service:
             self._close_allocation(sid)
 
     def _close_allocation(self, sid):
-        if self._rpc(dict(op="close", session_id=sid)).get("closed") is not True:
+        result = self._rpc(dict(op="close", session_id=sid))
+        if result.get("closed") is not True or result.get("session_id", sid) != sid:
             raise WorkerFailure("invalid close reply")
         with self.lock:
             self.sessions.pop(sid, None)
@@ -345,7 +346,8 @@ class Service:
 
         def run():
             result = self._rpc(dict(op=op, session_id=sid))
-            if result.get("reset" if op == "reset" else "closed") is not True:
+            if (result.get("reset" if op == "reset" else "closed") is not True
+                    or result.get("session_id", sid) != sid):
                 raise WorkerFailure("invalid lifecycle reply")
             if op == "close":
                 with self.lock:
@@ -353,15 +355,23 @@ class Service:
             return {"ok": True}
         return self._submit(run, lambda: self._release(sid))
 
-    def generate(self, body):
-        deadline = time.monotonic() + self.settings.request_timeout
-        if set(body) - {"session_id", "messages", "max_new_tokens", "sampling"} or not {
+    def _validate_generation(self, body):
+        if not isinstance(body, dict) or set(body) - {"session_id", "messages", "max_new_tokens", "sampling"} or not {
                 "session_id", "messages", "max_new_tokens"} <= set(body):
             raise ValueError("invalid generation fields")
         if "sampling" in body and not isinstance(body["sampling"], dict):
             raise ValueError("sampling must be an object")
         if not isinstance(body["messages"], list):
             raise ValueError("messages must be a list")
+        if not isinstance(body["session_id"], str) or not SESSION_ID.fullmatch(body["session_id"]):
+            raise ValueError("invalid session ID")
+        integer(body["max_new_tokens"], "max_new_tokens", 1, 32768)
+        validate_messages(body["messages"])
+        sampling_options(body.get("sampling"), self.vocabulary)
+
+    def generate(self, body):
+        deadline = time.monotonic() + self.settings.request_timeout
+        self._validate_generation(body)
         sid = body["session_id"]
         cancel_event = threading.Event()
         capacity = self._lease(sid, "generate", cancel_event)
@@ -388,40 +398,149 @@ class Service:
                             reused_tokens=0, cancelled=True, finish_reason="cancelled", cache_valid=False,
                             do_sample=request["do_sample"], seed=request["seed"], gpu_batching=False)
             result = self._rpc(native, cancel_event)
-            if any(key in result for key in ("sampling_policy", "sampled_policy", "sampling")):
-                raise WorkerFailure("ambiguous sampling metadata")
-            if "cancelled" in result and type(result["cancelled"]) is not bool:
-                raise WorkerFailure("invalid cancellation metadata")
-            cancelled = result.get("cancelled", False)
-            if cancelled:
-                if not cancel_event.is_set() or result.get("cache_valid") is not False:
-                    raise WorkerFailure("unsolicited or invalid cancellation")
-            elif (("cache_valid" in result and result["cache_valid"] is not True)
-                  or result.get("finish_reason") == "cancelled"):
-                raise WorkerFailure("unsolicited cache invalidation")
-            generated = token_ids(result.get("generated_ids"), "generated_ids", self.vocabulary, request["max_new_tokens"])
-            if (result.get("session_id") != sid or (not generated and not cancelled) or set(generated) & set(self.suppress)
-                    or any(t in self.stops for t in generated[:-1])
-                    or (not cancelled and len(generated) < request["max_new_tokens"] and generated[-1] not in self.stops)):
-                raise WorkerFailure("invalid generation reply")
-            for key in ("do_sample", "seed"):
-                if type(result.get(key)) is not type(request[key]) or result[key] != request[key]:
-                    raise WorkerFailure("sampling metadata mismatch")
-            consumed = 0 if cancelled else len(request["input_ids"]) + len(generated) - 1
-            integer(result.get("consumed_tokens"), "consumed_tokens", consumed, consumed)
-            integer(result.get("reused_tokens"), "reused_tokens", 0, 0 if cancelled else len(request["input_ids"]))
-            text = "" if not generated else self._frontend_call(
-                lambda: self.frontend.decode(generated[:-1] if generated[-1] in self.stops else generated),
-                deadline, wait=True)
-            response = dict(session_id=sid, text=text, generated_ids=generated,
-                            reused_tokens=result["reused_tokens"], consumed_tokens=consumed,
-                             do_sample=result["do_sample"], seed=result["seed"], gpu_batching=False,
-                             cancelled=cancelled, cache_valid=not cancelled,
-                             finish_reason="cancelled" if cancelled else "stop" if generated[-1] in self.stops else "length")
+            response = self._generation_response(sid, request, result, cancel_event)
+            self._decode_responses([response], deadline)
+            return response
+        return self._submit(run, lambda: self._release(sid, cancel_event), deadline=deadline)
+
+    def _generation_response(self, sid, request, result, cancel_event, *, gpu_batching=False):
+        if not isinstance(result, dict) or any(key in result for key in ("sampling_policy", "sampled_policy", "sampling")):
+            raise WorkerFailure("ambiguous generation metadata")
+        if "cancelled" in result and type(result["cancelled"]) is not bool:
+            raise WorkerFailure("invalid cancellation metadata")
+        cancelled = result.get("cancelled", False)
+        if cancelled:
+            if not cancel_event.is_set() or result.get("cache_valid") is not False:
+                raise WorkerFailure("unsolicited or invalid cancellation")
+        elif (("cache_valid" in result and result["cache_valid"] is not True)
+              or result.get("finish_reason") == "cancelled"):
+            raise WorkerFailure("unsolicited cache invalidation")
+        generated = token_ids(result.get("generated_ids"), "generated_ids", self.vocabulary, request["max_new_tokens"])
+        if (result.get("session_id") != sid or (not generated and not cancelled) or set(generated) & set(self.suppress)
+                or any(t in self.stops for t in generated[:-1])
+                or (not cancelled and len(generated) < request["max_new_tokens"] and generated[-1] not in self.stops)):
+            raise WorkerFailure("invalid generation reply")
+        for key in ("do_sample", "seed"):
+            if type(result.get(key)) is not type(request[key]) or result[key] != request[key]:
+                raise WorkerFailure("sampling metadata mismatch")
+        consumed = 0 if cancelled else len(request["input_ids"]) + len(generated) - 1
+        integer(result.get("consumed_tokens"), "consumed_tokens", consumed, consumed)
+        integer(result.get("reused_tokens"), "reused_tokens", 0, 0 if cancelled else len(request["input_ids"]))
+        return dict(session_id=sid, text="", generated_ids=generated,
+                    reused_tokens=result["reused_tokens"], consumed_tokens=consumed,
+                    do_sample=result["do_sample"], seed=result["seed"], gpu_batching=gpu_batching,
+                    cancelled=cancelled, cache_valid=not cancelled,
+                    finish_reason="cancelled" if cancelled else "stop" if generated[-1] in self.stops else "length")
+
+    def _decode_responses(self, responses, deadline):
+        def decode():
+            texts = []
+            for response in responses:
+                if time.monotonic() >= deadline:
+                    raise APIError(504, "frontend_deadline")
+                ids = response["generated_ids"]
+                texts.append("" if not ids else self.frontend.decode(ids[:-1] if ids[-1] in self.stops else ids))
+            return texts
+        texts = self._frontend_call(decode, deadline, wait=True) if any(r["generated_ids"] for r in responses) else [""] * len(responses)
+        for response, text in zip(responses, texts):
+            response["text"] = text
+            if len(encode_json(response)) > MAX_RESPONSE:
+                raise WorkerFailure("response exceeds limit")
+
+    def generate_batch(self, body):
+        deadline = time.monotonic() + self.settings.request_timeout
+        if not isinstance(body, dict) or set(body) != {"requests"} or not isinstance(body["requests"], list) or len(body["requests"]) != 2:
+            raise ValueError("batch requires exactly two requests")
+        bodies = body["requests"]
+        for item in bodies:
+            self._validate_generation(item)
+        sids = [item["session_id"] for item in bodies]
+        if sids[0] == sids[1]:
+            raise ValueError("duplicate batch session")
+        if getattr(self.worker, "supports_batching", False) is not True:
+            raise APIError(501, "batching_unavailable")
+        events = [threading.Event(), threading.Event()]
+        # Check both before mutating either lease. Never release somebody else's
+        # busy lease when the second lane cannot be admitted.
+        with self.lock:
+            if self.failed or self.stopping.is_set():
+                raise APIError(503, "worker_unavailable")
+            sessions = [self.sessions.get(sid) for sid in sids]
+            if any(session is None for session in sessions):
+                raise APIError(404, "unknown_session")
+            if any(session["busy"] for session in sessions):
+                raise APIError(409, "session_busy")
+            capacities = [session["capacity"] for session in sessions]
+            for session, event in zip(sessions, events):
+                session.update(busy=True, operation="generate", cancel_event=event)
+
+        def cleanup():
+            for sid, event in zip(sids, events):
+                self._release(sid, event)
+
+        def encode():
+            requests = []
+            for item, capacity in zip(bodies, capacities):
+                if time.monotonic() >= deadline:
+                    raise APIError(504, "frontend_deadline")
+                requests.append(make_request(self.frontend, None, None, self.config, capacity,
+                                             item["max_new_tokens"], messages=item["messages"], sampling=item.get("sampling")))
+            return requests
+        try:
+            requests = self._frontend_call(encode, deadline)
+            lanes = [{key: value for key, value in request.items()
+                      if key not in ("capacity", "suppress_tokens", "stop_tokens", "experimental_long_context")}
+                     for request in requests]
+            for lane, sid in zip(lanes, sids):
+                lane["session_id"] = sid
+        except BaseException:
+            cleanup()
+            raise
+
+        def run():
+            if time.monotonic() >= deadline:
+                raise APIError(504, "queue_deadline")
+            # The transport bridges pre-set events before its single group write;
+            # native owns lane-local abort/reset and peer continuation.
+            result = self.worker.call_batch_cancellable(lanes, events)
+            if not isinstance(result, dict) or result.get("ok") is not True:
+                raise WorkerFailure("native batch rejected")
+            paired = result.get("paired_decode_calls")
+            if type(paired) is not int or paired < 0 or type(result.get("gpu_batching")) is not bool or result["gpu_batching"] != (paired > 0):
+                raise WorkerFailure("invalid batch accounting")
+            results = result.get("results")
+            if not isinstance(results, list) or len(results) != 2:
+                raise WorkerFailure("invalid batch results")
+            responses = []
+            for sid, request, event, lane in zip(sids, requests, events, results):
+                if (not isinstance(lane, dict) or type(lane.get("gpu_batching")) is not bool
+                        or ("ok" in lane and lane["ok"] is not True)
+                        or lane["gpu_batching"] != result["gpu_batching"]
+                        or type(lane.get("paired_decode_calls")) is not int or lane["paired_decode_calls"] != paired
+                        or type(lane.get("cancelled")) is not bool or type(lane.get("cache_valid")) is not bool):
+                    raise WorkerFailure("invalid lane accounting")
+                response = self._generation_response(sid, request, lane, event, gpu_batching=result["gpu_batching"])
+                response["paired_decode_calls"] = paired
+                responses.append(response)
+            # Prefill samples the first token without a decode forward. Each
+            # paired forward therefore needs another output slot in both lanes.
+            # Cancellation may discard the token sampled after that forward,
+            # leaving one fewer reported token than normal completion would.
+            if paired > min(request["max_new_tokens"] - 1 for request in requests):
+                raise WorkerFailure("paired calls exceed requested decode budget")
+            for response in responses:
+                maximum = len(response["generated_ids"]) - (0 if response["cancelled"] else 1)
+                if paired > maximum:
+                    raise WorkerFailure("paired calls exceed lane decode work")
+            if (not any(response["cancelled"] for response in responses)
+                    and paired != min(len(response["generated_ids"]) - 1 for response in responses)):
+                raise WorkerFailure("paired calls do not match completed group")
+            self._decode_responses(responses, deadline)
+            response = dict(results=responses, gpu_batching=result["gpu_batching"], paired_decode_calls=paired)
             if len(encode_json(response)) > MAX_RESPONSE:
                 raise WorkerFailure("response exceeds limit")
             return response
-        return self._submit(run, lambda: self._release(sid, cancel_event), deadline=deadline)
+        return self._submit(run, cleanup, deadline=deadline)
 
     def close(self):
         self.stopping.set()
@@ -576,6 +695,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = service.create(request)
             elif self.path == "/generate":
                 result = service.generate(request)
+            elif self.path == "/generate_batch":
+                result = service.generate_batch(request)
             else:
                 match = re.fullmatch(r"/sessions/([A-Za-z0-9_-]{32})/(reset|close|cancel)", self.path)
                 if not match:
@@ -630,7 +751,7 @@ def main():
         # a successful constructor return and the caller's assignment.
         worker = WorkerClient.__new__(WorkerClient)
         worker.__init__(args.worker.resolve(strict=True), checkpoint, timeout=args.worker_timeout,
-                        env=worker_env, cancellation=True)
+                        env=worker_env, cancellation=True, batching=True)
         service = Service(worker, frontend, config, settings)
         with LocalHTTPServer(("127.0.0.1", args.port), service, token) as server:
             server.serve_forever()

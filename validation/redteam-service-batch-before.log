@@ -1,0 +1,91 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_________ test_lifecycle_reply_for_other_group_session_is_fatal[reset] _________
+
+service = <lfm3_server.Service object at 0x7bcec90ed010>, operation = 'reset'
+
+    @pytest.mark.parametrize("operation", ["reset", "close"])
+    def test_lifecycle_reply_for_other_group_session_is_fatal(service, operation):
+        a, b = create(service), create(service)
+        service.generate_batch(batch(a, b))
+        original = service.worker.call
+    
+        def wrong_identity(request):
+            result = original(request)
+            if request["op"] == operation and request["session_id"] == a:
+                result["session_id"] = b
+            return result
+    
+        service.worker.call = wrong_identity
+>       with pytest.raises(server.APIError, match="worker_unavailable"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'lfm3_server.APIError'>
+
+tests/test_lfm3_service_batch_redteam.py:32: Failed
+_________ test_lifecycle_reply_for_other_group_session_is_fatal[close] _________
+
+service = <lfm3_server.Service object at 0x7bcec9086e90>, operation = 'close'
+
+    @pytest.mark.parametrize("operation", ["reset", "close"])
+    def test_lifecycle_reply_for_other_group_session_is_fatal(service, operation):
+        a, b = create(service), create(service)
+        service.generate_batch(batch(a, b))
+        original = service.worker.call
+    
+        def wrong_identity(request):
+            result = original(request)
+            if request["op"] == operation and request["session_id"] == a:
+                result["session_id"] = b
+            return result
+    
+        service.worker.call = wrong_identity
+>       with pytest.raises(server.APIError, match="worker_unavailable"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'lfm3_server.APIError'>
+
+tests/test_lfm3_service_batch_redteam.py:32: Failed
+__________ test_abandoned_allocation_close_reply_identity_is_checked ___________
+
+service = <lfm3_server.Service object at 0x7bcec9087d90>
+
+    def test_abandoned_allocation_close_reply_identity_is_checked(service):
+        """The discard/idle close helper must not trust another allocation's ACK."""
+        a, b = create(service), create(service)
+        original = service.worker.call
+    
+        def wrong_identity(request):
+            result = original(request)
+            if request["op"] == "close" and request["session_id"] == a:
+                result["session_id"] = b
+            return result
+    
+        service.worker.call = wrong_identity
+>       with pytest.raises(server.APIError, match="worker_unavailable"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'lfm3_server.APIError'>
+
+tests/test_lfm3_service_batch_redteam.py:49: Failed
+_______ test_impossible_native_pair_count_is_not_published_as_http_fact ________
+
+service = <lfm3_server.Service object at 0x7bcec3f183e0>
+
+    def test_impossible_native_pair_count_is_not_published_as_http_fact(service):
+        a, b = create(service), create(service)
+    
+        def impossible(result):
+            result["paired_decode_calls"] = 999999
+            for lane in result["results"]:
+                lane["paired_decode_calls"] = 999999
+    
+        service.worker.mutate = impossible
+>       with pytest.raises(server.APIError, match="worker_unavailable"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'lfm3_server.APIError'>
+
+tests/test_lfm3_service_batch_redteam.py:63: Failed
+=========================== short test summary info ============================
+FAILED tests/test_lfm3_service_batch_redteam.py::test_lifecycle_reply_for_other_group_session_is_fatal[reset]
+FAILED tests/test_lfm3_service_batch_redteam.py::test_lifecycle_reply_for_other_group_session_is_fatal[close]
+FAILED tests/test_lfm3_service_batch_redteam.py::test_abandoned_allocation_close_reply_identity_is_checked
+FAILED tests/test_lfm3_service_batch_redteam.py::test_impossible_native_pair_count_is_not_published_as_http_fact
+4 failed in 0.24s

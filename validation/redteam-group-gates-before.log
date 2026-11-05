@@ -1,0 +1,93 @@
+FFFFFFF                                                                  [100%]
+=================================== FAILURES ===================================
+_________________ test_serial_group_trace_must_be_independent __________________
+
+tmp_path = PosixPath('/tmp/user/1000/pytest-of-ztflynn/pytest-234/test_serial_group_trace_must_b0')
+
+    @pytest.mark.xfail(strict=True, reason="serial/grouped trace identities can alias")
+    def test_serial_group_trace_must_be_independent(tmp_path):
+        trace = tmp_path / "serial"
+        trace.mkdir()
+        (trace / "0.logits.bf16").write_bytes(b"\0\0" * 128000)
+>       with pytest.raises(AssertionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'AssertionError'>
+
+tests/test_lfm3_group_gate_redteam.py:44: Failed
+______________________ test_zero_trace_steps_not_evidence ______________________
+
+tmp_path = PosixPath('/tmp/user/1000/pytest-of-ztflynn/pytest-234/test_zero_trace_steps_not_evid0')
+
+    @pytest.mark.xfail(strict=True, reason="zero trace count vacuously passes without any files")
+    def test_zero_trace_steps_not_evidence(tmp_path):
+>       with pytest.raises(AssertionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'AssertionError'>
+
+tests/test_lfm3_group_gate_redteam.py:50: Failed
+__________ test_empty_serial_references_cannot_validate_native_group ___________
+
+    @pytest.mark.xfail(strict=True, reason="zip silently skips both lanes for missing references")
+    def test_empty_serial_references_cannot_validate_native_group():
+        lanes, _, result = group_fixture()
+        result["results"] = [{}, {}]
+>       with pytest.raises(AssertionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'AssertionError'>
+
+tests/test_lfm3_group_gate_redteam.py:58: Failed
+_______________ test_impossible_paired_count_not_real_work_proof _______________
+
+    @pytest.mark.xfail(strict=True, reason="positive count has no bound tied to completed decode steps")
+    def test_impossible_paired_count_not_real_work_proof():
+        lanes, refs, result = group_fixture()
+        result["paired_decode_calls"] = 999999
+        for lane in result["results"]:
+            lane["paired_decode_calls"] = 999999
+>       with pytest.raises(AssertionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'AssertionError'>
+
+tests/test_lfm3_group_gate_redteam.py:68: Failed
+___________________ test_http_boolean_participation_rejected ___________________
+
+    @pytest.mark.xfail(strict=True, reason="HTTP per-lane bool True equals integer participation count 1")
+    def test_http_boolean_participation_rejected():
+        reference = list(range(32))
+        response = http_fixture(reference)
+        response["results"][1]["paired_decode_calls"] = True
+>       with pytest.raises(AssertionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'AssertionError'>
+
+tests/test_lfm3_group_gate_redteam.py:84: Failed
+_______________ test_http_successful_group_requires_valid_cache ________________
+
+    @pytest.mark.xfail(strict=True, reason="HTTP validates IDs but ignores invalidated lane caches")
+    def test_http_successful_group_requires_valid_cache():
+        reference = list(range(32))
+        response = http_fixture(reference)
+        response["results"][1]["cache_valid"] = False
+>       with pytest.raises(AssertionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'AssertionError'>
+
+tests/test_lfm3_group_gate_redteam.py:93: Failed
+_________________ test_http_empty_reference_not_a_group_proof __________________
+
+    @pytest.mark.xfail(strict=True, reason="HTTP helper accepts empty reference/output despite claimed paired work")
+    def test_http_empty_reference_not_a_group_proof():
+>       with pytest.raises(AssertionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'AssertionError'>
+
+tests/test_lfm3_group_gate_redteam.py:99: Failed
+=========================== short test summary info ============================
+FAILED tests/test_lfm3_group_gate_redteam.py::test_serial_group_trace_must_be_independent
+FAILED tests/test_lfm3_group_gate_redteam.py::test_zero_trace_steps_not_evidence
+FAILED tests/test_lfm3_group_gate_redteam.py::test_empty_serial_references_cannot_validate_native_group
+FAILED tests/test_lfm3_group_gate_redteam.py::test_impossible_paired_count_not_real_work_proof
+FAILED tests/test_lfm3_group_gate_redteam.py::test_http_boolean_participation_rejected
+FAILED tests/test_lfm3_group_gate_redteam.py::test_http_successful_group_requires_valid_cache
+FAILED tests/test_lfm3_group_gate_redteam.py::test_http_empty_reference_not_a_group_proof
+7 failed in 0.07s

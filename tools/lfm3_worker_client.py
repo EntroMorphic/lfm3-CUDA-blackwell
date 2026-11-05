@@ -67,11 +67,14 @@ class WorkerFailure(RuntimeError):
 
 
 class WorkerClient:
-    def __init__(self, binary, checkpoint, *, timeout=300, env=None, cancellation=False, sampling_trace_root=None):
+    def __init__(self, binary, checkpoint, *, timeout=300, env=None, cancellation=False, sampling_trace_root=None, batching=False):
         if not math.isfinite(timeout) or not 0 < timeout <= 86400:
             raise ValueError("invalid worker timeout")
         if type(cancellation) is not bool:
             raise ValueError("cancellation must be boolean")
+        if type(batching) is not bool:
+            raise ValueError("batching must be boolean")
+        self.supports_batching = False
         self.timeout = timeout
         self.closed = False
         self.lock = threading.Lock()
@@ -81,6 +84,7 @@ class WorkerClient:
         self.active_lock = threading.Lock()
         self.cleanup_lock = threading.Lock()
         self.active_generation = None
+        self.active_generations = {}
         self.cancel_read_fd = self.cancel_write_fd = None
         # No checkpoint writes, shell, inherited stdout or unbounded stderr pipe.
         self.process = None
@@ -121,8 +125,11 @@ class WorkerClient:
                     or type(ready.get("max_sessions")) is not int or ready["max_sessions"] != 2
                     or type(ready.get("aggregate_capacity")) is not int
                     or ready["aggregate_capacity"] != 32768
-                    or (cancellation and ready.get("cancellation") is not True)):
+                    or (cancellation and ready.get("cancellation") is not True)
+                    or ("decode_batching" in ready and type(ready["decode_batching"]) is not bool)
+                    or (batching and ready.get("decode_batching") is not True)):
                 raise WorkerFailure("incompatible worker handshake")
+            self.supports_batching = ready.get("decode_batching") is True
         except BaseException:
             self.close()
             raise
@@ -154,11 +161,25 @@ class WorkerClient:
     def call_cancellable(self, request, cancel_event):
         return self.call(request, cancel_event=cancel_event)
 
+    def call_batch_cancellable(self, lanes, events):
+        if not self.supports_batching:
+            raise WorkerFailure("worker decode batching unavailable")
+        if (not isinstance(lanes, list) or len(lanes) != 2 or len(events) != 2
+                or any(not isinstance(lane, dict) or "op" in lane or "rpc_id" in lane for lane in lanes)
+                or any(not isinstance(lane.get("session_id"), str) for lane in lanes)
+                or lanes[0]["session_id"] == lanes[1]["session_id"]):
+            raise ValueError("batch requires two distinct generation lanes")
+        return self.call(dict(op="generate_batch", lanes=lanes), cancel_event=events)
+
     def cancel(self, session_id):
         """Request only: terminal cancellation is acknowledged by the RPC reply."""
         with self.active_lock:
-            active = self.active_generation
-            if self.closed or self.cancel_write_fd is None or active is None or active["session_id"] != session_id:
+            active = getattr(self, "active_generations", {}).get(session_id)
+            if active is None:
+                single = getattr(self, "active_generation", None)
+                if single is not None and single["session_id"] == session_id:
+                    active = single
+            if self.closed or self.cancel_write_fd is None or active is None:
                 return False
             if active["sent"]:
                 return True
@@ -195,9 +216,21 @@ class WorkerClient:
             if request.get("op") == "generate":
                 with self.active_lock:
                     self.active_generation = dict(session_id=request.get("session_id"), rpc_id=sequence, sent=False)
+                    self.active_generations = {request.get("session_id"): self.active_generation}
                 if self.supports_cancellation and cancel_event is not None and cancel_event.is_set():
                     if not self.cancel(request.get("session_id")):
                         raise WorkerFailure("pre-dispatch cancellation was not admitted")
+            elif request.get("op") == "generate_batch":
+                lanes = request["lanes"]
+                with self.active_lock:
+                    self.active_generations = {
+                        lane["session_id"]: dict(session_id=lane["session_id"],
+                                                 rpc_id=((index + 1) << 32) | sequence, sent=False)
+                        for index, lane in enumerate(lanes)}
+                if self.supports_cancellation and cancel_event is not None:
+                    for lane, event in zip(lanes, cancel_event):
+                        if event is not None and event.is_set() and not self.cancel(lane["session_id"]):
+                            raise WorkerFailure("pre-dispatch cancellation was not admitted")
             deadline = time.monotonic() + self.timeout
             with selectors.DefaultSelector() as selector:
                 selector.register(self.process.stdin, selectors.EVENT_WRITE)
@@ -225,6 +258,7 @@ class WorkerClient:
         finally:
             with self.active_lock:
                 self.active_generation = None
+                self.active_generations = {}
             self.lock.release()
 
     def close(self):

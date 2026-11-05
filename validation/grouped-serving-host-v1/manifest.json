@@ -1,0 +1,15 @@
+{
+  "status": "host and Thor compile-only verified; GPU integration pending",
+  "host_tests": 905,
+  "worker_sha256": "184f14b7806a45bc914bc4eff306637d2b6fced7e180dfc69d5b79af712b53cf",
+  "source_sha256": {
+    "native/src/lfm3_worker.cu": "4c862165cbeca640a233fbcb70f7dc8a5f4abb687851d766b4377ee38e5857ff",
+    "native/include/lfm/text_cancellation.hpp": "9843d5c1d89ea5a885bb85084ca8caf698d34c7ad3d630905175704933c37a80",
+    "native/include/lfm/text_batch_cancellation.hpp": "29eb58050ee3a8650d76644aa77bab89bd44cdb3598452199aa57677a220597f",
+    "tools/lfm3_worker_client.py": "6b061349e56a85d9d810832598e2af97a1f504b54e15d3c3a12c5483289bd98b",
+    "tools/lfm3_server.py": "0bf92f4ff61bd7c79704b3ab7f1be711b4b4c928e67dd2e5836dab9da33cec87",
+    "tools/check_lfm3_batch_worker.py": "87ba4e5a5df11f13ddd2c4f094005cfe50dfa2a4639a12de128fa287405caf6f",
+    "tools/check_lfm3_http_batch.py": "cde08cc6278d55548e3feb01b5126d63a559b3a40929099b4eb2fa0524a84955"
+  },
+  "full_serving_accepted": false
+}

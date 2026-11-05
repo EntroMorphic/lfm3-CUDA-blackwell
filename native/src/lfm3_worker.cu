@@ -1,9 +1,11 @@
-// Single-threaded resident protocol prototype. Not network serving or GPU batching.
+// Single-threaded resident protocol prototype; explicit two-lane decode groups.
 // Reuse the identical runtime in one translation unit; no second kernel fork.
 #define LFM3_RUNTIME_ONLY
 #include "lfm3_main.cu"
+#include "lfm3_decode_batch.cuh"
 #include <lfm/text_sessions.hpp>
 #include <lfm/text_cancellation.hpp>
+#include <lfm/text_batch_cancellation.hpp>
 #include <map>
 #include <iomanip>
 #include <sstream>
@@ -55,8 +57,165 @@ void schema(const lfm::Json& request,const std::string& op) {
     if(common.count(key)) continue;
     if(op=="create" && key=="capacity") continue;
     if(op=="generate" && generate.count(key)) continue;
+    if(op=="generate_batch" && (key=="op" || key=="rpc_id" || key=="lanes")) continue;
     throw std::runtime_error("unsupported request field: "+key);
   }
+}
+// Metadata is collected for BOTH lanes before any lease, weight load or reset.
+struct BatchLane {
+  std::string id;
+  Session* session=nullptr;
+  std::vector<int> input,generated;
+  int count=0,paired=0;
+  bool return_logits=false,trace=false,done=false,cancelled=false;
+  size_t reused=0;
+  lfm::TextSamplingOptions options;
+  std::unique_ptr<lfm::TextSampler> sampler;
+  std::unique_ptr<lfm::text::SessionLedger::Lease> lease;
+};
+void generate_batch(const lfm::Json& request,int rpc_id,const std::string& directory,
+                    const lfm::ModelConfig& cfg,const std::vector<int>& suppressed,
+                    const std::vector<int>& stops,const std::string& trace_root,
+                    std::shared_ptr<lfm::Safetensors>& weights,
+                    std::map<std::string,Session>& sessions,lfm::text::SessionLedger& ledger,
+                    lfm::text::CancellationReader& cancellation) {
+  // Outer schema is intentionally narrower than the single-operation common set.
+  for(const auto& [key,value]:std::get<lfm::Json::Object>(request.value))
+    if(key!="op" && key!="rpc_id" && key!="lanes") throw std::runtime_error("unsupported batch field: "+key);
+  const auto& requests=request.at("lanes").array();
+  if(requests.size()!=2) throw std::runtime_error("generate_batch requires exactly two lanes");
+  std::array<BatchLane,2> lanes;
+  for(size_t i=0;i<2;++i) {
+    const auto& req=requests[i];auto& lane=lanes[i];
+    schema(req,"generate");
+    if(req.has("op") || req.has("rpc_id")) throw std::runtime_error("lane cannot carry op or rpc_id");
+    lane.id=session_id(req);
+    auto found=sessions.find(lane.id);
+    if(found==sessions.end()) throw std::runtime_error("unknown session");
+    lane.session=&found->second;
+    lane.input=ids(req,"input_ids",cfg.shape.vocabulary);
+    for(int token:lane.input) if(std::find(suppressed.begin(),suppressed.end(),token)!=suppressed.end())
+      throw std::runtime_error("modality placeholder input is unsupported");
+    lane.count=req.at("max_new_tokens").integer();
+    if(lane.count<1) throw std::runtime_error("max_new_tokens must be positive");
+    lfm::text::require_budget(lane.input.size(),lane.count,lane.session->capacity);
+    lane.return_logits=req.has("return_logits") && req.at("return_logits").boolean();
+    lane.trace=req.has("trace_sampling") && req.at("trace_sampling").boolean();
+    if(lane.trace && (trace_root.empty() || lane.count>32))
+      throw std::runtime_error("sampling trace needs startup audit root and at most32 output tokens");
+    lane.options=sampling_options(req,cfg.shape.vocabulary);
+    lane.sampler=std::make_unique<lfm::TextSampler>(lane.options);
+    if(ledger.inspect(lane.id).inflight) throw std::runtime_error("session already inflight");
+  }
+  if(lanes[0].id==lanes[1].id) throw std::runtime_error("batch sessions must be distinct");
+  const auto trace_key=std::to_string(rpc_id);
+  const auto trace_directory=trace_root+"/"+trace_key;
+  auto discard=[](BatchLane& lane) {
+    lane.session->runner.reset();lane.session->consumed.clear();lane.session->last_scores.clear();
+    if(lane.lease) lane.lease->abort();
+  };
+  auto poll=[&] {
+    const auto cancelled=cancellation.requested_pair(rpc_id);
+    for(size_t i=0;i<2;++i) if(!lanes[i].done && cancelled[i]) {
+      discard(lanes[i]);lanes[i].cancelled=true;lanes[i].done=true;
+    }
+  };
+  int paired=0;
+  try {
+    for(auto& lane:lanes) lane.lease=std::make_unique<lfm::text::SessionLedger::Lease>(
+      ledger.begin(lane.id,lfm::text::SessionLedger::Tokens(lane.input.begin(),lane.input.end()),lane.count));
+    poll();
+    if((lanes[0].trace || lanes[1].trace) && !std::filesystem::create_directory(trace_directory))
+      throw std::runtime_error("sampling trace request already exists");
+    // Prefills and reuse continuations remain serial, never decode-batched.
+    for(size_t i=0;i<2;++i) {
+      auto& lane=lanes[i];if(lane.done) continue;
+      auto& session=*lane.session;
+      if(!weights) weights=std::make_shared<lfm::Safetensors>(directory+"/model.safetensors");
+      if(!session.runner) {
+        auto shape=cfg;shape.shape.context=session.capacity;
+        session.runner=std::make_unique<Runner>(directory,shape,weights);
+      }
+      const bool reuse=!lane.lease->plan().full_prefill;
+      lane.reused=lane.lease->plan().reuse_tokens;
+      if(reuse && (session.consumed.size()!=lane.reused || session.runner->cursor!=int(lane.reused)))
+        throw std::runtime_error("session physical cache/ledger disagreement");
+      if(!reuse) {session.runner->reset();session.consumed.clear();session.last_scores.clear();}
+      poll(); // initialization/reset may have been long: check BEFORE prefill.
+      if(lane.done) continue;
+      if(!reuse) {
+        session.last_scores=session.runner->forward(lane.input);session.consumed=lane.input;
+      } else for(size_t j=lane.reused;j<lane.input.size();++j) {
+        poll();if(lane.done) break;
+        session.last_scores=session.runner->forward({lane.input[j]});session.consumed.push_back(lane.input[j]);
+      }
+      poll(); // also latch cancellation for the peer while this lane prefills.
+      if(lane.trace && !std::filesystem::create_directory(trace_directory+"/lane"+std::to_string(i)))
+        throw std::runtime_error("sampling trace lane already exists");
+    }
+    while(!lanes[0].done || !lanes[1].done) {
+      poll();
+      std::vector<size_t> ready;
+      std::vector<Runner*> owners;std::vector<int> tokens;
+      for(size_t i=0;i<2;++i) {
+        auto& lane=lanes[i];if(lane.done) continue;
+        auto& session=*lane.session;
+        if(lane.trace) {
+          std::vector<bf16> raw(session.last_scores.size());
+          for(size_t j=0;j<raw.size();++j) raw[j]=__float2bfloat16_rn(session.last_scores[j]);
+          std::ofstream file(trace_directory+"/lane"+std::to_string(i)+"/"+std::to_string(lane.generated.size())+".logits.bf16",std::ios::binary);
+          file.write(reinterpret_cast<const char*>(raw.data()),raw.size()*sizeof(bf16));
+          if(!file) throw std::runtime_error("sampling trace write failed");
+        }
+        const int token=lane.sampler->sample(session.last_scores.data(),session.last_scores.size(),lane.generated,suppressed);
+        lane.generated.push_back(token);
+        if(std::find(stops.begin(),stops.end(),token)!=stops.end() || lane.generated.size()==size_t(lane.count)) {
+          poll();if(lane.done) continue;
+          lane.lease->commit(lfm::text::SessionLedger::Tokens(lane.generated.begin(),lane.generated.end()),
+                             lfm::text::SessionLedger::Tokens(session.consumed.begin(),session.consumed.end()));
+          lane.done=true; // completed lanes are never touched by poll/discard again.
+        } else ready.push_back(i);
+      }
+      poll();
+      for(auto i:ready) if(!lanes[i].done) {
+        owners.push_back(lanes[i].session->runner.get());tokens.push_back(lanes[i].generated.back());
+      }
+      if(owners.empty()) continue;
+      std::vector<std::vector<float>> scores;
+      if(owners.size()==2) {scores=lfm3_decode_batch::forward(owners,tokens);++paired;}
+      else scores.push_back(owners[0]->forward({tokens[0]}));
+      size_t row=0;
+      for(auto i:ready) if(!lanes[i].done) {
+        auto& lane=lanes[i];lane.session->last_scores=std::move(scores[row++]);
+        lane.session->consumed.push_back(lane.generated.back());
+        if(owners.size()==2) ++lane.paired;
+      }
+    }
+  } catch(...) {
+    // No CUDA fault isolation promise: fail closed for ALL still-inflight lanes.
+    for(auto& lane:lanes) if(!lane.done && lane.lease) discard(lane);
+    throw;
+  }
+  std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"gpu_batching\":"<<(paired?"true":"false")
+           <<",\"paired_decode_calls\":"<<paired<<",\"results\":[";
+  for(size_t i=0;i<2;++i) {
+    const auto& lane=lanes[i];const auto& session=*lane.session;
+    if(i) std::cout<<',';
+    std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(lane.id)<<",\"generated_ids\":";
+    print_ids(std::cout,lane.generated);
+    std::cout<<",\"reused_tokens\":"<<(lane.cancelled?0:lane.reused)<<",\"consumed_tokens\":"<<session.consumed.size()
+             <<",\"do_sample\":"<<(lane.options.do_sample?"true":"false")<<",\"seed\":"<<lane.options.seed
+             <<",\"cancelled\":"<<(lane.cancelled?"true":"false")<<",\"cache_valid\":"<<(lane.cancelled?"false":"true")
+             <<",\"gpu_batching\":"<<(lane.paired?"true":"false")<<",\"paired_decode_calls\":"<<lane.paired;
+    if(lane.trace) std::cout<<",\"sampling_trace\":"<<quote(trace_key+"/lane"+std::to_string(i));
+    if(lane.return_logits && !lane.cancelled) {
+      std::cout<<",\"last_logits\":[";
+      for(size_t j=0;j<session.last_scores.size();++j) {if(j) std::cout<<',';std::cout<<session.last_scores[j];}
+      std::cout<<']';
+    }
+    std::cout<<'}';
+  }
+  std::cout<<"]}\n"<<std::flush;
 }
 } // namespace
 
@@ -97,7 +256,7 @@ int main(int argc,char** argv) try {
   // JSON readers generally parse numbers as double. Emit enough digits to
   // preserve the exact float->double value, not merely a float32 roundtrip.
   std::cout<<std::setprecision(std::numeric_limits<double>::max_digits10);
-  std::cout<<"{\"ready\":true,\"protocol\":2,\"max_sessions\":2,\"aggregate_capacity\":32768,\"gpu_batching\":false,\"cancellation\":"
+   std::cout<<"{\"ready\":true,\"protocol\":2,\"max_sessions\":2,\"aggregate_capacity\":32768,\"gpu_batching\":false,\"decode_batching\":true,\"cancellation\":"
            <<(cancellation_fd>=0?"true":"false")<<"}\n"<<std::flush;
   int last_rpc_id=0;
   for(;;) {
@@ -119,11 +278,21 @@ int main(int argc,char** argv) try {
       if(op=="shutdown") {
         std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"shutdown\":true}\n"<<std::flush;break;
       }
-      if(op=="stats") {
-        std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"sessions\":"<<ledger.size()<<",\"reserved_tokens\":"<<ledger.reserved_tokens()
-                 <<",\"weights_loaded\":"<<(weights?"true":"false")<<"}\n"<<std::flush;continue;
+       if(op=="stats") {
+         size_t free_bytes=0,total_bytes=0;
+         if(weights) {cuda_check(cudaDeviceSynchronize());cuda_check(cudaMemGetInfo(&free_bytes,&total_bytes));}
+         std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"sessions\":"<<ledger.size()<<",\"reserved_tokens\":"<<ledger.reserved_tokens()
+                  <<",\"weights_loaded\":"<<(weights?"true":"false");
+         // Device-wide unified-memory accounting, NOT per-worker allocations or RSS.
+         if(weights) std::cout<<",\"cuda_free_bytes\":"<<free_bytes<<",\"cuda_total_bytes\":"<<total_bytes
+                             <<",\"device_allocated_bytes\":"<<(total_bytes-free_bytes);
+         std::cout<<"}\n"<<std::flush;continue;
       }
-      const auto id=session_id(request);
+       if(op=="generate_batch") {
+         generate_batch(request,rpc_id,directory,cfg,suppressed,stops,sampling_trace_root,weights,sessions,ledger,cancellation);
+         continue;
+       }
+       const auto id=session_id(request);
       if(op=="create") {
         int capacity=request.at("capacity").integer();lfm::text::scratch_rows(capacity);
         ledger.create(id,capacity);
