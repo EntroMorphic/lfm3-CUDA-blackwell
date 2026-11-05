@@ -1,0 +1,105 @@
+{
+  "status": "passed",
+  "samples_per_mode": 20,
+  "all_responses_exact": true,
+  "hashes_stable": true,
+  "numerical_evidence_bound": true,
+  "latency_summary": {
+    "serial-pair": {
+      "samples": 20,
+      "median_seconds": 1.7383469169999444,
+      "p95_seconds": 1.753185402998497,
+      "aggregate_output_tokens_per_second": 36.739012348120966
+    },
+    "group": {
+      "samples": 20,
+      "median_seconds": 1.0698737214988796,
+      "p95_seconds": 1.0803080719997524,
+      "aggregate_output_tokens_per_second": 59.73383054694629
+    },
+    "paired_ratios": [
+      {
+        "round": 0,
+        "serial_pair_over_group_wall": 1.6223057172104876
+      },
+      {
+        "round": 1,
+        "serial_pair_over_group_wall": 1.6333023948785619
+      },
+      {
+        "round": 2,
+        "serial_pair_over_group_wall": 1.6197969641512864
+      },
+      {
+        "round": 3,
+        "serial_pair_over_group_wall": 1.6303651486104571
+      },
+      {
+        "round": 4,
+        "serial_pair_over_group_wall": 1.6254465886182417
+      },
+      {
+        "round": 5,
+        "serial_pair_over_group_wall": 1.6214939163520863
+      },
+      {
+        "round": 6,
+        "serial_pair_over_group_wall": 1.6170280360826093
+      },
+      {
+        "round": 7,
+        "serial_pair_over_group_wall": 1.628377414257734
+      },
+      {
+        "round": 8,
+        "serial_pair_over_group_wall": 1.6181688581868146
+      },
+      {
+        "round": 9,
+        "serial_pair_over_group_wall": 1.6350010796870422
+      },
+      {
+        "round": 10,
+        "serial_pair_over_group_wall": 1.6214950309489637
+      },
+      {
+        "round": 11,
+        "serial_pair_over_group_wall": 1.6413243902375334
+      },
+      {
+        "round": 12,
+        "serial_pair_over_group_wall": 1.6263112967930589
+      },
+      {
+        "round": 13,
+        "serial_pair_over_group_wall": 1.6210127571357884
+      },
+      {
+        "round": 14,
+        "serial_pair_over_group_wall": 1.6093595697950258
+      },
+      {
+        "round": 15,
+        "serial_pair_over_group_wall": 1.6285575917692001
+      },
+      {
+        "round": 16,
+        "serial_pair_over_group_wall": 1.6387140705451666
+      },
+      {
+        "round": 17,
+        "serial_pair_over_group_wall": 1.6234468706675451
+      },
+      {
+        "round": 18,
+        "serial_pair_over_group_wall": 1.6057481397333315
+      },
+      {
+        "round": 19,
+        "serial_pair_over_group_wall": 1.6513639690209125
+      }
+    ],
+    "median_paired_serial_over_group_wall": 1.6244467296428935
+  },
+  "full_acceptance": false
+}
