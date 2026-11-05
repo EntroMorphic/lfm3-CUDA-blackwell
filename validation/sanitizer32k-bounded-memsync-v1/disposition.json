@@ -1,0 +1,5 @@
+{
+  "status": "integrated memcheck passed; unexcluded synccheck not accepted",
+  "synccheck": "Internal Sanitizer Error: NVJET launch not tracked; numerical output alone insufficient",
+  "full_serving_accepted": false
+}

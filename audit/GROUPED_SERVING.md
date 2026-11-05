@@ -105,3 +105,27 @@ paths are also checked. Fixed predeclared budgets were not changed.
 Actual outputs are copied to `../tmp/http-grouped-soak-v2/`. This closes the
 specified ten-minute grouped resource workload, not arbitrary-duration stability
 or the unresolved integrated sanitizer gates.
+
+## Final default-math candidate resource confirmation
+
+After the long-prefill change, worker `1aa1e0c2...` passes the same fixed-duration
+workload independently in `validation/http-bounded-grouped-soak-v4/`:561 exact
+groups over600.12 measured seconds. Maximum warm RSS growth is1,441,792 bytes
+for the server and22,282,240 bytes for the worker, both below the unchanged32MiB
+budget. Neither process grows descriptors; observed device-wide free memory does
+not drop from the warm baseline. Closing both sessions recovers free memory to
+24,215,552 bytes above the empty-session warm baseline. Actual responses are in
+`../tmp/http-bounded-grouped-soak-v4/`.
+
+The same candidate passes legacy resident32K/sampling, scalar cancellation and
+three eight-client HTTP admission rounds in `validation/worker-bounded-regression-v1/`,
+`validation/cancellation-bounded-regression-v1/` and
+`validation/http-bounded-regression-v1/`. Its actual grouped worker protocol also
+passes memcheck (`INTEGRATED_SANITIZER_RUNNER.md`). Transport termination now waits
+for quiet live helper groups, and both grouped gate CLIs unwind termination safely.
+
+Soak timing remains observational: five early serial-pair samples and561 group
+samples have different sample counts/timing. A separate warmed AB/BA benchmark
+with matched counts and numerical-evidence binding is being verified; the soak
+alone is not a balanced performance experiment. Full acceptance remains false
+while required unexcluded sanitizer coverage is unresolved.

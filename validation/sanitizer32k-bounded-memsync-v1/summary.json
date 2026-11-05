@@ -1,0 +1,70 @@
+{
+  "passed": false,
+  "full_acceptance": false,
+  "scoped_passed": false,
+  "diagnostic_only": true,
+  "selected_tools": [
+    "memcheck",
+    "synccheck"
+  ],
+  "numeric_reference": "expected-result",
+  "initcheck_status": "not-run-diagnostic-only",
+  "controls_ok": false,
+  "synccheck_nvjet_excluded": false,
+  "records": [
+    {
+      "name": "memcheck",
+      "tool": "memcheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/sanitizer32k-bounded-memsync-v1/memcheck.log",
+        "/workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/liquid-lfm3",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/bringup-32768-request.json",
+        "/workspace/liquid-CUDA/build/sanitizer32k-bounded-memsync-v1/memcheck.json"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "clean": true,
+      "application_ok": true,
+      "application_error": null,
+      "group_cleanup_complete": true
+    },
+    {
+      "name": "synccheck",
+      "tool": "synccheck",
+      "command": [
+        "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+        "--tool",
+        "synccheck",
+        "--error-exitcode",
+        "86",
+        "--print-limit",
+        "4",
+        "--log-file",
+        "/workspace/liquid-CUDA/build/sanitizer32k-bounded-memsync-v1/synccheck.log",
+        "/workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/liquid-lfm3",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/bringup-32768-request.json",
+        "/workspace/liquid-CUDA/build/sanitizer32k-bounded-memsync-v1/synccheck.json"
+      ],
+      "returncode": 86,
+      "timed_out": false,
+      "clean": false,
+      "application_ok": true,
+      "application_error": null,
+      "group_cleanup_complete": true
+    }
+  ],
+  "binary_sha256": "e436191dddd7457e7776e65460cd438583ae8c160cc0a789abc27a7f08e29d07",
+  "probe_sha256": "a77d4028d0d1113455803708436489fc60e9ed1d50472a10cb40df9a60fba2d0"
+}

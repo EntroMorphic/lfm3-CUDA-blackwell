@@ -15,6 +15,7 @@ import threading
 import time
 
 from lfm3_worker_client import WorkerClient
+from lfm3_owned_process import owned_main
 
 
 def require_group(result, lanes, expected, require_pairs=True):
@@ -76,6 +77,7 @@ def validate_cancelled_history(before, after):
         raise AssertionError('cancelled group lost committed history or retained physical state')
 
 
+@owned_main
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)

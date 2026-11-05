@@ -1,0 +1,295 @@
+{
+  "status": "passed",
+  "worker_sha256": "1aa1e0c2f3c3ebc0153f156ff403b8b16ba943a4da2cca78303f6fc1d0adc2c9",
+  "source_sha256": {
+    "check_lfm3_http_batch.py": "9bd1bb451d50e6235d779aa582efa318152f0683ba215ede37d249e4ca5f3240",
+    "lfm3_server.py": "0bf92f4ff61bd7c79704b3ab7f1be711b4b4c928e67dd2e5836dab9da33cec87",
+    "lfm3_worker_client.py": "dcbfd5d7de36c2dd5768f98f39d0972a652cf66bed7c05be622030ea89727f17"
+  },
+  "limits": {
+    "warm_rss_growth_bytes": 33554432,
+    "warm_fd_growth": 2,
+    "warm_device_free_drop_bytes": 134217728
+  },
+  "requested_cycles": 5,
+  "minimum_seconds": 0.0,
+  "records": [
+    {
+      "case": "targeted-cancel-B",
+      "response": {
+        "results": [
+          {
+            "session_id": "hxvC2c4S-afioUbxUX6Qu3jSdBdpZ5oo",
+            "text": "Yes, reflective recursion is widely considered a core feature of human cognition. It refers to the ability to think about one's own thoughts, beliefs, and reasoning processes",
+            "generated_ids": [
+              12447,
+              20,
+              43709,
+              91506,
+              355,
+              8586,
+              3691,
+              267,
+              7641,
+              5491,
+              302,
+              1994,
+              40657,
+              22,
+              810,
+              10834,
+              310,
+              278,
+              4477,
+              310,
+              2038,
+              836,
+              734,
+              589,
+              1562,
+              10846,
+              20,
+              14708,
+              20,
+              309,
+              22722,
+              6394
+            ],
+            "reused_tokens": 0,
+            "consumed_tokens": 65,
+            "do_sample": false,
+            "seed": 42,
+            "gpu_batching": true,
+            "cancelled": false,
+            "cache_valid": true,
+            "finish_reason": "length",
+            "paired_decode_calls": 2
+          },
+          {
+            "session_id": "V8DjMxQX7lge0V33CKwZlsWDVAV7ncvg",
+            "text": "Yes, reflective",
+            "generated_ids": [
+              12447,
+              20,
+              43709
+            ],
+            "reused_tokens": 0,
+            "consumed_tokens": 0,
+            "do_sample": true,
+            "seed": 42,
+            "gpu_batching": true,
+            "cancelled": true,
+            "cache_valid": false,
+            "finish_reason": "cancelled",
+            "paired_decode_calls": 2
+          }
+        ],
+        "gpu_batching": true,
+        "paired_decode_calls": 2
+      }
+    }
+  ],
+  "samples": [
+    {
+      "cycle": 0,
+      "elapsed_seconds": 16.213184232001367,
+      "server": {
+        "rss_bytes": 295268352,
+        "descriptors": 8
+      },
+      "worker": {
+        "rss_bytes": 4835172352,
+        "descriptors": 43
+      },
+      "gpu": {
+        "ok": true,
+        "sessions": 2,
+        "reserved_tokens": 1024,
+        "weights_loaded": true,
+        "cuda_free_bytes": 85113044992,
+        "cuda_total_bytes": 131881676800,
+        "device_allocated_bytes": 46768631808
+      }
+    },
+    {
+      "cycle": 1,
+      "elapsed_seconds": 19.055763155000022,
+      "server": {
+        "rss_bytes": 295268352,
+        "descriptors": 8
+      },
+      "worker": {
+        "rss_bytes": 4835172352,
+        "descriptors": 43
+      },
+      "gpu": {
+        "ok": true,
+        "sessions": 2,
+        "reserved_tokens": 1024,
+        "weights_loaded": true,
+        "cuda_free_bytes": 85113044992,
+        "cuda_total_bytes": 131881676800,
+        "device_allocated_bytes": 46768631808
+      }
+    },
+    {
+      "cycle": 2,
+      "elapsed_seconds": 21.893882715001382,
+      "server": {
+        "rss_bytes": 295268352,
+        "descriptors": 8
+      },
+      "worker": {
+        "rss_bytes": 4835172352,
+        "descriptors": 43
+      },
+      "gpu": {
+        "ok": true,
+        "sessions": 2,
+        "reserved_tokens": 1024,
+        "weights_loaded": true,
+        "cuda_free_bytes": 85115707392,
+        "cuda_total_bytes": 131881676800,
+        "device_allocated_bytes": 46765969408
+      }
+    },
+    {
+      "cycle": 3,
+      "elapsed_seconds": 24.736734676000196,
+      "server": {
+        "rss_bytes": 295268352,
+        "descriptors": 8
+      },
+      "worker": {
+        "rss_bytes": 4835172352,
+        "descriptors": 43
+      },
+      "gpu": {
+        "ok": true,
+        "sessions": 2,
+        "reserved_tokens": 1024,
+        "weights_loaded": true,
+        "cuda_free_bytes": 85116616704,
+        "cuda_total_bytes": 131881676800,
+        "device_allocated_bytes": 46765060096
+      }
+    },
+    {
+      "cycle": 4,
+      "elapsed_seconds": 27.575432238998474,
+      "server": {
+        "rss_bytes": 295268352,
+        "descriptors": 8
+      },
+      "worker": {
+        "rss_bytes": 4835172352,
+        "descriptors": 43
+      },
+      "gpu": {
+        "ok": true,
+        "sessions": 2,
+        "reserved_tokens": 1024,
+        "weights_loaded": true,
+        "cuda_free_bytes": 85116616704,
+        "cuda_total_bytes": 131881676800,
+        "device_allocated_bytes": 46765060096
+      }
+    }
+  ],
+  "latencies": [
+    {
+      "mode": "serial-pair",
+      "seconds": 1.7424986520018138
+    },
+    {
+      "mode": "group",
+      "seconds": 1.1061311179983022
+    },
+    {
+      "mode": "serial-pair",
+      "seconds": 1.7533917509972525
+    },
+    {
+      "mode": "group",
+      "seconds": 1.08725391400003
+    },
+    {
+      "mode": "serial-pair",
+      "seconds": 1.7509855130010692
+    },
+    {
+      "mode": "group",
+      "seconds": 1.0851514169989969
+    },
+    {
+      "mode": "serial-pair",
+      "seconds": 1.7523337769998761
+    },
+    {
+      "mode": "group",
+      "seconds": 1.088707022001472
+    },
+    {
+      "mode": "serial-pair",
+      "seconds": 1.7520885919984721
+    },
+    {
+      "mode": "group",
+      "seconds": 1.08485594600279
+    }
+  ],
+  "scope": "authenticated fixed-two-lane HTTP grouping, per-lane cancellation, exact IDs, bounded extended soak and device-wide memory observation; not automatic microbatching or a universal production SLA",
+  "empty_session_gpu_baseline": {
+    "ok": true,
+    "sessions": 0,
+    "reserved_tokens": 0,
+    "weights_loaded": true,
+    "cuda_free_bytes": 85135376384,
+    "cuda_total_bytes": 131881676800,
+    "device_allocated_bytes": 46746300416
+  },
+  "baseline": {
+    "cycle": -1,
+    "elapsed_seconds": 13.362652472998889,
+    "server": {
+      "rss_bytes": 295268352,
+      "descriptors": 8
+    },
+    "worker": {
+      "rss_bytes": 4835172352,
+      "descriptors": 43
+    },
+    "gpu": {
+      "ok": true,
+      "sessions": 2,
+      "reserved_tokens": 1024,
+      "weights_loaded": true,
+      "cuda_free_bytes": 85113044992,
+      "cuda_total_bytes": 131881676800,
+      "device_allocated_bytes": 46768631808
+    }
+  },
+  "cycles_completed": 5,
+  "soak_seconds": 14.212794478000433,
+  "latency_summary": {
+    "serial-pair": {
+      "samples": 5,
+      "median_seconds": 1.7520885919984721,
+      "median_aggregate_tokens_per_second": 36.52783329123794
+    },
+    "group": {
+      "samples": 5,
+      "median_seconds": 1.08725391400003,
+      "median_aggregate_tokens_per_second": 58.863894786584545
+    }
+  },
+  "post_close_gpu": {
+    "ok": true,
+    "sessions": 0,
+    "reserved_tokens": 0,
+    "weights_loaded": true,
+    "cuda_free_bytes": 85124595712,
+    "cuda_total_bytes": 131881676800,
+    "device_allocated_bytes": 46757081088
+  }
+}

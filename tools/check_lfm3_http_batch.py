@@ -20,6 +20,7 @@ from lfm3_server import LocalHTTPServer, Service, Settings
 from lfm3_text_frontend import load_frontend
 from lfm3_worker_client import WorkerClient
 from check_lfm3_soak import process_sample
+from lfm3_owned_process import owned_main
 
 
 def resource_gate(baseline, sample):
@@ -51,6 +52,7 @@ def validate_response(response, reference, require_pairs=True):
             raise AssertionError("HTTP batch lane output/participation mismatch")
 
 
+@owned_main
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint",type=Path,required=True)

@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "worker_sha256": "1aa1e0c2f3c3ebc0153f156ff403b8b16ba943a4da2cca78303f6fc1d0adc2c9",
+  "cycles": 561,
+  "soak_seconds": 600.1187393269975,
+  "metrics": {
+    "server": {
+      "max_rss_growth_bytes": 1441792,
+      "max_fd_growth": 0
+    },
+    "worker": {
+      "max_rss_growth_bytes": 22282240,
+      "max_fd_growth": 0
+    },
+    "gpu": {
+      "max_free_drop_bytes": 0,
+      "post_close_delta_bytes": 24215552,
+      "scope": "device-wide unified memory, not per-worker attribution"
+    }
+  },
+  "full_serving_accepted": false
+}

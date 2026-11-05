@@ -1,0 +1,16 @@
+{
+  "real_worker_sha256": "1aa1e0c2f3c3ebc0153f156ff403b8b16ba943a4da2cca78303f6fc1d0adc2c9",
+  "sanitizer_sha256": "528bf1c6e6397f529d595391991ce33c5a6c2a243c1457d84f67b29c565a462d",
+  "adapter_sha256": "1bba2e95d91922caaffb0b27533b58cc07a91cf4f036ae38cecf8236d2ebfd4c",
+  "command": [
+    "/workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer",
+    "--tool",
+    "memcheck",
+    "--error-exitcode",
+    "86",
+    "--log-file",
+    "/workspace/liquid-CUDA/build/grouped-worker-memcheck-v1/memcheck.log",
+    "/workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/liquid-lfm3-worker"
+  ],
+  "scope": "actual grouped worker protocol under memcheck; no full sanitizer waiver"
+}

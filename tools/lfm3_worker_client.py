@@ -11,6 +11,11 @@ import sys
 import threading
 import time
 
+try:
+    from lfm3_owned_process import _check_group, live_group
+except ModuleNotFoundError:
+    from tools.lfm3_owned_process import _check_group, live_group
+
 
 MAX_FRAME = 4 * 1024 * 1024
 
@@ -77,6 +82,8 @@ class WorkerClient:
         self.supports_batching = False
         self.timeout = timeout
         self.closed = False
+        self.cleanup_failed = False
+        self.cleanup_error = None
         self.lock = threading.Lock()
         self.buffer = bytearray()
         self.sequence = 0
@@ -268,47 +275,71 @@ class WorkerClient:
             # than returning merely because requests have been marked closed.
             with getattr(self, "cleanup_lock", None) or nullcontext():
                 if getattr(self, "closed", False):
+                    if getattr(self, "cleanup_failed", False):
+                        raise WorkerFailure("worker cleanup previously failed") from self.cleanup_error
                     return
                 self.closed = True
-                descriptor_error = None
-                with getattr(self, "active_lock", None) or nullcontext():
-                    for name in ("cancel_read_fd", "cancel_write_fd"):
-                        try:
-                            self._retire_cancel_fd(name)
-                        except OSError as exc:
-                            descriptor_error = exc
-                if getattr(self, "process", None) is None:
-                    if descriptor_error is not None:
-                        raise descriptor_error
-                    return
-                # Descriptor cleanup failure must never skip child termination.
                 try:
-                    try:
-                        os.killpg(self.process.pid, signal.SIGTERM)
-                    except ProcessLookupError:
-                        pass
-                    if self.process.poll() is None:
-                        try:
-                            self.process.wait(timeout=2)
-                        except subprocess.TimeoutExpired:
-                            try:
-                                os.killpg(self.process.pid, signal.SIGKILL)
-                            except ProcessLookupError:
-                                pass
-                            self.process.wait(timeout=2)
+                    self._close_resources()
+                except BaseException as exc:
+                    # closed rejects new RPCs; it is not proof of quiescence.
+                    # Concurrent/repeated close callers must observe failure too.
+                    self.cleanup_failed = True
+                    self.cleanup_error = exc
+                    raise
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, blocked)
+
+    def _close_resources(self):
+        descriptor_error = None
+        with getattr(self, "active_lock", None) or nullcontext():
+            for name in ("cancel_read_fd", "cancel_write_fd"):
+                try:
+                    self._retire_cancel_fd(name)
+                except OSError as exc:
+                    descriptor_error = exc
+        if getattr(self, "process", None) is None:
+            if descriptor_error is not None:
+                raise descriptor_error
+            return
+        # All real children start in a new session. Reject any observable group
+        # mismatch before signaling; a reaped leader may leave owned helpers.
+        # Descriptor cleanup failure must never skip child termination.
+        try:
+            _check_group(self.process)
+            try:
+                os.killpg(self.process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            if self.process.poll() is None:
+                try:
+                    self.process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
                     try:
                         os.killpg(self.process.pid, signal.SIGKILL)
                     except ProcessLookupError:
                         pass
-                finally:
-                    try:
-                        self.process.stdin.close()
-                    finally:
-                        self.process.stdout.close()
-                if descriptor_error is not None:
-                    raise descriptor_error
+                    self.process.wait(timeout=2)
+            try:
+                os.killpg(self.process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            deadline = time.monotonic() + 2
+            while True:
+                remaining = live_group(self.process.pid)
+                if not remaining:
+                    break
+                budget = deadline - time.monotonic()
+                if budget <= 0:
+                    raise WorkerFailure(f"worker group cleanup incomplete; live PIDs {remaining}")
+                time.sleep(min(0.01, budget))
         finally:
-            signal.pthread_sigmask(signal.SIG_SETMASK, blocked)
+            try:
+                self.process.stdin.close()
+            finally:
+                self.process.stdout.close()
+        if descriptor_error is not None:
+            raise descriptor_error
 
     def _retire_cancel_fd(self, name):
         # exec/spawn ownership is interruption-safe; retiring its inherited

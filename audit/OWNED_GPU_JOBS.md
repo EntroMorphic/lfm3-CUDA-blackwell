@@ -64,3 +64,12 @@ exit and unlimited racecheck reporting/cleanup. The final full suite passes
 **724 tests** in `validation/host-owned-job-diagnostics-v3.log`. The corrected
 60-second diagnostic records all three owned processes and complete cleanup in
 `validation/racecheck32k-diagnostic-v4/`; its timeout remains non-accepting.
+
+Later transport/gate hardening adds quiet-group verification after final kill,
+propagating incomplete cleanup to repeated/concurrent callers while still closing
+pipes. Native/HTTP grouped gate entrypoints now unwind SIGTERM/SIGINT through
+their cleanup blocks. The integrated sanitizer runner also pins start/end artifact
+identities and requires valid native application results; scoped runs and excluded
+coverage cannot claim full acceptance.94 targeted lifecycle tests pass in
+`validation/host-transport-sanitizer-lifecycle-v1.log`. The combined suite including
+diagnostics has1021 passing tests in `validation/host-acceptance-followup-v5.log`.

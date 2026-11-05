@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /workspace/liquid-CUDA/build/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer --tool memcheck --error-exitcode 86 --log-file /workspace/liquid-CUDA/build/grouped-worker-memcheck-v1/memcheck.log /workspace/liquid-CUDA/build/cmake-bounded-prefill-v1/liquid-lfm3-worker "$@"

@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "real_worker_sha256": "1aa1e0c2f3c3ebc0153f156ff403b8b16ba943a4da2cca78303f6fc1d0adc2c9",
+  "adapter_sha256": "1bba2e95d91922caaffb0b27533b58cc07a91cf4f036ae38cecf8236d2ebfd4c",
+  "bitwise_logit_steps": 73,
+  "aggregate32k_checked": true,
+  "independent_non_greedy_logit_replay": true,
+  "memcheck_zero_errors": true,
+  "full_serving_accepted": false
+}
