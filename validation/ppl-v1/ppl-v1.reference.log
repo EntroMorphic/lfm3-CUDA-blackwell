@@ -1,0 +1,11 @@
+Loading weights: 100%|██████████| 203/203 [00:00<00:00, 7805.82it/s]
+Loading weights: 100%|██████████| 665/665 [00:00<00:00, 721.21it/s]
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+{"engine": "hf-sdpa", "length": 256, "windows": 1160, "scored_tokens": 295800, "mean_nll": 3.280237472773114, "perplexity": 26.582084471721966, "seconds": 56.37771833100123, "file": "nll-hf-sdpa-256.f32", "sha256": "aa8368850bb99a0c93f798a1558a37f237979a80e7fedf1fb3152a5b89e51aad"}
+{"engine": "hf-sdpa", "length": 257, "windows": 1155, "scored_tokens": 295680, "mean_nll": 3.277314195302921, "perplexity": 26.504491131762766, "seconds": 56.06055076200573, "file": "nll-hf-sdpa-257.f32", "sha256": "2942a9a78f09fde3f7b632b004fdd6c60aac2e7fa416f8198fa79d47f919545a"}
+{"engine": "hf-sdpa", "length": 4096, "windows": 72, "scored_tokens": 294840, "mean_nll": 2.5695272425371254, "perplexity": 13.059648934794824, "seconds": 46.469744669993815, "file": "nll-hf-sdpa-4096.f32", "sha256": "ec51f6c37f8c9e00e82936cacbb0b60ad3ce1b6db7cd1549baa4fadd2b6c3fe2"}
+{"engine": "hf-sdpa", "length": 32768, "windows": 9, "scored_tokens": 294903, "mean_nll": 2.5318773579954477, "perplexity": 12.577095697882086, "seconds": 73.4597979770042, "file": "nll-hf-sdpa-32768.f32", "sha256": "62ba755a2eca471531ea18fba4dea5ae06c35a04f88dbea80a0b0c9a28912c28"}
+Loading weights: 100%|██████████| 665/665 [00:01<00:00, 662.47it/s]
+{"engine": "hf-eager", "length": 256, "windows": 1160, "scored_tokens": 295800, "mean_nll": 3.280205602970643, "perplexity": 26.58123731943994, "seconds": 52.76323307099665, "file": "nll-hf-eager-256.f32", "sha256": "81b16935d184dcaeb1debb5d1fca66375530c0584e0af009876755bdb6b31c85"}
+{"engine": "hf-eager", "length": 257, "windows": 1155, "scored_tokens": 295680, "mean_nll": 3.277393276904055, "perplexity": 26.5065872322391, "seconds": 56.463529257998744, "file": "nll-hf-eager-257.f32", "sha256": "5de967baff2b59fd29cc7c0a39978a87fcb1c22d189fa61441243b030337aafb"}
+{"engine": "hf-eager", "length": 4096, "windows": 72, "scored_tokens": 294840, "mean_nll": 2.5694800141993253, "perplexity": 13.059032163848027, "seconds": 80.76169815699541, "file": "nll-hf-eager-4096.f32", "sha256": "58f838a9d350a1fa70f656bcffdabd736a1c47ff544bcf7111421b5ef1245c00"}
