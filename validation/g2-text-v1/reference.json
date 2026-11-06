@@ -1,0 +1,14 @@
+{
+ "versions": {
+  "tokenizers": "0.23.3",
+  "transformers": "5.22.1",
+  "python": "3.12.3",
+  "jinja2": "3.1.6"
+ },
+ "files": {
+  "encode.ref.jsonl": "e4282d3e2f7d2e2a7497fc659cde4f8261ab782fbf555e4828e0849326d51961",
+  "decode.in.jsonl": "0ab939196910291932c12f0f816345ee06d70dba01d5f8aa66c0fc3e310ec5a1",
+  "decode.ref.jsonl": "79a59cb2b25609a243b2e9dc843aadd239b59601abf7367f778fb699a6f27130",
+  "chat.ref.jsonl": "69c7dbff0690876b0b3fdff00ea5b8ad1c3368eb488bc44d01311819b319f904"
+ }
+}

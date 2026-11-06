@@ -1,0 +1,16 @@
+{
+ "sources": {
+  "native/include/lfm/lfm3_text.hpp": "cc41c000a377a2ff1fee7208c024ec4cdf2ffc0074259f1e4a85e4ca0dd47e61",
+  "native/include/lfm/lfm3_text_classes.hpp": "081ef0dcc065eb62e763636f5423c7c7b4e78b831cfac2539d4bb32fdf9c0783",
+  "native/include/lfm/model_config.hpp": "7148f817a0e1b56a033d48126b3cfcde315dbd94a7c378ccd7efd21a762e1e8b",
+  "native/tests/lfm3_text_tool.cpp": "c50ac6d4c31b6479d2408d70d8efb191eb3b98106a3f614ac00c47c6b8f4483f",
+  "tools/lfm3_text_diff.py": "89e8b270a53129fb818a89018af261a97f703f3505b83e50d41d1d036ea65fcc",
+  "tools/lfm3_text_frontend.py": "2f4ed0f779fb7ac5264a8305d3decd94cf78f445f493244f06daada21f2cdf1e",
+  "validation/g2-classes-v1/classes.json": "d81e0b972f1dff7278579924fda4a8139d52f912f4f5d8b23e3e91cb114f1ca2"
+ },
+ "tool_x86_64_sha256": "9fd2cdd44faff7ee7a05ab2c005fb1e26f3310f6114947a3d891f616608eb898",
+ "tool_aarch64_sha256": "891df7380d3c36208d6b6298adc0e18a982df140a0527f98891c7da1ff4f2296",
+ "tokenizer_json_sha256": "41927bd314d17d7d7fadb44e10cd0919f7b71528d7741596d8cbd15c6945ec44",
+ "chat_template_sha256": "ea74cc1d14319ed436dc0f37632893004d436913113e7605267f2b01694d65e4",
+ "case_dir": "build/g2-diff-v2 (inputs regenerate byte-identically: tools/lfm3_text_diff.py cases; sha256 in cases.json)"
+}

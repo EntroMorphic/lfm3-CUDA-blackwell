@@ -1,0 +1,44 @@
+{
+ "families": {
+  "encode": {
+   "cases": 1167834,
+   "mismatches": 0,
+   "both_rejected": 0,
+   "notes": {},
+   "first_mismatches": []
+  },
+  "decode": {
+   "cases": 16200,
+   "mismatches": 0,
+   "both_rejected": 0,
+   "notes": {
+    "stream_max_held_bytes": 3
+   },
+   "first_mismatches": []
+  },
+  "chat": {
+   "cases": 12006,
+   "mismatches": 0,
+   "both_rejected": 2732,
+   "notes": {
+    "coverage": {
+     "accepted": 9274,
+     "system": 4674,
+     "empty_system": 1743,
+     "list_content": 17796,
+     "prior_assistant_think_split": 3760,
+     "think_split_strip_py_only_space": 426,
+     "reasoning_kept": 3016,
+     "reasoning_dropped": 3542,
+     "tool_merge": 326,
+     "tool_passthrough": 1407,
+     "tool_list": 2782,
+     "tool_empty": 2964,
+     "rejected_capacity": 965
+    }
+   },
+   "first_mismatches": []
+  }
+ },
+ "pass": true
+}
