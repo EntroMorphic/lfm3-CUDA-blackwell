@@ -1,0 +1,32 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+80.6,69474831232,306,227041932.1,256642192.0,2587072,506262560,167168667.5,"lfm3_wmma_candidate::wmma_partials(const __nv_bfloat16 *, const __nv_bfloat16 *, float *, int, int, int, int, int, int)"
+6.9,5936072256,2880,2061136.2,2076880.0,602752,3569568,839589.7,"<unnamed>::probabilities_large(const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int, int, int, int)"
+6.4,5542922592,308,17996501.9,9090352.0,21280,38779008,15203090.8,"lfm3_wmma_candidate::wmma_finish(const float *, __nv_bfloat16 *, unsigned long, int, int, int, int, int)"
+2.0,1696470528,3092,548664.5,597904.0,4352,1341632,343259.5,nvjet_sm110_tst_128x128_64x6_1x1_h_bz_ptrBatch_NNT
+0.9,763634720,48,15909056.7,15953584.0,14397216,16010368,248100.4,"<unnamed>::swiglu(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, unsigned long)"
+0.9,741127680,1462,506927.3,523040.0,8768,962432,230402.1,nvjet_sm110_tst_128x128_64x8_2x1_2cta_v_bz_ptrBatch_TNT
+0.7,631712128,238,2654252.6,1939728.0,547552,4213344,1259994.1,"<unnamed>::norm(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, float, const __nv_bfloat16 *)"
+0.3,228696032,432,529389.0,611232.0,24576,950336,279048.5,nvjet_sm110_tst_256x128_64x5_2x1_2cta_v_bz_ptrBatch_TNT
+0.2,198586112,26,7637927.4,7643776.0,7582368,7702112,28621.4,"lfm::lfm3::convolution7_prefill(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+0.2,172137600,324,531288.9,559904.0,34624,1083744,285221.9,nvjet_sm110_tst_384x128_64x3_2x1_2cta_v_bz_ptrBatch_TNT
+0.1,124887200,228,547750.9,595488.0,34560,1081792,308585.6,nvjet_sm110_tst_448x128_64x3_2x1_2cta_v_bz_ptrBatch_TNT
+0.1,107454848,204,526739.5,548096.0,94720,970784,260585.4,nvjet_sm110_tst_512x128_64x2_2x1_2cta_v_bz_ptrBatch_TNT
+0.1,94041600,2752,34172.1,30720.0,13344,180416,17472.6,"<unnamed>::probabilities(const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int, int, int, int)"
+0.1,92820256,2540,36543.4,36128.0,35232,72608,2085.0,void cutlass::Kernel2<cutlass_75_tensorop_bf16_s1688gemm_bf16_64x128_tn_align1>(T1::Params)
+0.1,89505376,22,4068426.2,4010880.0,3897088,4276096,158907.3,"lfm::lfm3::head_gate(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, unsigned long, int)"
+0.1,84703776,2540,33347.9,33152.0,32928,62944,1248.9,void cutlass::Kernel2<cutlass_75_tensorop_bf16_s1688gemm_bf16_64x64_nn_align1>(T1::Params)
+0.1,80914016,180,449522.3,390112.0,36512,1019328,263823.4,nvjet_sm110_tst_320x128_64x4_2x1_2cta_v_bz_ptrBatch_TNT
+0.1,64301184,44,1461390.5,1322448.0,483296,2843424,931428.0,"<unnamed>::rotary_from_frequencies(__nv_bfloat16 *, const int *, const float *, int, int, int, int)"
+0.0,29781664,22,1353712.0,1350080.0,1344448,1400416,11816.1,"<unnamed>::scatter(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int, int, int, int)"
+0.0,14403712,96,150038.7,140352.0,14368,373696,114235.4,nvjet_sm110_tst_192x128_64x6_2x1_2cta_v_bz_ptrBatch_TNT
+0.0,6639680,2,3319840.0,3319840.0,3287776,3351904,45345.3,"void lfm3_wmma_candidate::v8::mma_thin_partials<(int)8>(const __nv_bfloat16 *, const __nv_bfloat16 *, float *, int, int, int, int, int, int)"
+0.0,5667616,2,2833808.0,2833808.0,2766368,2901248,95374.6,"<unnamed>::embed(const __nv_bfloat16 *, const int *, __nv_bfloat16 *, int, int)"
+0.0,3789600,36,105266.7,126720.0,16544,176480,65848.9,nvjet_sm110_tst_96x128_64x7_2x1_v_bz_ptrBatch_TNN
+0.0,2437696,12,203141.3,205296.0,179136,207840,7892.6,nvjet_sm110_tst_384x64_64x4_2x1_2cta_v_bz_ptrBatch_TNT
+0.0,1444320,12,120360.0,126480.0,52032,128928,21573.5,nvjet_sm110_tst_448x64_64x3_2x1_2cta_v_bz_ptrBatch_TNT
+0.0,898176,12,74848.0,77312.0,36640,82368,12274.5,nvjet_sm110_tst_112x128_64x7_2x1_v_bz_ptrBatch_TNN
+0.0,735968,12,61330.7,63392.0,33792,68320,8938.4,nvjet_sm110_tst_168x128_64x5_2x1_v_bz_ptrBatch_TNN
+0.0,485600,12,40466.7,41824.0,23936,42688,5237.5,nvjet_sm110_tst_144x128_64x6_2x1_v_bz_ptrBatch_TNN
+0.0,334176,24,13924.0,14256.0,9696,18048,3152.7,nvjet_sm110_tst_128x64_64x8_1x2_h_bz_ptrBatch_TNT
+0.0,312352,34,9186.8,8368.0,7744,11968,1445.0,nvjet_sm110_tst_128x128_64x6_1x1_h_bz_ptrBatch_TNT
+0.0,160352,12,13362.7,13520.0,11136,14432,1008.5,nvjet_sm110_tst_112x128_64x7_1x1_h_bz_ptrBatch_TNN

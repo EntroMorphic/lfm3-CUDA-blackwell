@@ -329,6 +329,107 @@ __global__ void __launch_bounds__(128) mma_thin_partials(const bf16* w, const bf
 }
 }  // namespace v8
 
+// v9: prefill (rows > 8) producer with v4 wmma_partials arithmetic. v4's wmma m16n16k16 compiles
+// to two HMMA.16816.F32.BF16 per K step (tokens 0..7 and 8..15 of its 16x16 tile); v9 issues the
+// same m16n8k16 MMA per 8-token tile, in the same K order per output element. One warp owns 16
+// weight rows across NT 8-token tiles, so each weight byte is fetched once per token group
+// (v4 fetched it once per 16-token tile, with 2-byte loads). Weights use v8's coalesced loads and
+// butterfly transpose; activations use 4-byte loads shared by all warps through L1/L2.
+namespace v9 {
+using bf16 = __nv_bfloat16;
+
+template <int S, int NT>
+__global__ void __launch_bounds__(128) mma_prefill_partials(const bf16* w, const bf16* x, float* partial, int m,
+                                                            int n, int k, int padded_n, int padded_m, int parts) {
+  static_assert(S % 2 == 0 && S >= 2 && NT >= 1, "stage must hold a multiple of the quad width");
+  constexpr int Q = S / 2;
+  int lane = int(threadIdx.x) & 31, warp = int(threadIdx.x) / 32;
+  int row = (int(blockIdx.x) * (int(blockDim.x) / 32) + warp) * 16;
+  if (row >= m) return;  // whole warp retires; shuffles below always see a full warp
+  int group = lane / 4, t = lane % 4, start = int(blockIdx.z) * (k / parts), end = start + k / parts;
+  const bool r0 = row + group < m, r1 = row + group + 8 < m;
+  const bf16* w0 = w + size_t(r0 ? row + group : 0) * k;
+  const bf16* w1 = w + size_t(r1 ? row + group + 8 : 0) * k;
+  const int tok0 = int(blockIdx.y) * 8 * NT;
+  float acc[NT][4];
+#pragma unroll
+  for (int j = 0; j < NT; ++j) acc[j][0] = acc[j][1] = acc[j][2] = acc[j][3] = 0.0f;
+  uint4 staged[2][Q];
+  auto fetch = [&](int base, int cnt) {
+#pragma unroll
+    for (int h = 0; h < 2; ++h)
+#pragma unroll
+      for (int q = 0; q < Q; ++q) {
+        int j = 4 * q + t;  // this lane's vector within the stage, for row half h
+        bool valid = j < 2 * cnt && (h ? r1 : r0);
+        staged[h][q] = valid ? v6::ld_nc_v4((h ? w1 : w0) + base + 8 * j) : make_uint4(0, 0, 0, 0);
+      }
+  };
+  // fr[h][jj] = this lane's 4-byte word of vector jj (elements 8*jj+2t, +1) for row half h.
+  uint32_t fr[2][2 * S];
+  // Two-stage XOR butterfly 4x4 transpose (lane t holds A[t][0..3]; wants A[0..3][t]).
+  // Stage 1 (xor 2, b=t>>1): send columns {2-2b,3-2b}, receive partner's {2b,2b+1}.
+  // Stage 2 (xor 1, a=t&1): send column 2b+1-a of both held rows, receive column 2b+a.
+  const bool b = (t >> 1) & 1, a = t & 1;
+  auto transpose = [&]() {
+#pragma unroll
+    for (int h = 0; h < 2; ++h)
+#pragma unroll
+      for (int q = 0; q < Q; ++q) {
+        const uint4 v = staged[h][q];
+        uint32_t r0 = __shfl_xor_sync(0xffffffffu, b ? v.x : v.z, 2);
+        uint32_t r1 = __shfl_xor_sync(0xffffffffu, b ? v.y : v.w, 2);
+        uint32_t x0 = b ? v.z : v.x, x1 = b ? v.w : v.y;  // own row t, columns 2b, 2b+1
+        // u[rb][cl]: row with bit1 = rb (row t has rb = b), column 2b+cl.
+        uint32_t u00 = b ? r0 : x0, u01 = b ? r1 : x1, u10 = b ? x0 : r0, u11 = b ? x1 : r1;
+        uint32_t gA = __shfl_xor_sync(0xffffffffu, a ? u00 : u01, 1);  // partner's row 1-a, column 2b+a
+        uint32_t gB = __shfl_xor_sync(0xffffffffu, a ? u10 : u11, 1);  // partner's row 3-a, column 2b+a
+        uint32_t oA = a ? u01 : u00, oB = a ? u11 : u10;               // own rows a, 2+a, column 2b+a
+        fr[h][4 * q + 0] = a ? gA : oA;
+        fr[h][4 * q + 1] = a ? oA : gA;
+        fr[h][4 * q + 2] = a ? gB : oB;
+        fr[h][4 * q + 3] = a ? oB : gB;
+      }
+  };
+  auto compute = [&](int base, int cnt) {
+#pragma unroll
+    for (int u = 0; u < S; ++u) {
+      if (u < cnt) {
+        int o = base + 16 * u + 2 * t;
+#pragma unroll
+        for (int j = 0; j < NT; ++j) {
+          if (tok0 + 8 * j < n) {  // warp-uniform: skip tiles wholly past the last token
+            int tok = tok0 + 8 * j + group;
+            bool bv = tok < n;
+            const bf16* xp = x + size_t(bv ? tok : 0) * k + o;
+            uint32_t b0 = bv ? v5::ld_nc(xp) : 0u, b1 = bv ? v5::ld_nc(xp + 8) : 0u;
+            v5::mma(acc[j][0], acc[j][1], acc[j][2], acc[j][3], fr[0][2 * u], fr[1][2 * u], fr[0][2 * u + 1],
+                    fr[1][2 * u + 1], b0, b1);
+          }
+        }
+      }
+    }
+  };
+  int steps = (end - start) / 16, stages = (steps + S - 1) / S;
+  fetch(start, min(S, steps));
+  for (int s = 0; s < stages; ++s) {
+    int base = start + s * 16 * S, cnt = min(S, steps - s * S);
+    transpose();
+    if (s + 1 < stages) fetch(base + 16 * S, min(S, steps - (s + 1) * S));
+    compute(base, cnt);
+  }
+  size_t head = size_t(blockIdx.z) * padded_m * padded_n;
+#pragma unroll
+  for (int j = 0; j < NT; ++j) {
+    if (tok0 + 8 * j < n) {
+      int col = tok0 + 8 * j + 2 * t;  // < ceil8(n) <= padded_n
+      if (r0) { size_t o = head + size_t(row + group) * padded_n + col; partial[o] = acc[j][0]; partial[o + 1] = acc[j][1]; }
+      if (r1) { size_t o = head + size_t(row + group + 8) * padded_n + col; partial[o] = acc[j][2]; partial[o + 1] = acc[j][3]; }
+    }
+  }
+}
+}  // namespace v9
+
 #ifndef CANDIDATE
 #define CANDIDATE v5::mma_thin_partials
 #endif
@@ -570,6 +671,7 @@ static int suite(int argc, char** argv) {
   return failures;
 }
 
+#ifndef THIN_PROBE_NO_MAIN
 int main(int argc, char** argv) try {
   int failures = suite<UNROLL>(argc, argv);
   return failures ? 2 : 0;
@@ -577,3 +679,4 @@ int main(int argc, char** argv) try {
   std::fprintf(stderr, "FAIL: %s\n", e.what());
   return 1;
 }
+#endif  // THIN_PROBE_NO_MAIN

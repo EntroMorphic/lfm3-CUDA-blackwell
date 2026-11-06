@@ -1,0 +1,10 @@
+Loading weights:   0%|          | 0/665 [00:00<?, ?it/s]Loading weights:  31%|███       | 203/665 [00:00<00:00, 1943.08it/s]Loading weights:  60%|█████▉    | 398/665 [00:00<00:00, 642.46it/s] Loading weights:  76%|███████▌  | 504/665 [00:00<00:00, 553.51it/s]Loading weights:  90%|█████████ | 601/665 [00:00<00:00, 631.44it/s]Loading weights: 100%|██████████| 665/665 [00:00<00:00, 702.37it/s]
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Loading weights:   0%|          | 0/203 [00:00<?, ?it/s]Loading weights: 100%|██████████| 203/203 [00:00<00:00, 7317.45it/s]
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-56e2.qdstrm'
+[1/1] [0%                          ] hf8.nsys-repProcessing events...
+[1/1] [0%                          ] hf8.nsys-rep[1/1] [=======36%                  ] hf8.nsys-rep[1/1] [=================72%        ] hf8.nsys-rep[1/1] [====================83%     ] hf8.nsys-rep[1/1] [========================100%] hf8.nsys-rep[1/1] [========================100%] hf8.nsys-rep
+Generated:
+	/workspace/liquid-CUDA/build/hf-nsys-v1/hf8.nsys-rep

@@ -1,0 +1,115 @@
+{
+  "runtime_sources": {
+    "Lfm3OmniForConditionalGeneration": {
+      "file": "/workspace/cache/huggingface/modules/transformers_modules/LFM3_hyphen_Omni_hyphen_2B/ae568f14d153af7a/modeling_lfm3_omni.py",
+      "sha256": "9872e64112f9e255fba43212771226772af521e93f99c1984ecba1049664c465"
+    },
+    "Lfm3DecoderLayer": {
+      "file": "/workspace/cache/huggingface/modules/transformers_modules/LFM3_hyphen_Omni_hyphen_2B/ae568f14d153af7a/modeling_lfm3.py",
+      "sha256": "e8cd5254ea99ce6bd731b57b10908c2e8b5010ce8315341f895a38484885eeab"
+    },
+    "Lfm3ShortConv": {
+      "file": "/workspace/cache/huggingface/modules/transformers_modules/LFM3_hyphen_Omni_hyphen_2B/ae568f14d153af7a/modeling_lfm3.py",
+      "sha256": "e8cd5254ea99ce6bd731b57b10908c2e8b5010ce8315341f895a38484885eeab"
+    },
+    "Lfm3Model": {
+      "file": "/workspace/cache/huggingface/modules/transformers_modules/LFM3_hyphen_Omni_hyphen_2B/ae568f14d153af7a/modeling_lfm3.py",
+      "sha256": "e8cd5254ea99ce6bd731b57b10908c2e8b5010ce8315341f895a38484885eeab"
+    },
+    "Lfm3Attention": {
+      "file": "/workspace/cache/huggingface/modules/transformers_modules/LFM3_hyphen_Omni_hyphen_2B/ae568f14d153af7a/modeling_lfm3.py",
+      "sha256": "e8cd5254ea99ce6bd731b57b10908c2e8b5010ce8315341f895a38484885eeab"
+    },
+    "lfm3_conv": {
+      "file": "/workspace/cache/huggingface/modules/transformers_modules/LFM3_hyphen_Omni_hyphen_2B/ae568f14d153af7a/lfm3_conv.py",
+      "sha256": "80d4a985382a22774212759248a6b4c737bfbf9c2a47b3dd7f797dda748e4bb4",
+      "can_use_lfm3_conv_now": false
+    }
+  },
+  "plain_generated_ids": [
+    12447,
+    20,
+    43709,
+    91506,
+    355,
+    8586,
+    3691,
+    267,
+    7641,
+    5491,
+    302,
+    1994,
+    40657,
+    22,
+    810,
+    10834,
+    310,
+    278,
+    4477,
+    310,
+    2038,
+    836,
+    734,
+    589,
+    1562,
+    10846,
+    20,
+    14708,
+    20,
+    309,
+    22722,
+    6394,
+    923,
+    393,
+    21280,
+    496,
+    116376,
+    836,
+    6416,
+    2426,
+    969,
+    7113,
+    989,
+    51877,
+    1326,
+    406,
+    33552,
+    20
+  ],
+  "plain_text": "Yes, reflective recursion is widely considered a core feature of human cognition. It refers to the ability to think about one's own thoughts, beliefs, and reasoning processes—essentially \"thinking about thinking.\" This capacity underlies metacognition,",
+  "traced_first4_ids": [
+    12447,
+    20,
+    43709,
+    91506
+  ],
+  "traced_matches_plain_prefix": true,
+  "load_seconds": 3.4324922550003976,
+  "parameter_dtypes": {
+    "torch.bfloat16": 665
+  },
+  "lm_head_tied_to_embeddings": true,
+  "attn_implementation": "sdpa",
+  "versions": {
+    "torch": "2.10.0+cu130",
+    "cuda": "13.0",
+    "transformers": "5.22.1",
+    "triton": "3.6.0",
+    "gpu": "NVIDIA Thor"
+  },
+  "torch_flags": {
+    "matmul_allow_tf32": false,
+    "matmul_allow_bf16_reduced_precision_reduction": true,
+    "float32_matmul_precision": "highest",
+    "sdp_flash": true,
+    "sdp_mem_efficient": true,
+    "sdp_cudnn": true,
+    "sdp_math": true,
+    "deterministic": false
+  },
+  "counts": {
+    "module_calls_logged": 700,
+    "python_calls_logged": 1662,
+    "kernel_launches": 6409
+  }
+}

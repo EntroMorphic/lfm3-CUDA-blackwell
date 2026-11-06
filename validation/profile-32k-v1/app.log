@@ -1,0 +1,12 @@
+{"candidate_linear_plan":true,"m":6144,"n":32768,"k":2048,"heuristic_id":66,"parts":1,"native_wmma":true,"thin":"none"}
+{"candidate_linear_plan":true,"m":2048,"n":32768,"k":2048,"heuristic_id":66,"parts":1,"native_wmma":true,"thin":"none"}
+{"candidate_linear_plan":true,"m":7680,"n":32768,"k":2048,"heuristic_id":66,"parts":1,"native_wmma":true,"thin":"none"}
+{"candidate_linear_plan":true,"m":2048,"n":32768,"k":7680,"heuristic_id":66,"parts":1,"native_wmma":true,"thin":"none"}
+{"candidate_linear_plan":true,"m":512,"n":32768,"k":2048,"heuristic_id":66,"parts":1,"native_wmma":true,"thin":"none"}
+{"candidate_linear_plan":true,"m":16,"n":32768,"k":2048,"heuristic_id":66,"parts":1,"native_wmma":true,"thin":"none"}
+{"candidate_linear_plan":true,"m":128000,"n":1,"k":2048,"heuristic_id":66,"parts":1,"native_wmma":true,"thin":"v8s8"}
+Collecting data...
+Generating '/tmp/nsys-report-8bc4.qdstrm'
+[1/1] [0%                          ] v8cand.nsys-rep[1/1] [0%                          ] v8cand.nsys-rep[1/1] [10%                         ] v8cand.nsys-rep[1/1] [==21%                       ] v8cand.nsys-rep[1/1] [=====31%                    ] v8cand.nsys-rep[1/1] [========42%                 ] v8cand.nsys-rep[1/1] [===========52%              ] v8cand.nsys-rep[1/1] [==============63%           ] v8cand.nsys-rep[1/1] [=================73%        ] v8cand.nsys-rep[1/1] [===================79%      ] v8cand.nsys-rep[1/1] [========================100%] v8cand.nsys-rep[1/1] [========================100%] v8cand.nsys-rep
+Generated:
+	/workspace/liquid-CUDA/build/profile-32k-v1/v8cand.nsys-rep
