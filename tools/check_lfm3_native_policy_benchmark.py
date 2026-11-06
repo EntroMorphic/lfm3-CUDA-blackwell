@@ -44,7 +44,7 @@ def main():
             path=manifest_path.parent/name
             if digest(path)!=r['candidate_sha256']:raise ValueError('candidate source identity differs')
             pin(path)
-        generated=manifest_path.parent/'native/tests/lfm3_wmma_runtime_generated.cuh'
+        generated=manifest_path.parent/manifest.get('generated_header','native/tests/lfm3_wmma_runtime_generated.cuh')
         if digest(generated)!=manifest['generated_header_sha256']:raise ValueError('generated kernel header differs')
         pin(generated)
         for path in a.library_dir.glob('*.so*'):

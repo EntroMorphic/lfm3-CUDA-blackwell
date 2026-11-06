@@ -1,0 +1,9 @@
+e23bbedd376e2ac1ad7da29bf46566dc09cd0714a5ee4319148d4a76a0adcc70  thin-v5-probe-v1/thin-v5-u16
+a84186a8c97c55fd21dbb6b532dc880da89a20cb0a27b29077a0b84c0fb0806b  thin-v5-probe-v1/thin-v5-u4
+0cd1b7ee4ac996f9bf9f2e7adfccc46f56a5e6485009455d6088be6402075890  thin-v5-probe-v1/thin-v5-u8
+d0e85332c56f2b8961d523f1ff874a917b0172aa6be3b5849428253e6ce62e0a  thin-v5-probe-v2/thin-v5-u16
+359099e8b681c42a3a7c51aa6b82f0ba3a7c38fda9e937d7308c2cac0c008882  thin-v5-probe-v2/thin-v5-u4
+a13a31f878f90af2d58f358af4a0a8460bd3e8d9eeb9fc58d7fb2282341a873a  thin-v5-probe-v2/thin-v5-u8
+cdc56946201e20fdb279615a4a580bfa00ae17957c0761ed54624e563a076f55  thin-v6-probe-v1/thin-v6-s4
+2fb0927833cb6e3061998d9cd83b180abe46081f98f9a8beafa84c684d1ac3bf  thin-v6-probe-v1/thin-v6-s8
+ac07606e5a85ef7df0d3dc005080063d113c824ff8fcc3599e03df944ec4746b  ../native/tests/lfm3_thin_v5_probe.cu

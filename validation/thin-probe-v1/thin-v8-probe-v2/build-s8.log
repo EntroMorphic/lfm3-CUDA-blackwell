@@ -1,0 +1,21 @@
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN2v817mma_thin_partialsILi8EEEvPK13__nv_bfloat16S3_Pfiiiiii' for 'sm_110'
+ptxas info    : Function properties for _ZN2v817mma_thin_partialsILi8EEEvPK13__nv_bfloat16S3_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 95 registers, used 0 barriers
+ptxas info    : Compile time = 23.449 ms
+ptxas info    : Compiling entry function '_ZN19lfm3_wmma_candidate11wmma_finishEPKfP13__nv_bfloat16miiiii' for 'sm_110'
+ptxas info    : Function properties for _ZN19lfm3_wmma_candidate11wmma_finishEPKfP13__nv_bfloat16miiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 36 registers, used 0 barriers
+ptxas info    : Compile time = 11.108 ms
+ptxas info    : Compiling entry function '_ZN19lfm3_wmma_candidate17mma_thin_partialsEPK13__nv_bfloat16S2_Pfiiiiii' for 'sm_110'
+ptxas info    : Function properties for _ZN19lfm3_wmma_candidate17mma_thin_partialsEPK13__nv_bfloat16S2_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 10.865 ms
+ptxas info    : Compiling entry function '_ZN19lfm3_wmma_candidate13wmma_partialsEPK13__nv_bfloat16S2_Pfiiiiii' for 'sm_110'
+ptxas info    : Function properties for _ZN19lfm3_wmma_candidate13wmma_partialsEPK13__nv_bfloat16S2_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 42 registers, used 0 barriers, 1024 bytes smem
+ptxas info    : Compile time = 17.052 ms

@@ -1,0 +1,2 @@
+0d7ea67c07c9fda09d51343c47f0fedd617a3fccc552fe1ea842586a0693f2ab  /workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/native/tests/lfm3_wmma_runtime_generated.cuh
+b7cdbabf42049ca9b9687383164076f15a8bb9d57e1f98b5a06e91a03eab92f3  /workspace/liquid-CUDA/native/tests/lfm3_thin_v5_probe.cu

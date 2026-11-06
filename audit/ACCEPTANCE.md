@@ -63,6 +63,27 @@ NVIDIA's documented unsupported tensormap/tcgen05 coverage, not vendor-confirmed
 attribution or a production waiver. Full-runtime synccheck and32K racecheck gates
 are unchanged. See `BOUNDARY_OBSERVER.md` and `TMA_STORE_FINDINGS.md`.
 
+### Thin-hybrid decode remediation candidate (not promoted)
+
+Candidate `thin-hybrid-runtime-candidate-v4` keeps v4's arithmetic and replaces only its decode
+(rows ≤ 8) producer with v8 (coalesced 16-byte loads, quad XOR-butterfly transpose in registers,
+no shared memory) for m ≥ 2048 and v5 U16 below that. Single `327a9096...`, worker `3442a068...`.
+Its producers are bitwise-identical to v4's on 203 random-input cases, the real layer-0 fixture
+and 192 tail cases under each sanitizer.
+
+It independently passes:
+- all 6890 eager checks
+- scoped integrated initcheck, unexcluded synccheck, memcheck and racecheck (29.3 s), with zero
+  findings
+- context through 4096, both paired matrices, the grouped worker and 32K SDPA
+
+Balanced warmed AB/BA 20-sample decode: median paired ratio **0.8450810816** against production
+(v4: 3.445809). Prefill is unchanged from v4 (0.1099 s against 0.0320 s). The full 32768-prefill
+guarded racecheck timed out at 900.6 s, with no OOM and clean cleanup. That fixture runs only
+v4's unchanged prefill `wmma_partials`, and its timeout is not credited or waived. HTTP,
+cancellation, soak and grouped-throughput gates are not repeated. Production is unchanged; full
+acceptance remains false. See `THIN_HYBRID.md`.
+
 ### Native ordinary-store remediation candidate (not promoted)
 
 Latest v4 candidate `81df4dea...` independently passes6890 eager checks, nine

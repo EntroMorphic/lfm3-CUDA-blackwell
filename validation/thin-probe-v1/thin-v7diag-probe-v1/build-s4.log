@@ -1,0 +1,30 @@
+/workspace/liquid-CUDA/native/tests/lfm3_thin_v5_probe.cu(271): warning #177-D: variable "quad" was declared but never referenced
+    const int quad = lane & ~3;
+              ^
+          detected during:
+            instantiation of "int run_case<U>(const Case &, FILE *) [with U=4]" at line 481
+            instantiation of "int suite<U>(int, char **) [with U=4]" at line 488
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN6v7diag17mma_thin_partialsILi4EEEvPK13__nv_bfloat16S3_Pfiiiiii' for 'sm_110'
+ptxas info    : Function properties for _ZN6v7diag17mma_thin_partialsILi4EEEvPK13__nv_bfloat16S3_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 56 registers, used 0 barriers
+ptxas info    : Compile time = 20.928 ms
+ptxas info    : Compiling entry function '_ZN19lfm3_wmma_candidate11wmma_finishEPKfP13__nv_bfloat16miiiii' for 'sm_110'
+ptxas info    : Function properties for _ZN19lfm3_wmma_candidate11wmma_finishEPKfP13__nv_bfloat16miiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 36 registers, used 0 barriers
+ptxas info    : Compile time = 15.317 ms
+ptxas info    : Compiling entry function '_ZN19lfm3_wmma_candidate17mma_thin_partialsEPK13__nv_bfloat16S2_Pfiiiiii' for 'sm_110'
+ptxas info    : Function properties for _ZN19lfm3_wmma_candidate17mma_thin_partialsEPK13__nv_bfloat16S2_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 14.323 ms
+ptxas info    : Compiling entry function '_ZN19lfm3_wmma_candidate13wmma_partialsEPK13__nv_bfloat16S2_Pfiiiiii' for 'sm_110'
+ptxas info    : Function properties for _ZN19lfm3_wmma_candidate13wmma_partialsEPK13__nv_bfloat16S2_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 42 registers, used 0 barriers, 1024 bytes smem
+ptxas info    : Compile time = 22.327 ms

@@ -1,0 +1,95 @@
+{
+  "status": "passed",
+  "binary_sha256": "b34e0b0779f2f90499cb7d70020b27542e09123a8115e008561a47ce52cb2308",
+  "sanitizer_sha256": null,
+  "reference_mode": "compact",
+  "records": [
+    {
+      "fixture": "scratch",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/thin-hybrid-runtime-candidate-v2/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/thin-hybrid-paired-compact-v1/scratch",
+        "scratch",
+        "compact"
+      ],
+      "owned_process_group": 1297,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 6.641912364000746,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "sliding",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/thin-hybrid-runtime-candidate-v2/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/thin-hybrid-paired-compact-v1/sliding",
+        "sliding",
+        "compact"
+      ],
+      "owned_process_group": 1302,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 7.504445100996236,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "softmax",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/thin-hybrid-runtime-candidate-v2/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/thin-hybrid-paired-compact-v1/softmax",
+        "softmax",
+        "compact"
+      ],
+      "owned_process_group": 1307,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 30.46713816800184,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "tiled",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/thin-hybrid-runtime-candidate-v2/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/thin-hybrid-paired-compact-v1/tiled",
+        "tiled",
+        "compact"
+      ],
+      "owned_process_group": 1312,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 55.37615477100189,
+      "group_cleanup_complete": true
+    },
+    {
+      "fixture": "upper",
+      "status": "passed",
+      "command": [
+        "/workspace/liquid-CUDA/build/thin-hybrid-runtime-candidate-v2/build/lfm3-decode-batch-probe",
+        "--experimental",
+        "/workspace/models/LFM3-Omni-2B",
+        "/workspace/liquid-CUDA/build/thin-hybrid-paired-compact-v1/upper",
+        "upper",
+        "compact"
+      ],
+      "owned_process_group": 1317,
+      "returncode": 0,
+      "timed_out": false,
+      "seconds": 96.52517875799822,
+      "group_cleanup_complete": true
+    }
+  ],
+  "not_run": [],
+  "worker_integration": false
+}
