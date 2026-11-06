@@ -1,0 +1,10 @@
+{
+  "engine": "native",
+  "length": 32768,
+  "windows_file": "windows-32768.i32",
+  "windows_sha256": "54df38e05bddde9717b61c75d018c5023d546e3e352151f807b715c2d2d638fc",
+  "nll_sha256": "5f16955788fca9e2a898a43bfd3cd24cd8cda69e4aaa3a94039dab88eb06000b",
+  "scorer": "build/score-v5/lfm3-score",
+  "scorer_sha256": "d0b1111ae49e2b8488e53765269d71c00b6951f62680725f65ac22fe950b8392",
+  "hashes_taken": "inside lfm3-profile-v1, at the scorer's paths, just before it ran"
+}

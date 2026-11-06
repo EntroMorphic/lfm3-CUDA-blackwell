@@ -1,0 +1,54 @@
+baseline PASS
+arithmetic PASS
+window257 PASS
+single PASS
+{
+  "cases": [
+    {
+      "case": "baseline",
+      "activation_checks": 4240,
+      "tokens": 16,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    },
+    {
+      "case": "arithmetic",
+      "activation_checks": 530,
+      "tokens": 2,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    },
+    {
+      "case": "window257",
+      "activation_checks": 1060,
+      "tokens": 4,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    },
+    {
+      "case": "single",
+      "activation_checks": 1060,
+      "tokens": 4,
+      "max_relative_rms": 0.0,
+      "max_logit_abs": 0.0,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true
+    }
+  ],
+  "stop_check": true,
+  "suppression_check": true,
+  "invalid_requests_rejected": 8,
+  "final_cache_slot_checked": true,
+  "binary_sha256": "d13e1d2876a465b37c4f801daa9c53fe5c7f62c79fcfab9ab49e26e84e835965",
+  "scope": "actual BF16 checkpoint activations/logits, teacher forcing and free-running greedy; eager attention only"
+}

@@ -11,6 +11,9 @@ import subprocess
 import sys
 import time
 
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from lfm3_oracle_live import oracle_live_count
+
 
 class Worker:
     def __init__(self,binary,checkpoint,log,env,timeout=300,trace_root=None):
@@ -209,9 +212,16 @@ def main():
             result_path.write_text(json.dumps(sampled,indent=2)+"\n")
             with (args.output/"resident-sampling-oracle.log").open("w") as stream:
                 try:
-                    subprocess.run([str(args.oracle),str(request_path),str(result_path),str(args.output/"sampling-traces"/str(trace_id)),str(vocabulary)],
+                    # G6: the oracle replays the worker's bound, counting with the engine's own C++ function
+                    subprocess.run([str(args.oracle),str(request_path),str(result_path),str(args.output/"sampling-traces"/str(trace_id)),
+                                    str(vocabulary),str(args.checkpoint/"tokenizer.json")],
                                    env=env,check=True,stdout=stream,stderr=subprocess.STDOUT,timeout=30)
                 except subprocess.CalledProcessError as exc:raise AssertionError("resident sampling logit replay failed") from exc
+            live=oracle_live_count(args.output/"resident-sampling-oracle.log")
+            # Runtime evidence for G6: the worker reports the bound it used, and it must be the oracle's count
+            # (replay alone cannot show it here: dead ids never rank inside top_k=42).
+            if sampled.get("live_token_count")!=live:raise AssertionError("worker and oracle disagree on the live token count")
+            if any(t>=live for t in sampled["generated_ids"]):raise AssertionError("worker emitted an id the tokenizer does not define")
             # Reset/interleaving must not advance the next request's RNG stream.
             call(dict(op="reset",session_id="A"))
             generate("B-between-sampled-replays","B",prompt+[8],expected_b,0)

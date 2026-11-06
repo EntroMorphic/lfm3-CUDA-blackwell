@@ -1,0 +1,12 @@
+{
+  "engine": "hf-sdpa",
+  "length": 32768,
+  "windows_file": "windows-32768.i32",
+  "windows_sha256": "54df38e05bddde9717b61c75d018c5023d546e3e352151f807b715c2d2d638fc",
+  "nll_sha256": "62ba755a2eca471531ea18fba4dea5ae06c35a04f88dbea80a0b0c9a28912c28",
+  "attn_implementation": "sdpa",
+  "versions": {
+    "torch": "2.10.0+cu130",
+    "transformers": "5.22.1"
+  }
+}

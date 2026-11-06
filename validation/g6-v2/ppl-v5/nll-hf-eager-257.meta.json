@@ -1,0 +1,12 @@
+{
+  "engine": "hf-eager",
+  "length": 257,
+  "windows_file": "windows-257.i32",
+  "windows_sha256": "0dad54b2ecada2d6eb85e7ffd983fac062a58cadf81504bb2a39aa133b48a590",
+  "nll_sha256": "5de967baff2b59fd29cc7c0a39978a87fcb1c22d189fa61441243b030337aafb",
+  "attn_implementation": "eager",
+  "versions": {
+    "torch": "2.10.0+cu130",
+    "transformers": "5.22.1"
+  }
+}

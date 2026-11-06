@@ -18,15 +18,22 @@ std::vector<int> ids(const lfm::Json& root,const std::string& name) {
   for(const auto& x:root.at(name).array()) result.push_back(x.integer());
   return result;
 }
+// Whole-string decimal integer: rejects "3.9", "3abc", "", sign tricks and overflow.
+int strict_int(const char* text,const char* name) {
+  const std::string value(text);
+  if(value.empty() || value.size()>9 || value.find_first_not_of("0123456789")!=std::string::npos)
+    throw std::runtime_error(std::string("invalid ")+name);
+  return std::stoi(value);
+}
 int main(int argc,char** argv) try {
-  if(argc!=5 && argc!=6) throw std::runtime_error("usage: text-sampling-oracle REQUEST.json RESULT.json TRACE_DIR VOCAB [LIVE_TOKENS]");
+  if(argc!=5 && argc!=6) throw std::runtime_error("usage: text-sampling-oracle REQUEST.json RESULT.json TRACE_DIR VOCAB [TOKENIZER.json]");
   const auto req=json(argv[1]),out=json(argv[2]);
-  const int vocab=std::stoi(argv[4]);
+  const int vocab=strict_int(argv[4],"vocabulary");
   if(vocab<1 || vocab>16777216) throw std::runtime_error("invalid vocabulary");
-  // Traces hold all VOCAB logits; tokens are chosen among the first LIVE_TOKENS (the ids the
-  // tokenizer defines), exactly as the worker does. Defaults to VOCAB.
-  const int live=argc==6?std::stoi(argv[5]):vocab;
-  if(live<1 || live>vocab) throw std::runtime_error("invalid live token count");
+  // Traces hold all VOCAB logits; tokens are chosen among the ids the tokenizer defines, counted by
+  // the engine's own lfm::tokenizer_token_count (one implementation, so the replay cannot drift from
+  // the engine). Without TOKENIZER.json every VOCAB id is live.
+  const int live=argc==6?lfm::tokenizer_token_count(argv[5],vocab):vocab;
   lfm::TextSamplingOptions options;
   options.do_sample=req.at("do_sample").boolean();
   options.temperature=req.at("temperature").number();
@@ -36,8 +43,16 @@ int main(int argc,char** argv) try {
   options.repetition_penalty=req.at("repetition_penalty").number();
   options.seed=req.at("seed").integer();
   if(!options.do_sample) throw std::runtime_error("oracle fixture must be stochastic");
+  if(options.top_k>vocab) throw std::runtime_error("top_k exceeds vocabulary size");
+  if(options.top_k>live) options.top_k=live;  // the engines' rule: k above the token count = all tokens
   lfm::TextSampler sampler(options);
-  const auto suppressed=ids(req,"suppress_tokens"),generated=ids(out,"generated_ids");
+  const auto generated=ids(out,"generated_ids");
+  // Same rule as the worker: suppression ids at or above `live` are already excluded by the bound.
+  std::vector<int> suppressed;
+  for(int id:ids(req,"suppress_tokens")) {
+    if(id<0 || id>=vocab) throw std::runtime_error("suppress token outside vocabulary");
+    if(id<live) suppressed.push_back(id);
+  }
   if(generated.empty()) throw std::runtime_error("missing generation");
   std::vector<int> history;
   bool differs=false;
@@ -56,6 +71,6 @@ int main(int argc,char** argv) try {
     history.push_back(expected);
   }
   if(!differs) throw std::runtime_error("fixture did not demonstrate non-greedy sampling");
-  std::cout<<"PASS: replayed "<<generated.size()<<" sampled tokens; non-greedy choice verified\n";
+  std::cout<<"PASS: replayed "<<generated.size()<<" sampled tokens; non-greedy choice verified; live_token_count "<<live<<"\n";
   return 0;
 } catch(const std::exception& e) {std::cerr<<e.what()<<"\n"; return 1;}

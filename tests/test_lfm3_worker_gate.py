@@ -11,7 +11,7 @@ import pytest
 TOOL=Path(__file__).resolve().parents[1]/"tools/check_lfm3_worker.py"
 
 
-@pytest.mark.parametrize("damage",[None,"empty-generation","wrong-generation","consumed","transcript","B-reuse","short-oracle","sampling-replay"])
+@pytest.mark.parametrize("damage",[None,"empty-generation","wrong-generation","consumed","transcript","B-reuse","short-oracle","sampling-replay","live-mismatch"])
 def test_worker_gate_cannot_credit_broken_generation(tmp_path,monkeypatch,damage):
     spec=importlib.util.spec_from_file_location("worker_acceptance",TOOL)
     gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(gate)
@@ -45,6 +45,8 @@ def test_worker_gate_cannot_credit_broken_generation(tmp_path,monkeypatch,damage
                 s["transcript"]=inputs+generated;s["consumed"]=(inputs+generated)[:-1]
                 return dict(ok=True,generated_ids=[] if damage=="empty-generation" else [6] if damage=="wrong-generation" else generated,
                             sampling_trace=1,
+                            # G6: the worker reports its token-choice bound; "live-mismatch" reports the output rows instead
+                            live_token_count=128000 if damage=="live-mismatch" else 125033,
                             consumed_tokens=len(s["consumed"])+(damage=="consumed"),last_logits=logits,
                             reused_tokens=0 if damage=="B-reuse" and id=="B" else reused)
             return dict(ok=True)
@@ -52,6 +54,8 @@ def test_worker_gate_cannot_credit_broken_generation(tmp_path,monkeypatch,damage
     def single(command,**kwargs):
         if command[0]==str(tmp_path/"oracle"):
             if damage=="sampling-replay":raise gate.subprocess.CalledProcessError(1,command)
+            # The real oracle reports the token count it bounded the replay with (G6); the gate requires it.
+            kwargs["stdout"].write("PASS: replayed sampled tokens; non-greedy choice verified; live_token_count 125033\n")
             return
         req=json.loads(Path(command[-2]).read_text());dest=Path(command[-1])
         count=req["max_new_tokens"]

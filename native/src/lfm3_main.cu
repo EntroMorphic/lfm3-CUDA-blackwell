@@ -459,15 +459,9 @@ int main(int argc,char** argv) try {
   // New serving contract counts the final emitted prediction too. Legacy
   // <=4096 fixture accounting remains unchanged unless explicitly opted in.
   if(long_context) lfm::text::require_budget(input.size(),size_t(count),capacity);
-  // Token choice is limited to ids the tokenizer defines (verified contiguous 0..live-1); output
-  // rows at or above `live` decode to nothing, so they are excluded as a prefix bound. Explicit
-  // suppression ids in that range are already covered.
-  const int live=lfm::tokenizer_token_count(std::string(argv[2])+"/tokenizer.json",cfg.shape.vocabulary);
-  suppress.erase(std::remove_if(suppress.begin(),suppress.end(),[&](int id){return id>=live;}),suppress.end());
-  std::vector<unsigned char> blocked(live,0);
-  for(int id:suppress) blocked[id]=1;
-  if(std::set<int>(suppress.begin(),suppress.end()).size()==size_t(live))
-    throw std::runtime_error("cannot suppress whole vocabulary");
+  // Sampling and the other scalar request checks complete before anything is read from the
+  // checkpoint beyond config.json (check_lfm3_sampling.py enforces this ordering). The two checks that
+  // need the tokenizer's count (stop ids, whole-vocabulary suppression) necessarily run after it.
   lfm::TextSamplingOptions sampling;
   if(request.has("do_sample")) sampling.do_sample=request.at("do_sample").boolean();
   if(request.has("temperature")) sampling.temperature=request.at("temperature").number();
@@ -476,8 +470,22 @@ int main(int argc,char** argv) try {
   if(request.has("min_p")) sampling.min_p=request.at("min_p").number();
   if(request.has("repetition_penalty")) sampling.repetition_penalty=request.at("repetition_penalty").number();
   if(request.has("seed")) sampling.seed=request.at("seed").integer();
-  if(sampling.top_k>live) throw std::runtime_error("top_k exceeds vocabulary size");
-  lfm::TextSampler sampler(sampling); // Validates every scalar before GPU upload.
+  if(sampling.top_k>cfg.shape.vocabulary) throw std::runtime_error("top_k exceeds vocabulary size");
+  { lfm::TextSampler validate(sampling); } // Validates every scalar before checkpoint access.
+  // Token choice is limited to ids the tokenizer defines (verified contiguous 0..live-1); output
+  // rows at or above `live` decode to nothing, so they are excluded as a prefix bound. Explicit
+  // suppression ids in that range are already covered; a stop id there could never be produced.
+  const int live=lfm::tokenizer_token_count(std::string(argv[2])+"/tokenizer.json",cfg.shape.vocabulary);
+  for(int id:stop) if(id>=live) throw std::runtime_error("stop token outside the tokenizer vocabulary");
+  suppress.erase(std::remove_if(suppress.begin(),suppress.end(),[&](int id){return id>=live;}),suppress.end());
+  std::vector<unsigned char> blocked(live,0);
+  for(int id:suppress) blocked[id]=1;
+  if(std::set<int>(suppress.begin(),suppress.end()).size()==size_t(live))
+    throw std::runtime_error("cannot suppress whole vocabulary");
+  // top_k is validated against the output layer (unchanged contract); k above the token count
+  // meant "every candidate", which is now every token the tokenizer defines.
+  if(sampling.top_k>live) sampling.top_k=live;
+  lfm::TextSampler sampler(sampling);
   auto greedy=[&](const std::vector<float>& logits) {
     int best=-1;  // ascending ids with strict '>' keep the lowest-id tie, like torch.argmax
     for(int token=0;token<live;++token)
@@ -555,7 +563,8 @@ int main(int argc,char** argv) try {
    <<",\"reset_checked\":"<<(check_reset?"true":"false")
    <<",\"reset_exact_logits_ok\":"<<(check_reset?(reset_ok?"true":"false"):"null")
    <<",\"warmup_runs\":"<<warmups<<",\"tracing\":"<<(trace_directory.empty()?"false":"true")
-   <<",\"do_sample\":"<<(sampling.do_sample?"true":"false")<<",\"seed\":"<<sampling.seed<<"}\n";
+   <<",\"do_sample\":"<<(sampling.do_sample?"true":"false")<<",\"seed\":"<<sampling.seed
+   <<",\"live_token_count\":"<<live<<"}\n";
   if(!f) throw std::runtime_error("output write failed");
   return 0;
 } catch(const std::exception& e) { std::cerr<<"lfm3: "<<e.what()<<"\n"; return 1; }

@@ -36,7 +36,16 @@ struct Session {
 struct GenerationCancelled : std::exception {
   const char* what() const noexcept override {return "generation cancelled at a token boundary";}
 };
-lfm::TextSamplingOptions sampling_options(const lfm::Json& request,int vocab) {
+// Ids of `ids` that token choice can see (those below the tokenizer's count); the full list stays in use
+// for input validation, so a modality id beyond the count is still rejected as input.
+std::vector<int> below(const std::vector<int>& ids,int live) {
+  std::vector<int> kept;
+  for(int id:ids) if(id<live) kept.push_back(id);
+  return kept;
+}
+// top_k is validated against the output layer (unchanged contract), then k above the tokenizer's
+// count, which meant "every candidate", becomes every token the tokenizer defines.
+lfm::TextSamplingOptions sampling_options(const lfm::Json& request,int vocab,int live) {
   lfm::TextSamplingOptions o;
   if(request.has("do_sample")) o.do_sample=request.at("do_sample").boolean();
   if(request.has("temperature")) o.temperature=request.at("temperature").number();
@@ -46,7 +55,9 @@ lfm::TextSamplingOptions sampling_options(const lfm::Json& request,int vocab) {
   if(request.has("repetition_penalty")) o.repetition_penalty=request.at("repetition_penalty").number();
   if(request.has("seed")) o.seed=request.at("seed").integer();
   if(o.top_k>vocab) throw std::runtime_error("top_k exceeds vocabulary size");
-  lfm::TextSampler validate(o);return o;
+  lfm::TextSampler validate(o);
+  if(o.top_k>live) o.top_k=live;
+  return o;
 }
 void schema(const lfm::Json& request,const std::string& op) {
   const std::set<std::string> common={"op","session_id","rpc_id"};
@@ -79,6 +90,7 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
                     std::shared_ptr<lfm::Safetensors>& weights,
                     std::map<std::string,Session>& sessions,lfm::text::SessionLedger& ledger,
                     lfm::text::CancellationReader& cancellation) {
+  const auto choice_suppressed=below(suppressed,live);
   // Outer schema is intentionally narrower than the single-operation common set.
   for(const auto& [key,value]:std::get<lfm::Json::Object>(request.value))
     if(key!="op" && key!="rpc_id" && key!="lanes") throw std::runtime_error("unsupported batch field: "+key);
@@ -103,7 +115,7 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
     lane.trace=req.has("trace_sampling") && req.at("trace_sampling").boolean();
     if(lane.trace && (trace_root.empty() || lane.count>32))
       throw std::runtime_error("sampling trace needs startup audit root and at most32 output tokens");
-    lane.options=sampling_options(req,live);
+    lane.options=sampling_options(req,cfg.shape.vocabulary,live);
     lane.sampler=std::make_unique<lfm::TextSampler>(lane.options);
     if(ledger.inspect(lane.id).inflight) throw std::runtime_error("session already inflight");
   }
@@ -167,7 +179,7 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
           file.write(reinterpret_cast<const char*>(raw.data()),raw.size()*sizeof(bf16));
           if(!file) throw std::runtime_error("sampling trace write failed");
         }
-        const int token=lane.sampler->sample(session.last_scores.data(),size_t(live),lane.generated,suppressed);
+        const int token=lane.sampler->sample(session.last_scores.data(),size_t(live),lane.generated,choice_suppressed);
         lane.generated.push_back(token);
         if(std::find(stops.begin(),stops.end(),token)!=stops.end() || lane.generated.size()==size_t(lane.count)) {
           poll();if(lane.done) continue;
@@ -206,7 +218,8 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
     std::cout<<",\"reused_tokens\":"<<(lane.cancelled?0:lane.reused)<<",\"consumed_tokens\":"<<session.consumed.size()
              <<",\"do_sample\":"<<(lane.options.do_sample?"true":"false")<<",\"seed\":"<<lane.options.seed
              <<",\"cancelled\":"<<(lane.cancelled?"true":"false")<<",\"cache_valid\":"<<(lane.cancelled?"false":"true")
-             <<",\"gpu_batching\":"<<(lane.paired?"true":"false")<<",\"paired_decode_calls\":"<<lane.paired;
+             <<",\"gpu_batching\":"<<(lane.paired?"true":"false")<<",\"paired_decode_calls\":"<<lane.paired
+             <<",\"live_token_count\":"<<live;  // the token-choice bound this lane used (G6)
     if(lane.trace) std::cout<<",\"sampling_trace\":"<<quote(trace_key+"/lane"+std::to_string(i));
     if(lane.return_logits && !lane.cancelled) {
       std::cout<<",\"last_logits\":[";
@@ -251,9 +264,10 @@ int main(int argc,char** argv) try {
   for(int id:suppressed) if(id>=cfg.shape.vocabulary) throw std::runtime_error("invalid modality token");
   for(int id:stops) if(id>=cfg.shape.vocabulary) throw std::runtime_error("invalid stop token");
   // Token choice is limited to ids the tokenizer defines (verified contiguous 0..live-1): output rows
-  // at or above `live` decode to nothing. Explicit suppression ids in that range are already covered.
+  // at or above `live` decode to nothing. `suppressed` stays whole for input validation; token choice uses
+  // `choice_suppressed`, its ids below `live` (ids at or above are excluded by the bound itself).
   const int live=lfm::tokenizer_token_count(directory+"/tokenizer.json",cfg.shape.vocabulary);
-  suppressed.erase(std::remove_if(suppressed.begin(),suppressed.end(),[&](int id){return id>=live;}),suppressed.end());
+  const auto choice_suppressed=below(suppressed,live);
   for(int id:stops) if(id>=live) throw std::runtime_error("stop token outside the tokenizer vocabulary");
   std::shared_ptr<lfm::Safetensors> weights;
   std::map<std::string,Session> sessions;
@@ -337,7 +351,7 @@ int main(int argc,char** argv) try {
       const bool trace_sampling=request.has("trace_sampling") && request.at("trace_sampling").boolean();
       if(trace_sampling && (sampling_trace_root.empty() || count>32))
         throw std::runtime_error("sampling trace needs startup audit root and at most32 output tokens");
-      const auto options=sampling_options(request,live);
+      const auto options=sampling_options(request,cfg.shape.vocabulary,live);
       lfm::TextSampler sampler(options);
       auto lease=ledger.begin(id,lfm::text::SessionLedger::Tokens(input.begin(),input.end()),count);
       std::vector<int> generated;
@@ -378,7 +392,7 @@ int main(int argc,char** argv) try {
             trace_file.write(reinterpret_cast<const char*>(trace_scores.data()),trace_scores.size()*sizeof(bf16));
             if(!trace_file) throw std::runtime_error("sampling trace write failed");
           }
-          int token=sampler.sample(session.last_scores.data(),size_t(live),generated,suppressed);
+          int token=sampler.sample(session.last_scores.data(),size_t(live),generated,choice_suppressed);
           generated.push_back(token);
           if(std::find(stops.begin(),stops.end(),token)!=stops.end() || t==count-1) break;
           session.last_scores=runner.forward({token});session.consumed.push_back(token);
@@ -388,7 +402,8 @@ int main(int argc,char** argv) try {
                      lfm::text::SessionLedger::Tokens(session.consumed.begin(),session.consumed.end()));
         std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)<<",\"generated_ids\":";print_ids(std::cout,generated);
         std::cout<<",\"reused_tokens\":"<<reused<<",\"consumed_tokens\":"<<session.consumed.size()
-                  <<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed;
+                  <<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed
+                  <<",\"live_token_count\":"<<live;  // the token-choice bound this generation used (G6)
         if(trace_sampling) std::cout<<",\"sampling_trace\":"<<rpc_id;
         if(return_logits) {
           std::cout<<",\"last_logits\":[";
@@ -401,7 +416,8 @@ int main(int argc,char** argv) try {
         std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)
                  <<",\"cancelled\":true,\"cache_valid\":false,\"consumed_tokens\":0,\"reused_tokens\":0,\"generated_ids\":";
         print_ids(std::cout,generated);
-        std::cout<<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed<<"}\n"<<std::flush;
+        std::cout<<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed
+                 <<",\"live_token_count\":"<<live<<"}\n"<<std::flush;  // G6 bound, on cancelled results too
       } catch(...) {
         session.runner.reset();session.consumed.clear();session.last_scores.clear();throw;
       }

@@ -182,7 +182,12 @@ class Json {
       while (p < s.size() && s[p] >= '0' && s[p] <= '9') ++p;
       if (p == digits) throw std::runtime_error("invalid JSON exponent");
     }
-    const double n = std::stod(s.substr(begin, p - begin));
+    double n = 0;
+    try {
+      n = std::stod(s.substr(begin, p - begin));
+    } catch (const std::out_of_range&) {  // overflow, or underflow to a subnormal/zero (ERANGE)
+      throw std::runtime_error("JSON number outside the double range");
+    }
     if (!std::isfinite(n)) throw std::runtime_error("nonfinite JSON number");
     return Json{n};
   }
@@ -214,17 +219,27 @@ inline int tokenizer_token_count(const std::string& path, int model_vocabulary) 
   const std::string text((std::istreambuf_iterator<char>(stream)), {});
   const Json j = Json::parse(text);
   if (model_vocabulary < 1) throw std::runtime_error("invalid model vocabulary");
+  // seen: 0 = unused, 1 = base vocabulary, 2 = added token only.
   std::vector<unsigned char> seen(static_cast<size_t>(model_vocabulary), 0);
   int max_id = -1;
-  const auto add = [&](int id) {
+  const auto check = [&](int id) {
     if (id < 0 || id >= model_vocabulary) throw std::runtime_error("tokenizer id outside the model vocabulary");
-    seen[static_cast<size_t>(id)] = 1;  // an added token may reuse a base id; it is the same id
     max_id = std::max(max_id, id);
+    return static_cast<size_t>(id);
   };
   const auto* vocab = std::get_if<Json::Object>(&j.at("model").at("vocab").value);
   if (!vocab || vocab->empty()) throw std::runtime_error("tokenizer model.vocab must be a nonempty object");
-  for (const auto& entry : *vocab) add(entry.second.integer());
-  for (const auto& token : j.at("added_tokens").array()) add(token.at("id").integer());
+  for (const auto& entry : *vocab) {
+    const size_t id = check(entry.second.integer());
+    // Two base tokens on one id is a corrupt vocabulary (decoding would be ambiguous).
+    if (seen[id]) throw std::runtime_error("tokenizer base vocabulary repeats an id");
+    seen[id] = 1;
+  }
+  // An added token may reuse a base id (it is the same id).
+  for (const auto& token : j.at("added_tokens").array()) {
+    const size_t id = check(token.at("id").integer());
+    if (!seen[id]) seen[id] = 2;
+  }
   const int count = max_id + 1;
   for (int id = 0; id < count; ++id)
     if (!seen[static_cast<size_t>(id)]) throw std::runtime_error("tokenizer ids are not contiguous");

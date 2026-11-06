@@ -14,9 +14,18 @@ import sys
 import threading
 import time
 
-from lfm3_tokenizer_info import tokenizer_token_count
+from lfm3_oracle_live import oracle_live_count
 from lfm3_worker_client import WorkerClient
 from lfm3_owned_process import owned_main
+
+
+def require_live_agreement(results,live):
+    """Runtime evidence for G6: every lane reports the token-choice bound it used, which must equal the
+    oracle's count (both computed by lfm::tokenizer_token_count), and no lane emitted an id at or above it."""
+    if not results:raise AssertionError('no lane results to check the live token count against')
+    for lane_result in results:
+        if lane_result.get('live_token_count')!=live:raise AssertionError('worker lane and oracle disagree on the live token count')
+        if any(t>=live for t in lane_result.get('generated_ids',[])):raise AssertionError('worker lane emitted an id the tokenizer does not define')
 
 
 def require_group(result, lanes, expected, require_pairs=True):
@@ -142,11 +151,14 @@ def main():
         sampled=stochastic_group['results'][1]
         result_path.write_text(json.dumps(sampled,indent=2)+'\n')
         with (args.output/'sampled-lane.oracle.log').open('w') as stream:
-            # the worker chooses among the ids the tokenizer defines; the oracle replays the same rule
-            live=tokenizer_token_count(args.checkpoint,model['text_config']['vocab_size'])
-            report['live_token_count']=live
-            subprocess.run([str(args.oracle),str(request_path),str(result_path),str(trace_root/str(sampled['sampling_trace'])),'128000',str(live)],
+            # the worker chooses among the ids the tokenizer defines; the oracle replays the same rule, counting
+            # with the engine's own C++ function from the checkpoint's tokenizer.json
+            subprocess.run([str(args.oracle),str(request_path),str(result_path),str(trace_root/str(sampled['sampling_trace'])),
+                            str(model['text_config']['vocab_size']),str(args.checkpoint/'tokenizer.json')],
                            check=True,env=env,stdout=stream,stderr=subprocess.STDOUT,timeout=30)
+        live=oracle_live_count(args.output/'sampled-lane.oracle.log');report['live_token_count']=live
+        require_live_agreement(stochastic_group['results'],live)
+        if any(t>=live for t in sampled['generated_ids']):raise AssertionError('worker emitted an id the tokenizer does not define')
         report['independent_non_greedy_logit_replay']=True;save()
         lanes = [dict(session_id="A", input_ids=prompt, max_new_tokens=32, trace_sampling=True),
                  dict(session_id="B", input_ids=prompt+[8], max_new_tokens=6, trace_sampling=True)]

@@ -59,3 +59,18 @@ def test_cancelled_group_preserves_nonempty_committed_history(damage):
     if damage:
         with pytest.raises(AssertionError):gate.validate_cancelled_history(before,after)
     else:gate.validate_cancelled_history(before,after)
+
+
+# G6 runtime evidence: the worker's reported bound must equal the oracle's count, on every lane.
+@pytest.mark.parametrize("results,ok",[
+    ([dict(live_token_count=125033,generated_ids=[1]),dict(live_token_count=125033,generated_ids=[125032])],True),
+    ([dict(live_token_count=125033,generated_ids=[1]),dict(live_token_count=128000,generated_ids=[2])],False),
+    ([dict(generated_ids=[1]),dict(live_token_count=125033,generated_ids=[2])],False),
+    ([dict(live_token_count=125033,generated_ids=[125033])],False),
+    ([],False),
+])
+def test_live_agreement_is_required_on_every_lane(results,ok):
+    if ok:
+        gate.require_live_agreement(results,125033)
+    else:
+        with pytest.raises(AssertionError):gate.require_live_agreement(results,125033)

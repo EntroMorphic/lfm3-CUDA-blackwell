@@ -8,6 +8,9 @@ import shutil
 import subprocess
 import sys
 
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from lfm3_oracle_live import oracle_live_count
+
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -24,11 +27,16 @@ def main():
     env=dict(os.environ)
     env["LD_LIBRARY_PATH"]=str(Path(sys.prefix)/"lib/python3.12/site-packages/nvidia/cu13/lib")+":"+env.get("LD_LIBRARY_PATH","")
     digest=hashlib.sha256(args.binary.read_bytes()).hexdigest()
+    model=json.loads((args.checkpoint/"config.json").read_text())
+    vocab=model.get("text_config",model)["vocab_size"]
+    tokenizer=args.checkpoint/"tokenizer.json"  # G6: the oracle counts the tokenizer's ids with the engine's code
+    engine_live=set()
+    traced=("sample42","sample_full")
     results={}
     def run(name,changes):
         request=dict(base,**changes)
-        if name=="sample42":
-            request.update(trace_logits_only=True,trace_directory=str(args.output/"sample42-trace"))
+        if name in traced:
+            request.update(trace_logits_only=True,trace_directory=str(args.output/(name+"-trace")))
         path=args.output/(name+".request.json")
         path.write_text(json.dumps(request,indent=2)+"\n")
         destination=args.output/(name+".json")
@@ -39,15 +47,21 @@ def main():
         if result.get("reset_exact_logits_ok") is not True or not result.get("generated_ids"):
             raise ValueError(name+": missing reset/generation evidence")
         generated=result["generated_ids"]
+        live=result.get("live_token_count")
+        if type(live) is not int or not 0<live<=vocab:raise ValueError(name+": engine did not report its live token count")
+        engine_live.add(live)
+        if any(t>=live for t in generated):raise ValueError(name+": emitted an id the tokenizer does not define")
         if set(generated)&set(request["suppress_tokens"]):raise ValueError("suppressed token sampled")
         if any(x in request["stop_tokens"] for x in generated[:-1]):raise ValueError("continued after stop")
         if len(generated)<request["max_new_tokens"] and generated[-1] not in request["stop_tokens"]:
             raise ValueError("unexplained termination")
         results[name]=result
-        if name=="sample42":
-            with (args.output/"sampling-oracle.log").open("w") as stream:
-                subprocess.run([str(args.oracle),str(path),str(destination),request["trace_directory"],"128000"],
+        if name in traced:
+            log=args.output/(name+"-oracle.log")
+            with log.open("w") as stream:
+                subprocess.run([str(args.oracle),str(path),str(destination),request["trace_directory"],str(vocab),str(tokenizer)],
                                env=env,check=True,stdout=stream,stderr=subprocess.STDOUT,timeout=30)
+            if oracle_live_count(log)!=live:raise ValueError(name+": oracle and engine disagree on the live token count")
         return generated
     greedy=run("greedy",{})
     if run("topk1",dict(do_sample=True,top_k=1,seed=42))!=greedy:
@@ -57,6 +71,10 @@ def main():
     if run("repeat42",policy)!=sampled:raise ValueError("seed reproducibility failed")
     if run("warm42",dict(policy,warmup_runs=1))!=sampled:raise ValueError("warmup consumed request RNG")
     run("sample43",dict(policy,seed=43)) # Difference is informative, not a flaky requirement.
+    # Unrestricted policy (no top-k/top-p/min-p) so no cut hides dead ids. Replay agreement alone cannot
+    # prove the bound (dead-id mass is ~6e-6), so the evidence is the engine's reported live_token_count,
+    # which must equal the oracle's count from the same C++ function, plus no emitted id >= that count.
+    run("sample_full",dict(do_sample=True,temperature=1.5,top_k=0,top_p=1.0,min_p=0.0,repetition_penalty=1.0,seed=7))
     stub=args.output/"config-only";stub.mkdir();shutil.copyfile(args.checkpoint/"config.json",stub/"config.json")
     invalid=[dict(temperature=0),dict(temperature=True),dict(top_k=-1),dict(top_k=128001),dict(top_k=1.5),
              dict(top_p=0),dict(top_p=1.1),dict(min_p=-0.1),dict(min_p=1.1),dict(repetition_penalty=0),
@@ -69,8 +87,10 @@ def main():
         (args.output/f"invalid-{i}.log").write_text(result.stdout+result.stderr)
         if result.returncode!=1 or destination.exists() or "cannot open" in result.stderr:
             raise ValueError(f"sampling metadata not rejected before checkpoint loading: {i}")
+    if len(engine_live)!=1:raise ValueError(f"engine reported inconsistent live token counts: {sorted(engine_live)}")
+    live=engine_live.pop()
     if hashlib.sha256(args.binary.read_bytes()).hexdigest()!=digest:raise ValueError("binary changed")
-    summary=dict(status="passed",binary_sha256=digest,seed_reproducible=True,warmup_rng_isolated=True,
+    summary=dict(status="passed",binary_sha256=digest,live_token_count=live,seed_reproducible=True,warmup_rng_isolated=True,
                  independent_logit_replay=True,non_greedy_fixture_verified=True,
                  oracle_sha256=hashlib.sha256(args.oracle.read_bytes()).hexdigest(),
                  topk1_equals_greedy=True,exact_reset_all_runs=True,preupload_sampling_rejections=len(invalid),

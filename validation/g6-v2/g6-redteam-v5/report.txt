@@ -1,0 +1,9 @@
+PASS fail-closed[gap]: rc=1 lfm3: tokenizer ids are not contiguous
+PASS fail-closed[outofrange]: rc=1 lfm3: tokenizer id outside the model vocabulary
+PASS sample[seed=1]: tokens=128 max_id=125022 dead=0 live=125033
+PASS sample[seed=2]: tokens=128 max_id=124914 dead=0 live=125033
+PASS sample[seed=3]: tokens=128 max_id=124451 dead=0 live=125033
+PASS scorer deterministic: L=256 rerun byte-identical
+PASS scorer refuses 4096 windows as 32768: FAIL: window 0 is not [delimiter] + content: wrong LENGTH or windows file
+PASS top_k=127000: rc=0 (expected accepted)
+PASS top_k=128001: rc=1 (expected rejected)

@@ -12,7 +12,9 @@ Run in the reference container (lfm3-omni-dev) with Thor's ptxas for the Triton 
   python /workspace/liquid-CUDA/tools/ppl_reference.py --text /workspace/data/wikitext-2-raw-v1/test.txt \\
       --output /workspace/liquid-CUDA/build/ppl-v1 --lengths 256 257 4096 32768
 
-Writes windows-L.i32 (int32, W x L ids), nll-CONFIG-L.f32 (float32, W x (L-1)) and summary.json.
+Writes windows-L.i32 (int32, W x L ids), nll-hf-CONFIG-L.f32 (float32, W x (L-1)) with a
+nll-hf-CONFIG-L.meta.json binding it to the windows it scored, and summary.json. ppl_compare.py
+refuses any NLL file whose metadata does not match.
 """
 import argparse
 import hashlib
@@ -32,9 +34,15 @@ def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def write_meta(path, **fields):
+    path.write_text(json.dumps(fields, indent=2) + "\n")
+
+
 def build_windows(tokens, bos, length, max_windows):
     step = length - 1
     count = len(tokens) // step
+    if count < 1:
+        raise ValueError(f"corpus has {len(tokens)} tokens, fewer than one window of length {length}")
     if max_windows:
         count = min(count, max_windows)
     rows = [[bos] + tokens[i * step:(i + 1) * step] for i in range(count)]
@@ -77,6 +85,8 @@ def main():
     text = a.text.read_text(encoding="utf-8")
     tokens = tok(text, add_special_tokens=False)["input_ids"]
     bos = tok.convert_tokens_to_ids("<|startoftext|>")
+    if bos in tokens:
+        raise ValueError("corpus contains the BOS id; windows would not be [BOS] + content")
     summary = {"corpus": str(a.text), "corpus_sha256": sha256(a.text), "corpus_tokens": len(tokens), "bos_id": bos,
                "window_rule": "[BOS] + next L-1 corpus tokens, non-overlapping; score positions 1..L-1",
                "nll_definition": "-log_softmax(lm_head(final hidden).float(), -1)[next token], all 128000 logits",
@@ -93,6 +103,9 @@ def main():
     for config in a.configs:
         model = AutoModelForMultimodalLM.from_pretrained(a.model, dtype=torch.bfloat16, device_map="cuda",
                                                          trust_remote_code=True, attn_implementation=config).eval()
+        actual = model.model.language_model.config._attn_implementation
+        if actual != config:
+            raise RuntimeError(f"requested attn_implementation={config} but the language model runs {actual}")
         for length in a.lengths:
             if config == "eager" and length > a.eager_max_length:
                 summary["results"].append({"engine": f"hf-{config}", "length": length, "skipped": "length above eager limit"})
@@ -100,8 +113,14 @@ def main():
             t0 = time.perf_counter()
             nll = score(model, windows[length])
             seconds = time.perf_counter() - t0
+            if not np.isfinite(nll).all():
+                raise RuntimeError(f"non-finite NLL for hf-{config} at length {length}")
             path = a.output / f"nll-hf-{config}-{length}.f32"
             nll.tofile(path)
+            write_meta(a.output / f"nll-hf-{config}-{length}.meta.json", engine=f"hf-{config}", length=length,
+                       windows_file=f"windows-{length}.i32", windows_sha256=summary["windows"][str(length)]["sha256"],
+                       nll_sha256=sha256(path), attn_implementation=actual,
+                       versions=summary["versions"])
             mean = float(nll.astype(np.float64).mean())
             summary["results"].append({"engine": f"hf-{config}", "length": length, "windows": int(nll.shape[0]),
                                        "scored_tokens": int(nll.size), "mean_nll": mean, "perplexity": math.exp(mean),

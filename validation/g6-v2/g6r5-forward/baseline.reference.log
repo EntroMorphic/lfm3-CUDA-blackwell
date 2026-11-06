@@ -1,0 +1,25 @@
+Loading weights:   0%|          | 0/665 [00:00<?, ?it/s]Loading weights:  28%|██▊       | 186/665 [00:00<00:00, 1850.95it/s]Loading weights:  56%|█████▌    | 372/665 [00:00<00:00, 657.10it/s] Loading weights:  71%|███████▏  | 475/665 [00:00<00:00, 565.34it/s]Loading weights:  83%|████████▎ | 551/665 [00:00<00:00, 571.35it/s]Loading weights: 100%|██████████| 665/665 [00:00<00:00, 704.24it/s]
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Loading weights:   0%|          | 0/203 [00:00<?, ?it/s]Loading weights: 100%|██████████| 203/203 [00:00<00:00, 7148.08it/s]
+{
+  "attention": "eager",
+  "generated_ids": [
+    12447,
+    20,
+    43709,
+    91506,
+    355,
+    8586,
+    3691,
+    267,
+    7641,
+    5491,
+    302,
+    1994,
+    40657,
+    22,
+    810,
+    10834
+  ],
+  "text": "Yes, reflective recursion is widely considered a core feature of human cognition. It refers"
+}
