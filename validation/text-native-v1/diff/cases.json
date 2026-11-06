@@ -1,0 +1,14 @@
+{
+ "encode": {
+  "cases": 1167834,
+  "sha256": "2b87925a667eb232d07e92a5c3c667ad8503d2192bcfe4e45144086f929375d0"
+ },
+ "decode": {
+  "cases": 16200,
+  "sha256": "6d9bf10bf45f401ab2f3950396477e4cf84b5152df8016df3cf7b1d9ee6f0825"
+ },
+ "chat": {
+  "cases": 12006,
+  "sha256": "571be5fb1ef3a28139ed7b01f7ec7fe72fde02717aa2700ff7ccc030f452cb72"
+ }
+}

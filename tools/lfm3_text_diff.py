@@ -243,8 +243,9 @@ def cmd_reference(a):
     chat_ref = []
     for c in read_jsonl(d / "chat.jsonl"):
         try:
-            prompt = fe.render_messages(c["messages"])
+            # encode_messages first: its capacity checks precede message validation, as in lfm3-text-tool
             ids = fe.encode_messages(c["messages"], c["capacity"], c["max_new_tokens"])
+            prompt = fe.render_messages(c["messages"])
             r = {"prompt": prompt, "ids": ids}
         except Exception as e:  # noqa: BLE001
             r = {"error": f"{type(e).__name__}: {e}"}

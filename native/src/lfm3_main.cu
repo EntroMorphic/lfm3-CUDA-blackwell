@@ -6,6 +6,7 @@
 #include <lfm/text_attention_tiles.hpp>
 #include <lfm/text_sampling.hpp>
 #include <lfm/handle_setup.hpp>
+#include <lfm/lfm3_text_request.hpp>
 #include <cublas_v2.h>
 #include <algorithm>
 #include <chrono>
@@ -432,6 +433,12 @@ int main(int argc,char** argv) try {
   auto cfg=lfm::ModelConfig::load(std::string(argv[2])+"/config.json",capacity);
   if(!cfg.is_lfm3() || !cfg.sandwich_norm || !cfg.tied || cfg.shape.conv_width!=7 || cfg.shape.head_dim!=128 || cfg.shape.hidden!=2048)
     throw std::runtime_error("runner requires tied, sandwich-normalized width-7 LFM3 with hidden=2048, head_dim=128");
+  // "messages" (native chat template + tokenizer) replaces input_ids; see lfm/lfm3_text_request.hpp.
+  const bool chat=request.has("messages");
+  const bool want_text=lfm::lfm3_text::wants_text(request);
+  if(chat && (request.has("input_ids") || request.has("teacher_ids")))
+    throw std::runtime_error("messages cannot be combined with input_ids or teacher_ids");
+  if(chat && !request.has("max_new_tokens")) throw std::runtime_error("messages require max_new_tokens");
   auto input=ids(request,"input_ids",cfg.shape.vocabulary);
   auto forced=ids(request,"teacher_ids",cfg.shape.vocabulary);
   auto suppress=ids(request,"suppress_tokens",cfg.shape.vocabulary);
@@ -453,12 +460,15 @@ int main(int argc,char** argv) try {
   if(warmups>10) throw std::runtime_error("at most 10 warmup runs");
   const bool check_reset=request.has("check_reset") && request.at("check_reset").boolean();
   const bool trace_logits_only=request.has("trace_logits_only") && request.at("trace_logits_only").boolean();
-  if(input.empty() || input.size()>size_t(capacity) || count>capacity || forced.size()>size_t(capacity) ||
-     input.size()+std::max(size_t(count?count-1:0),forced.size())>size_t(capacity) || (count && !forced.empty()))
-    throw std::runtime_error("invalid or overflowing prefill/decode request");
-  // New serving contract counts the final emitted prediction too. Legacy
-  // <=4096 fixture accounting remains unchanged unless explicitly opted in.
-  if(long_context) lfm::text::require_budget(input.size(),size_t(count),capacity);
+  auto check_geometry=[&] {
+    if(input.empty() || input.size()>size_t(capacity) || count>capacity || forced.size()>size_t(capacity) ||
+       input.size()+std::max(size_t(count?count-1:0),forced.size())>size_t(capacity) || (count && !forced.empty()))
+      throw std::runtime_error("invalid or overflowing prefill/decode request");
+    // New serving contract counts the final emitted prediction too. Legacy
+    // <=4096 fixture accounting remains unchanged unless explicitly opted in.
+    if(long_context) lfm::text::require_budget(input.size(),size_t(count),capacity);
+  };
+  if(!chat) check_geometry();  // a messages request has no ids until the tokenizer runs (below)
   // Sampling and the other scalar request checks complete before anything is read from the
   // checkpoint beyond config.json (check_lfm3_sampling.py enforces this ordering). The two checks that
   // need the tokenizer's count (stop ids, whole-vocabulary suppression) necessarily run after it.
@@ -477,6 +487,12 @@ int main(int argc,char** argv) try {
   // suppression ids in that range are already covered; a stop id there could never be produced.
   const int live=lfm::tokenizer_token_count(std::string(argv[2])+"/tokenizer.json",cfg.shape.vocabulary);
   for(int id:stop) if(id>=live) throw std::runtime_error("stop token outside the tokenizer vocabulary");
+  std::unique_ptr<lfm::lfm3_text::Tokenizer> text_frontend;
+  if(want_text) text_frontend=lfm::lfm3_text::load_checked(std::string(argv[2])+"/tokenizer.json",live);
+  if(chat) {
+    input=lfm::lfm3_text::message_input_ids(*text_frontend,request,capacity,count,suppress);
+    check_geometry();
+  }
   suppress.erase(std::remove_if(suppress.begin(),suppress.end(),[&](int id){return id>=live;}),suppress.end());
   std::vector<unsigned char> blocked(live,0);
   for(int id:suppress) blocked[id]=1;
@@ -564,7 +580,10 @@ int main(int argc,char** argv) try {
    <<",\"reset_exact_logits_ok\":"<<(check_reset?(reset_ok?"true":"false"):"null")
    <<",\"warmup_runs\":"<<warmups<<",\"tracing\":"<<(trace_directory.empty()?"false":"true")
    <<",\"do_sample\":"<<(sampling.do_sample?"true":"false")<<",\"seed\":"<<sampling.seed
-   <<",\"live_token_count\":"<<live<<"}\n";
+   <<",\"live_token_count\":"<<live;
+  if(want_text) f<<",\"text\":"<<lfm::lfm3_text::json_string(lfm::lfm3_text::generated_text(*text_frontend,generated,stop))
+                 <<",\"text_frontend\":\"native\"";
+  f<<"}\n";
   if(!f) throw std::runtime_error("output write failed");
   return 0;
 } catch(const std::exception& e) { std::cerr<<"lfm3: "<<e.what()<<"\n"; return 1; }

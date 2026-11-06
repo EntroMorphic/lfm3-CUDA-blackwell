@@ -1,0 +1,100 @@
+{
+ "pass_": true,
+ "failures": [],
+ "cases": [
+  {
+   "case": "parity0",
+   "prompt_tokens": 12,
+   "generated": 10,
+   "text": "Hello! How can I help you today?"
+  },
+  {
+   "case": "parity1",
+   "prompt_tokens": 11,
+   "generated": 48,
+   "text": "It looks like your message was cut off! Could you please provide more details or"
+  },
+  {
+   "case": "parity2",
+   "prompt_tokens": 39,
+   "generated": 7,
+   "text": "☕ 中文 é"
+  },
+  {
+   "case": "parity3",
+   "prompt_tokens": 26,
+   "generated": 2,
+   "text": "answer"
+  },
+  {
+   "case": "parity4",
+   "prompt_tokens": 20,
+   "generated": 10,
+   "text": "hi! how can i help you today?"
+  },
+  {
+   "case": "parity5",
+   "prompt_tokens": 19,
+   "generated": 10,
+   "text": "**Résultat :** second  \n**Second :**"
+  },
+  {
+   "case": "unicode",
+   "prompt_tokens": 56,
+   "generated": 21,
+   "text": "それは単純すぎる。👩🏽‍💻 é \u001c\n1234567"
+  },
+  {
+   "case": "multiturn-think",
+   "prompt_tokens": 32,
+   "generated": 4,
+   "text": "Eleven."
+  },
+  {
+   "case": "tools",
+   "prompt_tokens": 36,
+   "generated": 13,
+   "text": "The weather is sunny with a temperature of 22°C."
+  },
+  {
+   "case": "sampled",
+   "prompt_tokens": 17,
+   "generated": 23,
+   "text": "Rivers are slow-moving waterways that flow continuously, carving paths through t"
+  },
+  {
+   "case": "long8k",
+   "prompt_tokens": 4966,
+   "generated": 48,
+   "text": "Robert Boulter is an English actor known for guest roles on *The Bill* (2000, 20"
+  }
+ ],
+ "worker": {
+  "turn1_reused_tokens": 21,
+  "batch_gpu_batching": true
+ },
+ "seconds": {
+  "parity0.ids": 1.91,
+  "parity0.messages": 2.2,
+  "parity1.ids": 2.62,
+  "parity1.messages": 3.23,
+  "parity2.ids": 1.54,
+  "parity2.messages": 2.21,
+  "parity3.ids": 1.39,
+  "parity3.messages": 2.01,
+  "parity4.ids": 1.64,
+  "parity4.messages": 2.26,
+  "parity5.ids": 1.65,
+  "parity5.messages": 2.27,
+  "unicode.ids": 1.94,
+  "unicode.messages": 2.57,
+  "multiturn-think.ids": 1.51,
+  "multiturn-think.messages": 2.09,
+  "tools.ids": 1.67,
+  "tools.messages": 2.36,
+  "sampled.ids": 2.98,
+  "sampled.messages": 3.67,
+  "long8k.ids": 3.14,
+  "long8k.messages": 3.73
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "sources": {
+  "native/include/lfm/lfm3_text.hpp": "e73b9802362957f7b08deef1f7d7a5bf7b4fadf8db8e5f6c574da468e458d917",
+  "native/include/lfm/lfm3_text_request.hpp": "71328a00a0ccbff3b6a3d699636008a511331484c0c8073b5c959de8dd5dc179",
+  "native/include/lfm/lfm3_text_classes.hpp": "081ef0dcc065eb62e763636f5423c7c7b4e78b831cfac2539d4bb32fdf9c0783",
+  "native/include/lfm/model_config.hpp": "7148f817a0e1b56a033d48126b3cfcde315dbd94a7c378ccd7efd21a762e1e8b",
+  "native/src/lfm3_main.cu": "2d608994b3b13fad9f62aaf91f7f07162974becdf11eacb2b5eb01e957920132",
+  "native/src/lfm3_worker.cu": "9ac00f84ac114c610bb92d93a1cf768ef78c4718af873fd5fff3d5f777e6540f",
+  "native/tests/lfm3_text_tool.cpp": "86c9dce50cd1700467a7504c903d17a2780c598743b1bd67821fdf86a9ecb253",
+  "tools/lfm3_text_diff.py": "94db39e25d5612a7435308c343991097af4ce1aa5332a8ef00946ac74e10525e",
+  "tools/check_lfm3_native_text.py": "cd542ed82d142f0678956c25ff35ac510cb1e125e2e1d8c57b02f19a8341123d",
+  "tools/lfm3_text_frontend.py": "2f4ed0f779fb7ac5264a8305d3decd94cf78f445f493244f06daada21f2cdf1e",
+  "tools/lfm3_chat.py": "fb7d37efe64dcb917c86da4170cd6e6dee8174178d1a9ac69d1f83b6c8d8ca9f"
+ },
+ "binaries_aarch64": {
+  "liquid-lfm3": "3ff3371f39c4fab49e9c0ff88ea75eac0bcbfbb0c7c7e1d652adff6e2aa31bc8",
+  "liquid-lfm3-worker": "7903b26c9e8fdfaaf3b5a8d99de1149b312a78ca316d8026e830fa5d1734261b",
+  "lfm3-text-tool": "3148e4950ff6c1faa517b0b36c28e0204a4d0eaf49fa1955d4c6c62f24667b6a"
+ },
+ "build": "build/cmake-text-v2 (pinned compiler image sha256:3c2b5b8e\u2026, 0 warnings)",
+ "tokenizer_json_sha256": "41927bd314d17d7d7fadb44e10cd0919f7b71528d7741596d8cbd15c6945ec44",
+ "chat_template_sha256": "ea74cc1d14319ed436dc0f37632893004d436913113e7605267f2b01694d65e4"
+}

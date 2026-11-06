@@ -1,0 +1,344 @@
+{
+ "single": {
+  "parity0.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 1.91
+  },
+  "parity0.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.2
+  },
+  "parity1.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.62
+  },
+  "parity1.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 3.23
+  },
+  "parity2.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 1.54
+  },
+  "parity2.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.21
+  },
+  "parity3.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 1.39
+  },
+  "parity3.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.01
+  },
+  "parity4.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 1.64
+  },
+  "parity4.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.26
+  },
+  "parity5.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 1.65
+  },
+  "parity5.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.27
+  },
+  "unicode.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 1.94
+  },
+  "unicode.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.57
+  },
+  "multiturn-think.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 1.51
+  },
+  "multiturn-think.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.09
+  },
+  "tools.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 1.67
+  },
+  "tools.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.36
+  },
+  "sampled.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 2.98
+  },
+  "sampled.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 3.67
+  },
+  "long8k.ids": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 3.14
+  },
+  "long8k.messages": {
+   "rc": 0,
+   "stderr": "",
+   "seconds": 3.73
+  },
+  "bad.messages": {
+   "rc": 1,
+   "stderr": "lfm3: lfm3 chat: content: reserved chat/multimodal placeholder is not text input\n",
+   "output_exists": false
+  }
+ },
+ "worker": {
+  "turn0.messages": {
+   "rpc_id": 3,
+   "ok": true,
+   "session_id": "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+   "generated_ids": [
+    5210,
+    20,
+    1046,
+    20,
+    1703,
+    22,
+    124900
+   ],
+   "reused_tokens": 0,
+   "consumed_tokens": 21,
+   "do_sample": false,
+   "seed": 0,
+   "live_token_count": 125033,
+   "text": "One, two, three."
+  },
+  "turn0.ids": {
+   "rpc_id": 4,
+   "ok": true,
+   "session_id": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+   "generated_ids": [
+    5210,
+    20,
+    1046,
+    20,
+    1703,
+    22,
+    124900
+   ],
+   "reused_tokens": 0,
+   "consumed_tokens": 21,
+   "do_sample": false,
+   "seed": 0,
+   "live_token_count": 125033
+  },
+  "turn1.messages": {
+   "rpc_id": 5,
+   "ok": true,
+   "session_id": "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+   "generated_ids": [
+    25062,
+    20,
+    1046,
+    20,
+    734,
+    22,
+    124900
+   ],
+   "reused_tokens": 21,
+   "consumed_tokens": 42,
+   "do_sample": false,
+   "seed": 0,
+   "live_token_count": 125033,
+   "text": "Three, two, one."
+  },
+  "turn1.ids": {
+   "rpc_id": 6,
+   "ok": true,
+   "session_id": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+   "generated_ids": [
+    25062,
+    20,
+    1046,
+    20,
+    734,
+    22,
+    124900
+   ],
+   "reused_tokens": 21,
+   "consumed_tokens": 42,
+   "do_sample": false,
+   "seed": 0,
+   "live_token_count": 125033
+  },
+  "return_text": {
+   "rpc_id": 9,
+   "ok": true,
+   "session_id": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+   "generated_ids": [
+    5210,
+    20,
+    1046,
+    20,
+    1703,
+    22,
+    124900
+   ],
+   "reused_tokens": 0,
+   "consumed_tokens": 21,
+   "do_sample": false,
+   "seed": 0,
+   "live_token_count": 125033,
+   "text": "One, two, three."
+  },
+  "batch": {
+   "rpc_id": 12,
+   "ok": true,
+   "gpu_batching": true,
+   "paired_decode_calls": 6,
+   "results": [
+    {
+     "rpc_id": 12,
+     "ok": true,
+     "session_id": "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "generated_ids": [
+      25062,
+      20,
+      1046,
+      20,
+      734,
+      22,
+      124900
+     ],
+     "reused_tokens": 0,
+     "consumed_tokens": 42,
+     "do_sample": false,
+     "seed": 0,
+     "cancelled": false,
+     "cache_valid": true,
+     "gpu_batching": true,
+     "paired_decode_calls": 6,
+     "live_token_count": 125033,
+     "text": "Three, two, one."
+    },
+    {
+     "rpc_id": 12,
+     "ok": true,
+     "session_id": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+     "generated_ids": [
+      25062,
+      20,
+      1046,
+      20,
+      734,
+      22,
+      124900
+     ],
+     "reused_tokens": 0,
+     "consumed_tokens": 42,
+     "do_sample": false,
+     "seed": 0,
+     "cancelled": false,
+     "cache_valid": true,
+     "gpu_batching": true,
+     "paired_decode_calls": 6,
+     "live_token_count": 125033
+    }
+   ]
+  },
+  "reject.reserved": {
+   "rpc_id": 13,
+   "ok": false,
+   "error": "lfm3 chat: content: reserved chat/multimodal placeholder is not text input"
+  },
+  "reject.both": {
+   "rpc_id": 14,
+   "ok": false,
+   "error": "messages cannot be combined with input_ids"
+  },
+  "reject.capacity": {
+   "rpc_id": 15,
+   "ok": false,
+   "error": "lfm3 chat: prompt (5012) + output (4) exceeds capacity (4096)"
+  },
+  "rejection.reserved": {
+   "rpc_id": 16,
+   "ok": false,
+   "error": "lfm3 chat: content: reserved chat/multimodal placeholder is not text input"
+  },
+  "rejection.two-reasoning": {
+   "rpc_id": 17,
+   "ok": false,
+   "error": "lfm3 chat: use only one assistant reasoning field"
+  },
+  "rejection.late-system": {
+   "rpc_id": 18,
+   "ok": false,
+   "error": "lfm3 chat: system is supported only as the first message"
+  },
+  "rejection.bad-part": {
+   "rpc_id": 19,
+   "ok": false,
+   "error": "lfm3 chat: content parts must be text-only {type: text, text: string}"
+  },
+  "rejection.count-zero-and-bad-messages": {
+   "rpc_id": 20,
+   "ok": false,
+   "error": "lfm3 chat: max_new_tokens must be an integer in 1..32768"
+  },
+  "rejection.count-fills-capacity": {
+   "rpc_id": 21,
+   "ok": false,
+   "error": "lfm3 chat: capacity must fit a nonempty prompt plus max_new_tokens"
+  },
+  "rejection.over-capacity": {
+   "rpc_id": 22,
+   "ok": false,
+   "error": "lfm3 chat: prompt (5012) + output (48) exceeds capacity (4096)"
+  },
+  "after_rejects": {
+   "rpc_id": 24,
+   "ok": true,
+   "session_id": "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+   "generated_ids": [
+    5210,
+    20,
+    1046,
+    20,
+    1703,
+    22,
+    124900
+   ],
+   "reused_tokens": 0,
+   "consumed_tokens": 21,
+   "do_sample": false,
+   "seed": 0,
+   "live_token_count": 125033,
+   "text": "One, two, three."
+  }
+ }
+}

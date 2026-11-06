@@ -6,6 +6,7 @@
 #include <lfm/text_sessions.hpp>
 #include <lfm/text_cancellation.hpp>
 #include <lfm/text_batch_cancellation.hpp>
+#include <lfm/lfm3_text_request.hpp>
 #include <map>
 #include <iomanip>
 #include <sstream>
@@ -33,6 +34,23 @@ struct Session {
   std::vector<int> consumed;
   std::vector<float> last_scores;
 };
+// Native text frontend, loaded on the first request that needs it (messages / return_text) and checked
+// against the verified token count.
+struct TextFrontend {
+  std::string path;int live=0;
+  std::unique_ptr<lfm::lfm3_text::Tokenizer> tokenizer;
+  const lfm::lfm3_text::Tokenizer& get() {
+    if(!tokenizer) tokenizer=lfm::lfm3_text::load_checked(path,live);
+    return *tokenizer;
+  }
+};
+// Prompt ids of a generate request: input_ids as before, or natively encoded messages.
+std::vector<int> request_input(const lfm::Json& req,int vocab,TextFrontend& text,int capacity,
+                               const std::vector<int>& suppressed) {
+  if(!req.has("messages")) return ids(req,"input_ids",vocab);
+  const int count=req.at("max_new_tokens").integer();
+  return lfm::lfm3_text::message_input_ids(text.get(),req,capacity,count,suppressed);
+}
 struct GenerationCancelled : std::exception {
   const char* what() const noexcept override {return "generation cancelled at a token boundary";}
 };
@@ -61,7 +79,7 @@ lfm::TextSamplingOptions sampling_options(const lfm::Json& request,int vocab,int
 }
 void schema(const lfm::Json& request,const std::string& op) {
   const std::set<std::string> common={"op","session_id","rpc_id"};
-  const std::set<std::string> generate={"input_ids","max_new_tokens","do_sample","temperature","top_k","top_p","min_p","repetition_penalty","seed","return_logits","trace_sampling"};
+  const std::set<std::string> generate={"input_ids","max_new_tokens","do_sample","temperature","top_k","top_p","min_p","repetition_penalty","seed","return_logits","trace_sampling","messages","return_text"};
   const auto* object=std::get_if<lfm::Json::Object>(&request.value);
   if(!object) throw std::runtime_error("expected object");
   for(const auto& [key,value]:*object) {
@@ -78,7 +96,7 @@ struct BatchLane {
   Session* session=nullptr;
   std::vector<int> input,generated;
   int count=0,paired=0;
-  bool return_logits=false,trace=false,done=false,cancelled=false;
+  bool return_logits=false,trace=false,done=false,cancelled=false,want_text=false;
   size_t reused=0;
   lfm::TextSamplingOptions options;
   std::unique_ptr<lfm::TextSampler> sampler;
@@ -89,7 +107,7 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
                     const std::vector<int>& stops,const std::string& trace_root,
                     std::shared_ptr<lfm::Safetensors>& weights,
                     std::map<std::string,Session>& sessions,lfm::text::SessionLedger& ledger,
-                    lfm::text::CancellationReader& cancellation) {
+                    lfm::text::CancellationReader& cancellation,TextFrontend& text) {
   const auto choice_suppressed=below(suppressed,live);
   // Outer schema is intentionally narrower than the single-operation common set.
   for(const auto& [key,value]:std::get<lfm::Json::Object>(request.value))
@@ -105,7 +123,8 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
     auto found=sessions.find(lane.id);
     if(found==sessions.end()) throw std::runtime_error("unknown session");
     lane.session=&found->second;
-    lane.input=ids(req,"input_ids",cfg.shape.vocabulary);
+    lane.input=request_input(req,cfg.shape.vocabulary,text,lane.session->capacity,suppressed);
+    lane.want_text=lfm::lfm3_text::wants_text(req);
     for(int token:lane.input) if(std::find(suppressed.begin(),suppressed.end(),token)!=suppressed.end())
       throw std::runtime_error("modality placeholder input is unsupported");
     lane.count=req.at("max_new_tokens").integer();
@@ -220,6 +239,7 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
              <<",\"cancelled\":"<<(lane.cancelled?"true":"false")<<",\"cache_valid\":"<<(lane.cancelled?"false":"true")
              <<",\"gpu_batching\":"<<(lane.paired?"true":"false")<<",\"paired_decode_calls\":"<<lane.paired
              <<",\"live_token_count\":"<<live;  // the token-choice bound this lane used (G6)
+    if(lane.want_text) std::cout<<",\"text\":"<<lfm::lfm3_text::json_string(lfm::lfm3_text::generated_text(text.get(),lane.generated,stops));
     if(lane.trace) std::cout<<",\"sampling_trace\":"<<quote(trace_key+"/lane"+std::to_string(i));
     if(lane.return_logits && !lane.cancelled) {
       std::cout<<",\"last_logits\":[";
@@ -269,6 +289,7 @@ int main(int argc,char** argv) try {
   const int live=lfm::tokenizer_token_count(directory+"/tokenizer.json",cfg.shape.vocabulary);
   const auto choice_suppressed=below(suppressed,live);
   for(int id:stops) if(id>=live) throw std::runtime_error("stop token outside the tokenizer vocabulary");
+  TextFrontend text{directory+"/tokenizer.json",live,nullptr};
   std::shared_ptr<lfm::Safetensors> weights;
   std::map<std::string,Session> sessions;
   lfm::text::SessionLedger ledger(2,32768);
@@ -308,7 +329,7 @@ int main(int argc,char** argv) try {
          std::cout<<"}\n"<<std::flush;continue;
       }
        if(op=="generate_batch") {
-         generate_batch(request,rpc_id,directory,cfg,suppressed,live,stops,sampling_trace_root,weights,sessions,ledger,cancellation);
+         generate_batch(request,rpc_id,directory,cfg,suppressed,live,stops,sampling_trace_root,weights,sessions,ledger,cancellation,text);
          continue;
        }
        const auto id=session_id(request);
@@ -341,7 +362,8 @@ int main(int argc,char** argv) try {
         std::cout<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"reset\":true}\n"<<std::flush;continue;
       }
       if(op!="generate") throw std::runtime_error("unknown operation");
-      const auto input=ids(request,"input_ids",cfg.shape.vocabulary);
+      const auto input=request_input(request,cfg.shape.vocabulary,text,session.capacity,suppressed);
+      const bool want_text=lfm::lfm3_text::wants_text(request);
       for(int token:input) if(std::find(suppressed.begin(),suppressed.end(),token)!=suppressed.end())
         throw std::runtime_error("modality placeholder input is unsupported");
       const int count=request.at("max_new_tokens").integer();
@@ -404,6 +426,7 @@ int main(int argc,char** argv) try {
         std::cout<<",\"reused_tokens\":"<<reused<<",\"consumed_tokens\":"<<session.consumed.size()
                   <<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed
                   <<",\"live_token_count\":"<<live;  // the token-choice bound this generation used (G6)
+        if(want_text) std::cout<<",\"text\":"<<lfm::lfm3_text::json_string(lfm::lfm3_text::generated_text(text.get(),generated,stops));
         if(trace_sampling) std::cout<<",\"sampling_trace\":"<<rpc_id;
         if(return_logits) {
           std::cout<<",\"last_logits\":[";
@@ -417,7 +440,9 @@ int main(int argc,char** argv) try {
                  <<",\"cancelled\":true,\"cache_valid\":false,\"consumed_tokens\":0,\"reused_tokens\":0,\"generated_ids\":";
         print_ids(std::cout,generated);
         std::cout<<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed
-                 <<",\"live_token_count\":"<<live<<"}\n"<<std::flush;  // G6 bound, on cancelled results too
+                 <<",\"live_token_count\":"<<live;  // G6 bound, on cancelled results too
+        if(want_text) std::cout<<",\"text\":"<<lfm::lfm3_text::json_string(lfm::lfm3_text::generated_text(text.get(),generated,stops));
+        std::cout<<"}\n"<<std::flush;
       } catch(...) {
         session.runner.reset();session.consumed.clear();session.last_scores.clear();throw;
       }

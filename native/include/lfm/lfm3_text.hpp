@@ -634,15 +634,16 @@ inline std::vector<Message> parse_messages(const Json& j) {
     } else {
       bad("content must be a string or a list of text parts; multimodal input is unsupported");
     }
+    // As the frontend: count the reasoning fields first, then validate the one that is present.
     int reasoning = 0;
+    for (const char* key : {"thinking", "reasoning", "reasoning_content"}) reasoning += o->count(key) ? 1 : 0;
+    if (reasoning > 1) bad("use only one assistant reasoning field");
     for (const char* key : {"thinking", "reasoning", "reasoning_content"})
       if (o->count(key)) {
-        ++reasoning;
         m.has_thinking = true;
         m.thinking = text(o->at(key), key);
         total += m.thinking.size();
       }
-    if (reasoning > 1) bad("use only one assistant reasoning field");
     if (o->count("tool_call_id")) {
       m.has_tool_call_id = true;
       m.tool_call_id = text(o->at("tool_call_id"), "tool_call_id");
@@ -733,13 +734,19 @@ inline std::string render_chat(const std::vector<Message>& all) {
   return out;
 }
 
-// TextFrontend.encode_messages: rendered prompt ids, reserving every requested output token.
-inline std::vector<int> encode_messages(const Tokenizer& tokenizer, const std::vector<Message>& messages,
-                                        int capacity, int max_new_tokens) {
+// TextFrontend.encode_messages checks these before it validates the messages; callers that parse
+// messages themselves call this first to keep the same order of rejections.
+inline void check_capacity(int capacity, int max_new_tokens) {
   if (capacity < 1 || capacity > kMaxContextTokens) throw std::runtime_error("lfm3 chat: capacity must be an integer in 1..32768");
   if (max_new_tokens < 1 || max_new_tokens > kMaxContextTokens)
     throw std::runtime_error("lfm3 chat: max_new_tokens must be an integer in 1..32768");
   if (max_new_tokens >= capacity) throw std::runtime_error("lfm3 chat: capacity must fit a nonempty prompt plus max_new_tokens");
+}
+
+// TextFrontend.encode_messages: rendered prompt ids, reserving every requested output token.
+inline std::vector<int> encode_messages(const Tokenizer& tokenizer, const std::vector<Message>& messages,
+                                        int capacity, int max_new_tokens) {
+  check_capacity(capacity, max_new_tokens);
   std::vector<int> ids = tokenizer.encode(render_chat(messages));
   if (ids.empty()) throw std::runtime_error("lfm3 chat: empty prompt");
   if (ids.size() + static_cast<size_t>(max_new_tokens) > static_cast<size_t>(capacity))

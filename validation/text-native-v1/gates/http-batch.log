@@ -1,0 +1,70 @@
+{
+  "status": "passed",
+  "worker_sha256": "7903b26c9e8fdfaaf3b5a8d99de1149b312a78ca316d8026e830fa5d1734261b",
+  "source_sha256": {
+    "check_lfm3_http_batch.py": "9bd1bb451d50e6235d779aa582efa318152f0683ba215ede37d249e4ca5f3240",
+    "lfm3_server.py": "0bf92f4ff61bd7c79704b3ab7f1be711b4b4c928e67dd2e5836dab9da33cec87",
+    "lfm3_worker_client.py": "dcbfd5d7de36c2dd5768f98f39d0972a652cf66bed7c05be622030ea89727f17"
+  },
+  "limits": {
+    "warm_rss_growth_bytes": 33554432,
+    "warm_fd_growth": 2,
+    "warm_device_free_drop_bytes": 134217728
+  },
+  "requested_cycles": 60,
+  "minimum_seconds": 600,
+  "scope": "authenticated fixed-two-lane HTTP grouping, per-lane cancellation, exact IDs, bounded extended soak and device-wide memory observation; not automatic microbatching or a universal production SLA",
+  "empty_session_gpu_baseline": {
+    "ok": true,
+    "sessions": 0,
+    "reserved_tokens": 0,
+    "weights_loaded": true,
+    "cuda_free_bytes": 79044091904,
+    "cuda_total_bytes": 131881746432,
+    "device_allocated_bytes": 52837654528
+  },
+  "baseline": {
+    "cycle": -1,
+    "elapsed_seconds": 11.290050509996945,
+    "server": {
+      "rss_bytes": 296251392,
+      "descriptors": 8
+    },
+    "worker": {
+      "rss_bytes": 4845883392,
+      "descriptors": 43
+    },
+    "gpu": {
+      "ok": true,
+      "sessions": 2,
+      "reserved_tokens": 1024,
+      "weights_loaded": true,
+      "cuda_free_bytes": 79023443968,
+      "cuda_total_bytes": 131881746432,
+      "device_allocated_bytes": 52858302464
+    }
+  },
+  "cycles_completed": 599,
+  "soak_seconds": 600.9237683300016,
+  "latency_summary": {
+    "serial-pair": {
+      "samples": 5,
+      "median_seconds": 1.3995771479967516,
+      "median_aggregate_tokens_per_second": 45.72809729824807
+    },
+    "group": {
+      "samples": 599,
+      "median_seconds": 0.8622708089969819,
+      "median_aggregate_tokens_per_second": 74.22262163141836
+    }
+  },
+  "post_close_gpu": {
+    "ok": true,
+    "sessions": 0,
+    "reserved_tokens": 0,
+    "weights_loaded": true,
+    "cuda_free_bytes": 79096459264,
+    "cuda_total_bytes": 131881746432,
+    "device_allocated_bytes": 52785287168
+  }
+}

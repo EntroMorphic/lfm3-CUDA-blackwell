@@ -72,6 +72,5 @@ python tools/lfm3_text_diff.py compare --dir build/g2-diff-v2
 
 ## Not yet done
 
-The engine binaries do not use the header yet. Text serving still renders and tokenizes through the
-Python frontend. Wiring the header into `liquid-lfm3` and the worker is part of G7 (single
-executable).
+Superseded: the binaries now use the header (see `validation/text-native-v1`). At the time of this run, text serving still rendered and tokenized through the
+Python frontend.

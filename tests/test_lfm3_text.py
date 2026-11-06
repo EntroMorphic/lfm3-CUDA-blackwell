@@ -126,10 +126,17 @@ def test_invalid_utf8_text_is_refused(tool, tmp_path):
     ([{"role": "user"}], "every message requires text content"),
     ([{"role": "user", "content": [{"type": "image"}]}], "content parts must be text-only"),
     ([{"role": "bot", "content": "x"}], "role must be"),
+    # the field count comes before validating the field (frontend order)
+    ([{"role": "assistant", "content": "x", "thinking": 5, "reasoning": "y"}], "use only one assistant reasoning field"),
 ])
 def test_rejected_conversations(tool, tmp_path, messages, reason):
     rc, out = run(tool, tmp_path, "chat", [{"messages": messages, "capacity": 32768, "max_new_tokens": 16}])
     assert rc == 0 and reason in out[0]["error"], out[0]
+
+
+def test_capacity_is_checked_before_messages(tool, tmp_path):
+    rc, out = run(tool, tmp_path, "chat", [{"messages": [], "capacity": 0, "max_new_tokens": 16}])
+    assert rc == 0 and "capacity must be an integer" in out[0]["error"]
 
 
 def test_capacity_rules(tool, tmp_path):

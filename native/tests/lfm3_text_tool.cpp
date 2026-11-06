@@ -79,6 +79,7 @@ int main(int argc, char** argv) {
           result = "{\"text\":" + quote(tok.decode(ids, skip)) + ",\"stream\":" + quote(streamed) +
                    ",\"held\":" + std::to_string(held) + ",\"tail\":" + quote(tail) + "}";
         } else {
+          lfm::lfm3_text::check_capacity(j.at("capacity").integer(), j.at("max_new_tokens").integer());
           const auto messages = lfm::lfm3_text::parse_messages(j.at("messages"));
           const std::string prompt = lfm::lfm3_text::render_chat(messages);
           const auto ids = lfm::lfm3_text::encode_messages(tok, messages, j.at("capacity").integer(),

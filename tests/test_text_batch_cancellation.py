@@ -95,6 +95,7 @@ STUBS = r'''
 #include <lfm/text_sessions.hpp>
 #include <lfm/text_batch_cancellation.hpp>
 #include <lfm/text_serving_limits.hpp>
+#include <lfm/lfm3_text_request.hpp>
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
@@ -180,7 +181,8 @@ int main(int argc,char** argv) {
    "{\"session_id\":\""+second+"\",\"input_ids\":"+second_input+",\"max_new_tokens\":"+count+extra+"}]}");
  std::ostringstream out;auto* old=std::cout.rdbuf(out.rdbuf());bool failed=false;
  // live = the fake model's whole vocabulary: it has no output rows beyond its tokens (G6 bound is a no-op here)
- try {generate_batch(request,1,"unused",cfg,{},cfg.shape.vocabulary,mode=="eos"?std::vector<int>{7}:std::vector<int>{},trace_root,weights,sessions,ledger,reader);}
+ TextFrontend text{"unused-tokenizer.json",cfg.shape.vocabulary,nullptr};
+ try {generate_batch(request,1,"unused",cfg,{},cfg.shape.vocabulary,mode=="eos"?std::vector<int>{7}:std::vector<int>{},trace_root,weights,sessions,ledger,reader,text);}
  catch(const std::exception&) {failed=true;}
  std::cout.rdbuf(old);
  if(mode=="duplicate" || mode=="bad_metadata" || mode=="bad_schema" || mode=="bad_capacity") {
