@@ -1,0 +1,11 @@
+Loading weights:   0%|          | 0/665 [00:00<?, ?it/s]Loading weights:  27%|██▋       | 180/665 [00:00<00:00, 1799.15it/s]Loading weights:  54%|█████▍    | 360/665 [00:00<00:00, 535.92it/s] Loading weights:  69%|██████▊   | 456/665 [00:00<00:00, 487.75it/s]Loading weights:  79%|███████▉  | 527/665 [00:01<00:00, 469.71it/s]Loading weights: 100%|██████████| 665/665 [00:01<00:00, 603.24it/s]
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Loading weights:   0%|          | 0/203 [00:00<?, ?it/s]Loading weights: 100%|██████████| 203/203 [00:00<00:00, 6436.58it/s]
+{
+  "attention": "eager",
+  "generated_ids": [
+    3843,
+    124900
+  ],
+  "text": "42"
+}

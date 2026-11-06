@@ -1,0 +1,20 @@
+{
+  "windows": "/workspace/liquid-CUDA/build/ppl-v1/windows-4096.i32",
+  "length": 4096,
+  "positions": 294840,
+  "live_ids": 125033,
+  "model_vocab": 128000,
+  "dead_ids": 2967,
+  "argmax_is_dead": 0,
+  "best_dead_rank_min": 24294,
+  "positions_with_dead_in_topk": {
+    "top1": 0,
+    "top10": 0,
+    "top100": 0,
+    "top1000": 0
+  },
+  "mean_dead_probability_mass": 6.17719379083998e-06,
+  "max_dead_probability_mass": 0.0019350051879882812,
+  "mean_nll_change_if_masked": -6.178096229906177e-06,
+  "note": "NLL change is exact per position: -log softmax_live(target) - (-log softmax_all(target)) = lse_live - lse_all"
+}

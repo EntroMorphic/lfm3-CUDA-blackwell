@@ -14,6 +14,7 @@ import sys
 import threading
 import time
 
+from lfm3_tokenizer_info import tokenizer_token_count
 from lfm3_worker_client import WorkerClient
 from lfm3_owned_process import owned_main
 
@@ -141,7 +142,10 @@ def main():
         sampled=stochastic_group['results'][1]
         result_path.write_text(json.dumps(sampled,indent=2)+'\n')
         with (args.output/'sampled-lane.oracle.log').open('w') as stream:
-            subprocess.run([str(args.oracle),str(request_path),str(result_path),str(trace_root/str(sampled['sampling_trace'])),'128000'],
+            # the worker chooses among the ids the tokenizer defines; the oracle replays the same rule
+            live=tokenizer_token_count(args.checkpoint,model['text_config']['vocab_size'])
+            report['live_token_count']=live
+            subprocess.run([str(args.oracle),str(request_path),str(result_path),str(trace_root/str(sampled['sampling_trace'])),'128000',str(live)],
                            check=True,env=env,stdout=stream,stderr=subprocess.STDOUT,timeout=30)
         report['independent_non_greedy_logit_replay']=True;save()
         lanes = [dict(session_id="A", input_ids=prompt, max_new_tokens=32, trace_sampling=True),

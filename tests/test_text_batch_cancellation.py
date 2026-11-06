@@ -179,7 +179,8 @@ int main(int argc,char** argv) {
    "{\"session_id\":\"A\",\"input_ids\":"+first_input+",\"max_new_tokens\":"+first_count+(mode=="trace"?extra:"")+"},"
    "{\"session_id\":\""+second+"\",\"input_ids\":"+second_input+",\"max_new_tokens\":"+count+extra+"}]}");
  std::ostringstream out;auto* old=std::cout.rdbuf(out.rdbuf());bool failed=false;
- try {generate_batch(request,1,"unused",cfg,{},mode=="eos"?std::vector<int>{7}:std::vector<int>{},trace_root,weights,sessions,ledger,reader);}
+ // live = the fake model's whole vocabulary: it has no output rows beyond its tokens (G6 bound is a no-op here)
+ try {generate_batch(request,1,"unused",cfg,{},cfg.shape.vocabulary,mode=="eos"?std::vector<int>{7}:std::vector<int>{},trace_root,weights,sessions,ledger,reader);}
  catch(const std::exception&) {failed=true;}
  std::cout.rdbuf(old);
  if(mode=="duplicate" || mode=="bad_metadata" || mode=="bad_schema" || mode=="bad_capacity") {

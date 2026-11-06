@@ -19,10 +19,14 @@ std::vector<int> ids(const lfm::Json& root,const std::string& name) {
   return result;
 }
 int main(int argc,char** argv) try {
-  if(argc!=5) throw std::runtime_error("usage: text-sampling-oracle REQUEST.json RESULT.json TRACE_DIR VOCAB");
+  if(argc!=5 && argc!=6) throw std::runtime_error("usage: text-sampling-oracle REQUEST.json RESULT.json TRACE_DIR VOCAB [LIVE_TOKENS]");
   const auto req=json(argv[1]),out=json(argv[2]);
   const int vocab=std::stoi(argv[4]);
   if(vocab<1 || vocab>16777216) throw std::runtime_error("invalid vocabulary");
+  // Traces hold all VOCAB logits; tokens are chosen among the first LIVE_TOKENS (the ids the
+  // tokenizer defines), exactly as the worker does. Defaults to VOCAB.
+  const int live=argc==6?std::stoi(argv[5]):vocab;
+  if(live<1 || live>vocab) throw std::runtime_error("invalid live token count");
   lfm::TextSamplingOptions options;
   options.do_sample=req.at("do_sample").boolean();
   options.temperature=req.at("temperature").number();
@@ -44,11 +48,11 @@ int main(int argc,char** argv) try {
       throw std::runtime_error("missing/wrong-size BF16 trace");
     std::vector<float> logits(vocab);
     for(int i=0;i<vocab;++i) {std::uint32_t bits=std::uint32_t(raw[i])<<16; std::memcpy(&logits[i],&bits,sizeof(float));}
-    int expected=sampler.sample(logits.data(),logits.size(),history,suppressed);
+    int expected=sampler.sample(logits.data(),size_t(live),history,suppressed);
     if(expected!=generated[step]) throw std::runtime_error("sampler wiring mismatch at step "+std::to_string(step));
     auto greedy_options=options;greedy_options.do_sample=false;
     lfm::TextSampler greedy(greedy_options);
-    differs |= expected!=greedy.sample(logits.data(),logits.size(),history,suppressed);
+    differs |= expected!=greedy.sample(logits.data(),size_t(live),history,suppressed);
     history.push_back(expected);
   }
   if(!differs) throw std::runtime_error("fixture did not demonstrate non-greedy sampling");

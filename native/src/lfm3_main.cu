@@ -459,7 +459,14 @@ int main(int argc,char** argv) try {
   // New serving contract counts the final emitted prediction too. Legacy
   // <=4096 fixture accounting remains unchanged unless explicitly opted in.
   if(long_context) lfm::text::require_budget(input.size(),size_t(count),capacity);
-  if(std::set<int>(suppress.begin(),suppress.end()).size()==size_t(cfg.shape.vocabulary))
+  // Token choice is limited to ids the tokenizer defines (verified contiguous 0..live-1); output
+  // rows at or above `live` decode to nothing, so they are excluded as a prefix bound. Explicit
+  // suppression ids in that range are already covered.
+  const int live=lfm::tokenizer_token_count(std::string(argv[2])+"/tokenizer.json",cfg.shape.vocabulary);
+  suppress.erase(std::remove_if(suppress.begin(),suppress.end(),[&](int id){return id>=live;}),suppress.end());
+  std::vector<unsigned char> blocked(live,0);
+  for(int id:suppress) blocked[id]=1;
+  if(std::set<int>(suppress.begin(),suppress.end()).size()==size_t(live))
     throw std::runtime_error("cannot suppress whole vocabulary");
   lfm::TextSamplingOptions sampling;
   if(request.has("do_sample")) sampling.do_sample=request.at("do_sample").boolean();
@@ -469,19 +476,18 @@ int main(int argc,char** argv) try {
   if(request.has("min_p")) sampling.min_p=request.at("min_p").number();
   if(request.has("repetition_penalty")) sampling.repetition_penalty=request.at("repetition_penalty").number();
   if(request.has("seed")) sampling.seed=request.at("seed").integer();
-  if(sampling.top_k>cfg.shape.vocabulary) throw std::runtime_error("top_k exceeds vocabulary size");
+  if(sampling.top_k>live) throw std::runtime_error("top_k exceeds vocabulary size");
   lfm::TextSampler sampler(sampling); // Validates every scalar before GPU upload.
   auto greedy=[&](const std::vector<float>& logits) {
-    int best=-1;
-    for(int token=0;token<cfg.shape.vocabulary;++token)
-      if(std::find(suppress.begin(),suppress.end(),token)==suppress.end() &&
-         (best<0 || logits[token]>logits[best])) best=token;
+    int best=-1;  // ascending ids with strict '>' keep the lowest-id tie, like torch.argmax
+    for(int token=0;token<live;++token)
+      if(!blocked[token] && (best<0 || logits[token]>logits[best])) best=token;
     if(best<0) throw std::runtime_error("cannot suppress whole vocabulary");
     return best;
   };
   auto sample=[&](lfm::TextSampler& picker,const std::vector<float>& logits,const std::vector<int>& history) {
     if(!sampling.do_sample && sampling.repetition_penalty==1.0) return greedy(logits);
-    return picker.sample(logits.data(),logits.size(),history,suppress);
+    return picker.sample(logits.data(),size_t(live),history,suppress);
   };
   Runner runner(argv[2],cfg);
   runner.trace_logits_only=trace_logits_only;

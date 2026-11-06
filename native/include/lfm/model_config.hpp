@@ -199,6 +199,38 @@ struct RuntimeShape {
   size_t kv_batch_stride() const { return static_cast<size_t>(attention_layers) * kv_layer_stride(); }
 };
 
+// Number of token ids the tokenizer defines (base BPE vocabulary plus added tokens). The output
+// layer may have more rows than tokens: LFM3-Omni-2B scores 128000 ids but its tokenizer defines
+// 125033, so ids 125033..127999 decode to nothing. Generation must only choose ids below the
+// returned count, which is safe as a prefix bound only because the ids are verified to be exactly
+// 0..count-1 (no gaps). Anything else is rejected rather than assumed.
+inline int tokenizer_token_count(const std::string& path, int model_vocabulary) {
+  std::ifstream stream(path, std::ios::binary);
+  if (!stream) throw std::runtime_error("cannot open tokenizer: " + path);
+  stream.seekg(0, std::ios::end);
+  const auto bytes = stream.tellg();
+  if (bytes <= 0 || bytes > 256 * 1024 * 1024) throw std::runtime_error("invalid tokenizer size");
+  stream.seekg(0);
+  const std::string text((std::istreambuf_iterator<char>(stream)), {});
+  const Json j = Json::parse(text);
+  if (model_vocabulary < 1) throw std::runtime_error("invalid model vocabulary");
+  std::vector<unsigned char> seen(static_cast<size_t>(model_vocabulary), 0);
+  int max_id = -1;
+  const auto add = [&](int id) {
+    if (id < 0 || id >= model_vocabulary) throw std::runtime_error("tokenizer id outside the model vocabulary");
+    seen[static_cast<size_t>(id)] = 1;  // an added token may reuse a base id; it is the same id
+    max_id = std::max(max_id, id);
+  };
+  const auto* vocab = std::get_if<Json::Object>(&j.at("model").at("vocab").value);
+  if (!vocab || vocab->empty()) throw std::runtime_error("tokenizer model.vocab must be a nonempty object");
+  for (const auto& entry : *vocab) add(entry.second.integer());
+  for (const auto& token : j.at("added_tokens").array()) add(token.at("id").integer());
+  const int count = max_id + 1;
+  for (int id = 0; id < count; ++id)
+    if (!seen[static_cast<size_t>(id)]) throw std::runtime_error("tokenizer ids are not contiguous");
+  return count;
+}
+
 struct ModelConfig {
   enum class Architecture { Lfm2, Lfm3, Lfm3Omni };
   enum class LayerKind { Convolution, FullAttention, SlidingAttention };

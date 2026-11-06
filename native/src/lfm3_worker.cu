@@ -74,7 +74,7 @@ struct BatchLane {
   std::unique_ptr<lfm::text::SessionLedger::Lease> lease;
 };
 void generate_batch(const lfm::Json& request,int rpc_id,const std::string& directory,
-                    const lfm::ModelConfig& cfg,const std::vector<int>& suppressed,
+                    const lfm::ModelConfig& cfg,const std::vector<int>& suppressed,int live,
                     const std::vector<int>& stops,const std::string& trace_root,
                     std::shared_ptr<lfm::Safetensors>& weights,
                     std::map<std::string,Session>& sessions,lfm::text::SessionLedger& ledger,
@@ -103,7 +103,7 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
     lane.trace=req.has("trace_sampling") && req.at("trace_sampling").boolean();
     if(lane.trace && (trace_root.empty() || lane.count>32))
       throw std::runtime_error("sampling trace needs startup audit root and at most32 output tokens");
-    lane.options=sampling_options(req,cfg.shape.vocabulary);
+    lane.options=sampling_options(req,live);
     lane.sampler=std::make_unique<lfm::TextSampler>(lane.options);
     if(ledger.inspect(lane.id).inflight) throw std::runtime_error("session already inflight");
   }
@@ -167,7 +167,7 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
           file.write(reinterpret_cast<const char*>(raw.data()),raw.size()*sizeof(bf16));
           if(!file) throw std::runtime_error("sampling trace write failed");
         }
-        const int token=lane.sampler->sample(session.last_scores.data(),session.last_scores.size(),lane.generated,suppressed);
+        const int token=lane.sampler->sample(session.last_scores.data(),size_t(live),lane.generated,suppressed);
         lane.generated.push_back(token);
         if(std::find(stops.begin(),stops.end(),token)!=stops.end() || lane.generated.size()==size_t(lane.count)) {
           poll();if(lane.done) continue;
@@ -250,6 +250,11 @@ int main(int argc,char** argv) try {
   }
   for(int id:suppressed) if(id>=cfg.shape.vocabulary) throw std::runtime_error("invalid modality token");
   for(int id:stops) if(id>=cfg.shape.vocabulary) throw std::runtime_error("invalid stop token");
+  // Token choice is limited to ids the tokenizer defines (verified contiguous 0..live-1): output rows
+  // at or above `live` decode to nothing. Explicit suppression ids in that range are already covered.
+  const int live=lfm::tokenizer_token_count(directory+"/tokenizer.json",cfg.shape.vocabulary);
+  suppressed.erase(std::remove_if(suppressed.begin(),suppressed.end(),[&](int id){return id>=live;}),suppressed.end());
+  for(int id:stops) if(id>=live) throw std::runtime_error("stop token outside the tokenizer vocabulary");
   std::shared_ptr<lfm::Safetensors> weights;
   std::map<std::string,Session> sessions;
   lfm::text::SessionLedger ledger(2,32768);
@@ -289,7 +294,7 @@ int main(int argc,char** argv) try {
          std::cout<<"}\n"<<std::flush;continue;
       }
        if(op=="generate_batch") {
-         generate_batch(request,rpc_id,directory,cfg,suppressed,stops,sampling_trace_root,weights,sessions,ledger,cancellation);
+         generate_batch(request,rpc_id,directory,cfg,suppressed,live,stops,sampling_trace_root,weights,sessions,ledger,cancellation);
          continue;
        }
        const auto id=session_id(request);
@@ -332,7 +337,7 @@ int main(int argc,char** argv) try {
       const bool trace_sampling=request.has("trace_sampling") && request.at("trace_sampling").boolean();
       if(trace_sampling && (sampling_trace_root.empty() || count>32))
         throw std::runtime_error("sampling trace needs startup audit root and at most32 output tokens");
-      const auto options=sampling_options(request,cfg.shape.vocabulary);
+      const auto options=sampling_options(request,live);
       lfm::TextSampler sampler(options);
       auto lease=ledger.begin(id,lfm::text::SessionLedger::Tokens(input.begin(),input.end()),count);
       std::vector<int> generated;
@@ -373,7 +378,7 @@ int main(int argc,char** argv) try {
             trace_file.write(reinterpret_cast<const char*>(trace_scores.data()),trace_scores.size()*sizeof(bf16));
             if(!trace_file) throw std::runtime_error("sampling trace write failed");
           }
-          int token=sampler.sample(session.last_scores.data(),session.last_scores.size(),generated,suppressed);
+          int token=sampler.sample(session.last_scores.data(),size_t(live),generated,suppressed);
           generated.push_back(token);
           if(std::find(stops.begin(),stops.end(),token)!=stops.end() || t==count-1) break;
           session.last_scores=runner.forward({token});session.consumed.push_back(token);
