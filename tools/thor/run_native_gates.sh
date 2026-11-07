@@ -5,6 +5,9 @@
 # Writes OUT/status.json per stage. Not run: the standalone resource soak (unchanged by token choice;
 # HTTP grouped batching already holds a 10-minute soak).
 # Usage: run_native_gates.sh BUILD_DIR_NAME OUT_TAG
+# KEEP_GOING=1 runs every stage and lists the failing ones in OUT/failures (inventory mode); the exit
+# status is then 1 if any stage failed. With KEEP_GOING=1 the native server gate runs as well.
+# FORWARD_ARGS passes extra flags to the forward gate (--activation-tolerance for the native-GEMM build).
 set -uo pipefail
 build=$1; tag=$2
 W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
@@ -20,7 +23,9 @@ for _ in 1 2 3; do
   [ "$(echo "$r" | head -1)" = 125033 ] || { status parse-timing 1; exit 1; }
 done
 EX="docker exec -e TRITON_PTXAS_PATH=/workspace/tools/ptxas -e TRITON_PTXAS_BLACKWELL_PATH=/workspace/tools/ptxas -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1 /opt/venv/bin/python3"
-run(){ name=$1; shift; status "$name" null; $EX "$@" > "$out/$name.log" 2>&1; rc=$?; [ $rc = 0 ] || { status "$name" $rc; exit $rc; }; }
+failed=0
+run(){ name=$1; shift; status "$name" null; $EX "$@" > "$out/$name.log" 2>&1; rc=$?; [ $rc = 0 ] && return 0
+  status "$name" $rc; [ -n "${KEEP_GOING:-}" ] || exit $rc; echo "$name rc=$rc" >> "$out/failures"; failed=1; }
 CK=/workspace/models/LFM3-Omni-2B; T=/workspace/liquid-CUDA/tools; N=$C/$build; O=$C/$tag
 REQ=$C/forward-bounded-prefill-v1/baseline/generation-request.json   # accepted tokenized request (sampling/worker gates)
 # Accepted 128-token native control for the HTTP/cancellation gates (the reflective-recursion prompt, 86
@@ -35,7 +40,7 @@ for pin in "request.json:5651a375a4dd1144c6f49e72a666cf2423ef3062b5502821381a693
     || { status control-pin 1; echo "control $f differs from the accepted one"; exit 1; }
 done
 LONG=$C/context32k-bounded-prefill-v1/decode_into32768/request.json
-run forward        $T/check_lfm3_forward.py --checkpoint $CK --binary $N/liquid-lfm3 --output $O-forward
+run forward        $T/check_lfm3_forward.py --checkpoint $CK --binary $N/liquid-lfm3 --output $O-forward ${FORWARD_ARGS:-}
 run context        $T/check_lfm3_context.py --checkpoint $CK --binary $N/liquid-lfm3 --suite full --reuse-reference $C/context-full-bounded-release-v2 --timeout 180 --output $O-context
 run sampling       $T/check_lfm3_sampling.py --checkpoint $CK --binary $N/liquid-lfm3 --request $REQ --oracle $N/text-sampling-oracle --output $O-sampling
 run worker         $T/check_lfm3_worker.py --checkpoint $CK --worker $N/liquid-lfm3-worker --single $N/liquid-lfm3 --request $REQ --long-request $LONG --oracle $N/text-sampling-oracle --output $O-worker
@@ -45,4 +50,8 @@ run cancellation   $T/check_lfm3_cancellation.py --checkpoint $CK --worker $N/li
 run http-cancellation $T/check_lfm3_http_cancellation.py --checkpoint $CK --worker $N/liquid-lfm3-worker --control-result $CTL_RES --output $O-http-cancellation
 run 32k            $T/check_lfm3_32k.py --checkpoint $CK --binary $N/liquid-lfm3 --output $O-32k
 run http-batch     $T/check_lfm3_http_batch.py --checkpoint $CK --worker $N/liquid-lfm3-worker --control-result $CTL_RES --output $O-http-batch
+if [ -n "${KEEP_GOING:-}" ]; then
+  run native-server $T/check_lfm3_native_server.py --checkpoint $CK --server $N/liquid-lfm3-server --worker $N/liquid-lfm3-worker --control-result $CTL_RES --output $O-native-server
+  [ $failed = 0 ] || { status "done-with-failures" 1; exit 1; }
+fi
 status "done" 0

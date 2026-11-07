@@ -13,6 +13,10 @@ def main():
     p.add_argument("--checkpoint", type=Path, required=True)
     p.add_argument("--binary", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--activation-tolerance", action="store_true",
+                   help="Judge activations by compare_lfm3_traces tolerances instead of bitwise BF16 equality with eager "
+                        "(the native-GEMM build, G4). Teacher argmax, free-running greedy, reset, stop and suppression "
+                        "stay exact.")
     args = p.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     tools = Path(__file__).resolve().parent
@@ -38,7 +42,8 @@ def main():
              "--output", directory, "--tokens", steps, *extra], args.output / (name + ".reference.log"))
         run([args.binary, "--experimental", args.checkpoint, directory / "request.json", directory / "native.json"],
             directory / "native.log")
-        run([sys.executable, tools / "compare_lfm3_traces.py", directory, "--require-exact"], directory / "comparison.log")
+        exact = [] if args.activation_tolerance else ["--require-exact"]
+        run([sys.executable, tools / "compare_lfm3_traces.py", directory, *exact], directory / "comparison.log")
         request = json.loads((directory / "request.json").read_text())
         expected = json.loads((directory / "reference.json").read_text())["generated_ids"]
         request.pop("teacher_ids")
@@ -88,6 +93,7 @@ def main():
     report = dict(cases=reports, stop_check=True, suppression_check=True, invalid_requests_rejected=len(invalid),
                   final_cache_slot_checked=True,
                   binary_sha256=hashlib.sha256(args.binary.read_bytes()).hexdigest(),
+                  activations="tolerance (compare_lfm3_traces defaults)" if args.activation_tolerance else "bitwise BF16",
                   scope="actual BF16 checkpoint activations/logits, teacher forcing and free-running greedy; eager attention only")
     (args.output / "summary.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))

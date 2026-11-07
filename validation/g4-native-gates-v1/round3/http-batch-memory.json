@@ -1,0 +1,116 @@
+{
+ "ab-default-v4-http-batch": {
+  "status": "passed",
+  "samples": 457,
+  "swing_mib": [
+   45,
+   466
+  ],
+  "post_close_minus_empty_mib": 529,
+  "app_live_bytes": {
+   "empty": null,
+   "post_close": null,
+   "soak_distinct": []
+  }
+ },
+ "ab-native-v4-http-batch": {
+  "status": "passed",
+  "samples": 668,
+  "swing_mib": [
+   4,
+   71
+  ],
+  "post_close_minus_empty_mib": 29,
+  "app_live_bytes": {
+   "empty": null,
+   "post_close": null,
+   "soak_distinct": []
+  }
+ },
+ "g4-native-v3-http-batch": {
+  "status": "failed",
+  "samples": 96,
+  "swing_mib": [
+   -139,
+   125
+  ],
+  "post_close_minus_empty_mib": null,
+  "app_live_bytes": {
+   "empty": null,
+   "post_close": null,
+   "soak_distinct": []
+  }
+ },
+ "g4-native-v4-http-batch": {
+  "status": "failed",
+  "samples": 668,
+  "swing_mib": [
+   -25,
+   0
+  ],
+  "post_close_minus_empty_mib": -48,
+  "app_live_bytes": {
+   "empty": null,
+   "post_close": null,
+   "soak_distinct": []
+  }
+ },
+ "metrics-native-v5-http-batch": {
+  "status": "passed",
+  "samples": 656,
+  "swing_mib": [
+   7,
+   268
+  ],
+  "post_close_minus_empty_mib": 302,
+  "app_live_bytes": {
+   "empty": 0,
+   "post_close": 0,
+   "soak_distinct": [
+    166705408
+   ]
+  }
+ },
+ "g7-http-batch": {
+  "status": "passed",
+  "samples": 620,
+  "swing_mib": [
+   -1,
+   65
+  ],
+  "post_close_minus_empty_mib": 33,
+  "app_live_bytes": {
+   "empty": null,
+   "post_close": null,
+   "soak_distinct": []
+  }
+ },
+ "text2-http-batch": {
+  "status": "passed",
+  "samples": 599,
+  "swing_mib": [
+   -1,
+   64
+  ],
+  "post_close_minus_empty_mib": 49,
+  "app_live_bytes": {
+   "empty": null,
+   "post_close": null,
+   "soak_distinct": []
+  }
+ },
+ "g6r5-http-batch": {
+  "status": "passed",
+  "samples": 598,
+  "swing_mib": [
+   -47,
+   10
+  ],
+  "post_close_minus_empty_mib": 13,
+  "app_live_bytes": {
+   "empty": null,
+   "post_close": null,
+   "soak_distinct": []
+  }
+ }
+}

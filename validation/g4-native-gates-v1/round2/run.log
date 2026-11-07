@@ -1,0 +1,32 @@
+== build-default 07:39:54
+2dcd128ccdaf4b5375c1e299ff0536751ef9e8641ec3015ff50bfc89f4156c42  liquid-lfm3
+57f3bca596df67f567e3efea7b0bc6d284beac6f36e5a026842d6747c7ced930  liquid-lfm3-worker
+e7e07451a0d2e8d10b3cae121f68f7e2f6bca51697067eee3e56e07868d67f97  liquid-lfm3-server
+09632b39fbe8d2e157d03d6d86d34db6e1075b2adb366adf3907a1fa14d44943  text-sampling-oracle
+a075eeedbfb92d5429877fc787d079fd68fd4fdb8e12401665b451c5165fd009  lfm3-decode-batch-probe
+warnings: 0
+== build-native 07:41:03
+4b54809903de85236dfb23a762513758873db1375ee7f961bf35cf6f88033f11  liquid-lfm3
+ea215c100c68108db9bb2d5a6cb7a065d311366f6f689e3a780d56f154987ce8  liquid-lfm3-worker
+898bdac6f7bb010f8d08cee525326737a2756de3b3b4c639affda08a8a315380  liquid-lfm3-server
+09632b39fbe8d2e157d03d6d86d34db6e1075b2adb366adf3907a1fa14d44943  text-sampling-oracle
+c40a6a956085adf971440f40db3c0ccf9232d7574fd7d8506ea7753b0e1ecf7f  lfm3-decode-batch-probe
+warnings: 0
+== compare-default 07:42:35
+liquid-lfm3 stripped:same
+liquid-lfm3-worker stripped:same
+liquid-lfm3-server stripped:same
+== ab-http-batch-default 07:42:35
+rc=0
+samples 457 baseline 71452 MiB  min +45  max +466 MiB  status passed
+== ab-http-batch-native 07:52:48
+rc=0
+samples 668 baseline 72008 MiB  min +4  max +71 MiB  status passed
+== gates-native 08:02:58
+gates rc=1
+forward rc=1
+context rc=1
+http-batch rc=1
+== context-measure 08:18:43
+context-measure rc=1
+ALL DONE 08:18:46

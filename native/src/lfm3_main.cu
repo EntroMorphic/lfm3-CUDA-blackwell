@@ -10,6 +10,7 @@
 #ifdef LFM3_NATIVE_GEMM
 // G4: the engine's GEMMs are lfm::gemm (no cuBLAS). The forward pass is held to journal §9's
 // perplexity bar instead of bitwise identity with the cuBLAS build.
+#include <lfm/allocation_metrics.hpp>
 #include <lfm/gemm.cuh>
 #else
 #include <cublas_v2.h>
@@ -28,10 +29,19 @@ void cuda_check(cudaError_t s) { if (s != cudaSuccess) throw std::runtime_error(
 #ifndef LFM3_NATIVE_GEMM
 void blas_check(cublasStatus_t s) { if (s != CUBLAS_STATUS_SUCCESS) throw std::runtime_error("cuBLAS error " + std::to_string(s)); }
 #endif
+#ifdef LFM3_NATIVE_GEMM
+// Engine buffers are counted when LFM_ALLOCATION_METRICS=1, so the worker can report its own live device
+// bytes: on Thor's unified memory, device-wide free memory also moves with host activity.
+template<class T> struct Buffer {
+  T* p = nullptr;
+  explicit Buffer(size_t n) { cuda_check(lfm::allocation_metrics::malloc_requested(&p, lfm::checked_product({n, sizeof(T)}))); }
+  ~Buffer() { lfm::allocation_metrics::free_requested(p); }
+#else
 template<class T> struct Buffer {
   T* p = nullptr;
   explicit Buffer(size_t n) { cuda_check(cudaMalloc(&p, lfm::checked_product({n, sizeof(T)}))); }
   ~Buffer() { cudaFree(p); }
+#endif
   Buffer(const Buffer&) = delete;
   Buffer& operator=(const Buffer&) = delete;
 };
@@ -261,6 +271,19 @@ inline void head_values(const lfm::RuntimeShape& s,int context,const bf16* probs
 }
 #endif
 
+#ifdef LFM3_NATIVE_GEMM
+// Writes STEM.logits.f32 (exact) and STEM.logits.bf16 (rounded, the established trace format).
+inline void write_logits_trace(const std::string& stem,const std::vector<float>& logits) {
+  std::ofstream exact(stem+".logits.f32",std::ios::binary);
+  exact.write(reinterpret_cast<const char*>(logits.data()),logits.size()*sizeof(float));
+  std::vector<bf16> rounded(logits.size());
+  for(size_t i=0;i<logits.size();++i) rounded[i]=__float2bfloat16_rn(logits[i]);
+  std::ofstream f(stem+".logits.bf16",std::ios::binary);
+  f.write(reinterpret_cast<const char*>(rounded.data()),rounded.size()*sizeof(bf16));
+  if(!exact || !f) throw std::runtime_error("trace write failed");
+}
+#endif
+
 class Runner {
  public:
   lfm::ModelConfig config;
@@ -389,16 +412,13 @@ class Runner {
     auto p=lfm::gemm::linear(x,w("embed_tokens.weight"),nullptr,rows,s.hidden,s.vocabulary);
     p.c_f32=out; lfm::gemm::run(p);
   }
-  // The logits trace keeps its .bf16 format: a rounded copy of the FP32 logits.
+  // Logits traces: STEP.logits.f32 holds the exact FP32 values the engine returns (and samples from);
+  // STEP.logits.bf16 keeps the established format, rounded, for comparisons against BF16 references.
   void dump_logits(const float* ptr, size_t n) {
     if (trace.empty()) return;
     std::vector<float> data(n);
     cuda_check(cudaMemcpy(data.data(),ptr,n*sizeof(float),cudaMemcpyDeviceToHost));
-    std::vector<bf16> rounded(n);
-    for (size_t i=0;i<n;++i) rounded[i]=__float2bfloat16_rn(data[i]);
-    std::ofstream f(trace+"/"+std::to_string(step)+".logits.bf16",std::ios::binary);
-    f.write(reinterpret_cast<const char*>(rounded.data()),n*sizeof(bf16));
-    if (!f) throw std::runtime_error("trace write failed");
+    write_logits_trace(trace+"/"+std::to_string(step),data);
   }
 #endif
   void linear(const std::string& name, const bf16* x, bf16* out, int rows, int input, int output) {

@@ -92,3 +92,16 @@ def test_replay_clamps_top_k_to_the_token_count_like_the_engines(oracle,tmp_path
 def test_replay_rejects_malformed_vocabulary_argument(oracle,tmp_path,vocab):
     result=_replay(oracle,tmp_path,2,vocab=vocab)
     assert result.returncode==1 and "invalid" in result.stderr,(result.returncode,result.stderr)
+
+
+# G4: an FP32-logit engine (the native-GEMM build) samples from exact FP32 logits and writes them as
+# STEP.logits.f32 next to the rounded BF16 trace. The oracle must replay the exact values. Here the BF16
+# trace is uniform over 4 ids (seed 42 selects ID 3), but the exact trace puts ID 3 at -1000, leaving a
+# uniform 3-way support (seed 42 selects ID 2): only a replay of the FP32 file accepts ID 2.
+@pytest.mark.parametrize("generated,exact,ok",[(2,"good",True),(3,"good",False),(3,None,True),(2,"short",False)])
+def test_replay_prefers_the_exact_fp32_trace(oracle,tmp_path,generated,exact,ok):
+    if exact=="good":(tmp_path/"0.logits.f32").write_bytes(struct.pack("<ffff",0.0,0.0,0.0,-1000.0))
+    if exact=="short":(tmp_path/"0.logits.f32").write_bytes(struct.pack("<fff",0.0,0.0,0.0))
+    result=_replay(oracle,tmp_path,generated)
+    assert result.returncode==(0 if ok else 1),result.stderr
+    if exact=="short":assert "wrong-size FP32 trace" in result.stderr

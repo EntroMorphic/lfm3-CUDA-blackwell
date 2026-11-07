@@ -1,4 +1,5 @@
 // Independent-process wiring oracle: replay materialized logits, not model code.
+#include <filesystem>
 #include <lfm/model_config.hpp>
 #include <lfm/text_sampling.hpp>
 #include <cstdint>
@@ -57,12 +58,21 @@ int main(int argc,char** argv) try {
   std::vector<int> history;
   bool differs=false;
   for(size_t step=0;step<generated.size();++step) {
-    std::ifstream file(std::string(argv[3])+"/"+std::to_string(step)+".logits.bf16",std::ios::binary);
-    std::vector<std::uint16_t> raw(vocab);
-    if(!file.read(reinterpret_cast<char*>(raw.data()),vocab*2) || file.peek()!=std::char_traits<char>::eof())
-      throw std::runtime_error("missing/wrong-size BF16 trace");
+    // An engine that samples from FP32 logits (the native-GEMM build) writes STEP.logits.f32 with the exact
+    // values it used; replay those. Otherwise the BF16 trace is exact.
+    const std::string stem=std::string(argv[3])+"/"+std::to_string(step);
     std::vector<float> logits(vocab);
-    for(int i=0;i<vocab;++i) {std::uint32_t bits=std::uint32_t(raw[i])<<16; std::memcpy(&logits[i],&bits,sizeof(float));}
+    if(std::filesystem::exists(stem+".logits.f32")) {
+      std::ifstream file(stem+".logits.f32",std::ios::binary);
+      if(!file.read(reinterpret_cast<char*>(logits.data()),std::streamsize(vocab)*4) || file.peek()!=std::char_traits<char>::eof())
+        throw std::runtime_error("wrong-size FP32 trace");
+    } else {
+      std::ifstream file(stem+".logits.bf16",std::ios::binary);
+      std::vector<std::uint16_t> raw(vocab);
+      if(!file.read(reinterpret_cast<char*>(raw.data()),vocab*2) || file.peek()!=std::char_traits<char>::eof())
+        throw std::runtime_error("missing/wrong-size BF16 trace");
+      for(int i=0;i<vocab;++i) {std::uint32_t bits=std::uint32_t(raw[i])<<16; std::memcpy(&logits[i],&bits,sizeof(float));}
+    }
     int expected=sampler.sample(logits.data(),size_t(live),history,suppressed);
     if(expected!=generated[step]) throw std::runtime_error("sampler wiring mismatch at step "+std::to_string(step));
     auto greedy_options=options;greedy_options.do_sample=false;

@@ -8,6 +8,7 @@ validation, not a throughput benchmark.
 import argparse
 import gc
 import hashlib
+import array
 import json
 import math
 import os
@@ -91,6 +92,18 @@ def reject_before_weights(binary, checkpoint, output, env, timeout, run=subproce
                 f"{name}: did not reject before weights with expected diagnostic; see {name}.log")
         results.append(name)
     return results
+
+
+def bf16_rounding_of(exact):
+    """Round-to-nearest-even BF16 bytes of little-endian FP32 bytes (finite values)."""
+    words = array.array("I")
+    words.frombytes(exact)
+    if sys.byteorder != "little":
+        words.byteswap()
+    out = array.array("H", (((w + 0x7FFF + ((w >> 16) & 1)) >> 16) & 0xFFFF for w in words))
+    if sys.byteorder != "little":
+        out.byteswap()
+    return out.tobytes()
 
 
 def compare_logits(reference, native, vocab, atol=0.0, rtol=0.0):
@@ -350,8 +363,17 @@ def main():
             require(result.get("generated_ids") == [], f"{name}: unexpected generation in teacher run")
             wanted = {f"{step}.logits.bf16" for step in range(decodes + 1)}
             actual = {p.name for p in trace.iterdir()}
+            # G4: an FP32-logit engine (native GEMM) also writes STEP.logits.f32, the exact values it returns.
+            # Accept them only for every step, and only if each .bf16 trace is their round-to-nearest-even.
+            if any(n.endswith(".logits.f32") for n in actual):
+                wanted |= {f"{step}.logits.f32" for step in range(decodes + 1)}
             require(actual == wanted and all(not p.is_symlink() for p in trace.iterdir()),
                     f"{name}: missing logits or unexpected full activation files: {actual ^ wanted}")
+            for step in range(decodes + 1):
+                exact = trace / f"{step}.logits.f32"
+                if exact.exists():
+                    require(bf16_rounding_of((exact).read_bytes()) == (trace / f"{step}.logits.bf16").read_bytes(),
+                            f"{name} step={step}: BF16 trace is not the rounding of the FP32 trace")
             actual_argmax = result.get("teacher_argmax")
             require(isinstance(actual_argmax, list) and len(actual_argmax) == decodes + 1,
                     f"{name}: teacher argmax count mismatch")

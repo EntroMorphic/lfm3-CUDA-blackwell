@@ -11,7 +11,7 @@ import pytest
 TOOL=Path(__file__).resolve().parents[1]/"tools/check_lfm3_worker.py"
 
 
-@pytest.mark.parametrize("damage",[None,"empty-generation","wrong-generation","consumed","transcript","B-reuse","short-oracle","sampling-replay","live-mismatch"])
+@pytest.mark.parametrize("damage",[None,"empty-generation","wrong-generation","consumed","transcript","B-reuse","short-oracle","sampling-replay","live-mismatch","fp32-exact","fp32-short"])
 def test_worker_gate_cannot_credit_broken_generation(tmp_path,monkeypatch,damage):
     spec=importlib.util.spec_from_file_location("worker_acceptance",TOOL)
     gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(gate)
@@ -22,7 +22,9 @@ def test_worker_gate_cannot_credit_broken_generation(tmp_path,monkeypatch,damage
     output=tmp_path/"evidence"
     monkeypatch.setattr(sys,"argv",[str(TOOL),"--checkpoint",str(checkpoint),"--worker",str(tmp_path/"worker"),
                                    "--single",str(tmp_path/"single"),"--request",str(request),"--output",str(output),"--oracle",str(tmp_path/"oracle")])
-    logits=list(map(float,range(8)))
+    # G4 "fp32-*": an FP32-logit engine returns values FP32 holds exactly but BF16 cannot (i + 2^-12) and
+    # traces them exactly as STEP.logits.f32; the rounded .bf16 trace alone could not match them.
+    logits=[i+2.0**-12 for i in range(8)] if damage and damage.startswith("fp32") else list(map(float,range(8)))
     class FakeWorker:
         def __init__(self,*args,**kwargs):self.sessions={};self.process=types.SimpleNamespace(wait=lambda timeout:0)
         def close(self):pass
@@ -66,10 +68,13 @@ def test_worker_gate_cannot_credit_broken_generation(tmp_path,monkeypatch,damage
         step=max(0,len(generated)-1) if count else len(req["teacher_ids"])
         raw=b"".join(struct.pack("<H",struct.unpack("<I",struct.pack("<f",x))[0]>>16) for x in logits)
         (trace/f"{step}.logits.bf16").write_bytes(raw[:-2] if damage=="short-oracle" else raw)
+        if damage and damage.startswith("fp32"):
+            exact=struct.pack("<8f",*logits)
+            (trace/f"{step}.logits.f32").write_bytes(exact[:-4] if damage=="fp32-short" else exact)
     monkeypatch.setattr(gate.subprocess,"run",single)
     monkeypatch.setitem(sys.modules,"lfm3_text_frontend",types.SimpleNamespace(
         load_frontend=lambda path:types.SimpleNamespace(encode_messages=lambda *args:[4,4])))
-    if damage:
+    if damage and damage!="fp32-exact":
         with pytest.raises(AssertionError):gate.main()
         assert json.loads((output/"summary.json").read_text())["status"]=="failed"
     else:

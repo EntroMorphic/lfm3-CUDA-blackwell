@@ -17,6 +17,8 @@ def main():
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--tokens", type=int, default=16)
     p.add_argument("--attention", choices=["eager", "sdpa"], default="eager")
+    p.add_argument("--dtype", choices=["bfloat16", "float32"], default="bfloat16",
+                   help="float32: a higher-precision anchor for measuring BF16 implementations (G4/G5); traces are still saved as BF16")
     p.add_argument("--prompt", default="Hypothetically, might reflective recursion be a function of cognition?")
     p.add_argument("--length", type=int, help="Repeat/truncate content tokens to this length (boundary tests)")
     p.add_argument("--no-trace", action="store_true")
@@ -26,7 +28,7 @@ def main():
     args = p.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     model = AutoModelForMultimodalLM.from_pretrained(
-        str(args.checkpoint), dtype=torch.bfloat16, device_map="cuda",
+        str(args.checkpoint), dtype=getattr(torch, args.dtype), device_map="cuda",
         trust_remote_code=True, attn_implementation=args.attention,
     ).eval()
     processor = AutoProcessor.from_pretrained(str(args.checkpoint), trust_remote_code=True)
@@ -58,8 +60,13 @@ def main():
     def save(name, tensor):
         if not trace_enabled:
             return
-        tensor = tensor.detach().contiguous().cpu().bfloat16()
+        tensor = tensor.detach().contiguous().cpu()
         key = f"{step}.{name}"
+        if name == "logits" and tensor.dtype == torch.float32:
+            # An FP32 anchor's logits are kept exactly too: BF16 rounding of logits (~1/16 at |z|~21)
+            # would hide differences between implementations' actual outputs (G4).
+            (trace / (key + ".f32")).write_bytes(tensor.numpy().tobytes())
+        tensor = tensor.bfloat16()
         shapes[key] = list(tensor.shape)
         (trace / (key + ".bf16")).write_bytes(tensor.view(torch.uint16).numpy().tobytes())
 

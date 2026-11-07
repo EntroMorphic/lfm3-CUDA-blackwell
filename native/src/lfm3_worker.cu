@@ -192,11 +192,15 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
         auto& lane=lanes[i];if(lane.done) continue;
         auto& session=*lane.session;
         if(lane.trace) {
+#ifdef LFM3_NATIVE_GEMM
+          write_logits_trace(trace_directory+"/lane"+std::to_string(i)+"/"+std::to_string(lane.generated.size()),session.last_scores);
+#else
           std::vector<bf16> raw(session.last_scores.size());
           for(size_t j=0;j<raw.size();++j) raw[j]=__float2bfloat16_rn(session.last_scores[j]);
           std::ofstream file(trace_directory+"/lane"+std::to_string(i)+"/"+std::to_string(lane.generated.size())+".logits.bf16",std::ios::binary);
           file.write(reinterpret_cast<const char*>(raw.data()),raw.size()*sizeof(bf16));
           if(!file) throw std::runtime_error("sampling trace write failed");
+#endif
         }
         const int token=lane.sampler->sample(session.last_scores.data(),size_t(live),lane.generated,choice_suppressed);
         lane.generated.push_back(token);
@@ -321,6 +325,14 @@ class WorkerCore {
        // Device-wide unified-memory accounting, NOT per-worker allocations or RSS.
        if(weights) out<<",\"cuda_free_bytes\":"<<free_bytes<<",\"cuda_total_bytes\":"<<total_bytes
                            <<",\"device_allocated_bytes\":"<<(total_bytes-free_bytes);
+#ifdef LFM3_NATIVE_GEMM
+       // The worker's own engine buffers (LFM_ALLOCATION_METRICS=1 only): exact, unlike the device-wide numbers.
+       if(lfm::allocation_metrics::enabled()) {
+         const auto m=lfm::allocation_metrics::snapshot();
+         out<<",\"app_live_bytes\":"<<m.live<<",\"app_outstanding_allocations\":"<<m.outstanding
+            <<",\"app_metrics_valid\":"<<(m.valid?"true":"false");
+       }
+#endif
        out<<"}\n"<<std::flush;return true;
     }
      if(op=="generate_batch") {
@@ -403,11 +415,15 @@ class WorkerCore {
       for(int t=0;t<count;++t) {
         check_cancellation();
         if(trace_sampling) {
+#ifdef LFM3_NATIVE_GEMM
+          write_logits_trace(sampling_trace+"/"+std::to_string(t),session.last_scores);
+#else
           std::vector<bf16> trace_scores(session.last_scores.size());
           for(size_t i=0;i<trace_scores.size();++i) trace_scores[i]=__float2bfloat16_rn(session.last_scores[i]);
           std::ofstream trace_file(sampling_trace+"/"+std::to_string(t)+".logits.bf16",std::ios::binary);
           trace_file.write(reinterpret_cast<const char*>(trace_scores.data()),trace_scores.size()*sizeof(bf16));
           if(!trace_file) throw std::runtime_error("sampling trace write failed");
+#endif
         }
         int token=sampler.sample(session.last_scores.data(),size_t(live),generated,choice_suppressed);
         generated.push_back(token);

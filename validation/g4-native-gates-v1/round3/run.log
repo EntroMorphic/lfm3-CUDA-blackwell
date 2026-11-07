@@ -1,0 +1,108 @@
+== build-default 08:23:27
+100c8ffe936515a98ad3379fdf44c470b3bd8f9d6776b590948b068e91fa7e93  liquid-lfm3
+f4f22ae7227d25c10a03a77d66a6a8455babb05a2ba4fd77c93fb8ff729febe1  liquid-lfm3-worker
+e7e07451a0d2e8d10b3cae121f68f7e2f6bca51697067eee3e56e07868d67f97  liquid-lfm3-server
+09632b39fbe8d2e157d03d6d86d34db6e1075b2adb366adf3907a1fa14d44943  text-sampling-oracle
+74138fb3cd3f092e06b1d1fea51e1df7efa5d3272876e27af5bcc420ee4a92d7  lfm3-decode-batch-probe
+warnings: 0
+== build-native 08:24:43
+1eb0023769778b01cdd9223dc3e3b26629ed62639d4a0a363e8b7920bef3ee95  liquid-lfm3
+08f1107ccef1e78608ad2c7807d0201576dbbc1bdbbaf4f0b7f9dad01206f9b7  liquid-lfm3-worker
+c1950ff77aeeda156efd5b3b1f889d4bfd4914845d983ae38677f343aae7552f  liquid-lfm3-server
+09632b39fbe8d2e157d03d6d86d34db6e1075b2adb366adf3907a1fa14d44943  text-sampling-oracle
+66ee7ebc06a7b208ae87f639129e114b1e10b50a2b8f86530f00d14b0c5fbec3  lfm3-decode-batch-probe
+warnings: 0
+== compare-default 08:26:26
+liquid-lfm3 stripped:same
+liquid-lfm3-worker stripped:same
+liquid-lfm3-server stripped:same
+== http-batch-metrics 08:26:26
+rc=0
+empty      app_live 0 bytes, outstanding 0, valid True, device free 71006 MiB
+post-close app_live 0 bytes, outstanding 0, valid True, device free 71308 MiB
+soak samples 656: app_live min 166705408 max 166705408 distinct 1
+status passed
+== spread-references 08:36:39
+FAIL ref eager baseline
+`ptxas` stderr:
+ptxas-blackwell fatal   : Value 'sm_110a' is not defined for option 'gpu-name'
+
+Repro command: /opt/venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell -lineinfo --fmad=false -v --gpu-name=sm_110a /tmp/tmpskuyeao3.ptx -o /tmp/tmpskuyeao3.ptx.o
+
+FAIL ref eager arithmetic
+`ptxas` stderr:
+ptxas-blackwell fatal   : Value 'sm_110a' is not defined for option 'gpu-name'
+
+Repro command: /opt/venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell -lineinfo --fmad=false -v --gpu-name=sm_110a /tmp/tmpwlxgh5b_.ptx -o /tmp/tmpwlxgh5b_.ptx.o
+
+FAIL ref eager window257
+`ptxas` stderr:
+ptxas-blackwell fatal   : Value 'sm_110a' is not defined for option 'gpu-name'
+
+Repro command: /opt/venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell -lineinfo --fmad=false -v --gpu-name=sm_110a /tmp/tmpwxkkrd6m.ptx -o /tmp/tmpwxkkrd6m.ptx.o
+
+FAIL ref eager single
+`ptxas` stderr:
+ptxas-blackwell fatal   : Value 'sm_110a' is not defined for option 'gpu-name'
+
+Repro command: /opt/venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell -lineinfo --fmad=false -v --gpu-name=sm_110a /tmp/tmpkw0y7yq8.ptx -o /tmp/tmpkw0y7yq8.ptx.o
+
+FAIL ref sdpa baseline
+`ptxas` stderr:
+ptxas-blackwell fatal   : Value 'sm_110a' is not defined for option 'gpu-name'
+
+Repro command: /opt/venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell -lineinfo --fmad=false -v --gpu-name=sm_110a /tmp/tmpipp20s74.ptx -o /tmp/tmpipp20s74.ptx.o
+
+FAIL ref sdpa arithmetic
+`ptxas` stderr:
+ptxas-blackwell fatal   : Value 'sm_110a' is not defined for option 'gpu-name'
+
+Repro command: /opt/venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell -lineinfo --fmad=false -v --gpu-name=sm_110a /tmp/tmp8h083zjp.ptx -o /tmp/tmp8h083zjp.ptx.o
+
+FAIL ref sdpa window257
+`ptxas` stderr:
+ptxas-blackwell fatal   : Value 'sm_110a' is not defined for option 'gpu-name'
+
+Repro command: /opt/venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell -lineinfo --fmad=false -v --gpu-name=sm_110a /tmp/tmpn_hvjm7d.ptx -o /tmp/tmpn_hvjm7d.ptx.o
+
+FAIL ref sdpa single
+`ptxas` stderr:
+ptxas-blackwell fatal   : Value 'sm_110a' is not defined for option 'gpu-name'
+
+Repro command: /opt/venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell -lineinfo --fmad=false -v --gpu-name=sm_110a /tmp/tmpdlkpjepr.ptx -o /tmp/tmpdlkpjepr.ptx.o
+
+== spread-native 08:37:39
+FAIL native baseline
+lfm3: cannot open /workspace/liquid-CUDA/build/spread-eager-v1/baseline/request.json
+FAIL native arithmetic
+lfm3: cannot open /workspace/liquid-CUDA/build/spread-eager-v1/arithmetic/request.json
+FAIL native window257
+lfm3: cannot open /workspace/liquid-CUDA/build/spread-eager-v1/window257/request.json
+FAIL native single
+lfm3: cannot open /workspace/liquid-CUDA/build/spread-eager-v1/single/request.json
+== spread-compare 08:37:39
+Traceback (most recent call last):
+  File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tools/compare_trace_spread.py", line 84, in <module>
+    main()
+  File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tools/compare_trace_spread.py", line 36, in main
+    eager_ids = json.loads((e / "reference.json").read_text())["generated_ids"]
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/spread-eager-v1/baseline/reference.json'
+== context-measure 08:37:39
+context-measure rc=0
+capacity1                    status passed   steps   1  max_abs 0.2812  bitwise steps 0
+decode2                      status passed   steps   2  max_abs 0.2812  bitwise steps 0
+conv7                        status passed   steps   3  max_abs 0.6523  bitwise steps 0
+window255                    status passed   steps   3  max_abs 0.2500  bitwise steps 0
+window256                    status passed   steps   2  max_abs 0.1250  bitwise steps 0
+window257                    status passed   steps   2  max_abs 0.1875  bitwise steps 0
+long1024                     status passed   steps   3  max_abs 0.2500  bitwise steps 0
+final4096                    status passed   steps   2  max_abs 0.1250  bitwise steps 0
+prefill4096                  status passed   steps   1  max_abs 0.1250  bitwise steps 0
+ALL DONE 08:38:04

@@ -74,6 +74,13 @@ def compare_traces(root, serial, grouped, count):
         a, b = (left/name).read_bytes(), (right/name).read_bytes()
         if len(a) != 256000 or a != b:
             raise AssertionError(f"serial/group full-logit bit mismatch at step {index}")
+        exact = f"{index}.logits.f32"  # FP32-logit engine: compare the exact values too, and require both
+        if (left/exact).exists() != (right/exact).exists():
+            raise AssertionError(f"serial/group exact-trace presence mismatch at step {index}")
+        if (left/exact).exists():
+            a, b = (left/exact).read_bytes(), (right/exact).read_bytes()
+            if len(a) != 512000 or a != b:
+                raise AssertionError(f"serial/group exact FP32 logit mismatch at step {index}")
     return count
 
 

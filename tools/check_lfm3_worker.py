@@ -142,10 +142,16 @@ def main():
                                     str(directory/"result.json")],env=env,check=True,stdout=stream,stderr=subprocess.STDOUT,timeout=300)
                 output=json.loads((directory/"result.json").read_text())
                 step=max(0,len(output["generated_ids"])-1) if count else len(teacher)
+                generated=output["generated_ids"] if count else [output["teacher_argmax"][-1]]
+                exact=directory/"trace"/f"{step}.logits.f32"
+                if exact.exists():  # FP32-logit engine (native GEMM): the exact values it returns
+                    raw=exact.read_bytes()
+                    if len(raw)!=vocabulary*4:raise AssertionError("oracle logit vocabulary length mismatch")
+                    return dict(logits=[x[0] for x in struct.iter_unpack("<f",raw)],generated=generated)
                 raw=(directory/"trace"/f"{step}.logits.bf16").read_bytes()
                 if len(raw)!=vocabulary*2:raise AssertionError("oracle logit vocabulary length mismatch")
                 return dict(logits=[struct.unpack("<f",struct.pack("<I",x[0]<<16))[0] for x in struct.iter_unpack("<H",raw)],
-                            generated=output["generated_ids"] if count else [output["teacher_argmax"][-1]])
+                            generated=generated)
             expected0=single_logits("initial",prompt,[])
             expected1=single_logits("continued",prompt,[7])
             expected_b=single_logits("other",prompt+[8],[])

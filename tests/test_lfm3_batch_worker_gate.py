@@ -74,3 +74,17 @@ def test_live_agreement_is_required_on_every_lane(results,ok):
         gate.require_live_agreement(results,125033)
     else:
         with pytest.raises(AssertionError):gate.require_live_agreement(results,125033)
+
+
+def test_trace_comparison_covers_exact_fp32_traces(tmp_path):
+    # G4: the native-GEMM build also writes STEP.logits.f32; serial and grouped must agree on those bits
+    # too, and an exact trace on one side only is a mismatch.
+    for p in (tmp_path/'1', tmp_path/'2/lane0'):
+        p.mkdir(parents=True)
+        (p/'0.logits.bf16').write_bytes(b'\0\0'*128000)
+        (p/'0.logits.f32').write_bytes(b'\0\0\0\0'*128000)
+    assert gate.compare_traces(tmp_path,1,'2/lane0',1)==1
+    (tmp_path/'2/lane0/0.logits.f32').write_bytes(b'\1\0\0\0'+b'\0\0\0\0'*127999)
+    with pytest.raises(AssertionError,match="exact FP32"):gate.compare_traces(tmp_path,1,'2/lane0',1)
+    (tmp_path/'2/lane0/0.logits.f32').unlink()
+    with pytest.raises(AssertionError,match="presence"):gate.compare_traces(tmp_path,1,'2/lane0',1)

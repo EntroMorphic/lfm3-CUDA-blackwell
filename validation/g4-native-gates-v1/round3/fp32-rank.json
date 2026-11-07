@@ -1,0 +1,158 @@
+{
+  "definition": "Distance of BF16 implementations from an anchor forward pass, per traced activation and per logit step.",
+  "anchor": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/spread-fp32-v2",
+  "cases": [
+    {
+      "case": "baseline",
+      "candidates": {
+        "eager": {
+          "tokens_agree": 16,
+          "of_tokens": 16,
+          "files": 4240,
+          "activation_rel_rms_median": 0.010382709926359628,
+          "activation_rel_rms_max": 0.030993116860276216,
+          "logit_steps": 16,
+          "logit_kl_mean": 0.00044275494818502145,
+          "logit_kl_max": 0.0021876556967033224,
+          "logit_max_abs": 0.25032472610473633
+        },
+        "sdpa": {
+          "tokens_agree": 16,
+          "of_tokens": 16,
+          "files": 3536,
+          "activation_rel_rms_median": 0.008858491647799912,
+          "activation_rel_rms_max": 0.02347100128535958,
+          "logit_steps": 16,
+          "logit_kl_mean": 0.0002107929027562683,
+          "logit_kl_max": 0.0010174412528467865,
+          "logit_max_abs": 0.1930084228515625
+        },
+        "native": {
+          "tokens_agree": 16,
+          "of_tokens": 16,
+          "files": 4240,
+          "activation_rel_rms_median": 0.009059497828266518,
+          "activation_rel_rms_max": 0.02312258169901727,
+          "logit_steps": 16,
+          "logit_kl_mean": 0.00022528807923872195,
+          "logit_kl_max": 0.001058782003632838,
+          "logit_max_abs": 0.1913149356842041
+        }
+      }
+    },
+    {
+      "case": "arithmetic",
+      "candidates": {
+        "eager": {
+          "tokens_agree": 2,
+          "of_tokens": 2,
+          "files": 530,
+          "activation_rel_rms_median": 0.010355052279532947,
+          "activation_rel_rms_max": 0.024730901106242213,
+          "logit_steps": 2,
+          "logit_kl_mean": 1.003936687890933e-06,
+          "logit_kl_max": 1.9731455099073396e-06,
+          "logit_max_abs": 0.21268367767333984
+        },
+        "sdpa": {
+          "tokens_agree": 2,
+          "of_tokens": 2,
+          "files": 442,
+          "activation_rel_rms_median": 0.009278556577067554,
+          "activation_rel_rms_max": 0.01809286605127996,
+          "logit_steps": 2,
+          "logit_kl_mean": 6.589236433814231e-07,
+          "logit_kl_max": 1.3014469873295249e-06,
+          "logit_max_abs": 0.18184280395507812
+        },
+        "native": {
+          "tokens_agree": 2,
+          "of_tokens": 2,
+          "files": 530,
+          "activation_rel_rms_median": 0.008977386267056974,
+          "activation_rel_rms_max": 0.021149183348097327,
+          "logit_steps": 2,
+          "logit_kl_mean": 1.4330555424364271e-06,
+          "logit_kl_max": 2.8631122326890546e-06,
+          "logit_max_abs": 0.1994168758392334
+        }
+      }
+    },
+    {
+      "case": "window257",
+      "candidates": {
+        "eager": {
+          "tokens_agree": 4,
+          "of_tokens": 4,
+          "files": 1060,
+          "activation_rel_rms_median": 0.011172338703942282,
+          "activation_rel_rms_max": 0.04608411166375857,
+          "logit_steps": 4,
+          "logit_kl_mean": 6.064272909084322e-07,
+          "logit_kl_max": 1.2127878934400108e-06,
+          "logit_max_abs": 0.211983323097229
+        },
+        "sdpa": {
+          "tokens_agree": 4,
+          "of_tokens": 4,
+          "files": 884,
+          "activation_rel_rms_median": 0.010179348059460247,
+          "activation_rel_rms_max": 0.027243830690662073,
+          "logit_steps": 4,
+          "logit_kl_mean": 5.298787896894102e-07,
+          "logit_kl_max": 6.951308914196869e-07,
+          "logit_max_abs": 0.2325267791748047
+        },
+        "native": {
+          "tokens_agree": 4,
+          "of_tokens": 4,
+          "files": 1060,
+          "activation_rel_rms_median": 0.010457815791494397,
+          "activation_rel_rms_max": 0.03384792860114113,
+          "logit_steps": 4,
+          "logit_kl_mean": 6.98523886333433e-07,
+          "logit_kl_max": 1.272757582919696e-06,
+          "logit_max_abs": 0.15935134887695312
+        }
+      }
+    },
+    {
+      "case": "single",
+      "candidates": {
+        "eager": {
+          "tokens_agree": 4,
+          "of_tokens": 4,
+          "files": 1060,
+          "activation_rel_rms_median": 0.01379135219488777,
+          "activation_rel_rms_max": 0.04020609247456514,
+          "logit_steps": 4,
+          "logit_kl_mean": 0.0003022007568117034,
+          "logit_kl_max": 0.0006030035418162161,
+          "logit_max_abs": 0.20873260498046875
+        },
+        "sdpa": {
+          "tokens_agree": 4,
+          "of_tokens": 4,
+          "files": 884,
+          "activation_rel_rms_median": 0.013886481644791565,
+          "activation_rel_rms_max": 0.03812866264623463,
+          "logit_steps": 4,
+          "logit_kl_mean": 0.0002820180306045938,
+          "logit_kl_max": 0.0006030035418162161,
+          "logit_max_abs": 0.3666621446609497
+        },
+        "native": {
+          "tokens_agree": 4,
+          "of_tokens": 4,
+          "files": 1060,
+          "activation_rel_rms_median": 0.01352078498618878,
+          "activation_rel_rms_max": 0.040800299703839214,
+          "logit_steps": 4,
+          "logit_kl_mean": 0.00037955771623225985,
+          "logit_kl_max": 0.0010127652592819747,
+          "logit_max_abs": 0.21822845935821533
+        }
+      }
+    }
+  ]
+}
