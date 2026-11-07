@@ -1,0 +1,26 @@
+== sources
+  8c415abcacad951408bb1d0019009e0533254ab183b425c9270bdc997d9f684f  native/src/lfm3_main.cu
+  9645bcc70d65583b4397820acd4bd734d5883829d3d967e071ab64fa9c8a5f9e  native/include/lfm/gemm.cuh
+  7de93bf55503a1126369023faa14acef0c503aeb3d7a891fcfc2319564d82a17  tools/thor/g4_prefill_heads.sh
+== timing 14:42:55
+== bit-invariance 14:48:37
+3968 heads=16: 04dccb687c8dbe34 over 129 steps
+3968 heads=8: 04dccb687c8dbe34 over 129 steps
+3968 heads=4: 04dccb687c8dbe34 over 129 steps
+4096 heads=16: 566af98ab956b23c over 129 steps
+4096 heads=8: 566af98ab956b23c over 129 steps
+4096 heads=4: 566af98ab956b23c over 129 steps
+32000 heads=16: 36b1ab281acff6c4 over 129 steps
+32000 heads=8: 36b1ab281acff6c4 over 129 steps
+32000 heads=4: 36b1ab281acff6c4 over 129 steps
+prompt heads  prefill_s (median of 3)  decode_tok/s
+  3968    16      0.7557            57.3   (3 runs)
+  3968     8      0.7570            57.3   (3 runs)
+  3968     4      0.7613            57.2   (3 runs)
+  4096    16      0.7710            57.3   (3 runs)
+  4096     8      0.8026            57.2   (3 runs)
+  4096     4      0.8661            57.2   (3 runs)
+ 32000    16      7.6186            51.0   (3 runs)
+ 32000     8      8.1202            50.8   (3 runs)
+ 32000     4      9.1042            50.8   (3 runs)
+ALL DONE 14:49:41

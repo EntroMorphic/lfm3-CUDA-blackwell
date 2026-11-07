@@ -16,6 +16,7 @@
 #include <cublas_v2.h>
 #endif
 #include <algorithm>
+#include <cstdlib>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -245,8 +246,18 @@ inline size_t gemm_workspace_bytes(const lfm::RuntimeShape& s,int context) {
 // Prefill runs attention one KV-head group (query_heads/kv_heads heads) at a time; decode runs all heads in
 // one call. Per-element GEMM arithmetic is independent of the batch count, so the split changes no bit; it
 // cuts the FP32 score scratch by kv_heads (1 GiB -> 256 MiB at capacity 4096).
+// Query heads per prefill attention call: one KV group by default. LFM3_PREFILL_HEADS overrides it (a measurement knob,
+// journal/g4-prefill-memory_synth.md): a multiple of the KV group size that divides the head count. Bit-invariant.
+inline int prefill_heads(const lfm::RuntimeShape& s) {
+  static const int requested = [] { const char* v = std::getenv("LFM3_PREFILL_HEADS"); return v ? std::atoi(v) : 0; }();
+  const int group = s.query_heads / s.kv_heads;
+  if (requested == 0) return group;
+  if (requested < group || requested % group || s.query_heads % requested)
+    throw std::runtime_error("LFM3_PREFILL_HEADS must be a multiple of the KV group size that divides the head count");
+  return requested;
+}
 inline size_t padded_attention_scratch(const lfm::RuntimeShape& s) {
-  const size_t pitch=key_pitch(s.context), group=s.query_heads/s.kv_heads;
+  const size_t pitch=key_pitch(s.context), group=prefill_heads(s);
   return std::max(size_t(lfm::text::scratch_rows(s.context))*pitch*group, pitch*s.query_heads);
 }
 // scores[h] (rows x pitch) = Q_h · K_{h/group}ᵀ over cache positions [key_start, key_start+end). `context` is
@@ -452,7 +463,7 @@ class Runner {
     std::string label="layers."+std::to_string(layer)+".self_attn.probabilities";
     if(total_rows>lfm::text::scratch_rows(s.context)) label+=".tile"+std::to_string(first);
     // Decode (one row): all heads at once. Prefill: one KV-head group at a time (see padded_attention_scratch).
-    const int group=rows==1?s.query_heads:s.query_heads/s.kv_heads;
+    const int group=rows==1?s.query_heads:prefill_heads(s);
     for(int h0=0;h0<s.query_heads;h0+=group) {
       const size_t kv=size_t(h0/(s.query_heads/s.kv_heads))*s.context*s.head_dim;
       head_scores(s,s.context,q.p+size_t(first)*s.hidden+size_t(h0)*s.head_dim,keys[layer]->p+kv,key_start,rows,end,
