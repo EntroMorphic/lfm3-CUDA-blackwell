@@ -96,6 +96,15 @@ def reject_before_weights(binary, checkpoint, output, env, timeout, run=subproce
     return results
 
 
+def compare_context_manifest(golden, manifest):
+    """Tier 1: the case set, each case's free-running ids and every teacher logit trace must equal the pin."""
+    golden = {k: v for k, v in golden.items() if not k.startswith("_")}
+    require(set(golden) == set(manifest), f"tier 1: case set differs from the pin: {sorted(set(golden) ^ set(manifest))}")
+    for case in golden:
+        require(golden[case]["generated_ids"] == manifest[case]["generated_ids"], f"tier 1: {case}: ids differ from the pin")
+        require(golden[case]["files"] == manifest[case]["files"], f"tier 1: {case}: logit traces differ from the pin")
+
+
 def compare_logits(reference, native, vocab, atol=0.0, rtol=0.0):
     require(len(reference) == len(native) == vocab * 2, "missing or wrong-size BF16 logits")
     max_abs = 0.0
@@ -378,9 +387,11 @@ def main():
             require(actual == wanted and all(not p.is_symlink() for p in trace.iterdir()),
                     f"{name}: missing logits or unexpected full activation files: {actual ^ wanted}")
             try:
-                exact_logit_steps(trace, range(decodes + 1))
+                exact = exact_logit_steps(trace, range(decodes + 1))
             except ValueError as error:
                 raise RuntimeError(f"{name}: {error}") from error
+            # Native tiers are for the FP32-logit engine: its exact logit traces are required, not just accepted.
+            require(exact or not args.native_tiers, f"{name}: --native-tiers requires the engine's exact .logits.f32 traces")
             actual_argmax = result.get("teacher_argmax")
             require(isinstance(actual_argmax, list) and len(actual_argmax) == decodes + 1,
                     f"{name}: teacher argmax count mismatch")
@@ -418,11 +429,7 @@ def main():
                                                                      suite=args.suite, plan="validation/g4-gates-v2/PLAN.md")))
                 summary["tier1"] = f"pinned {args.pin}"
             else:
-                golden = {k: v for k, v in golden.items() if not k.startswith("_")}
-                require(set(golden) == set(manifest), f"tier 1: case set differs from the pin: {sorted(set(golden) ^ set(manifest))}")
-                for case in golden:
-                    require(golden[case]["generated_ids"] == manifest[case]["generated_ids"], f"tier 1: {case}: ids differ from the pin")
-                    require(golden[case]["files"] == manifest[case]["files"], f"tier 1: {case}: logit traces differ from the pin")
+                compare_context_manifest(golden, manifest)
                 summary["tier1"] = f"matches {args.golden}"
         summary.update(status="passed", maximum4096_checked=args.suite == "full")
         progress("complete")

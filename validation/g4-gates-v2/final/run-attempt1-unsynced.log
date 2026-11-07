@@ -1,0 +1,34 @@
+== build-default 12:01:09
+100c8ffe936515a98ad3379fdf44c470b3bd8f9d6776b590948b068e91fa7e93  liquid-lfm3
+57f3bca596df67f567e3efea7b0bc6d284beac6f36e5a026842d6747c7ced930  liquid-lfm3-worker
+e7e07451a0d2e8d10b3cae121f68f7e2f6bca51697067eee3e56e07868d67f97  liquid-lfm3-server
+c2a9d1f6b1608abb22a36c172c53fce5f60156e94a6a0b66edb7a6c90e859daf  text-sampling-oracle
+74138fb3cd3f092e06b1d1fea51e1df7efa5d3272876e27af5bcc420ee4a92d7  lfm3-decode-batch-probe
+warnings: 0
+== build-cublas 12:02:29
+2dcd128ccdaf4b5375c1e299ff0536751ef9e8641ec3015ff50bfc89f4156c42  liquid-lfm3
+57f3bca596df67f567e3efea7b0bc6d284beac6f36e5a026842d6747c7ced930  liquid-lfm3-worker
+e7e07451a0d2e8d10b3cae121f68f7e2f6bca51697067eee3e56e07868d67f97  liquid-lfm3-server
+c2a9d1f6b1608abb22a36c172c53fce5f60156e94a6a0b66edb7a6c90e859daf  text-sampling-oracle
+74138fb3cd3f092e06b1d1fea51e1df7efa5d3272876e27af5bcc420ee4a92d7  lfm3-decode-batch-probe
+warnings: 0
+== identities 12:03:45
+liquid-lfm3 default vs native-v6: DIFF; cublas option vs cmake-server-v3: same
+liquid-lfm3-worker default vs native-v6: DIFF; cublas option vs cmake-server-v3: same
+liquid-lfm3-server default vs native-v6: DIFF; cublas option vs cmake-server-v3: same
+lfm3-decode-batch-probe default vs native-v6: DIFF; cublas option vs cmake-server-v3: same
+liquid-lfm3 default: 1207504 bytes; needed: libcudart.so.13 libcublas.so.13 libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+liquid-lfm3-worker default: 1286880 bytes; needed: libcudart.so.13 libcublas.so.13 libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+liquid-lfm3-server default: 1464816 bytes; needed: libcudart.so.13 libcublas.so.13 libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+== tier3-scorer 12:03:46
+lfm3-score built sha256 3c38d7ee44e36555
+scorer mode: native-gemm; needed: libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+256: NLL bitwise identical to attempt 3
+257: NLL bitwise identical to attempt 3
+4096: NLL bitwise identical to attempt 3
+32768: NLL bitwise identical to attempt 3
+== gates-pin 12:08:34
+g4-final-v1-default links cuBLAS: TIERS is for native-GEMM builds
+pin gates rc=2
+cat: /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/g4-final-v1-pin-gates/status.json: No such file or directory
+pins removed: the pin run did not pass

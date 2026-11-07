@@ -188,3 +188,69 @@ def test_forward_pins_only_after_tier2a_passes(tmp_path):
     pinned = json.loads(pin.read_text())
     assert pinned["_provenance"]["binary_sha256"] == hashlib.sha256(b"binary").hexdigest() and "baseline" in pinned
     gate.finish_tiers(None, pin, binary, manifest, [dict(case="baseline", passed=True)])  # golden round-trip
+
+
+def main_calls(tool, names):
+    """Names called anywhere inside the tool's main(): tier code that main never calls does not gate anything."""
+    import ast
+    tree = ast.parse((TOOLS / tool).read_text())
+    main = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    called = {c.func.id if isinstance(c.func, ast.Name) else getattr(c.func, "attr", None)
+              for c in ast.walk(main) if isinstance(c, ast.Call)}
+    return {n for n in names if n in called}
+
+
+def test_forward_main_runs_every_tier():
+    assert main_calls("check_lfm3_forward.py", {"finish_tiers", "tier2a", "trace_manifest", "check_exact_logits",
+                                                 "comparator_args"}) == {"finish_tiers", "tier2a", "trace_manifest",
+                                                                        "check_exact_logits", "comparator_args"}
+
+
+def test_context_and_http_batch_mains_use_their_tier_checks():
+    assert main_calls("check_lfm3_context.py", {"compare_context_manifest", "exact_logit_steps"}) == {
+        "compare_context_manifest", "exact_logit_steps"}
+    assert main_calls("check_lfm3_http_batch.py", {"post_close_recovered", "resource_gate", "exact_accounting"}) == {
+        "post_close_recovered", "resource_gate", "exact_accounting"}
+
+
+def test_forward_comparator_args():
+    import types
+    gate = load_forward()
+    tiers = gate.comparator_args(types.SimpleNamespace(native_tiers=True, activation_tolerance=True))
+    assert tiers == ["--max-relative-rms", "inf", "--max-logit-error", "inf"]
+    assert gate.comparator_args(types.SimpleNamespace(native_tiers=False, activation_tolerance=True)) == []
+    assert gate.comparator_args(types.SimpleNamespace(native_tiers=False, activation_tolerance=False)) == ["--require-exact"]
+
+
+def test_context_tier1_manifest_comparison():
+    spec = importlib.util.spec_from_file_location("context_gate_tiers", TOOLS / "check_lfm3_context.py")
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+    pinned = {"a": dict(generated_ids=[1, 2], files={"0.logits.bf16": "x"}), "b": dict(generated_ids=None, files={"0.logits.bf16": "y"}),
+              "_provenance": {"binary_sha256": "z"}}
+    actual = {k: dict(v) for k, v in pinned.items() if not k.startswith("_")}
+    gate.compare_context_manifest(pinned, actual)
+    for damage in ("cases", "ids", "files"):
+        changed = {k: dict(v) for k, v in actual.items()}
+        if damage == "cases":
+            del changed["b"]
+        if damage == "ids":
+            changed["a"]["generated_ids"] = [1, 3]
+        if damage == "files":
+            changed["b"]["files"] = {"0.logits.bf16": "w"}
+        with pytest.raises(RuntimeError, match="tier 1"):
+            gate.compare_context_manifest(pinned, changed)
+
+
+def test_tier_code_is_wired_where_it_gates():
+    # Calls that exist but are bypassed or lose their argument gate nothing (mutations found by review).
+    forward = (TOOLS / "check_lfm3_forward.py").read_text()
+    assert "    if args.native_tiers:\n        finish_tiers(args.pin, args.golden, args.binary, manifest, fidelity)" in forward
+    http = (TOOLS / "check_lfm3_http_batch.py").read_text()
+    assert "resource_gate(baseline,observed,args.require_exact_accounting)" in http
+    assert "post_close_recovered(empty_gpu,post_close,args.require_exact_accounting)" in http
+    runner = (TOOLS / "thor/run_native_gates.sh").read_text()
+    assert "${metrics:+--require-exact-accounting}" in runner
+    assert 'grep -c "lfm::gemm::"' in runner and '[ $cublas = 0 ] && [ $gemm = 3 ]' in runner
+    context = (TOOLS / "check_lfm3_context.py").read_text()
+    assert 'require(exact or not args.native_tiers' in context

@@ -356,3 +356,19 @@ def test_json_symlink_rejected(tmp_path):
     path.symlink_to(target)
     with pytest.raises(OSError):
         bench.read_json(path)
+
+
+@pytest.mark.parametrize("labels,claim", [(["eager-bf16"] * 3, "applies"),
+                                          (["eager-fp32-scores"] * 3, "does not apply"),
+                                          (["eager-bf16", "eager-fp32-scores", "eager-bf16"], None),
+                                          (["eager-int8"] * 3, None)])
+def test_native_engine_labels(reference, native_request, labels, claim):
+    # G4: the native-GEMM engine reports eager-fp32-scores; its eager-parity claim does not apply (greedy agreement is
+    # still measured). All samples must come from one engine, and unknown labels are rejected.
+    samples = [dict(sample(native=True), attention=label) for label in labels]
+    if claim is None:
+        with pytest.raises(Exception):
+            summary(reference, native_request, samples)
+        return
+    report = summary(reference, native_request, samples)
+    assert report["native_attention"] == labels[0] and report["eager_parity_claim"].startswith(claim)

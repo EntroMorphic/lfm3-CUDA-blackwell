@@ -67,3 +67,16 @@ def test_post_close_recovery(case,ok):
                 'device-within':(device,dict(cuda_free_bytes=(70<<30)-(16<<20))),
                 'device-beyond':(device,dict(cuda_free_bytes=(70<<30)-(16<<20)-1))}[case]
     assert gate.post_close_recovered(empty,post)[0] is ok
+
+
+def test_required_exact_accounting_never_falls_back():
+    # G4: with --require-exact-accounting (native builds), missing or invalid accounting fails; it never degrades to the
+    # device-wide check, even when the device-wide reading would pass.
+    device=dict(cuda_free_bytes=70<<30,cuda_total_bytes=128<<30)
+    baseline={'server':dict(rss_bytes=1<<28,descriptors=8),'worker':dict(rss_bytes=1<<32,descriptors=43),'gpu':dict(device)}
+    with pytest.raises(AssertionError,match='required'):gate.resource_gate(baseline,copy.deepcopy(baseline),True)
+    gate.resource_gate(baseline,copy.deepcopy(baseline))  # without the requirement: device-wide, passes
+    invalid=dict(device,app_live_bytes=0,app_metrics_valid=False)
+    assert gate.post_close_recovered(invalid,dict(device,app_live_bytes=4096,app_metrics_valid=False),True)[0] is False
+    assert gate.post_close_recovered(device,dict(device),True)[0] is False
+    assert gate.post_close_recovered(device,dict(device))[0] is True

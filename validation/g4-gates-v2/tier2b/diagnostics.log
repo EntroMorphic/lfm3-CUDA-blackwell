@@ -1,0 +1,46 @@
+== sources
+  88f979f3fe52a9e9b92ae4771b651131e43a9eb6dd172acefeca3d9addf012ec  tools/ppl_fidelity.py
+  ed512f0db402b8ec1a635974e96b188aa53133cf8571d1bf034eeb2d4a6269b0  tools/ppl_compare.py
+  7c6c77f9f4e9905316ebd6e6d6744535ad013e6de07304dd782545a3e668dd89  tools/thor/g4_tier2b_diagnostics.sh
+== tier2b-recomputed: --anchor /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-fp32-v2 --engine-dir /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-g4-v3 --expect-sha256 /tmp/g4-tier2b-diag2/expected-attempt3.sha256
+ length windows  |engine-fp32|  |sdpa-fp32|          D   95% CI                     verdict
+    256    1160      1.674e-02    1.940e-02  -2.66e-03   [-2.74e-03, -2.57e-03]   closer than SDPA
+                                      eager  -4.61e-03   [-4.70e-03, -4.51e-03]   (information)
+    257    1155      1.677e-02    1.948e-02  -2.70e-03   [-2.79e-03, -2.62e-03]   closer than SDPA
+                                      eager  -4.59e-03   [-4.69e-03, -4.50e-03]   (information)
+   4096      72      1.501e-02    1.753e-02  -2.52e-03   [-2.60e-03, -2.43e-03]   closer than SDPA
+                                      eager  -4.73e-03   [-4.84e-03, -4.62e-03]   (information)
+  32768       9      1.585e-02    1.818e-02  -2.33e-03   [-2.43e-03, -2.20e-03]   closer than SDPA
+TIER 2b: PASS
+rc=0
+== diagnostic-attempt2-bf16-logits: --anchor /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-fp32-v2 --engine-dir /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-g4-v2 --expect-sha256 /tmp/g4-tier2b-diag2/expected-attempt2.sha256
+ length windows  |engine-fp32|  |sdpa-fp32|          D   95% CI                     verdict
+    256    1160      1.941e-02    1.940e-02  +1.39e-05   [-7.08e-05, +1.01e-04]   as close as SDPA
+                                      eager  -1.93e-03   [-2.03e-03, -1.84e-03]   (information)
+    257    1155      1.946e-02    1.948e-02  -1.67e-05   [-1.04e-04, +7.36e-05]   as close as SDPA
+                                      eager  -1.91e-03   [-2.01e-03, -1.81e-03]   (information)
+   4096      72      1.749e-02    1.753e-02  -3.54e-05   [-1.13e-04, +4.47e-05]   as close as SDPA
+                                      eager  -2.25e-03   [-2.36e-03, -2.15e-03]   (information)
+  32768       9      1.824e-02    1.818e-02  +6.14e-05   [-4.45e-05, +1.56e-04]   as close as SDPA
+TIER 2b: PASS
+rc=0
+== robust-ppl-g4-v3: --anchor /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-fp32-v1 --anchor-engine hf-sdpa-fp32 --windows-dir /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-v5 --lengths 256 257 4096 --engine-dir /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-g4-v3 --expect-sha256 /tmp/g4-tier2b-diag2/expected-attempt3.sha256
+ length windows  |engine-fp32|  |sdpa-fp32|          D   95% CI                     verdict
+    256    1160      1.674e-02    1.940e-02  -2.66e-03   [-2.74e-03, -2.57e-03]   closer than SDPA
+                                      eager  -4.61e-03   [-4.70e-03, -4.51e-03]   (information)
+    257    1155      1.677e-02    1.948e-02  -2.70e-03   [-2.79e-03, -2.62e-03]   closer than SDPA
+                                      eager  -4.59e-03   [-4.69e-03, -4.50e-03]   (information)
+   4096      72      1.501e-02    1.753e-02  -2.52e-03   [-2.60e-03, -2.43e-03]   closer than SDPA
+                                      eager  -4.73e-03   [-4.84e-03, -4.62e-03]   (information)
+TIER 2b: PASS (lengths [256, 257, 4096] only: a diagnostic, not the gate)
+rc=0
+== robust-ppl-g4-v2: --anchor /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-fp32-v1 --anchor-engine hf-sdpa-fp32 --windows-dir /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-v5 --lengths 256 257 4096 --engine-dir /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/ppl-g4-v2 --expect-sha256 /tmp/g4-tier2b-diag2/expected-attempt2.sha256
+ length windows  |engine-fp32|  |sdpa-fp32|          D   95% CI                     verdict
+    256    1160      1.941e-02    1.940e-02  +1.39e-05   [-7.08e-05, +1.01e-04]   as close as SDPA
+                                      eager  -1.93e-03   [-2.03e-03, -1.84e-03]   (information)
+    257    1155      1.946e-02    1.948e-02  -1.67e-05   [-1.04e-04, +7.36e-05]   as close as SDPA
+                                      eager  -1.91e-03   [-2.01e-03, -1.81e-03]   (information)
+   4096      72      1.749e-02    1.753e-02  -3.54e-05   [-1.13e-04, +4.47e-05]   as close as SDPA
+                                      eager  -2.25e-03   [-2.36e-03, -2.15e-03]   (information)
+TIER 2b: PASS (lengths [256, 257, 4096] only: a diagnostic, not the gate)
+rc=0

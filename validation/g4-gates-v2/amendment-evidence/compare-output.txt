@@ -1,0 +1,20 @@
+7910638b6140c4f5c200875caaaf4b250944a8c6399e7ba5f9f3e788586a436f  fp32-probe-eager_blocked-4096-v2/nll-hf-eager_blocked-fp32-4096.f32
+7910638b6140c4f5c200875caaaf4b250944a8c6399e7ba5f9f3e788586a436f  fp32-probe-eager-4096-v2/nll-hf-eager-fp32-4096.f32
+38455a0fa1a84d3b362e623114d5178ab530c7a9a5add7c62f7b6f9b150a108a  fp32-probe-sdpa-4096-v2/nll-hf-sdpa-fp32-4096.f32
+eager_blocked vs eager: tokens 4095, max |dNLL| 0.000e+00, mean 0.000e+00, bitwise identical True
+eager_blocked vs sdpa: tokens 4095, max |dNLL| 5.054e-05, mean 4.683e-06, bitwise identical False
+eager vs sdpa: tokens 4095, max |dNLL| 5.054e-05, mean 4.683e-06, bitwise identical False
+== fp32-probe-32768.log
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+== fp32-probe-eager_blocked-32768-v2.log
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+{"engine": "hf-eager_blocked-fp32", "length": 32768, "windows": 1, "scored_tokens": 32767, "mean_nll": 2.525992195595855, "perplexity": 12.503294825253644, "seconds": 86.47251249600004, "file": "nll-h
+== fp32-probe-eager_blocked-4096-v2.log
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+{"engine": "hf-eager_blocked-fp32", "length": 4096, "windows": 1, "scored_tokens": 4095, "mean_nll": 2.575013024698359, "perplexity": 13.131488191048884, "seconds": 5.232538152000018, "file": "nll-hf-
+== fp32-probe-eager-4096-v2.log
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+{"engine": "hf-eager-fp32", "length": 4096, "windows": 1, "scored_tokens": 4095, "mean_nll": 2.575013024698359, "perplexity": 13.131488191048884, "seconds": 5.028991768999958, "file": "nll-hf-eager-fp
+== fp32-probe-sdpa-4096-v2.log
+[transformers] The following generation flags are not valid and may be ignored: ['temperature', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+{"engine": "hf-sdpa-fp32", "length": 4096, "windows": 1, "scored_tokens": 4095, "mean_nll": 2.5750130718281357, "perplexity": 13.131488809933002, "seconds": 4.664940836000028, "file": "nll-hf-sdpa-fp3

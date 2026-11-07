@@ -1,0 +1,26 @@
+Transcribed verbatim from the session's terminal output on 2026-11-07 (the probe scripts printed these lines to
+the SSH session; they were not written to files on Thor). Thor: 122 GB unified memory.
+
+1. FP32 SDPA, before the amendment, full §9 run (ppl_reference --configs sdpa --dtype float32): lengths 256, 257
+   and 4,096 completed (build/ppl-fp32-v1); during length 32,768 Thor stopped answering ping and SSH and had to be
+   power-cycled (last successful check 10:52; reboot recorded at 11:14 by `last -x reboot`). The kernel log of
+   that boot showed no OOM entry.
+
+2. fp32-probe-sigkill-watchdog.sh 4096 16   (SDPA FP32, one window)
+length 4096: rc=0 killed=0 available start 118 GB, minimum 105 GB, peak use ~13 GB
+
+3. fp32-probe-sigkill-watchdog.sh 32768 16  (SDPA FP32, one window)
+WATCHDOG: available 11 GB < 16 GB, killed
+length 32768: rc=137 killed=1 available start 107 GB, minimum 11 GB, peak use ~96 GB
+   Afterwards MemAvailable stayed at ~2.8 GB with no process holding memory (checked over 60 s; a kworker in D
+   state), until a reboot.
+
+4. After that reboot, fp32-probe-sigterm.sh (one window each, 4096, v2 directories):
+eager_blocked 4096: rc=0 stopped=0 available before 75 GB, minimum 73 GB (peak ~2 GB), after 75 GB
+eager 4096: rc=0 stopped=0 available before 75 GB, minimum 73 GB (peak ~2 GB), after 75 GB
+sdpa 4096: rc=0 stopped=0 available before 75 GB, minimum 73 GB (peak ~2 GB), after 75 GB
+   (75 GB rather than ~124 GB at the start: an earlier failed attempt of these probes, with inference_mode
+   misplaced so autograd kept activations, used ~46 GB that was not returned before this run.)
+
+5. fp32-probe-sigterm.sh 32768 eager_blocked 30 v2   (one window)
+eager_blocked 32768: rc=0 stopped=0 available before 75 GB, minimum 73 GB (peak ~2 GB), after 75 GB

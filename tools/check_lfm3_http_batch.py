@@ -23,7 +23,7 @@ from check_lfm3_soak import process_sample
 from lfm3_owned_process import owned_main
 
 
-def resource_gate(baseline, sample):
+def resource_gate(baseline, sample, require_exact=False):
     for role in ("server", "worker"):
         if (sample[role]["rss_bytes"] > baseline[role]["rss_bytes"]+32*1024*1024 or
             sample[role]["descriptors"] > baseline[role]["descriptors"]+2):
@@ -33,6 +33,8 @@ def resource_gate(baseline, sample):
         not 0 < memory["cuda_free_bytes"] <= memory["cuda_total_bytes"] or
         memory["cuda_total_bytes"] != baseline["gpu"]["cuda_total_bytes"]):
         raise AssertionError("invalid device-wide CUDA memory reading")
+    if require_exact and not exact_accounting(baseline["gpu"]):
+        raise AssertionError("exact engine-buffer accounting required but the warm baseline lacks it")
     if exact_accounting(baseline["gpu"]):
         # G4 (validation/g4-gates-v2/PLAN.md): the worker's own engine-buffer bytes decide; on Thor's unified memory
         # the device-wide reading also moves with host activity and is recorded only.
@@ -42,9 +44,11 @@ def resource_gate(baseline, sample):
         raise AssertionError("fixed warm device-wide CUDA free-memory budget exceeded")
 
 
-def post_close_recovered(empty, post_close):
+def post_close_recovered(empty, post_close, require_exact=False):
     """After closing every session: exact engine-buffer bytes back to the empty-session value when the worker reports
     them, else device-wide free memory within 16 MiB of it. Returns (recovered, how it was judged)."""
+    if require_exact and not exact_accounting(empty):
+        return False, "exact engine-buffer accounting required but missing or invalid"
     if exact_accounting(empty):
         return (exact_accounting(post_close) and post_close["app_live_bytes"] == empty["app_live_bytes"],
                 "worker engine-buffer bytes (exact); device-wide readings recorded only")
@@ -82,6 +86,9 @@ def main():
     parser.add_argument("--output",type=Path,required=True)
     parser.add_argument("--cycles",type=int,default=60)
     parser.add_argument("--minimum-seconds",type=float,default=600)
+    parser.add_argument("--require-exact-accounting",action="store_true",
+                        help="native-GEMM builds (G4): memory is judged only by the worker's exact engine-buffer bytes; "
+                             "missing or invalid accounting fails instead of falling back to device-wide readings")
     args=parser.parse_args()
     if not 5<=args.cycles<=10000 or not 0<=args.minimum_seconds<=7200:
         raise ValueError("invalid bounded soak limits")
@@ -133,6 +140,8 @@ def main():
         for _ in range(3):batch()
         for sid in (a,b):call(f"/sessions/{sid}/close",{})
         empty_gpu=service._submit(lambda:worker.call(dict(op="stats")),lambda:None)
+        if args.require_exact_accounting and not exact_accounting(empty_gpu):
+            raise AssertionError("exact engine-buffer accounting required: start the worker with LFM_ALLOCATION_METRICS=1")
         if type(empty_gpu.get('cuda_free_bytes')) is not int:raise AssertionError('missing empty-session device baseline')
         a,b=[call("/sessions",dict(capacity=512))[0]["session_id"] for _ in range(2)]
         for request,sid in zip(requests,(a,b)):request['session_id']=sid
@@ -184,7 +193,7 @@ def main():
                 call("/generate_batch",dict(requests=[requests[0],dict(requests[1],max_new_tokens=0)]),status=400)
                 for sid in (a,b):call(f"/sessions/{sid}/reset",{})
                 batch()
-            observed=sample(cycle);report["samples"].append(observed);save();resource_gate(baseline,observed)
+            observed=sample(cycle);report["samples"].append(observed);save();resource_gate(baseline,observed,args.require_exact_accounting)
             cycle+=1
         report["cycles_completed"]=cycle;report["soak_seconds"]=time.monotonic()-soak_start
         report["latency_summary"]={}
@@ -196,7 +205,7 @@ def main():
         for sid in (a,b):call(f"/sessions/{sid}/close",{})
         post_close=service._submit(lambda:worker.call(dict(op='stats')),lambda:None)
         report['post_close_gpu']=post_close;save()
-        recovered,report['memory_judged_by']=post_close_recovered(empty_gpu,post_close)
+        recovered,report['memory_judged_by']=post_close_recovered(empty_gpu,post_close,args.require_exact_accounting)
         if (post_close.get('sessions')!=0 or post_close.get('reserved_tokens')!=0 or not recovered):
             raise AssertionError('post-close allocations not recovered (engine-buffer bytes exactly, else device-wide within 16 MiB)')
         if service.sessions or service.failed:raise AssertionError("leaked sessions/failed service")

@@ -16,18 +16,32 @@ build=$1; tag=$2
 case "${KEEP_GOING:-0}" in 0|1) ;; *) echo "KEEP_GOING must be 0 or 1"; exit 2 ;; esac
 case "${TIERS:-}" in "") tier_args=(); context_tier=(); metrics=() ;;
   pin|golden) [ -n "${PIN_DIR:-}" ] || { echo "TIERS needs PIN_DIR"; exit 2; }
+    # Pins are written by forward and context as they pass; a later failure must not leave them, so pin strictly.
+    [ "$TIERS" = golden ] || [ "${KEEP_GOING:-0}" = 0 ] || { echo "TIERS=pin requires KEEP_GOING=0"; exit 2; }
     tier_args=(--native-tiers --$TIERS "$PIN_DIR/forward.json"); context_tier=(--native-tiers --$TIERS "$PIN_DIR/context.json")
     metrics=(-e LFM_ALLOCATION_METRICS=1) ;;
   *) echo "TIERS must be pin or golden"; exit 2 ;; esac
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
+W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=${LFM3_BUILD_ROOT:-$W/liquid-CUDA/build}; C=/workspace/liquid-CUDA/build
+# Engine kind, failing closed: native = no binary needs libcublas AND lfm::gemm is compiled in; cuBLAS = all need
+# libcublas. A native-GEMM build cannot pass the eager-bitwise forward/context gates: it needs TIERS.
+command -v readelf >/dev/null && command -v nm >/dev/null || { echo "readelf and nm are required"; exit 2; }
+cublas=0; gemm=0
+for f in liquid-lfm3 liquid-lfm3-worker liquid-lfm3-server; do
+  test -x "$B/$build/$f" || { echo "missing $B/$build/$f"; exit 1; }
+  dyn=$(readelf -d "$B/$build/$f") || { echo "readelf failed on $f"; exit 2; }
+  grep -q libcublas <<< "$dyn" && cublas=$((cublas+1))
+  # grep -c reads all of nm's output: grep -q could exit early and, under pipefail, SIGPIPE nm into a false "no".
+  symbols=$(nm -C "$B/$build/$f" 2>/dev/null | grep -c "lfm::gemm::"); [ "${symbols:-0}" -gt 0 ] && gemm=$((gemm+1))
+done
+if [ $cublas = 0 ] && [ $gemm = 3 ]; then
+  [ -n "${TIERS:-}" ] || { echo "$build is a native-GEMM build: set TIERS=pin|golden and PIN_DIR"; exit 2; }
+elif [ $cublas = 3 ] && [ $gemm = 0 ]; then
+  [ -z "${TIERS:-}" ] || { echo "$build links cuBLAS: TIERS is for native-GEMM builds"; exit 2; }
+else echo "$build: cannot tell the engine kind (cuBLAS in $cublas, lfm::gemm in $gemm of 3 binaries)"; exit 2; fi
 out="$B/$tag-gates"; test ! -e "$out" || { echo "exists: $out"; exit 1; }; mkdir "$out"
 status(){ printf '{"stage":"%s","rc":%s,"unix":%s}\n' "$1" "$2" "$(date +%s)" > "$out/status.json"; }
 bins="liquid-lfm3 liquid-lfm3-worker text-sampling-oracle liquid-lfm3-server"
 for f in $bins; do test -x "$B/$build/$f" || { echo "missing $B/$build/$f"; exit 1; }; done
-# A native-GEMM build (no cuBLAS in liquid-lfm3) cannot pass the eager-bitwise forward/context gates: it needs TIERS.
-if ! readelf -d "$B/$build/liquid-lfm3" | grep -q "libcublas"; then
-  [ -n "${TIERS:-}" ] || { echo "$build is a native-GEMM build: set TIERS=pin|golden and PIN_DIR"; exit 2; }
-elif [ -n "${TIERS:-}" ]; then echo "$build links cuBLAS: TIERS is for native-GEMM builds"; exit 2; fi
 python3 -c 'import json,sys; print(json.dumps(dict(build=sys.argv[1], keep_going=sys.argv[2] == "1", forward_args=sys.argv[3], tiers=sys.argv[4], pin_dir=sys.argv[5])))' \
   "$build" "${KEEP_GOING:-0}" "${FORWARD_ARGS:-}" "${TIERS:-}" "${PIN_DIR:-}" > "$out/mode.json"
 (cd "$B/$build" && sha256sum $bins) > "$out/binaries.sha256" \
@@ -65,7 +79,7 @@ run server         $T/check_lfm3_server.py --checkpoint $CK --worker $N/liquid-l
 run cancellation   $T/check_lfm3_cancellation.py --checkpoint $CK --worker $N/liquid-lfm3-worker --control-request $CTL_REQ --control-result $CTL_RES --output $O-cancellation
 run http-cancellation $T/check_lfm3_http_cancellation.py --checkpoint $CK --worker $N/liquid-lfm3-worker --control-result $CTL_RES --output $O-http-cancellation
 run 32k            $T/check_lfm3_32k.py --checkpoint $CK --binary $N/liquid-lfm3 --output $O-32k
-run http-batch     $T/check_lfm3_http_batch.py --checkpoint $CK --worker $N/liquid-lfm3-worker --control-result $CTL_RES --output $O-http-batch
+run http-batch     $T/check_lfm3_http_batch.py --checkpoint $CK --worker $N/liquid-lfm3-worker --control-result $CTL_RES --output $O-http-batch ${metrics:+--require-exact-accounting}
 run native-server $T/check_lfm3_native_server.py --checkpoint $CK --server $N/liquid-lfm3-server --worker $N/liquid-lfm3-worker --control-result $CTL_RES --output $O-native-server
 [ $failed = 0 ] || { status "done-with-failures" 1; exit 1; }
 status "done" 0

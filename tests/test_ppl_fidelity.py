@@ -16,9 +16,9 @@ def sha(p):
     return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
 
-def windows(d, count=6):
+def windows(d, count=6, **extra):
     d.mkdir(parents=True, exist_ok=True)
-    summary = {"bos_id": BOS, "windows": {}}
+    summary = {"bos_id": BOS, "windows": {}, **extra}
     for L in LENGTHS:
         w = np.full((count, L), 7, np.int32)
         w[:, 0] = BOS
@@ -43,8 +43,9 @@ def nll(d, engine, L, values, attn=None, dtype=None):
 
 def build(tmp_path, engine_noise, sdpa_noise, eager=True):
     rng = np.random.default_rng(0)
+    fp32 = dict(dtype="float32", precision=dict(matmul_allow_tf32=False, cudnn_allow_tf32=False))
     for name in ("anchor", "refs", "engine"):
-        windows(tmp_path / name)
+        windows(tmp_path / name, **(fp32 if name == "anchor" else {}))
     for L in LENGTHS:
         base = rng.uniform(1, 5, size=6 * (L - 1))
         nll(tmp_path / "anchor", "hf-sdpa-fp32", L, base, "sdpa", "float32")
@@ -125,3 +126,50 @@ def test_expected_hashes_are_enforced(tmp_path):
     assert run(tmp_path, extra=("--expect-sha256", str(tmp_path / "ok.sha"))).returncode == 0
     (tmp_path / "bad.sha").write_text("\n".join(lines[:1] + ["0" * 64 + "  nll-native-gemm-257.f32"] + lines[2:]) + "\n")
     assert run(tmp_path, extra=("--expect-sha256", str(tmp_path / "bad.sha"))).returncode == 2
+
+
+def test_anchor_tf32_or_empty_expectations_or_bad_lengths_give_no_verdict(tmp_path):
+    build(tmp_path, 0.01, 0.01)
+    assert run(tmp_path).returncode == 0
+    (tmp_path / "empty.sha").write_text("")
+    assert run(tmp_path, extra=("--expect-sha256", str(tmp_path / "empty.sha"))).returncode == 2
+    assert run(tmp_path, extra=("--lengths", "512")).returncode == 2
+    summary = tmp_path / "anchor/summary.json"
+    for flag in ("cudnn_allow_tf32", "matmul_allow_tf32"):
+        s = json.loads(summary.read_text())
+        s["precision"] = {**dict(matmul_allow_tf32=False, cudnn_allow_tf32=False), flag: True}
+        summary.write_text(json.dumps(s))
+        r = run(tmp_path)
+        assert r.returncode == 2 and "TF32" in r.stderr, flag
+
+
+def test_a_subset_of_lengths_with_windows_elsewhere(tmp_path):
+    # Robustness checks against an anchor that has no summary.json of its own (e.g. a partial run).
+    build(tmp_path, 0.01, 0.01)
+    (tmp_path / "anchor/summary.json").unlink()
+    r = run(tmp_path, extra=("--lengths", "256", "4096", "--windows-dir", str(tmp_path / "refs")))
+    assert r.returncode == 0, r.stderr
+    assert [row["length"] for row in json.loads((tmp_path / "out.json").read_text())["rows"]] == [256, 4096]
+
+
+def test_malformed_metadata_is_no_verdict(tmp_path):
+    build(tmp_path, 0.01, 0.01)
+    meta = tmp_path / "engine/nll-native-gemm-256.meta.json"
+    meta.write_text("[]")  # not an object: an unexpected exception type
+    assert run(tmp_path).returncode == 2
+
+
+def test_insufficient_expectations_tf32_files_and_subset_labels(tmp_path):
+    build(tmp_path, 0.01, 0.01)
+    lines = [f"{sha(tmp_path / f'engine/nll-native-gemm-{L}.f32')}  nll-native-gemm-{L}.f32" for L in LENGTHS]
+    (tmp_path / "three.sha").write_text("\n".join(lines[:3]) + "\n")
+    r = run(tmp_path, extra=("--expect-sha256", str(tmp_path / "three.sha")))
+    assert r.returncode == 2 and "lists no hash" in r.stderr
+    r = run(tmp_path, extra=("--lengths", "256"))
+    assert r.returncode == 0 and "not the gate" in r.stdout
+    assert json.loads((tmp_path / "out.json").read_text())["full_gate"] is False
+    meta = tmp_path / "anchor/nll-hf-sdpa-fp32-257.meta.json"
+    m = json.loads(meta.read_text()); m["precision"] = dict(matmul_allow_tf32=True, cudnn_allow_tf32=False)
+    meta.write_text(json.dumps(m))
+    r = run(tmp_path)
+    assert r.returncode == 2 and "TF32 enabled" in r.stderr

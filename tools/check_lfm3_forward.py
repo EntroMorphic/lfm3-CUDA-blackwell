@@ -12,6 +12,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lfm3_trace_exact import exact_logit_steps  # noqa: E402
 
 
+def comparator_args(args):
+    """compare_lfm3_traces flags: native tiers record eager distances without judging them (teacher argmax stays
+    exact); --activation-tolerance uses its default tolerances; otherwise bitwise equality with eager."""
+    if args.native_tiers:
+        return ["--max-relative-rms", "inf", "--max-logit-error", "inf"]
+    return [] if args.activation_tolerance else ["--require-exact"]
+
+
 def trace_manifest(native, generated_ids):
     """Tier 1: SHA-256 of every native trace file, and the free-running ids."""
     files = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(native.iterdir()) if p.is_file()}
@@ -131,11 +139,7 @@ def main():
              "--output", directory, "--tokens", steps, *extra], args.output / (name + ".reference.log"))
         run([args.binary, "--experimental", args.checkpoint, directory / "request.json", directory / "native.json"],
             directory / "native.log")
-        if args.native_tiers:  # eager distances are information only; the teacher argmax check stays exact
-            exact = ["--max-relative-rms", "inf", "--max-logit-error", "inf"]
-        else:
-            exact = [] if args.activation_tolerance else ["--require-exact"]
-        run([sys.executable, tools / "compare_lfm3_traces.py", directory, *exact], directory / "comparison.log")
+        run([sys.executable, tools / "compare_lfm3_traces.py", directory, *comparator_args(args)], directory / "comparison.log")
         request = json.loads((directory / "request.json").read_text())
         expected = json.loads((directory / "reference.json").read_text())["generated_ids"]
         request.pop("teacher_ids")

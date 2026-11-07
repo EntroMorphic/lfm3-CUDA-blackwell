@@ -62,3 +62,21 @@ math (scores, additive eager mask, FP32 softmax, P·V), computed 2,048 query row
 4,096-token window it is **bitwise identical** to plain FP32 eager; at 32,768 it runs within a few GB. It is used at
 all four lengths, so every length has the same anchor. Engine name: `hf-eager_blocked-fp32`. Nothing else in 2b
 changes: the statistic, the CI, ε, the FAIL rule, and the single run.
+
+## Notes after the run (2026-11-07, independent review); the declaration and amendment above are unchanged
+
+- The amendment's figures are backed by `amendment-evidence/`, committed after the run: the memory figures are
+  transcribed from the session (they were printed, not written to files); the 4,096 comparison is reproduced by
+  `amendment-evidence/compare.py`.
+- "exceeded 96 GB": it reached about 96 GB (107 → 11 GB available) when the watchdog stopped it. "Hung the machine
+  twice": once it hung; the second time a SIGKILL watchdog stopped it and the driver kept the memory until a reboot.
+- "at 32,768 it runs within a few GB" is not supported as stated: the run kept MemAvailable at or above 73 GB, and
+  MemAvailable may not capture every GPU allocation on Thor.
+- "bitwise identical to plain FP32 eager" was measured on one 4,096-token window on Thor (identical NLL files). Blocks
+  smaller than the sequence change matmul shapes, so in general they agree to FP32 rounding (a CPU test,
+  `tests/test_ppl_reference_eager_blocked.py`, bounds that); at 256 and 257 one block covers the sequence.
+- The declared anchor (FP32 SDPA) had completed 256, 257 and 4,096 before the amendment; against those lengths 2b gives
+  the same result (`tier2b/robust-*.json`).
+- 2b's margin comes from the engine's FP32 logits; with BF16 logits the engine is as close to FP32 as SDPA
+  (`tier2b/README.md`).
+

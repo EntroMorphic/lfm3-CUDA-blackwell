@@ -310,7 +310,8 @@ def test_native_tiers_pin_then_golden(tmp_path, monkeypatch):
                 # A native engine differs from eager in its logits (here 0x4001 vs 0x4000) but keeps the argmax, and
                 # writes its exact FP32 logits too (bits 0x40008001 and 0x40008002 both round to 0x4001).
                 (trace / f"{step}.logits.bf16").write_bytes(bf16(0x3f80, state["logit"]))
-                (trace / f"{step}.logits.f32").write_bytes(struct.pack("<ff", 1.0, state["exact"]))
+                if not state.get("no_f32"):
+                    (trace / f"{step}.logits.f32").write_bytes(struct.pack("<ff", 1.0, state["exact"]))
         return dict(teacher_argmax=[1, 1], generated_ids=[] if label == "teacher" else [1, 1], decode_forward_calls=1)
 
     monkeypatch.setattr(context, "make_references", reference)
@@ -331,4 +332,11 @@ def test_native_tiers_pin_then_golden(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["check", "--checkpoint", str(checkpoint), "--binary", str(binary),
                                      "--output", str(tmp_path / "changed"), "--suite", "smoke", "--native-tiers", "--golden", str(pin)])
     with pytest.raises(RuntimeError, match="tier 1"):
+        context.main()
+
+    # Tier mode requires the exact FP32 logit traces: a run without them fails before tier 1.
+    state.update(exact=as_float(0x40008001), no_f32=True)
+    monkeypatch.setattr(sys, "argv", ["check", "--checkpoint", str(checkpoint), "--binary", str(binary),
+                                     "--output", str(tmp_path / "no-f32"), "--suite", "smoke", "--native-tiers", "--golden", str(pin)])
+    with pytest.raises(RuntimeError, match="requires the engine's exact"):
         context.main()

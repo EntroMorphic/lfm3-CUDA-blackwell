@@ -53,6 +53,8 @@ def register_eager_blocked(block_rows):
     """Eager attention computed in blocks of query rows: the same math as the model's eager_attention_forward
     (scores, additive eager mask, FP32 softmax, P.V) without materializing all L x L scores at once. In FP32 at
     32,768 tokens, SDPA falls back to its unfused math kernel and needs over 96 GB (validation/g4-gates-v2/)."""
+    if not isinstance(block_rows, int) or block_rows < 1:
+        raise ValueError("--attention-block-rows must be at least 1")
     from transformers import AttentionInterface
     from transformers.masking_utils import ALL_MASK_ATTENTION_FUNCTIONS, AttentionMaskInterface
 
@@ -164,7 +166,7 @@ def main():
             nll.tofile(path)
             write_meta(a.output / f"nll-hf-{config}{suffix}-{length}.meta.json", engine=f"hf-{config}{suffix}", length=length,
                        windows_file=f"windows-{length}.i32", windows_sha256=summary["windows"][str(length)]["sha256"],
-                       nll_sha256=sha256(path), attn_implementation=actual, dtype=a.dtype,
+                       nll_sha256=sha256(path), attn_implementation=actual, dtype=a.dtype, precision=summary["precision"],
                        versions=summary["versions"])
             mean = float(nll.astype(np.float64).mean())
             summary["results"].append({"engine": f"hf-{config}{suffix}", "length": length, "windows": int(nll.shape[0]),
