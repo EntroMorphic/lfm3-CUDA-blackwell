@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """G4 tier 2b: is an engine's per-token NLL as close to an FP32 model's as HF SDPA's is? (validation/g4-gates-v2/PLAN.md)
 
-Per token: A = |NLL_engine - NLL_anchor|, S = |NLL_sdpa - NLL_anchor|, anchor = hf-sdpa-fp32. Paired over windows:
+Per token: A = |NLL_engine - NLL_anchor|, S = |NLL_sdpa - NLL_anchor|; the anchor is an FP32 run of ppl_reference
+(default hf-eager_blocked-fp32: exact FP32 eager attention in blocks; see the PLAN amendment). Paired over windows:
 D = mean(A) - mean(S), with ppl_compare's 95% paired bootstrap CI over windows and its epsilon. A length FAILS iff
 the whole CI of D lies above +epsilon (the engine is statistically farther from FP32 than SDPA is). Also reported,
 not judged: the same with hf-eager in place of hf-sdpa where it exists.
@@ -34,7 +35,8 @@ def windows_sha(d, length):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    p.add_argument("--anchor", type=Path, required=True, help="ppl_reference --dtype float32 --configs sdpa output")
+    p.add_argument("--anchor", type=Path, required=True, help="ppl_reference --dtype float32 output")
+    p.add_argument("--anchor-engine", default="hf-eager_blocked-fp32", help="hf-ATTENTION-fp32")
     p.add_argument("--references", type=Path, required=True, help="directory with nll-hf-sdpa/-eager files")
     p.add_argument("--engine-dir", type=Path, required=True)
     p.add_argument("--engine", required=True)
@@ -68,10 +70,12 @@ def run(a):
             if windows_sha(d, length)[1] != sha:
                 raise InputError(f"{d}: windows-{length}.i32 differ from the anchor's")
         count = windows.shape[0]
-        anchor, _ = load_nll(a.anchor, "hf-sdpa-fp32", length, sha, count, True)
-        meta = json.loads((a.anchor / f"nll-hf-sdpa-fp32-{length}.meta.json").read_text())
-        if meta.get("dtype") != "float32" or meta.get("attn_implementation") != "sdpa":
-            raise InputError(f"anchor at {length} is not recorded as float32 with sdpa attention")
+        anchor, _ = load_nll(a.anchor, a.anchor_engine, length, sha, count, True)
+        meta = json.loads((a.anchor / f"nll-{a.anchor_engine}-{length}.meta.json").read_text())
+        attention = a.anchor_engine[len("hf-"):-len("-fp32")]
+        if (not (a.anchor_engine.startswith("hf-") and a.anchor_engine.endswith("-fp32")) or meta.get("dtype") != "float32"
+                or meta.get("attn_implementation") != attention):
+            raise InputError(f"anchor at {length} is not recorded as float32 with {attention} attention")
         engine, engine_sha = load_nll(a.engine_dir, a.engine, length, sha, count, True)
         engine_meta = json.loads((a.engine_dir / f"nll-{a.engine}-{length}.meta.json").read_text())
         if not (isinstance(engine_meta.get("scorer_sha256"), str) and len(engine_meta["scorer_sha256"]) == 64):
@@ -100,7 +104,8 @@ def run(a):
         row["verdict"] = ("farther than SDPA (FAIL)" if row["fails"] else
                           "closer than SDPA" if sd["ci95"][1] < -EQUAL_EPS else "as close as SDPA")
         rows.append(row)
-    report = dict(status="complete", definition=__doc__.split("\n\n")[0], epsilon=EQUAL_EPS, engine=a.engine, rows=rows,
+    report = dict(status="complete", definition=__doc__.split("\n\n")[0], epsilon=EQUAL_EPS, engine=a.engine,
+                  anchor_engine=a.anchor_engine, rows=rows,
                   passes=not any(r["fails"] for r in rows))
     if a.output:
         a.output.write_text(json.dumps(report, indent=2) + "\n")

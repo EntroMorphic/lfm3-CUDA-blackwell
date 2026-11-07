@@ -49,6 +49,31 @@ def build_windows(tokens, bos, length, max_windows):
     return np.asarray(rows, dtype=np.int32)
 
 
+def register_eager_blocked(block_rows):
+    """Eager attention computed in blocks of query rows: the same math as the model's eager_attention_forward
+    (scores, additive eager mask, FP32 softmax, P.V) without materializing all L x L scores at once. In FP32 at
+    32,768 tokens, SDPA falls back to its unfused math kernel and needs over 96 GB (validation/g4-gates-v2/)."""
+    from transformers import AttentionInterface
+    from transformers.masking_utils import ALL_MASK_ATTENTION_FUNCTIONS, AttentionMaskInterface
+
+    def eager_blocked(module, query, key, value, attention_mask, scaling, dropout=0.0, **kwargs):
+        groups = module.num_key_value_groups
+        key = key.repeat_interleave(groups, dim=1) if groups > 1 else key
+        value = value.repeat_interleave(groups, dim=1) if groups > 1 else value
+        out = torch.empty_like(query[..., :value.shape[-1]])
+        for r0 in range(0, query.shape[2], block_rows):
+            r1 = min(query.shape[2], r0 + block_rows)
+            weights = torch.matmul(query[:, :, r0:r1], key.transpose(2, 3)) * scaling
+            if attention_mask is not None:
+                weights = weights + attention_mask[:, :, r0:r1, : key.shape[-2]]
+            weights = torch.nn.functional.softmax(weights, dim=-1, dtype=torch.float32).to(query.dtype)
+            out[:, :, r0:r1] = torch.matmul(weights, value)
+        return out.transpose(1, 2).contiguous(), None
+
+    AttentionInterface.register("eager_blocked", eager_blocked)
+    AttentionMaskInterface.register("eager_blocked", ALL_MASK_ATTENTION_FUNCTIONS["eager"])
+
+
 @torch.inference_mode()
 def score(model, windows, tile=256):
     lm = model.model.language_model
@@ -74,13 +99,17 @@ def main():
     p.add_argument("--model", default="/workspace/models/LFM3-Omni-2B")
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--lengths", type=int, nargs="+", default=[256, 257, 4096, 32768])
-    p.add_argument("--configs", nargs="+", default=["sdpa", "eager"])
+    p.add_argument("--configs", nargs="+", default=["sdpa", "eager"], choices=["sdpa", "eager", "eager_blocked"])
     p.add_argument("--eager-max-length", type=int, default=4096, help="eager materializes L x L attention in FP32")
     p.add_argument("--max-windows", type=int, default=0, help="cap windows per length (0 = all)")
+    p.add_argument("--attention-block-rows", type=int, default=2048,
+                   help="query rows per block for --configs eager_blocked (exact eager attention, bounded memory)")
     p.add_argument("--dtype", choices=["bfloat16", "float32"], default="bfloat16",
                    help="float32: a precision anchor (G4 tier 2b); engines are named hf-CONFIG-fp32, TF32 disabled")
     a = p.parse_args()
     a.output.mkdir(parents=True, exist_ok=False)
+    if "eager_blocked" in a.configs:
+        register_eager_blocked(a.attention_block_rows)
     if a.dtype == "float32":
         torch.backends.cuda.matmul.allow_tf32 = False
         torch.backends.cudnn.allow_tf32 = False
@@ -100,8 +129,10 @@ def main():
                "versions": {"torch": torch.__version__, "transformers": transformers.__version__},
                "dtype": a.dtype,
                "precision_note": ("FP32 SDPA runs PyTorch's memory-efficient attention, whose GEMMs use 3xTF32 (FP32-level "
-                                  "accuracy) regardless of the TF32 flags (mem_eff_attention/gemm_kernel_utils.h)")
+                                  "accuracy) regardless of the TF32 flags (mem_eff_attention/gemm_kernel_utils.h); "
+                                  "eager_blocked uses plain FP32 matmuls with TF32 disabled")
                                  if a.dtype == "float32" else None,
+               "attention_block_rows": a.attention_block_rows if "eager_blocked" in a.configs else None,
                "precision": {"matmul_allow_tf32": torch.backends.cuda.matmul.allow_tf32,
                                               "cudnn_allow_tf32": torch.backends.cudnn.allow_tf32,
                                               "float32_matmul_precision": torch.get_float32_matmul_precision()},

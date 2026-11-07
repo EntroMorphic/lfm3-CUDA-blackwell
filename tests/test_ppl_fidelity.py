@@ -56,7 +56,8 @@ def build(tmp_path, engine_noise, sdpa_noise, eager=True):
 
 def run(tmp_path, engine="native-gemm", engine_dir="engine", extra=()):
     return subprocess.run([sys.executable, str(TOOL), "--anchor", str(tmp_path / "anchor"), "--references", str(tmp_path / "refs"),
-                           "--engine-dir", str(tmp_path / engine_dir), "--engine", engine, "--output", str(tmp_path / "out.json"), *extra],
+                           "--engine-dir", str(tmp_path / engine_dir), "--engine", engine, "--output", str(tmp_path / "out.json"),
+                           "--anchor-engine", "hf-sdpa-fp32", *extra],
                           capture_output=True, text=True)
 
 

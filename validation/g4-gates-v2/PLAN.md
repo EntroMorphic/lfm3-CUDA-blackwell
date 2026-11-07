@@ -46,3 +46,19 @@ recorded, not judged. (A default build has no accounting; it keeps the device-wi
 Default the CMake option to the native GEMM (cuBLAS remains an explicit option for A/B), make `build_scorer.sh`
 default to `native-gemm`, let `benchmark_lfm3.py` accept the native labels for speed while recording that the
 eager-parity claim does not apply, and run every gate on the final default build.
+
+## Amendment (2026-11-07, before tier 2b ran): the 2b anchor is exact FP32 eager attention, computed in blocks
+
+The declared 2b anchor, FP32 with SDPA attention, cannot be used as declared:
+- **It does not fit at 32,768.** In FP32, SDPA falls back to an unfused kernel; one 32,768-token window exceeded
+  96 GB of Thor's unified memory and hung the machine twice (once fully; once stopped by a watchdog, after which
+  the driver held the memory until a reboot).
+- **It is not exact FP32.** Its memory-efficient attention uses 3xTF32 GEMMs regardless of the TF32 flags. On one
+  4,096-token window it differs from plain FP32 eager by up to 5.05e-5 nats per token (mean 4.7e-6), which is the
+  size of ε.
+
+Instead the anchor is `ppl_reference.py --configs eager_blocked --dtype float32`: the model's own eager attention
+math (scores, additive eager mask, FP32 softmax, P·V), computed 2,048 query rows at a time, TF32 disabled. On one
+4,096-token window it is **bitwise identical** to plain FP32 eager; at 32,768 it runs within a few GB. It is used at
+all four lengths, so every length has the same anchor. Engine name: `hf-eager_blocked-fp32`. Nothing else in 2b
+changes: the statistic, the CI, ε, the FAIL rule, and the single run.
