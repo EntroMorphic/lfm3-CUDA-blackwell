@@ -1,0 +1,105 @@
+{
+  "status": "complete",
+  "definition": "G4 tier 2b: is an engine's per-token NLL as close to an FP32 model's as HF SDPA's is? (validation/g4-gates-v2/PLAN.md)",
+  "epsilon": 1e-05,
+  "engine": "native-gemm",
+  "anchor_engine": "hf-eager_blocked-fp32",
+  "rows": [
+    {
+      "length": 256,
+      "windows": 1160,
+      "engine_nll_sha256": "692a3f9f128b5a25e8b7b62892f3f0d3c60a246d89092b01b647d421b14dace0",
+      "engine_mean_abs_dev": 0.016741361261454243,
+      "hf-sdpa": {
+        "ref_mean_abs_dev": 0.019400418546822392,
+        "delta": -0.002659057285368144,
+        "ci95": [
+          -0.0027438575681092594,
+          -0.0025739128032560635
+        ],
+        "engine_closer_windows": 1113
+      },
+      "hf-eager": {
+        "ref_mean_abs_dev": 0.021348651103855722,
+        "delta": -0.004607289842401475,
+        "ci95": [
+          -0.004701697983139488,
+          -0.004513592543733338
+        ],
+        "engine_closer_windows": 1157
+      },
+      "fails": false,
+      "verdict": "closer than SDPA"
+    },
+    {
+      "length": 257,
+      "windows": 1155,
+      "engine_nll_sha256": "6b14e7f8fb7fbed5d5235a896416e550dcdb76abeee19c9ee7fa5e94b596737d",
+      "engine_mean_abs_dev": 0.016773026193283237,
+      "hf-sdpa": {
+        "ref_mean_abs_dev": 0.019476384159743544,
+        "delta": -0.0027033579664603024,
+        "ci95": [
+          -0.0027897265518755424,
+          -0.002616335053778876
+        ],
+        "engine_closer_windows": 1118
+      },
+      "hf-eager": {
+        "ref_mean_abs_dev": 0.02136753210706329,
+        "delta": -0.004594505913780051,
+        "ci95": [
+          -0.0046893822249515086,
+          -0.004500172281882996
+        ],
+        "engine_closer_windows": 1152
+      },
+      "fails": false,
+      "verdict": "closer than SDPA"
+    },
+    {
+      "length": 4096,
+      "windows": 72,
+      "engine_nll_sha256": "8371e068d6df054e11e8c95ea15d714aaf140a257bbfb273f7ce97df64cbd8ce",
+      "engine_mean_abs_dev": 0.015011219865554275,
+      "hf-sdpa": {
+        "ref_mean_abs_dev": 0.017526535931172055,
+        "delta": -0.002515316065617782,
+        "ci95": [
+          -0.002599480434574337,
+          -0.00242925290306013
+        ],
+        "engine_closer_windows": 72
+      },
+      "hf-eager": {
+        "ref_mean_abs_dev": 0.019743155042213734,
+        "delta": -0.004731935176659461,
+        "ci95": [
+          -0.0048442379683303225,
+          -0.004618077841019122
+        ],
+        "engine_closer_windows": 72
+      },
+      "fails": false,
+      "verdict": "closer than SDPA"
+    },
+    {
+      "length": 32768,
+      "windows": 9,
+      "engine_nll_sha256": "c6be4d4da0babd9d822e42b1af1b43099f398c86e4c2cf9a2d37ddcc18000283",
+      "engine_mean_abs_dev": 0.015850675727317572,
+      "hf-sdpa": {
+        "ref_mean_abs_dev": 0.018177388307743514,
+        "delta": -0.0023267125804259424,
+        "ci95": [
+          -0.0024318561915936546,
+          -0.002200582926509197
+        ],
+        "engine_closer_windows": 9
+      },
+      "fails": false,
+      "verdict": "closer than SDPA"
+    }
+  ],
+  "passes": true
+}

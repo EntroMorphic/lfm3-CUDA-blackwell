@@ -1,0 +1,18 @@
+== anchor 11:33:44, available 75 GB
+anchor rc=0, minimum available 73 GB, now 75 GB
+{"engine": "hf-eager_blocked-fp32", "length": 256, "windows": 1160, "scored_tokens": 295800, "mean_nll": 3.2802566319701785, "perplexity": 26.58259376
+{"engine": "hf-eager_blocked-fp32", "length": 257, "windows": 1155, "scored_tokens": 295680, "mean_nll": 3.2774673142641544, "perplexity": 26.50854978
+{"engine": "hf-eager_blocked-fp32", "length": 4096, "windows": 72, "scored_tokens": 294840, "mean_nll": 2.569224750786426, "perplexity": 13.0556990961
+{"engine": "hf-eager_blocked-fp32", "length": 32768, "windows": 9, "scored_tokens": 294903, "mean_nll": 2.531454656683766, "perplexity": 12.5717804664
+windows identical to ppl-v5: True {'matmul_allow_tf32': False, 'cudnn_allow_tf32': False, 'float32_matmul_precision': 'highest'}
+== tier 2b 12:00:28
+ length windows  |engine-fp32|  |sdpa-fp32|          D   95% CI                     verdict
+    256    1160      1.674e-02    1.940e-02  -2.66e-03   [-2.74e-03, -2.57e-03]   closer than SDPA
+                                      eager  -4.61e-03   [-4.70e-03, -4.51e-03]   (information)
+    257    1155      1.677e-02    1.948e-02  -2.70e-03   [-2.79e-03, -2.62e-03]   closer than SDPA
+                                      eager  -4.59e-03   [-4.69e-03, -4.50e-03]   (information)
+   4096      72      1.501e-02    1.753e-02  -2.52e-03   [-2.60e-03, -2.43e-03]   closer than SDPA
+                                      eager  -4.73e-03   [-4.84e-03, -4.62e-03]   (information)
+  32768       9      1.585e-02    1.818e-02  -2.33e-03   [-2.43e-03, -2.20e-03]   closer than SDPA
+TIER 2b: PASS
+tier 2b rc=0

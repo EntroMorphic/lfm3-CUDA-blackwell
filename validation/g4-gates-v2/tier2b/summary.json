@@ -1,0 +1,88 @@
+{
+  "corpus": "/workspace/data/wikitext-2-raw-v1/test.txt",
+  "corpus_sha256": "696cca6b65a171b0a358a4be6732cdfdf2dd6164a32e20fd70e3c13fc4dfae83",
+  "corpus_tokens": 295824,
+  "bos_id": 124894,
+  "window_rule": "[BOS] + next L-1 corpus tokens, non-overlapping; score positions 1..L-1",
+  "nll_definition": "-log_softmax(lm_head(final hidden).float(), -1)[next token], all 128000 logits",
+  "versions": {
+    "torch": "2.10.0+cu130",
+    "transformers": "5.22.1"
+  },
+  "dtype": "float32",
+  "precision_note": "FP32 SDPA runs PyTorch's memory-efficient attention, whose GEMMs use 3xTF32 (FP32-level accuracy) regardless of the TF32 flags (mem_eff_attention/gemm_kernel_utils.h); eager_blocked uses plain FP32 matmuls with TF32 disabled",
+  "attention_block_rows": 2048,
+  "precision": {
+    "matmul_allow_tf32": false,
+    "cudnn_allow_tf32": false,
+    "float32_matmul_precision": "highest"
+  },
+  "windows": {
+    "256": {
+      "count": 1160,
+      "file": "windows-256.i32",
+      "sha256": "d1c90869b1982dfb7372ceece27f79cc095a7331f32eeee88a08a8fbdb5e1838"
+    },
+    "257": {
+      "count": 1155,
+      "file": "windows-257.i32",
+      "sha256": "0dad54b2ecada2d6eb85e7ffd983fac062a58cadf81504bb2a39aa133b48a590"
+    },
+    "4096": {
+      "count": 72,
+      "file": "windows-4096.i32",
+      "sha256": "c8a4407fb67b4b1dd49cb6608eb6bc601833a4023096457772c4f09ee2a55eee"
+    },
+    "32768": {
+      "count": 9,
+      "file": "windows-32768.i32",
+      "sha256": "54df38e05bddde9717b61c75d018c5023d546e3e352151f807b715c2d2d638fc"
+    }
+  },
+  "results": [
+    {
+      "engine": "hf-eager_blocked-fp32",
+      "length": 256,
+      "windows": 1160,
+      "scored_tokens": 295800,
+      "mean_nll": 3.2802566319701785,
+      "perplexity": 26.582593767995583,
+      "seconds": 259.620062392,
+      "file": "nll-hf-eager_blocked-fp32-256.f32",
+      "sha256": "85f3adbc4ae381c0d42c31cc8ffc572402de680a36e996c2262e299e7af642ab"
+    },
+    {
+      "engine": "hf-eager_blocked-fp32",
+      "length": 257,
+      "windows": 1155,
+      "scored_tokens": 295680,
+      "mean_nll": 3.2774673142641544,
+      "perplexity": 26.508549782633153,
+      "seconds": 364.495292767,
+      "file": "nll-hf-eager_blocked-fp32-257.f32",
+      "sha256": "2e9aef358e860141ff41c9429e2720554fd17a1c83df41909fbe4530305b9968"
+    },
+    {
+      "engine": "hf-eager_blocked-fp32",
+      "length": 4096,
+      "windows": 72,
+      "scored_tokens": 294840,
+      "mean_nll": 2.569224750786426,
+      "perplexity": 13.05569909615194,
+      "seconds": 312.283200007,
+      "file": "nll-hf-eager_blocked-fp32-4096.f32",
+      "sha256": "dd8a399ea8e7d02de502a7385fea60f58a633cf96f2bf1fc9586b7b4964f9f2a"
+    },
+    {
+      "engine": "hf-eager_blocked-fp32",
+      "length": 32768,
+      "windows": 9,
+      "scored_tokens": 294903,
+      "mean_nll": 2.531454656683766,
+      "perplexity": 12.57178046649023,
+      "seconds": 654.9482676370001,
+      "file": "nll-hf-eager_blocked-fp32-32768.f32",
+      "sha256": "3f6c3df0fefcf3fae30b08d6fef79a9f9e2f7ff6a43509b721e4ae3410b103c3"
+    }
+  ]
+}

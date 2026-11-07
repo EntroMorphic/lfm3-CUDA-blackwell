@@ -1,0 +1,13 @@
+{
+  "engine": "hf-eager_blocked-fp32",
+  "length": 256,
+  "windows_file": "windows-256.i32",
+  "windows_sha256": "d1c90869b1982dfb7372ceece27f79cc095a7331f32eeee88a08a8fbdb5e1838",
+  "nll_sha256": "85f3adbc4ae381c0d42c31cc8ffc572402de680a36e996c2262e299e7af642ab",
+  "attn_implementation": "eager_blocked",
+  "dtype": "float32",
+  "versions": {
+    "torch": "2.10.0+cu130",
+    "transformers": "5.22.1"
+  }
+}
