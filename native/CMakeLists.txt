@@ -5,6 +5,7 @@ option(LIQUID_PROFILE_NVTX "Enable diagnostic host-side NVTX component ranges" O
 option(LIQUID_LFM3_OPS_TESTS "Build the isolated LFM3 operator test bridge" OFF)
 
 find_package(CUDAToolkit REQUIRED)
+find_package(Threads REQUIRED)
 
 add_executable(liquid-lfm3 src/lfm3_main.cu src/safetensors.cpp)
 target_include_directories(liquid-lfm3 PRIVATE include)
@@ -19,6 +20,14 @@ target_compile_features(liquid-lfm3-worker PRIVATE cxx_std_20 cuda_std_20)
 target_compile_options(liquid-lfm3-worker PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
 target_link_libraries(liquid-lfm3-worker PRIVATE CUDA::cudart CUDA::cublas)
 set_target_properties(liquid-lfm3-worker PROPERTIES CUDA_ARCHITECTURES 110)
+
+# One executable for text serving: loopback HTTP, native text frontend and the worker engine in-process.
+add_executable(liquid-lfm3-server src/lfm3_server.cu src/safetensors.cpp)
+target_include_directories(liquid-lfm3-server PRIVATE include)
+target_compile_features(liquid-lfm3-server PRIVATE cxx_std_20 cuda_std_20)
+target_compile_options(liquid-lfm3-server PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
+target_link_libraries(liquid-lfm3-server PRIVATE CUDA::cudart CUDA::cublas Threads::Threads)
+set_target_properties(liquid-lfm3-server PROPERTIES CUDA_ARCHITECTURES 110)
 
 add_executable(liquid-native src/main.cu src/safetensors.cpp src/tokenizer.cpp)
 target_include_directories(liquid-native PRIVATE include)

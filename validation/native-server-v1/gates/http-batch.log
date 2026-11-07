@@ -1,0 +1,70 @@
+{
+  "status": "passed",
+  "worker_sha256": "f4f22ae7227d25c10a03a77d66a6a8455babb05a2ba4fd77c93fb8ff729febe1",
+  "source_sha256": {
+    "check_lfm3_http_batch.py": "9bd1bb451d50e6235d779aa582efa318152f0683ba215ede37d249e4ca5f3240",
+    "lfm3_server.py": "0bf92f4ff61bd7c79704b3ab7f1be711b4b4c928e67dd2e5836dab9da33cec87",
+    "lfm3_worker_client.py": "dcbfd5d7de36c2dd5768f98f39d0972a652cf66bed7c05be622030ea89727f17"
+  },
+  "limits": {
+    "warm_rss_growth_bytes": 33554432,
+    "warm_fd_growth": 2,
+    "warm_device_free_drop_bytes": 134217728
+  },
+  "requested_cycles": 60,
+  "minimum_seconds": 600,
+  "scope": "authenticated fixed-two-lane HTTP grouping, per-lane cancellation, exact IDs, bounded extended soak and device-wide memory observation; not automatic microbatching or a universal production SLA",
+  "empty_session_gpu_baseline": {
+    "ok": true,
+    "sessions": 0,
+    "reserved_tokens": 0,
+    "weights_loaded": true,
+    "cuda_free_bytes": 76452114432,
+    "cuda_total_bytes": 131881746432,
+    "device_allocated_bytes": 55429632000
+  },
+  "baseline": {
+    "cycle": -1,
+    "elapsed_seconds": 9.392632870993111,
+    "server": {
+      "rss_bytes": 295837696,
+      "descriptors": 8
+    },
+    "worker": {
+      "rss_bytes": 4844388352,
+      "descriptors": 43
+    },
+    "gpu": {
+      "ok": true,
+      "sessions": 2,
+      "reserved_tokens": 1024,
+      "weights_loaded": true,
+      "cuda_free_bytes": 76422193152,
+      "cuda_total_bytes": 131881746432,
+      "device_allocated_bytes": 55459553280
+    }
+  },
+  "cycles_completed": 620,
+  "soak_seconds": 600.9277194540045,
+  "latency_summary": {
+    "serial-pair": {
+      "samples": 5,
+      "median_seconds": 1.3172465309908148,
+      "median_aggregate_tokens_per_second": 48.58619741580194
+    },
+    "group": {
+      "samples": 620,
+      "median_seconds": 0.8553281325075659,
+      "median_aggregate_tokens_per_second": 74.8250847453961
+    }
+  },
+  "post_close_gpu": {
+    "ok": true,
+    "sessions": 0,
+    "reserved_tokens": 0,
+    "weights_loaded": true,
+    "cuda_free_bytes": 76486963200,
+    "cuda_total_bytes": 131881746432,
+    "device_allocated_bytes": 55394783232
+  }
+}

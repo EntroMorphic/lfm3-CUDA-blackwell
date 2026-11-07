@@ -30,6 +30,8 @@ class Json {
   using Object = std::map<std::string, Json>;
   using Array = std::vector<Json>;
   std::variant<std::nullptr_t, bool, double, std::string, Array, Object> value;
+  // True for a number written without a fraction or exponent (Python json's int); numbers stay doubles.
+  bool integral = false;
   const Json& at(const std::string& key) const {
     const auto* o = std::get_if<Object>(&value);
     if (!o || !o->count(key)) throw std::runtime_error("missing configuration field: " + key);
@@ -170,12 +172,15 @@ class Json {
     if (p == s.size() || s[p] < '0' || s[p] > '9') throw std::runtime_error("invalid JSON number");
     if (s[p] == '0') ++p;
     else while (p < s.size() && s[p] >= '0' && s[p] <= '9') ++p;
+    bool integral = true;
     if (p < s.size() && s[p] == '.') {
+      integral = false;
       const size_t digits = ++p;
       while (p < s.size() && s[p] >= '0' && s[p] <= '9') ++p;
       if (p == digits) throw std::runtime_error("invalid JSON fraction");
     }
     if (p < s.size() && (s[p] == 'e' || s[p] == 'E')) {
+      integral = false;
       ++p;
       if (p < s.size() && (s[p] == '+' || s[p] == '-')) ++p;
       const size_t digits = p;
@@ -189,7 +194,9 @@ class Json {
       throw std::runtime_error("JSON number outside the double range");
     }
     if (!std::isfinite(n)) throw std::runtime_error("nonfinite JSON number");
-    return Json{n};
+    Json number{n};
+    number.integral = integral;
+    return number;
   }
 };
 

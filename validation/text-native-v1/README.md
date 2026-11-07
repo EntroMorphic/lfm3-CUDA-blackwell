@@ -82,6 +82,7 @@ sides do this identically. It is not one of the six suppressed modality ids.
 
 ## Not yet done
 
-The Python CLI and HTTP server still call the Transformers frontend. Switching them to send
+Superseded for serving: `liquid-lfm3-server` (see `validation/native-server-v1`) replaces the Python HTTP
+server. At the time of this run, the Python CLI and HTTP server still called the Transformers frontend. Switching them to send
 `messages` and use the returned `text` would drop Transformers from serving; the HTTP layer itself
 stays Python until G7. The stream decoder is implemented and tested, but no binary streams yet.

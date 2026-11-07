@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "preflight_only": false,
+  "worker_sha256": "f4f22ae7227d25c10a03a77d66a6a8455babb05a2ba4fd77c93fb8ff729febe1",
+  "single_sha256": "2dcd128ccdaf4b5375c1e299ff0536751ef9e8641ec3015ff50bfc89f4156c42",
+  "resident32k_checked": true,
+  "resident_sampling_logit_replay": true,
+  "oracle_sha256": "f0ca04e305e8bf5067c74cf5f5ea41ed14b197320de70d907532c5ac7f6bae6f",
+  "scope": "single-threaded resident cache isolation/prefix/lifecycle; not GPU batching or concurrent cancellation"
+}

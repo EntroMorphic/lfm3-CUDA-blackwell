@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "worker_sha256": "f4f22ae7227d25c10a03a77d66a6a8455babb05a2ba4fd77c93fb8ff729febe1",
+  "oracle_sha256": "f0ca04e305e8bf5067c74cf5f5ea41ed14b197320de70d907532c5ac7f6bae6f",
+  "scope": "native grouped decoding, serial full-logit bits/IDs, independent policies, retirement, per-lane cancellation, stale tags and aggregate32K; sanitizer/HTTP/soak acceptance separate",
+  "bitwise_logit_steps": 73,
+  "live_token_count": 125033,
+  "independent_non_greedy_logit_replay": true,
+  "aggregate32k_checked": true
+}

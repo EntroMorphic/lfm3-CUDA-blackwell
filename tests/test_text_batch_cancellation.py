@@ -182,7 +182,7 @@ int main(int argc,char** argv) {
  std::ostringstream out;auto* old=std::cout.rdbuf(out.rdbuf());bool failed=false;
  // live = the fake model's whole vocabulary: it has no output rows beyond its tokens (G6 bound is a no-op here)
  TextFrontend text{"unused-tokenizer.json",cfg.shape.vocabulary,nullptr};
- try {generate_batch(request,1,"unused",cfg,{},cfg.shape.vocabulary,mode=="eos"?std::vector<int>{7}:std::vector<int>{},trace_root,weights,sessions,ledger,reader,text);}
+ try {generate_batch(request,1,"unused",cfg,{},cfg.shape.vocabulary,mode=="eos"?std::vector<int>{7}:std::vector<int>{},trace_root,weights,sessions,ledger,reader,text,std::cout);}
  catch(const std::exception&) {failed=true;}
  std::cout.rdbuf(old);
  if(mode=="duplicate" || mode=="bad_metadata" || mode=="bad_schema" || mode=="bad_capacity") {

@@ -1,0 +1,316 @@
+{
+  "cases": 12478,
+  "cases_sha256": "34f17626aa19bb849e187a609ba7626dd95893a163b9b16e88573f4c9d82bcc6",
+  "mismatches": [],
+  "expected_differences": [
+    {
+      "case": 12390,
+      "kind": "sampling-literal",
+      "python": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          200,
+          "{\"session_id\":\"@SID@\",\"text\":\"\",\"generated_ids\":[124900],\"reused_tokens\":0,\"consumed_tokens\":22,\"do_sample\":false,\"seed\":0,\"gpu_batching\":false,\"cancelled\":false,\"cache_valid\":true,\"finish_reason\":\"stop\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      },
+      "native": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          400,
+          "{\"error\":\"invalid_request\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      }
+    },
+    {
+      "case": 12396,
+      "kind": "sampling-literal",
+      "python": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          200,
+          "{\"session_id\":\"@SID@\",\"text\":\"\",\"generated_ids\":[124900],\"reused_tokens\":0,\"consumed_tokens\":22,\"do_sample\":false,\"seed\":0,\"gpu_batching\":false,\"cancelled\":false,\"cache_valid\":true,\"finish_reason\":\"stop\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      },
+      "native": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          400,
+          "{\"error\":\"invalid_request\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      }
+    },
+    {
+      "case": 12398,
+      "kind": "sampling-literal",
+      "python": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          200,
+          "{\"session_id\":\"@SID@\",\"text\":\"\",\"generated_ids\":[124900],\"reused_tokens\":0,\"consumed_tokens\":22,\"do_sample\":false,\"seed\":0,\"gpu_batching\":false,\"cancelled\":false,\"cache_valid\":true,\"finish_reason\":\"stop\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      },
+      "native": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          400,
+          "{\"error\":\"invalid_request\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      }
+    },
+    {
+      "case": 12399,
+      "kind": "sampling-literal",
+      "python": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          200,
+          "{\"session_id\":\"@SID@\",\"text\":\"\",\"generated_ids\":[124900],\"reused_tokens\":0,\"consumed_tokens\":22,\"do_sample\":false,\"seed\":0,\"gpu_batching\":false,\"cancelled\":false,\"cache_valid\":true,\"finish_reason\":\"stop\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      },
+      "native": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          400,
+          "{\"error\":\"invalid_request\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      }
+    },
+    {
+      "case": 12400,
+      "kind": "sampling-literal",
+      "python": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          200,
+          "{\"session_id\":\"@SID@\",\"text\":\"\",\"generated_ids\":[124900],\"reused_tokens\":0,\"consumed_tokens\":22,\"do_sample\":false,\"seed\":0,\"gpu_batching\":false,\"cancelled\":false,\"cache_valid\":true,\"finish_reason\":\"stop\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      },
+      "native": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          400,
+          "{\"error\":\"invalid_request\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      }
+    },
+    {
+      "case": 12405,
+      "kind": "sampling-literal",
+      "python": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          200,
+          "{\"session_id\":\"@SID@\",\"text\":\"\",\"generated_ids\":[124900],\"reused_tokens\":0,\"consumed_tokens\":22,\"do_sample\":false,\"seed\":0,\"gpu_batching\":false,\"cancelled\":false,\"cache_valid\":true,\"finish_reason\":\"stop\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      },
+      "native": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          400,
+          "{\"error\":\"invalid_request\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      }
+    },
+    {
+      "case": 12407,
+      "kind": "sampling-literal",
+      "python": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          200,
+          "{\"session_id\":\"@SID@\",\"text\":\"\",\"generated_ids\":[124900],\"reused_tokens\":0,\"consumed_tokens\":22,\"do_sample\":false,\"seed\":0,\"gpu_batching\":false,\"cancelled\":false,\"cache_valid\":true,\"finish_reason\":\"stop\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      },
+      "native": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          400,
+          "{\"error\":\"invalid_request\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      }
+    },
+    {
+      "case": 12408,
+      "kind": "sampling-literal",
+      "python": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          200,
+          "{\"session_id\":\"@SID@\",\"text\":\"\",\"generated_ids\":[124900],\"reused_tokens\":0,\"consumed_tokens\":22,\"do_sample\":false,\"seed\":0,\"gpu_batching\":false,\"cancelled\":false,\"cache_valid\":true,\"finish_reason\":\"stop\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      },
+      "native": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          400,
+          "{\"error\":\"invalid_request\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      }
+    },
+    {
+      "case": 12409,
+      "kind": "sampling-literal",
+      "python": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          200,
+          "{\"session_id\":\"@SID@\",\"text\":\"\",\"generated_ids\":[124900],\"reused_tokens\":0,\"consumed_tokens\":22,\"do_sample\":false,\"seed\":0,\"gpu_batching\":false,\"cancelled\":false,\"cache_valid\":true,\"finish_reason\":\"stop\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      },
+      "native": {
+        "create": [
+          200,
+          "{\"session_id\":\"@SID@\",\"capacity\":256,\"gpu_batching\":false}"
+        ],
+        "generate": [
+          400,
+          "{\"error\":\"invalid_request\"}"
+        ],
+        "close": [
+          200,
+          "{\"ok\":true}"
+        ]
+      }
+    }
+  ],
+  "dropped_by_python": [],
+  "statuses": {
+    "create:200": 12420,
+    "generate:200": 9375,
+    "close:200": 12420,
+    "generate:400": 3039,
+    "create:400": 58,
+    "generate:404": 1
+  },
+  "kinds": {
+    "chat": 12006,
+    "capacity-literal": 45,
+    "count-literal": 45,
+    "sampling-literal": 315,
+    "create-json": 18,
+    "sampling-object": 8,
+    "messages": 20,
+    "session-id": 6,
+    "generate-fields": 8,
+    "fit": 7
+  }
+}

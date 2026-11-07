@@ -1,0 +1,15 @@
+{
+ "cases": 12478,
+ "mismatches": 0,
+ "expected_differences": 9,
+ "dropped_by_python": 0,
+ "statuses": {
+  "create:200": 12420,
+  "generate:200": 9375,
+  "close:200": 12420,
+  "generate:400": 3039,
+  "create:400": 58,
+  "generate:404": 1
+ }
+}
+PASS
