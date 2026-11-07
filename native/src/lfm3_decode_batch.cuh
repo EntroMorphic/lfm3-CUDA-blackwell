@@ -104,9 +104,10 @@ inline std::vector<std::vector<float>> forward(const std::vector<Runner*>& lanes
   const size_t scratch=size_t(std::max(a.s.context,lanes[1]->s.context))*s.query_heads;
 #endif
   Buffer<LFM3_SCORE> scores(scratch);
-  Buffer<bf16> probs(scratch),logits(size_t(2)*s.vocabulary);
+  Buffer<bf16> probs(scratch);
+  Buffer<LFM3_LOGIT> logits(size_t(2)*s.vocabulary);
   // Allocate host outputs BEFORE mutation; no allocation is needed to publish cursors.
-  std::vector<bf16> raw(size_t(2)*s.vocabulary);
+  std::vector<LFM3_LOGIT> raw(size_t(2)*s.vocabulary);
   std::vector<std::vector<float>> result(2,std::vector<float>(s.vocabulary));
   const int positions[2]={a.cursor,lanes[1]->cursor};
   cuda_check(cudaMemcpy(a.tokens.p,ids.data(),2*sizeof(int),cudaMemcpyHostToDevice));
@@ -161,11 +162,15 @@ inline std::vector<std::vector<float>> forward(const std::vector<Runner*>& lanes
     normalize(a.updated.p,p+"post_ffn_norm.weight",a.hidden.p,2,s.hidden,1,a.hidden.p);
   }
   normalize(a.hidden.p,"embedding_norm.weight",a.normalized.p,2,s.hidden,1);
+#ifdef LFM3_NATIVE_GEMM
+  a.lm_head(a.normalized.p,logits.p,2);
+#else
   a.linear("embed_tokens.weight",a.normalized.p,logits.p,2,s.hidden,s.vocabulary);
+#endif
   cuda_check(cudaGetLastError());
-  cuda_check(cudaMemcpy(raw.data(),logits.p,raw.size()*sizeof(bf16),cudaMemcpyDeviceToHost));
+  cuda_check(cudaMemcpy(raw.data(),logits.p,raw.size()*sizeof(LFM3_LOGIT),cudaMemcpyDeviceToHost));
   for(int lane=0;lane<2;++lane) for(int i=0;i<s.vocabulary;++i) {
-    const float value=__bfloat162float(raw[size_t(lane)*s.vocabulary+i]);
+    const float value=LFM3_LOGIT_FLOAT(raw[size_t(lane)*s.vocabulary+i]);
     if(!std::isfinite(value)) throw std::runtime_error("nonfinite batched logits; discard BOTH caches");
     result[lane][i]=value;
   }

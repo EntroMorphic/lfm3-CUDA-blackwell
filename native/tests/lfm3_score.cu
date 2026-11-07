@@ -18,19 +18,26 @@
 #include "../src/lfm3_main.cu"
 
 #include <cmath>
+#include <type_traits>
 #include <cstdio>
 
 namespace {
 constexpr int kThreads = 1024;
 
-// One block per row. Deterministic: fixed per-thread strided order, then a fixed tree.
-__global__ void row_nll(const bf16* logits, const int* targets, float* out, int rows, int vocab) {
+template <class T>
+__device__ __forceinline__ float logit_value(T x) {
+  if constexpr (std::is_same_v<T, float>) return x; else return __bfloat162float(x);
+}
+// One block per row. Deterministic: fixed per-thread strided order, then a fixed tree. The native GEMM build
+// scores FP32 logits (LFM3_LOGIT); the cuBLAS build scores the engine's BF16 logits.
+template <class T>
+__global__ void row_nll(const T* logits, const int* targets, float* out, int rows, int vocab) {
   const int row = blockIdx.x;
   if (row >= rows) return;
-  const bf16* x = logits + size_t(row) * vocab;
+  const T* x = logits + size_t(row) * vocab;
   __shared__ float red[kThreads];
   float m = -INFINITY;
-  for (int i = threadIdx.x; i < vocab; i += blockDim.x) m = fmaxf(m, __bfloat162float(x[i]));
+  for (int i = threadIdx.x; i < vocab; i += blockDim.x) m = fmaxf(m, logit_value(x[i]));
   red[threadIdx.x] = m;
   __syncthreads();
   for (int s = blockDim.x / 2; s > 0; s >>= 1) {
@@ -40,14 +47,14 @@ __global__ void row_nll(const bf16* logits, const int* targets, float* out, int 
   const float mx = red[0];
   __syncthreads();
   float sum = 0.0f;
-  for (int i = threadIdx.x; i < vocab; i += blockDim.x) sum += expf(__bfloat162float(x[i]) - mx);
+  for (int i = threadIdx.x; i < vocab; i += blockDim.x) sum += expf(logit_value(x[i]) - mx);
   red[threadIdx.x] = sum;
   __syncthreads();
   for (int s = blockDim.x / 2; s > 0; s >>= 1) {
     if (threadIdx.x < s) red[threadIdx.x] += red[threadIdx.x + s];
     __syncthreads();
   }
-  if (threadIdx.x == 0) out[row] = mx + logf(red[0]) - __bfloat162float(x[targets[row]]);
+  if (threadIdx.x == 0) out[row] = mx + logf(red[0]) - logit_value(x[targets[row]]);
 }
 }  // namespace
 
@@ -86,7 +93,7 @@ int main(int argc, char** argv) try {
   Runner runner(model, cfg);
 
   const int vocab = cfg.shape.vocabulary, hidden = cfg.shape.hidden, tile = 256;
-  Buffer<bf16> tile_logits(size_t(tile) * vocab);
+  Buffer<LFM3_LOGIT> tile_logits(size_t(tile) * vocab);
   Buffer<int> targets(length);
   Buffer<float> nll(length);
   std::vector<float> all;
@@ -102,7 +109,11 @@ int main(int argc, char** argv) try {
     cuda_check(cudaMemcpy(targets.p, window.data() + 1, size_t(length - 1) * sizeof(int), cudaMemcpyHostToDevice));
     for (int r0 = 0; r0 < length - 1; r0 += tile) {
       const int rows = std::min(tile, length - 1 - r0);
+#ifdef LFM3_NATIVE_GEMM
+      runner.lm_head(runner.normalized.p + size_t(r0) * hidden, tile_logits.p, rows);
+#else
       runner.linear("embed_tokens.weight", runner.normalized.p + size_t(r0) * hidden, tile_logits.p, rows, hidden, vocab);
+#endif
       row_nll<<<rows, kThreads>>>(tile_logits.p, targets.p + r0, nll.p + r0, rows, vocab);
       cuda_check(cudaGetLastError());
     }

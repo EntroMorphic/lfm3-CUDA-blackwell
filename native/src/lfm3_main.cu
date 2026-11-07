@@ -114,11 +114,17 @@ __global__ void scatter(const bf16* k, const bf16* v, bf16* kc, bf16* vc,
 // same). Only the probabilities are rounded to BF16, as the P·V operand. validation/g4-native-gemm-v2.
 #define LFM3_SCORE float
 #define LFM3_SCALED_SCORE(x) __fmul_rn((x),rsqrtf(float(dim)))
+// Logits stay FP32 out of lm_head: they feed only the log-softmax and the sampler, so nothing in the model
+// changes, and the convexity bias of rounding them (8e-5 nats/token, validation/g4-native-gemm-v3) is gone.
+#define LFM3_LOGIT float
+#define LFM3_LOGIT_FLOAT(x) (x)
 #else
 #define LFM3_PITCH_PARAMETER
 #define LFM3_ROW_STRIDE end
 #define LFM3_SCORE bf16
 #define LFM3_SCALED_SCORE(x) __bfloat162float(__float2bfloat16_rn(__fmul_rn(__bfloat162float(x),rsqrtf(float(dim)))))
+#define LFM3_LOGIT bf16
+#define LFM3_LOGIT_FLOAT(x) __bfloat162float(x)
 #endif
 __global__ void probabilities(const LFM3_SCORE* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start LFM3_PITCH_PARAMETER) {
   const int row=blockIdx.x%rows,tid=threadIdx.x;
@@ -263,7 +269,8 @@ class Runner {
 #ifndef LFM3_NATIVE_GEMM
   cublasHandle_t blas = nullptr;
 #endif
-  Buffer<bf16> hidden, normalized, projected, operated, updated, q, k, v, gates, attended, gated, a, b, act, logits;
+  Buffer<bf16> hidden, normalized, projected, operated, updated, q, k, v, gates, attended, gated, a, b, act;
+  Buffer<LFM3_LOGIT> logits;
   Buffer<int> positions, tokens;
   Buffer<unsigned char> workspace;
   Buffer<LFM3_SCORE> score_buffer;
@@ -373,6 +380,24 @@ class Runner {
     cuda_check(cudaMemcpy2D(data.data(),width*sizeof(bf16),ptr,pitch*sizeof(bf16),width*sizeof(bf16),count,cudaMemcpyDeviceToHost));
     std::ofstream f(trace+"/"+std::to_string(step)+"."+name+".bf16",std::ios::binary);
     f.write(reinterpret_cast<const char*>(data.data()),data.size()*sizeof(bf16));
+    if (!f) throw std::runtime_error("trace write failed");
+  }
+#endif
+#ifdef LFM3_NATIVE_GEMM
+  // lm_head with the FP32 accumulator stored unrounded.
+  void lm_head(const bf16* x, float* out, int rows) {
+    auto p=lfm::gemm::linear(x,w("embed_tokens.weight"),nullptr,rows,s.hidden,s.vocabulary);
+    p.c_f32=out; lfm::gemm::run(p);
+  }
+  // The logits trace keeps its .bf16 format: a rounded copy of the FP32 logits.
+  void dump_logits(const float* ptr, size_t n) {
+    if (trace.empty()) return;
+    std::vector<float> data(n);
+    cuda_check(cudaMemcpy(data.data(),ptr,n*sizeof(float),cudaMemcpyDeviceToHost));
+    std::vector<bf16> rounded(n);
+    for (size_t i=0;i<n;++i) rounded[i]=__float2bfloat16_rn(data[i]);
+    std::ofstream f(trace+"/"+std::to_string(step)+".logits.bf16",std::ios::binary);
+    f.write(reinterpret_cast<const char*>(rounded.data()),n*sizeof(bf16));
     if (!f) throw std::runtime_error("trace write failed");
   }
 #endif
@@ -506,14 +531,19 @@ class Runner {
     }
     normalize(hidden.p,"embedding_norm.weight",normalized.p,rows,s.hidden);
     dump("final_norm",normalized.p,size_t(rows)*s.hidden);
+#ifdef LFM3_NATIVE_GEMM
+    lm_head(normalized.p+size_t(rows-1)*s.hidden,logits.p,1);
+    dump_logits(logits.p,s.vocabulary);
+#else
     linear("embed_tokens.weight",normalized.p+size_t(rows-1)*s.hidden,logits.p,1,s.hidden,s.vocabulary);
     dump("logits",logits.p,s.vocabulary);
+#endif
     cuda_check(cudaGetLastError());
-    std::vector<bf16> raw(s.vocabulary);
-    cuda_check(cudaMemcpy(raw.data(),logits.p,s.vocabulary*sizeof(bf16),cudaMemcpyDeviceToHost));
+    std::vector<LFM3_LOGIT> raw(s.vocabulary);
+    cuda_check(cudaMemcpy(raw.data(),logits.p,s.vocabulary*sizeof(LFM3_LOGIT),cudaMemcpyDeviceToHost));
     std::vector<float> result(s.vocabulary);
     for(int i=0;i<s.vocabulary;++i) {
-      result[i]=__bfloat162float(raw[i]);
+      result[i]=LFM3_LOGIT_FLOAT(raw[i]);
       if(!std::isfinite(result[i])) throw std::runtime_error("nonfinite logits");
     }
     cursor+=rows; ++step;
