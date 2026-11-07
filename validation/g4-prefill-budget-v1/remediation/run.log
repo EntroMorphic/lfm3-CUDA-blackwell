@@ -1,0 +1,34 @@
+== sources 16:41:14
+  34055903ccdb8c92e603974017e75c59a4e3eba4e708327af6449ee9fe1762f5  native/src/lfm3_main.cu
+  4db243a9d00b6f91d9bc736bb52a7f2e4a068f5f34c01d903be80d7d6eca2b1f  tools/thor/g4_prefill_parse_check.sh
+== build 16:41:14
+8d9f65f1da48354c8024476773836d715073ca3a307e584b4db5aa15e7525168  liquid-lfm3
+b0e0a8c41355dc72600c241758a926dbb60a13475e1a68a29e3ea590fdb37fc4  liquid-lfm3-worker
+505bfc033284c0bae417423e9ff522f47abd4114711bd81e9753415638276579  liquid-lfm3-server
+c2a9d1f6b1608abb22a36c172c53fce5f60156e94a6a0b66edb7a6c90e859daf  text-sampling-oracle
+aac3faf156cae73de7df2a1b35b2020e7ecab83a29741c16e40bd1f5837f6ed7  lfm3-decode-batch-probe
+warnings: 0
+== nll-bit-identity 16:42:56
+lfm3-score built sha256 8e37bf5f5f12b385
+256: NLL bitwise identical to attempt 3
+257: NLL bitwise identical to attempt 3
+4096: NLL bitwise identical to attempt 3
+32768: NLL bitwise identical to attempt 3
+== override-parsing 16:47:50
+2560 heads=default: 7af63de85a33dc2e over 129 steps
+2560 heads=4: 7af63de85a33dc2e over 129 steps
+2560 heads=8: 7af63de85a33dc2e over 129 steps
+2560 heads=16: 7af63de85a33dc2e over 129 steps
+32768 heads=default: 566af98ab956b23c over 129 steps
+32768 heads=4: 566af98ab956b23c over 129 steps
+32768 heads=8: 566af98ab956b23c over 129 steps
+32768 heads=16: 566af98ab956b23c over 129 steps
+refused 'abc': LFM3_PREFILL_HEADS must be a positive integer
+refused '16x': LFM3_PREFILL_HEADS must be a positive integer
+refused '': LFM3_PREFILL_HEADS must be a positive integer
+refused '0': LFM3_PREFILL_HEADS must be a positive integer
+refused '-4': LFM3_PREFILL_HEADS must be a positive integer
+refused '3': LFM3_PREFILL_HEADS must be a multiple of the KV group size that divides the head count
+refused '12': LFM3_PREFILL_HEADS must be a multiple of the KV group size that divides the head count
+refused '99999999999': LFM3_PREFILL_HEADS must be a positive integer
+ALL DONE 16:48:35

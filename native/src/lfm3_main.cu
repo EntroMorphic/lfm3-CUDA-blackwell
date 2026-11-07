@@ -16,6 +16,7 @@
 #include <cublas_v2.h>
 #endif
 #include <algorithm>
+#include <cerrno>
 #include <cstdlib>
 #include <chrono>
 #include <filesystem>
@@ -243,17 +244,24 @@ inline size_t gemm_workspace_bytes(const lfm::RuntimeShape& s,int context) {
   // Split-K P·V scratch for up to 8 query rows (decode, and prefill tiles of <= 8 rows).
   return lfm::gemm::workspace_bytes(8,s.head_dim,key_pitch(context),s.query_heads);
 }
-// Prefill runs attention one KV-head group (query_heads/kv_heads heads) at a time; decode runs all heads in
-// one call. Per-element GEMM arithmetic is independent of the batch count, so the split changes no bit; it
-// cuts the FP32 score scratch by kv_heads (1 GiB -> 256 MiB at capacity 4096).
-// Query heads per prefill attention call. Bit-invariant (lfm::gemm's per-element arithmetic does not depend on the
-// batch count), so it is chosen for speed under a memory budget: the most heads, in whole KV groups dividing the head
-// count, whose FP32 score scratch fits kPrefillScoreBudget. Measured (validation/g4-prefill-heads-v1/): in 128-row
-// tiles (capacity > 4,096) more heads per call is faster (P·V's grid is 1 x 1 x heads); in one large tile it does not
-// matter. Result: 16 heads (256 MiB) at capacity 32,768, 4 heads (256 MiB) at 4,096. LFM3_PREFILL_HEADS overrides it.
+// Query heads per prefill attention call (decode runs all heads in one call). Bit-invariant (lfm::gemm's
+// per-element arithmetic does not depend on the batch count), so it is chosen for speed under a memory budget: the
+// most heads, in whole KV groups dividing the head count, whose FP32 score buffer fits kPrefillScoreBudget.
+// Measured (validation/g4-prefill-heads-v1/): in 128-row tiles (capacity > 4,096) more heads per call is faster; in
+// one large tile it does not matter. Result for LFM3-Omni-2B (16 heads, 4 KV heads): 16 heads at capacity <= 2,048,
+// 8 at 2,049-2,896, 4 at 2,897-4,096, 16 above 4,096; never more than 256 MiB. The BF16 probability buffer has the
+// same element count (half the bytes). LFM3_PREFILL_HEADS overrides it, for measurement only.
 inline constexpr size_t kPrefillScoreBudget = size_t(256) << 20;
 inline int prefill_heads(const lfm::RuntimeShape& s) {
-  static const int requested = [] { const char* v = std::getenv("LFM3_PREFILL_HEADS"); return v ? std::atoi(v) : 0; }();
+  static const int requested = [] {
+    const char* v = std::getenv("LFM3_PREFILL_HEADS");
+    if (!v) return 0;
+    char* end = nullptr; errno = 0;
+    const long n = std::strtol(v, &end, 10);
+    if (end == v || *end != '\0' || errno || n < 1 || n > 65535)
+      throw std::runtime_error("LFM3_PREFILL_HEADS must be a positive integer");
+    return int(n);
+  }();
   const int group = s.query_heads / s.kv_heads;
   if (requested != 0) {
     if (requested < group || requested % group || s.query_heads % requested)

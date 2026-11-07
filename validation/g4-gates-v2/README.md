@@ -50,6 +50,7 @@ scratch is 512 MiB at 4,096).
   zero; `../g4-native-gemm-v3/`). Tier 2b cannot answer it: its margin comes from the FP32 logits.
 - Full-distribution closeness to FP32: on the four small fixtures native's logit KL was farther than SDPA's on three
   (`../g4-native-gates-v1/`); no powered measurement of KL exists.
-- The KV-group prefill split's trade-off is resolved by a budget rule (`../g4-prefill-budget-v1/`): ≤ 256 MiB of score
-  scratch at every capacity, and v5's prefill speed at capacity 32,768.
+- The KV-group prefill split's memory/speed trade-off is resolved by a budget rule (`../g4-prefill-budget-v1/`):
+  ≤ 256 MiB of FP32 score scratch at every capacity, and v5's native prefill time at capacity 32,768 (7.61 s). The
+  ratio to cuBLAS there is 1.34× in that session, not v5's 1.21×: cuBLAS's own time moved between sessions.
 - Stage B: a `tcgen05` prefill GEMM.

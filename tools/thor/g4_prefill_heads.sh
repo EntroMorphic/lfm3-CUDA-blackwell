@@ -13,7 +13,8 @@ IMG=sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f
 O=$B/$tag; test ! -e $O && test ! -e $B/$tag-build || { echo "exists $tag"; exit 1; }; mkdir -p $O
 echo "== sources"; (cd $R && sha256sum native/src/lfm3_main.cu native/include/lfm/gemm.cuh tools/thor/g4_prefill_heads.sh) | sed 's/^/  /'
 docker run --rm --network none -v $R/native:/src/native:ro -v $W:/workspace $IMG bash -c "bash /workspace/liquid-CUDA/tools/thor/build_native.sh $C/$tag-build; rc=\$?; chown -R 1000:1000 $C/$tag-build $C/$tag-build.cmake.log $C/$tag-build.build.log 2>/dev/null; exit \$rc" > $O/build.log 2>&1 || { echo "FAIL build"; exit 1; }
-readelf -d $B/$tag-build/liquid-lfm3 | grep -q libcublas && { echo "FAIL: default build links cuBLAS"; exit 1; }
+dyn=$(readelf -d $B/$tag-build/liquid-lfm3) || { echo "FAIL: readelf"; exit 1; }  # not `| grep -q` (SIGPIPE under pipefail)
+[ "$(grep -c libcublas <<< "$dyn")" = 0 ] || { echo "FAIL: default build links cuBLAS"; exit 1; }
 cp $B/g4-evidence-v1-decode-rate/req-4096.json $B/g4-evidence-v1-decode-rate/req-32000.json $O/
 python3 - $O $B/ppl-v5/windows-32768.i32 <<'PY'
 import json, sys

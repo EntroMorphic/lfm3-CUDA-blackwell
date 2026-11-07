@@ -14,7 +14,9 @@ step sources; (cd $R && sha256sum native/CMakeLists.txt native/src/*.cu native/s
 step build
 docker run --rm --network none -v $R/native:/src/native:ro -v $W:/workspace $IMG bash -c "bash /workspace/liquid-CUDA/tools/thor/build_native.sh $C/$D; rc=\$?; chown -R 1000:1000 $C/$D $C/$D.cmake.log $C/$D.build.log 2>/dev/null; exit \$rc" || fail build
 echo "warnings: $(grep -ci warning $B/$D.build.log)"
-for f in liquid-lfm3 liquid-lfm3-worker liquid-lfm3-server; do readelf -d $B/$D/$f | grep -q libcublas && fail "$f links cuBLAS"; done
+# Not `readelf | grep -q` (a SIGPIPE under pipefail can hide a match); a failed readelf is a failure, not a pass.
+for f in liquid-lfm3 liquid-lfm3-worker liquid-lfm3-server; do dyn=$(readelf -d $B/$D/$f) || fail "readelf $f"
+  [ "$(grep -c libcublas <<< "$dyn")" = 0 ] || fail "$f links cuBLAS"; done
 (cd $B/$D && sha256sum liquid-lfm3 liquid-lfm3-worker liquid-lfm3-server text-sampling-oracle lfm3-decode-batch-probe) > $B/$D.sha256
 step nll-bit-identity; mkdir -p $B/$S $B/$P
 docker run --rm --network none -v $W:/workspace $IMG bash -c "bash /workspace/liquid-CUDA/tools/thor/build_scorer.sh $C/$S; rc=\$?; chown -R 1000:1000 $C/$S; exit \$rc" || fail scorer

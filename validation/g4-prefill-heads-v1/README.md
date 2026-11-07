@@ -13,8 +13,9 @@
   (`run.log`, "bit-invariance").
 - **The declared predictions held:** at capacity 32,768, 16 heads recovers v5's prefill (7.62 s; v5 measured 7.61 s
   in another session); at capacity 4,096, heads-per-call changes prefill by under 1% (predicted ≤ 10%).
-- **Why:** in 128-row tiles, P·V's grid is 1 × 1 × heads — 16 CTAs with all heads, 4 with one KV group, on 20 SMs.
-  In one 3,968-row tile the grid is large either way.
+- **Likely why (not profiled):** in 128-row tiles, P·V's grid is 1 × 1 × heads — 16 CTAs with all heads, 4 with one
+  KV group, on 20 SMs. In one 3,968-row tile the grid is large either way. The plan's per-kernel Nsight profile was
+  not run: the end-to-end times fit this explanation, but it is not measured per kernel.
 - **Correction to earlier evidence:** the "4,096" prefill timings in `../g4-native-gates-v1/` used 4,096 prompt tokens
   plus 128 decode steps, i.e. capacity 32,768 (the tiled path), not capacity 4,096.
 - Decode is unaffected (one call with all heads in every setting).
