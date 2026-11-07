@@ -1,0 +1,5 @@
+7b33ba3deca67c5e456d5585ed0e9ef6021abcb7e449b5cafaa79086d2760ccf  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/include/lfm/gemm.cuh
+32c65e0c5ec5ac47e0cffbbbae01280cc0d31cb0824de4fb5dc89ebf75d4435d  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/tests/lfm3_gemm_probe.cu
+12bf4752e4ef9cbe123f32b7f67f4a58be0f41f428f0126cc004d32cb9022a29  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/native/tests/lfm3_gemm_sweep.cu
+362e8db2680959956d76f338eae25cfcb211cc42740e637c5aed285465c3f2a7  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/gemm-probe-v2/lfm3-gemm-probe
+07ae6b1fc9f8788bea08d0ccb444bd45334304a4d039814f76635854691e9d65  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/gemm-probe-v2/lfm3-gemm-sweep

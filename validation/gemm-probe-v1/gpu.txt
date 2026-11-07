@@ -1,0 +1,2 @@
+name, driver_version, clocks.current.sm [MHz], clocks.max.sm [MHz]
+NVIDIA Thor, 580.00, [N/A], [N/A]

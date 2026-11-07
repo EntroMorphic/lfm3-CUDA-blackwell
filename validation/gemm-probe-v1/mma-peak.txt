@@ -1,0 +1,6 @@
+sms=20 clock=1048576 kHz warps/block=4: 56.1 TFLOPS (2673 FLOP/clk/SM)
+sms=20 clock=1048576 kHz warps/block=8: 56.3 TFLOPS (2686 FLOP/clk/SM)
+sms=20 clock=1048576 kHz warps/block=16: 56.7 TFLOPS (2705 FLOP/clk/SM)
+no error
+434d5a4f07c9a1d3bded99603a063fb0257507d4791ef29b19474f919a96b3be  mma_peak.cu
+a3c71e09b36717b7df373195810f07c31199f3216854ba2b75715d4cea971544  mma-peak
