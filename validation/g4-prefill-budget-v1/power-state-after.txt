@@ -1,0 +1,5 @@
+NV Power Mode: 120W
+1
+gpu-gpc-0 governor=nvhost_podgov min=314000000 max=1386000000
+gpu-nvd-0 governor=nvhost_podgov min=314000000 max=1557000000
+Sat Nov  7 03:33:01 PM MST 2026

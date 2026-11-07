@@ -123,3 +123,10 @@ are excluded for everyone.
 
 All attempt-to-attempt window counts, means and CIs cited in `../g4-native-gemm-v{1,2,3}/` reproduce from
 `tools/g4_paired_stats.py` over the NLL files hashed in those directories; output: `paired-stats.json`.
+
+## Correction (2026-11-07, later session)
+
+The decode comparison in "Speed" did not reproduce: in `../g4-prefill-budget-v1/` the same cuBLAS binary decodes at 55–58
+tok/s (here 30–39) and the native engine at 59–61 (here 58–60), giving 1.06–1.25× instead of 1.51–1.61×. This session's
+power mode and clocks were not recorded. The 1.51–1.61× claim is withdrawn. Also, the "4,096" rows here ran at capacity
+32,768 (4,096 prompt tokens + 128 decode steps), not capacity 4,096 (`../g4-prefill-heads-v1/`).

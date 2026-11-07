@@ -11,6 +11,9 @@ for o in $tag-decode-rate $tag-http-batch; do test ! -e $B/$o || { echo "exists 
 EX="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia"
 CK=/workspace/models/LFM3-Omni-2B
 step(){ echo "== $1 $(date +%T)"; }
+# Speed depends on the power mode and clocks (validation/g4-prefill-budget-v1/): record them before and after.
+power(){ echo "power $1: $(nvpmodel -q 2>/dev/null | head -1); $(for f in /sys/class/devfreq/gpu-*; do echo -n "$(basename $f) $(cat $f/governor) min=$(cat $f/min_freq) max=$(cat $f/max_freq); "; done)"; }
+power before
 step decode-rate
 O=$B/$tag-decode-rate; mkdir -p $O
 sha256sum $B/$default/liquid-lfm3 $B/$native/liquid-lfm3 > $O/binaries.sha256
@@ -52,4 +55,5 @@ step spread-compare
 python3 $R/tools/compare_trace_spread.py $B/$spread/fp32 $B/$tag-fp32-rank.json --cases baseline,arithmetic,window257,single \
   --candidate eager $B/$spread/eager/reference $B/$spread/eager --candidate sdpa $B/$spread/sdpa/reference $B/$spread/sdpa \
   --candidate native $B/$spread/eager/native $B/$spread/eager
+power after
 echo "ALL DONE $(date +%T)"

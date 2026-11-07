@@ -1,0 +1,128 @@
+== sources 14:52:01
+  7c16b1a75715762ba4b3d8c88b8a2d4502f19e1bfc89d2f3720b3dac5411a39d  native/CMakeLists.txt
+  0a53f9861aca1cf668184e706fba7a0f26b3b2386d5122ceddd87c4650b9de8d  native/src/lfm3_main.cu
+  1012cfe2c5d857c2de2bb7b70b27975422a2de19f12bcb0a0227fab05892433d  native/src/lfm3_server.cu
+  bc170a26fff50bab827c5273e188f867d5c9b3c64ee254bb4120ea33be602ba0  native/src/lfm3_worker.cu
+  f16d07fe182812723f88ad8b2d05bc143c4435bae57b233d7c6e13c80bf4435f  native/src/main.cu
+  9558e2491bdb943f436fa099352eb864f4b68900021e216b8940b29dae50e429  native/src/lfm3_decode_batch.cuh
+  9645bcc70d65583b4397820acd4bd734d5883829d3d967e071ab64fa9c8a5f9e  native/include/lfm/gemm.cuh
+  2283c50b813cb7de7ca0cfe597d453c924fc4432ef4348adb868013bb628e913  tools/analyze_lfm3_projection_bedrock.py
+  b5fadd6db8bce5ade57c76d2c8ce7afecf2182584d44436f25fd69bc0c1faf8f  tools/benchmark_lfm3.py
+  1c395ca6a4afbdd29563f67370ee837070234e24546ee61b06e22009a635a445  tools/check_lfm3_32k.py
+  7fdbea6e44233fc56e8eca8b6276336411537d84d4fa2977fdc4613e0dd6ffbf  tools/check_lfm3_batch_worker.py
+  3a61fa93bb70cd4b74170cf03084f83a13d850f45b62e1d07325c38fbbf52ddc  tools/check_lfm3_blas_policy.py
+  d21224cccf2e7e99c5c182f1c6fee98516c96d57af57aa0fc5e4cb5be1d717a5  tools/check_lfm3_boundary.py
+  108fdb8eb26f3f9c4138a7516ed5fdc2a49b6ead304ae664be2fad8d96cb97f5  tools/check_lfm3_cancellation.py
+  a5fcc1d96b6c8372af42e9f4c99f9bb7ebfc3eb4db20a6e5fc0084de53a70186  tools/check_lfm3_candidate_sanitizers.py
+  bb093e8d06f6b193570a8f099b444df01597d9bc0e0bd606241746ffbde99ca0  tools/check_lfm3_context.py
+  a1d47fa8b1fa4807cdd6fef74db5ced65666d23fb559f4fb02dfc1d0d58bd5df  tools/check_lfm3_convolution.py
+  6701713eaa2522a9d3df8a16575219ebc4f0c530d7931f00547795a2bc8e8640  tools/check_lfm3_cublas_modes.py
+  9436560bd2d94b6b758ffc2e860d9d65e9f6ad83f7bfe125bb3f3b05f8275574  tools/check_lfm3_decode_batch.py
+  188df63fc77f6b9154d9d49dea04ab70676b023cf3f78f7ae8a7b84d840ec7e7  tools/check_lfm3_forward.py
+  e77066d7f2220aa2ba689784c22842f433091460e0638e5e77a51626c906f1fd  tools/check_lfm3_group_benchmark.py
+  8dc55c1a063fbe74afa1061bb5ec922d9dcae6a404d6b2433a0c13990b931fe3  tools/check_lfm3_http_batch.py
+  7a42cf841d3ec28d19040b8a687d92c9cf212a1ad088b6ce35d68f51d2e1f2a2  tools/check_lfm3_http_cancellation.py
+  acd3f838abb926ff1297c20e65f0f28b422053837b981b243209e5a6bf50d557  tools/check_lfm3_initcheck_matrix.py
+  e26de8bf84ec331fdb3cfd4f3eef94742462fe7bd0ae8e77729c740ac0ab297d  tools/check_lfm3_launch_boundary.py
+  d0751b11e92dd3d2ec52e4893315b165276114bca684630a844e3c5e6f658b16  tools/check_lfm3_lt_candidates.py
+  da92c97ff900178259ac1369658a0f641039b08819a070800a8be6e288c675d7  tools/check_lfm3_mma_tails.py
+  60ea728bfe8e070d95890e51f566c32eba525b2cd62867fffd0a60bb7621c4e4  tools/check_lfm3_native_policy_benchmark.py
+  abeb9b0804c4bf1ef95f864db36da58f4abcf6fba562e288fedb0cbd3b53e839  tools/check_lfm3_native_server.py
+  cd542ed82d142f0678956c25ff35ac510cb1e125e2e1d8c57b02f19a8341123d  tools/check_lfm3_native_text.py
+  389e9eeb7c5131cc7f4ff801aa5a366df45b4a3f9bc13c71c6dcee9a8362c3a0  tools/check_lfm3_ops.py
+  1294889aea89e2530d30445cacced068861d57b5822e17dc6e2998fd4b8936eb  tools/check_lfm3_projection_bedrock.py
+  7a52b083dedce578d50870a28a52550346a68c4f1ff0110af3c38ff70b178f4a  tools/check_lfm3_racecheck_diagnostic.py
+  9865bad53503ce083574dcddbb18d5e09f648eb43d7bd1bb91ab95f6a6f90557  tools/check_lfm3_racecheck_guarded.py
+  e6c39be02ca6650091cf99595e0b0e1ef5d512770ba2d1e077a1fab180731b9d  tools/check_lfm3_sampling.py
+  4c3cb5de41ff587c1235c119e5dffd1c3b27676033b690475aac6e768b223c24  tools/check_lfm3_sanitizer.py
+  7b5ad7e3d10bde44fc94a4da00447c89a33ca417c86f9d24354bc56db5fba568  tools/check_lfm3_sanitizer_repro.py
+  e3ecf9d7005748ed2f32050ca1c52f0c745d4f0086790bddda29bffdf54df049  tools/check_lfm3_server.py
+  35b237565a2551d80b31fd39d549931413fa267792205ad6a2079cb107c8df83  tools/check_lfm3_soak.py
+  43ae70031dbfb0c8e57132c92a1c97c5398c0c920a908a3442d573c7707b8014  tools/check_lfm3_tma_store.py
+  c3bac573659044d76da9e1d0d28daf2092ddca34a8393f15fdbdf7a1a6ecfd6c  tools/check_lfm3_wmma_candidate.py
+  6767cf87f8c4a3a660c7824d842239a2dab13a1024f75181aa4bb3615d254f2b  tools/check_lfm3_worker.py
+  a9bb813daad08b2cb3bb37c88867fc3234bc1bd925195007569caa73a3bdf9cb  tools/compare_lfm3_traces.py
+  1cb4c0c028fa1b806919f820e65a6f30f0097360fe1afb44236a340f2002a115  tools/compare_trace_spread.py
+  1271713d947e6060991b0697c7c4af291c5d6849a382b66b221ab092a03d88e0  tools/g4_paired_stats.py
+  627aabd4afbf267ca1da9f13d6fd7acf82ef968e2049b3b1826727d5c84490a0  tools/gen_lfm3_text_classes.py
+  79af807be8f9fa0de9e2f21363fd85c4b310bf19b858497e5e3492b29e985204  tools/inspect_checkpoint.py
+  e4c8e9efeacaddf494d68fece4125792d8d2cfc5b140b346d932335be7a3edf3  tools/lfm3_bridge.py
+  fb7d37efe64dcb917c86da4170cd6e6dee8174178d1a9ac69d1f83b6c8d8ca9f  tools/lfm3_chat.py
+  674cf90ffdbfdbd482391b592596cf9f0a85f4ad055a316cefefb44603fb690e  tools/lfm3_http_diff.py
+  d1a612e4d3a68365e5c0b7ad5744ac707ca98395520fba4ee06f1fbe74f5d0c5  tools/lfm3_oracle_live.py
+  c0d6ab70d7507dc54969e13308b84ba648a42b4c33413edbf2586ddbecd5e1cd  tools/lfm3_owned_process.py
+  1301f01289aacdfac8bfd6420517c9929ebf0e58409f0afbb3cdfc396d521db1  tools/lfm3_reference.py
+  0bf92f4ff61bd7c79704b3ab7f1be711b4b4c928e67dd2e5836dab9da33cec87  tools/lfm3_server.py
+  94db39e25d5612a7435308c343991097af4ce1aa5332a8ef00946ac74e10525e  tools/lfm3_text_diff.py
+  2f4ed0f779fb7ac5264a8305d3decd94cf78f445f493244f06daada21f2cdf1e  tools/lfm3_text_frontend.py
+  a5f34e9ef5a6efb6a02b477791f498f253d43da23e02b33c4a27526941021ae2  tools/lfm3_trace_exact.py
+  dcbfd5d7de36c2dd5768f98f39d0972a652cf66bed7c05be622030ea89727f17  tools/lfm3_worker_client.py
+  eaa89a4efec818a3b8e2d49d677a659f70841f40695da42c3c449b6b238e7d0c  tools/measure_dead_vocab.py
+  ed512f0db402b8ec1a635974e96b188aa53133cf8571d1bf034eeb2d4a6269b0  tools/ppl_compare.py
+  88f979f3fe52a9e9b92ae4771b651131e43a9eb6dd172acefeca3d9addf012ec  tools/ppl_fidelity.py
+  d66f99a4fa96830b6b504ce73b4f064ef75e3de2553af59630a247542ac3a942  tools/ppl_reference.py
+  47abd8fbe040ad8f4677551b872798bdd426bd7580d331de7f4186da5479dada  tools/prepare_lfm3_blas_policy.py
+  53faa25b6b57fccaf0ca835a961fa83e84fb88e9e105ee0739748c59a60ae1b0  tools/prepare_lfm3_pedantic_diagnostic.py
+  5a41ee12d409059c306adb47735737bb50de5eaabcd892510adc1e4143b81d88  tools/prepare_lfm3_thin_hybrid_runtime.py
+  cb7eb0fe97a4a33b9a8b0ee537a5d78b636965afe24c34f517c5d86604a93077  tools/prepare_lfm3_wmma_runtime.py
+  d2b43e8fa33f3704a80b37b56ce5f99f118c9bf668bfcc20e4bcb52b294fbd28  tools/probe_pretokenizer_classes.py
+  69bc3005149d6c368661e2251b4f81a79381d103be39be6231f058bf878c51e3  tools/run_lfm3_thin_hybrid_gates.py
+  bbeae41ebced40cd456837c5704805c7b4ebf0e47cbf46ebc7b70471791a6524  tools/thor_remote.py
+  9cd91c8e1540ff5b9050929dfc00e57f6f328886d95989abba3bb279e2d4f65d  tools/trace_hf_text_path.py
+  8955b08fbc9904b85889db15f55b95d4943553c3ae8915a5f68da59b0cba1647  tools/thor/build_candidate.sh
+  483c4904dc59d0752967ecf889069fc0bfe75a0793c527b76388953f45566096  tools/thor/build_native.sh
+  b375e39750e31622e3710d5e69cad5a3f0568ef251081e9d921438965060e430  tools/thor/build_prefill_probe.sh
+  178bd5b94bc59069d3cce4217f42dd1f5b2dffb56c5287e2caec67afa1b6896b  tools/thor/build_scorer.sh
+  d911a67602edca9111e309e44a49208b99a7bbe29a0bc62fd554f80d8580eebf  tools/thor/build_thin_probe.sh
+  624a9c11b1892587d81c58999e974244d3361a1850e930783344a743b7ea9306  tools/thor/footprint.sh
+  422728482a5bd95204ac19d1198fd66fc6a18a66e05638eb05bc536455f34d62  tools/thor/g4_final_round.sh
+  3b0eef9d724edaa38bbafc6221c27ddcf018e95de4f6ba55c5f1e4dc42442e61  tools/thor/g4_native_evidence.sh
+  7bfe29c2cca5a55e7aa28914c629e9478c2ff0b575be76633bd78313f23e14a8  tools/thor/g4_prefill_budget_round.sh
+  7de93bf55503a1126369023faa14acef0c503aeb3d7a891fcfc2319564d82a17  tools/thor/g4_prefill_heads.sh
+  7c6c77f9f4e9905316ebd6e6d6744535ad013e6de07304dd782545a3e668dd89  tools/thor/g4_tier2b_diagnostics.sh
+  159b27e4ec6d9993c324527abf8c74c8be5950845be57e4ca89a65ee17453e38  tools/thor/g4_tier2b.sh
+  b7170dc7915af05e5b6555c14a071dd740e11e368f260036daf7354bd87d1b59  tools/thor/redteam_g6_runtime.sh
+  0078da377325a48c6bf35cef94ed1d514dff610a26d8f16a70c43ff12fb5fd30  tools/thor/run_native_gates.sh
+  570edab7ddc94e2006733ef6616ecc3f579acd8ba6da1c1c104f42c2b762ade8  tools/thor/run_ppl.sh
+  96703bf501fccd87bfb73a5e776be292370736c439d80e571afb65d2a6cc445e  tools/thor/run_round.sh
+== build 14:52:01
+b46aa09c2c3655b13d3260a1965893c8783c2f55c1d014099de632a57e7f58f5  liquid-lfm3
+01e7d614cf3e6f803a047c772024320f354b021f85f0c5391f396d4999eb4e74  liquid-lfm3-worker
+9dbd036cd469c6ce4fe9f57c4bb89c8f2848234d7e33e35b718db9b9b592590f  liquid-lfm3-server
+c2a9d1f6b1608abb22a36c172c53fce5f60156e94a6a0b66edb7a6c90e859daf  text-sampling-oracle
+180fe5df8dc415b5004bb4a7ea9fd88dde8331f8d68cde6729e95493a97e45cd  lfm3-decode-batch-probe
+warnings: 0
+== nll-bit-identity 14:53:26
+lfm3-score built sha256 a1975eaa22b643dc
+256: NLL bitwise identical to attempt 3
+257: NLL bitwise identical to attempt 3
+4096: NLL bitwise identical to attempt 3
+32768: NLL bitwise identical to attempt 3
+== gates-golden 14:58:44
+golden gates rc=0
+{"stage":"done","rc":0,"unix":1794089822}
+== speed-and-memory 15:17:02
+== decode-rate 15:17:02
+decode-rate summary written
+== http-batch-metrics 15:20:56
+rc=0
+{"status": "passed", "samples": 667, "app_live_bytes": {"empty": 0, "post_close": 0, "soak_distinct": [166705408]}, "post_close_minus_empty_device_mib": 26}
+== spread-compare 15:31:07
+baseline: through step 16, 3536 common files; anchor files not traced by {'eager': 0, 'sdpa': 704, 'native': 0}
+  eager   act rel_rms median 0.0104 max 0.0270  logits KL mean 4.43e-04 max 2.19e-03 (16 steps)  max_abs 0.250
+  sdpa    act rel_rms median 0.0089 max 0.0235  logits KL mean 2.11e-04 max 1.02e-03 (16 steps)  max_abs 0.193
+  native  act rel_rms median 0.0092 max 0.0231  logits KL mean 2.25e-04 max 1.06e-03 (16 steps)  max_abs 0.191
+arithmetic: through step 2, 442 common files; anchor files not traced by {'eager': 0, 'sdpa': 88, 'native': 0}
+  eager   act rel_rms median 0.0104 max 0.0201  logits KL mean 1.00e-06 max 1.97e-06 (2 steps)  max_abs 0.213
+  sdpa    act rel_rms median 0.0093 max 0.0181  logits KL mean 6.59e-07 max 1.30e-06 (2 steps)  max_abs 0.182
+  native  act rel_rms median 0.0092 max 0.0181  logits KL mean 1.43e-06 max 2.86e-06 (2 steps)  max_abs 0.199
+window257: through step 4, 884 common files; anchor files not traced by {'eager': 0, 'sdpa': 176, 'native': 0}
+  eager   act rel_rms median 0.0109 max 0.0261  logits KL mean 6.06e-07 max 1.21e-06 (4 steps)  max_abs 0.212
+  sdpa    act rel_rms median 0.0102 max 0.0272  logits KL mean 5.30e-07 max 6.95e-07 (4 steps)  max_abs 0.233
+  native  act rel_rms median 0.0103 max 0.0313  logits KL mean 6.99e-07 max 1.27e-06 (4 steps)  max_abs 0.159
+single: through step 4, 884 common files; anchor files not traced by {'eager': 0, 'sdpa': 176, 'native': 0}
+  eager   act rel_rms median 0.0139 max 0.0402  logits KL mean 3.02e-04 max 6.03e-04 (4 steps)  max_abs 0.209
+  sdpa    act rel_rms median 0.0139 max 0.0381  logits KL mean 2.82e-04 max 6.03e-04 (4 steps)  max_abs 0.367
+  native  act rel_rms median 0.0136 max 0.0408  logits KL mean 3.80e-04 max 1.01e-03 (4 steps)  max_abs 0.218
+ALL DONE 15:31:26
+ALL DONE 15:31:26

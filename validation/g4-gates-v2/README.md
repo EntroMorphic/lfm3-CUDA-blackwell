@@ -39,8 +39,10 @@ runner writes as "done" only if every stage passed; their own reports are not co
 
 ## Speed and memory against the cuBLAS engine (`../g4-native-gates-v1/`)
 
-Decode 1.51–1.61× faster; prefill takes 1.00–1.96× cuBLAS's time (the stage B `tcgen05` kernel targets prefill); FP32 score
-scratch per session 256 MiB at capacity 4,096 (the cuBLAS engine's BF16 scratch is 512 MiB).
+Superseded by `../g4-prefill-budget-v1/`: the decode comparison (1.51–1.61×) did not reproduce in a later session
+(1.06–1.25×, same cuBLAS binary; conditions unrecorded) and is withdrawn; prefill with the budget rule takes 1.12–1.94×
+cuBLAS's time in that session; FP32 score scratch ≤ 256 MiB per session at every capacity (the cuBLAS engine's BF16
+scratch is 512 MiB at 4,096).
 
 ## What remains open
 
@@ -48,6 +50,6 @@ scratch per session 256 MiB at capacity 4,096 (the cuBLAS engine's BF16 scratch 
   zero; `../g4-native-gemm-v3/`). Tier 2b cannot answer it: its margin comes from the FP32 logits.
 - Full-distribution closeness to FP32: on the four small fixtures native's logit KL was farther than SDPA's on three
   (`../g4-native-gates-v1/`); no powered measurement of KL exists.
-- The trade-off of the KV-group prefill split (4× less score scratch, prefill 1.43–1.58× instead of 1.21–1.42×
-  cuBLAS's time at 32K/4K) awaits Tripp's call.
+- The KV-group prefill split's trade-off is resolved by a budget rule (`../g4-prefill-budget-v1/`): ≤ 256 MiB of score
+  scratch at every capacity, and v5's prefill speed at capacity 32,768.
 - Stage B: a `tcgen05` prefill GEMM.
