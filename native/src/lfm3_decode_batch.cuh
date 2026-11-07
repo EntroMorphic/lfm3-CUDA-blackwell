@@ -40,7 +40,7 @@ inline void validate(const std::vector<Runner*>& lanes, const std::vector<int>& 
 
 // Ragged, unpadded head GEMMs: exactly the serial decode end/key_start and lda.
 inline void attention(Runner& scratch, Runner& owner, int lane, int layer,
-                      Buffer<bf16>& scores, Buffer<bf16>& probs
+                      Buffer<LFM3_SCORE>& scores, Buffer<bf16>& probs
 #ifdef LFM3_NATIVE_GEMM
                       , Buffer<unsigned char>& work, size_t work_bytes
 #endif
@@ -103,7 +103,8 @@ inline std::vector<std::vector<float>> forward(const std::vector<Runner*>& lanes
 #else
   const size_t scratch=size_t(std::max(a.s.context,lanes[1]->s.context))*s.query_heads;
 #endif
-  Buffer<bf16> scores(scratch),probs(scratch),logits(size_t(2)*s.vocabulary);
+  Buffer<LFM3_SCORE> scores(scratch);
+  Buffer<bf16> probs(scratch),logits(size_t(2)*s.vocabulary);
   // Allocate host outputs BEFORE mutation; no allocation is needed to publish cursors.
   std::vector<bf16> raw(size_t(2)*s.vocabulary);
   std::vector<std::vector<float>> result(2,std::vector<float>(s.vocabulary));

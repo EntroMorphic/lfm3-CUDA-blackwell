@@ -110,11 +110,17 @@ __global__ void scatter(const bf16* k, const bf16* v, bf16* kc, bf16* vc,
 // Native GEMM build: scores and probs rows are `pitch` apart, and columns [end, pitch) of probs are zero.
 #define LFM3_PITCH_PARAMETER ,int pitch
 #define LFM3_ROW_STRIDE pitch
+// Scores stay FP32 from the QKᵀ accumulator through the 1/sqrt(d) scale (journal §9 item 4; SDPA does the
+// same). Only the probabilities are rounded to BF16, as the P·V operand. validation/g4-native-gemm-v2.
+#define LFM3_SCORE float
+#define LFM3_SCALED_SCORE(x) __fmul_rn((x),rsqrtf(float(dim)))
 #else
 #define LFM3_PITCH_PARAMETER
 #define LFM3_ROW_STRIDE end
+#define LFM3_SCORE bf16
+#define LFM3_SCALED_SCORE(x) __bfloat162float(__float2bfloat16_rn(__fmul_rn(__bfloat162float(x),rsqrtf(float(dim)))))
 #endif
-__global__ void probabilities(const bf16* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start LFM3_PITCH_PARAMETER) {
+__global__ void probabilities(const LFM3_SCORE* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start LFM3_PITCH_PARAMETER) {
   const int row=blockIdx.x%rows,tid=threadIdx.x;
   const size_t base=size_t(blockIdx.x)*LFM3_ROW_STRIDE;
   const int position=start+row;
@@ -128,7 +134,7 @@ __global__ void probabilities(const bf16* scores,bf16* probs,int rows,int end,in
     int t=tid+i*32;
     float x=-INFINITY;
     if(t<end && t+key_start>=begin && t+key_start<=position)
-      x=__bfloat162float(__float2bfloat16_rn(__fmul_rn(__bfloat162float(scores[base+t]),rsqrtf(float(dim)))));
+      x=LFM3_SCALED_SCORE(scores[base+t]);
     elements[i]=x; maximum=fmaxf(maximum,x);
   }
   for(int offset=16;offset;offset/=2) maximum=fmaxf(maximum,__shfl_xor_sync(0xffffffff,maximum,offset));
@@ -167,7 +173,7 @@ template<bool Maximum> __device__ float block_softmax_reduce(float value,float* 
 }
 // ATen FP32 forward switches from persistent warp to register/block at 2049.
 // See native/third_party/PYTORCH_LICENSE and audit/CONTEXT.md for attribution.
-__global__ void probabilities_large(const bf16* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start LFM3_PITCH_PARAMETER) {
+__global__ void probabilities_large(const LFM3_SCORE* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start LFM3_PITCH_PARAMETER) {
   const int tid=threadIdx.x,row=blockIdx.x%rows,position=start+row;
   const int begin=window?max(0,position-window+1):0;
   const size_t base=size_t(blockIdx.x)*LFM3_ROW_STRIDE;
@@ -178,7 +184,7 @@ __global__ void probabilities_large(const bf16* scores,bf16* probs,int rows,int 
     const int t=tid+i*1024;
     float value=-INFINITY;
     if(t<end && t+key_start>=begin && t+key_start<=position)
-      value=__bfloat162float(__float2bfloat16_rn(__fmul_rn(__bfloat162float(scores[base+t]),rsqrtf(float(dim)))));
+      value=LFM3_SCALED_SCORE(scores[base+t]);
     elements[i]=value;
     if(t<end) maximum=fmaxf(maximum,value);
   }
@@ -226,9 +232,9 @@ inline size_t padded_attention_scratch(const lfm::RuntimeShape& s) {
 // scores[h] (rows x pitch) = Q_h · K_{h/group}ᵀ over cache positions [key_start, key_start+end). `context` is
 // the capacity of the cache that holds the keys (its per-head stride).
 inline void head_scores(const lfm::RuntimeShape& s,int context,const bf16* queries,const bf16* key_cache,
-                        int key_start,int rows,int end,bf16* scores) {
+                        int key_start,int rows,int end,float* scores) {
   lfm::gemm::Problem p;
-  p.a=queries; p.b=key_cache+size_t(key_start)*s.head_dim; p.c=scores;
+  p.a=queries; p.b=key_cache+size_t(key_start)*s.head_dim; p.c=nullptr; p.c_f32=scores;
   p.m=rows; p.n=end; p.k=s.head_dim;
   p.lda=s.hidden; p.ldb=s.head_dim; p.ldc=key_pitch(end);
   p.stride_a=s.head_dim; p.stride_b=(long long)context*s.head_dim; p.stride_c=(long long)rows*key_pitch(end);
@@ -260,7 +266,8 @@ class Runner {
   Buffer<bf16> hidden, normalized, projected, operated, updated, q, k, v, gates, attended, gated, a, b, act, logits;
   Buffer<int> positions, tokens;
   Buffer<unsigned char> workspace;
-  Buffer<bf16> score_buffer, probability_buffer;
+  Buffer<LFM3_SCORE> score_buffer;
+  Buffer<bf16> probability_buffer;
   Buffer<const bf16*> pointer_a, pointer_b;
   Buffer<bf16*> pointer_c;
   std::vector<std::unique_ptr<Buffer<bf16>>> keys, values, states;

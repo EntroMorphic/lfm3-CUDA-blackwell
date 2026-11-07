@@ -27,6 +27,9 @@ struct Problem {
   const bf16* a = nullptr;
   const bf16* b = nullptr;
   bf16* c = nullptr;
+  // Optional FP32 output: when set, C is stored here as the unrounded FP32 accumulator and `c` is unused
+  // (attention scores kept in FP32 through the softmax). Same layout and reduction order as `c`.
+  float* c_f32 = nullptr;
   int m = 0, n = 0, k = 0;  // k: reduction length, a multiple of 8
   // B rows (k index) that exist, for K x N B: rows at or beyond it read as zero (attention P·V, where
   // the probability row is zero-padded to k but the value cache is not).
@@ -48,6 +51,12 @@ inline size_t workspace_bytes(int rows, int n, int k, int batch) {
 }
 
 namespace detail {
+
+// Stores output element `index` (z * stride_c + row * ldc + col) as BF16, or as FP32 when c_f32 is set.
+__device__ __forceinline__ void put(const Problem& p, long long index, float v) {
+  if (p.c_f32) p.c_f32[index] = v;
+  else p.c[index] = __float2bfloat16_rn(v);
+}
 
 __device__ __forceinline__ unsigned smem_u32(const void* p) {
   return static_cast<unsigned>(__cvta_generic_to_shared(p));
@@ -106,7 +115,7 @@ __global__ void __launch_bounds__(T::THREADS) wide_kernel(Problem p) {
   const int z = blockIdx.z;
   const bf16* A = p.a + z * p.stride_a;
   const bf16* B = p.b + (z / p.group) * p.stride_b;
-  bf16* C = p.c + z * p.stride_c;
+  const long long c0 = z * p.stride_c;
   const int n0 = blockIdx.x * BN, m0 = blockIdx.y * BM;
   const int tid = threadIdx.x, warp = tid / 32, lane = tid % 32;
   const int wm = warp / T::WARPS_N, wn = warp % T::WARPS_N;
@@ -205,8 +214,14 @@ __global__ void __launch_bounds__(T::THREADS) wide_kernel(Problem p) {
         const int row = m0 + wm * T::WM + mi * 16 + g + half * 8;
         const int col = n0 + wn * T::WN + ni * 8 + 2 * t;
         if (row >= p.m) continue;
-        bf16* out = C + row * p.ldc + col;
+        const long long at = c0 + row * p.ldc + col;
         const float x = acc[mi][ni][half * 2], y = acc[mi][ni][half * 2 + 1];
+        if (p.c_f32) {
+          if (col < p.n) p.c_f32[at] = x;
+          if (col + 1 < p.n) p.c_f32[at + 1] = y;
+          continue;
+        }
+        bf16* out = p.c + at;
         if (col + 1 < p.n && (reinterpret_cast<std::uintptr_t>(out) & 3) == 0) *reinterpret_cast<__nv_bfloat162*>(out) = __floats2bfloat162_rn(x, y);
         else {
           if (col < p.n) out[0] = __float2bfloat16_rn(x);
@@ -223,7 +238,7 @@ __global__ void __launch_bounds__(256) thin_kernel(Problem p) {
   const int z = blockIdx.y;
   const bf16* A = p.a + z * p.stride_a;
   const bf16* B = p.b + (z / p.group) * p.stride_b;
-  bf16* C = p.c + z * p.stride_c;
+  const long long c0 = z * p.stride_c;
   const int warp = (blockIdx.x * blockDim.x + threadIdx.x) / 32, lane = threadIdx.x % 32;
   const int col0 = warp * COLS;
   if (col0 >= p.n) return;
@@ -272,7 +287,7 @@ __global__ void __launch_bounds__(256) thin_kernel(Problem p) {
       for (int j = 0; j < COLS; ++j)
         if (lane == r * COLS + j) v = acc[r][j];
     const int r = lane / COLS, j = lane % COLS;
-    if (col0 + j < p.n) C[r * p.ldc + col0 + j] = __float2bfloat16_rn(v);
+    if (col0 + j < p.n) put(p, c0 + r * p.ldc + col0 + j, v);
   }
 }
 
@@ -311,7 +326,7 @@ __global__ void split_kn_finish(Problem p, int splits) {
   const float* part = p.workspace + size_t(z) * splits * per + size_t(r) * p.n + col;
   float sum = 0.f;
   for (int s = 0; s < splits; ++s) sum += part[size_t(s) * per];
-  p.c[z * p.stride_c + r * p.ldc + col] = __float2bfloat16_rn(sum);
+  put(p, z * p.stride_c + r * p.ldc + col, sum);
 }
 template <int R>
 inline void launch_split_kn(const Problem& p, cudaStream_t stream) {
@@ -331,7 +346,7 @@ __global__ void __launch_bounds__(256) thin_k128_kernel(Problem p) {
   const int z = blockIdx.y;
   const bf16* A = p.a + z * p.stride_a;
   const bf16* B = p.b + (z / p.group) * p.stride_b;
-  bf16* C = p.c + z * p.stride_c;
+  const long long c0 = z * p.stride_c;
   const int lane = threadIdx.x % 32, sub = lane % 8, slot = lane / 8;
   const int warps = gridDim.x * (blockDim.x / 32);
   const int warp = blockIdx.x * (blockDim.x / 32) + threadIdx.x / 32;
@@ -375,7 +390,7 @@ __global__ void __launch_bounds__(256) thin_k128_kernel(Problem p) {
       v += __shfl_xor_sync(0xffffffffu, v, 4);
       v += __shfl_xor_sync(0xffffffffu, v, 2);
       v += __shfl_xor_sync(0xffffffffu, v, 1);
-      if (sub == r && row < p.n) C[r * p.ldc + row] = __float2bfloat16_rn(v);
+      if (sub == r && row < p.n) put(p, c0 + r * p.ldc + row, v);
     }
   }
 }
@@ -412,6 +427,7 @@ inline void check(const Problem& p) {
   const auto aligned = [](const void* q) { return reinterpret_cast<std::uintptr_t>(q) % 16 == 0; };
   if (p.m < 1 || p.n < 1 || p.k < 8 || p.k % 8 || p.batch < 1 || p.group < 1 || p.batch % p.group)
     throw std::runtime_error("gemm: invalid geometry");
+  if (!p.c == !p.c_f32) throw std::runtime_error("gemm: exactly one of c and c_f32 must be set");
   if (!aligned(p.a) || !aligned(p.b) || p.lda % 8 || p.ldb % 8 || p.stride_a % 8 || p.stride_b % 8)
     throw std::runtime_error("gemm: operands must be 16-byte aligned with 8-element strides");
   if (!p.b_k_contiguous && (p.b_rows < 0 || p.b_rows > p.k || p.n % 8)) throw std::runtime_error("gemm: invalid K x N operand");

@@ -1,0 +1,15 @@
+83765f5209fbd86f203c20bb157c6ffafebf089281b354e666e6121026ad26d2  ppl-g4-v2/nll-native-gemm-256.f32
+cf1d6e564e6157c75b186a556f8159e02428983b9452853b11d03681451417a7  ppl-g4-v2/nll-native-gemm-257.f32
+2c43025612243d1bfe45fba75d5c3d0f178dff54e87d44d3784d7cd3936e5fa5  ppl-g4-v2/nll-native-gemm-32768.f32
+8465f8d5ee25be0b2dcd09bdba5485f0c438d07c7ab882d48cbe03946c26265c  ppl-g4-v2/nll-native-gemm-4096.f32
+0849469b0f192c0cbd71d6ad35f325089057fe641d3e565aa2d2c85911c0de2b  score-g4-v2/lfm3-score
+f4ccea4090b86e16acfc851c49d67a74272480cfdd26c2774db6e360b1a9fd5a  cmake-g4-native-v2/liquid-lfm3
+26dabefe2a2e0dc48b6d1042e0293990316170c51a4160faed2b3928366b2a03  cmake-g4-native-v2/liquid-lfm3-server
+ff3a526e60a1d7e07aad08ea2c3b853bf3b5b1881032cd3a4d65ef2e63a09e56  cmake-g4-native-v2/liquid-lfm3-worker
+2dcd128ccdaf4b5375c1e299ff0536751ef9e8641ec3015ff50bfc89f4156c42  cmake-g4-default-v2/liquid-lfm3
+e7e07451a0d2e8d10b3cae121f68f7e2f6bca51697067eee3e56e07868d67f97  cmake-g4-default-v2/liquid-lfm3-server
+57f3bca596df67f567e3efea7b0bc6d284beac6f36e5a026842d6747c7ced930  cmake-g4-default-v2/liquid-lfm3-worker
+2adf40fa1d9edbd4d29147fd4abd41343f042927f80903793014fa79a92e20f5  /workspace/liquid-CUDA/native/tests/lfm3_score.cu
+c456c8e4d9b593e6fbfee3c8612574ed980e0bc42d1b0eff0870a1423e665289  /workspace/liquid-CUDA/native/src/lfm3_main.cu
+27a95da46ed4f7fa43918ba20b8d287affb5fbe47c5c42fc8fa3be3ae2bcded6  /workspace/liquid-CUDA/native/src/safetensors.cpp
+9645bcc70d65583b4397820acd4bd734d5883829d3d967e071ab64fa9c8a5f9e  /workspace/liquid-CUDA/native/include/lfm/gemm.cuh

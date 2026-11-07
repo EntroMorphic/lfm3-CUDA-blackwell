@@ -1,0 +1,10 @@
+{
+  "engine": "native-gemm",
+  "length": 4096,
+  "windows_file": "windows-4096.i32",
+  "windows_sha256": "c8a4407fb67b4b1dd49cb6608eb6bc601833a4023096457772c4f09ee2a55eee",
+  "nll_sha256": "8465f8d5ee25be0b2dcd09bdba5485f0c438d07c7ab882d48cbe03946c26265c",
+  "scorer": "build/score-g4-v2/lfm3-score",
+  "scorer_sha256": "0849469b0f192c0cbd71d6ad35f325089057fe641d3e565aa2d2c85911c0de2b",
+  "hashes_taken": "inside lfm3-profile-v1, at the scorer's paths, just before it ran"
+}
