@@ -40,10 +40,22 @@ inline void validate(const std::vector<Runner*>& lanes, const std::vector<int>& 
 
 // Ragged, unpadded head GEMMs: exactly the serial decode end/key_start and lda.
 inline void attention(Runner& scratch, Runner& owner, int lane, int layer,
-                      Buffer<bf16>& scores, Buffer<bf16>& probs) {
+                      Buffer<bf16>& scores, Buffer<bf16>& probs
+#ifdef LFM3_NATIVE_GEMM
+                      , Buffer<unsigned char>& work, size_t work_bytes
+#endif
+                      ) {
   const auto& s=owner.s;const int window=owner.config.layer_specs[layer].window;
   const int key_start=window>0?std::max(0,owner.cursor+1-window):0;
   const int end=owner.cursor+1-key_start;
+#ifdef LFM3_NATIVE_GEMM
+  const int pitch=key_pitch(end);
+  head_scores(s,s.context,scratch.q.p+size_t(lane)*s.hidden,owner.keys[layer]->p,key_start,1,end,scores.p);
+  if(end<=2048) probabilities<<<s.query_heads,32>>>(scores.p,probs.p,1,end,owner.cursor,window,s.head_dim,key_start,pitch);
+  else probabilities_large<<<s.query_heads,1024>>>(scores.p,probs.p,1,end,owner.cursor,window,s.head_dim,key_start,pitch);
+  head_values(s,s.context,probs.p,owner.values[layer]->p,key_start,1,end,scratch.attended.p+size_t(lane)*s.hidden,
+              work.p,work_bytes);
+#else
   std::vector<const bf16*> ap(s.query_heads),bp(s.query_heads);
   std::vector<bf16*> cp(s.query_heads);
   for(int h=0;h<s.query_heads;++h) {
@@ -75,6 +87,7 @@ inline void attention(Runner& scratch, Runner& owner, int lane, int layer,
     reinterpret_cast<const void* const*>(scratch.pointer_b.p),CUDA_R_16BF,end,&beta,
     reinterpret_cast<void* const*>(scratch.pointer_c.p),CUDA_R_16BF,s.hidden,s.query_heads,
     CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+#endif
 }
 
 inline std::vector<std::vector<float>> forward(const std::vector<Runner*>& lanes,
@@ -82,7 +95,14 @@ inline std::vector<std::vector<float>> forward(const std::vector<Runner*>& lanes
   validate(lanes,ids); // All metadata rejections precede any device/cache mutation.
   if(lanes.size()==1) return {lanes[0]->forward({ids[0]})};
   auto& a=*lanes[0];const auto& s=a.s;
+#ifdef LFM3_NATIVE_GEMM
+  const int widest=std::max(a.s.context,lanes[1]->s.context);
+  const size_t scratch=size_t(key_pitch(widest))*s.query_heads;
+  const size_t work_bytes=gemm_workspace_bytes(s,widest);
+  Buffer<unsigned char> work(work_bytes);
+#else
   const size_t scratch=size_t(std::max(a.s.context,lanes[1]->s.context))*s.query_heads;
+#endif
   Buffer<bf16> scores(scratch),probs(scratch),logits(size_t(2)*s.vocabulary);
   // Allocate host outputs BEFORE mutation; no allocation is needed to publish cursors.
   std::vector<bf16> raw(size_t(2)*s.vocabulary);
@@ -120,7 +140,11 @@ inline std::vector<std::vector<float>> forward(const std::vector<Runner*>& lanes
         auto& r=*lanes[lane];
         scatter<<<grid(s.kv_width()),256>>>(a.k.p+size_t(lane)*s.kv_width(),a.v.p+size_t(lane)*s.kv_width(),
           r.keys[layer]->p,r.values[layer]->p,1,s.kv_heads,s.head_dim,r.s.context,r.cursor);
+#ifdef LFM3_NATIVE_GEMM
+        attention(a,r,lane,layer,scores,probs,work,work_bytes);
+#else
         attention(a,r,lane,layer,scores,probs);
+#endif
       }
       a.linear(at+"gate_proj.weight",a.normalized.p,a.gates.p,2,s.hidden,s.query_heads);
       lfm::lfm3::head_gate<<<grid(size_t(2)*s.hidden),256>>>(a.attended.p,a.gates.p,a.gated.p,

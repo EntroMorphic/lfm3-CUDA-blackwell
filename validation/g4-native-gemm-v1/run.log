@@ -1,0 +1,41 @@
+== build-default 21:38:09
+2dcd128ccdaf4b5375c1e299ff0536751ef9e8641ec3015ff50bfc89f4156c42  liquid-lfm3
+57f3bca596df67f567e3efea7b0bc6d284beac6f36e5a026842d6747c7ced930  liquid-lfm3-worker
+5a7b0a1b1104fd60c6728f1c1ab7dd8b24ac959b4314388874e39ec6d0f3d95e  liquid-lfm3-server
+f0ca04e305e8bf5067c74cf5f5ea41ed14b197320de70d907532c5ac7f6bae6f  text-sampling-oracle
+74138fb3cd3f092e06b1d1fea51e1df7efa5d3272876e27af5bcc420ee4a92d7  lfm3-decode-batch-probe
+warnings: 0
+== build-native 21:39:32
+cfe33448ea8a805b7ac99ad8492b38bb99aa090984ce53b02e7cec637d28c8d5  liquid-lfm3
+79c3d9c2f0360c8deca30e1a0fdc2738707cd0166c651fc68e6d3e0f9067fb6b  liquid-lfm3-worker
+890dacc4dc94eb2f4957960a02ea96f86529d2908084ea5587b3873a8310cf31  liquid-lfm3-server
+f0ca04e305e8bf5067c74cf5f5ea41ed14b197320de70d907532c5ac7f6bae6f  text-sampling-oracle
+61665d9b2f4af7b090cef64a91161e34c3a5d04e0bc80c4ff202e9221652a8c0  lfm3-decode-batch-probe
+warnings: 0
+== compare-default 21:41:13
+liquid-lfm3 full:DIFF stripped:same
+liquid-lfm3-worker full:DIFF stripped:same
+liquid-lfm3-server full:DIFF stripped:same
+== native-linkage 21:41:13
+liquid-lfm3 2277392 bytes; needed: libcudart.so.13 libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+liquid-lfm3-worker 2356760 bytes; needed: libcudart.so.13 libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+liquid-lfm3-server 2601064 bytes; needed: libcudart.so.13 libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+== build-scorer 21:41:13
+lfm3-score built sha256 ea3141e75d45eff4
+scorer needed: libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+== ppl 21:41:36
+{"engine":"native","length":256,"windows":1160,"scored_tokens":295800,"mean_nll":3.280191829,"perplexity":26.580871,"seconds":59.139}
+{"engine":"native","length":257,"windows":1155,"scored_tokens":295680,"mean_nll":3.277472188,"perplexity":26.508679,"seconds":71.720}
+{"engine":"native","length":4096,"windows":72,"scored_tokens":294840,"mean_nll":2.569480009,"perplexity":13.059032,"seconds":60.713}
+{"engine":"native","length":32768,"windows":9,"scored_tokens":294903,"mean_nll":2.532013865,"perplexity":12.578813,"seconds":72.645}
+== compare 21:46:06
+ length windows   PPL sdpa  PPL eager PPL native-gemm        dNLL                    95% CI resolution   verdict bar
+    256    1160    26.5821    26.5812     26.5809   -4.56e-05    [-1.95e-04, +9.71e-05]   1.46e-04     equal PASS
+    257    1155    26.5045    26.5066     26.5087   +1.58e-04    [+1.63e-05, +2.98e-04]   1.41e-04     worse FAIL
+   4096      72    13.0596    13.0590     13.0590   -4.72e-05    [-2.09e-04, +1.21e-04]   1.65e-04     equal PASS
+  32768       9    12.5771        nan     12.5788   +1.37e-04    [+2.56e-05, +2.50e-04]   1.12e-04     worse FAIL
+BAR (perplexity equal or better, 95% CI reading): FAIL
+info: equal eps 1e-05 nats/token; regressions smaller than a length's resolution cannot be detected; point-estimate equal-or-better at all lengths: False; within standard stack: False
+compare rc=1
+
+[exited with code 1]

@@ -1,13 +1,16 @@
 #pragma once
 // Native BF16 GEMMs for the LFM3 engine (G4: no cuBLAS). FP32 accumulation, BF16 output rounded to
-// nearest even, deterministic (fixed reduction order, no atomics, no split-K workspace).
+// nearest even, deterministic (fixed reduction order, no atomics; the decode P·V split-K path sums its
+// FP32 partials from a caller-provided workspace in a fixed order).
 //
 //   C[z] (M x N) = A[z] (M x K, K contiguous) · op(B[z / group])
 //     op = transpose for B stored N x K (K contiguous): projections X·Wᵀ and attention Q·Kᵀ
 //     op = identity  for B stored K x N (N contiguous): attention P·V
 //
-// Two kernels: `thin` for M <= 8 (decode: weight-bandwidth bound) and `wide` (prefill: tensor cores,
-// mma.sync m16n8k16, a multistage cp.async pipeline through XOR-swizzled shared memory, ldmatrix).
+// Kernels: `thin` and `thin_k128` for M <= 8 with B stored N x K (decode projections and Q·Kᵀ: weight-
+// bandwidth bound), `split_kn` for M <= 8 with B stored K x N (decode P·V), and `wide` otherwise
+// (prefill: tensor cores, mma.sync m16n8k16, a multistage cp.async pipeline through XOR-swizzled shared
+// memory, ldmatrix).
 // Quality bar (journal §9): perplexity equal or better than the standard stack within the 95% CI.
 // No reproduction of cuBLAS's kernel selection or reduction order is attempted or claimed.
 #include <cuda_bf16.h>

@@ -7,7 +7,13 @@
 #include <lfm/text_sampling.hpp>
 #include <lfm/handle_setup.hpp>
 #include <lfm/lfm3_text_request.hpp>
+#ifdef LFM3_NATIVE_GEMM
+// G4: the engine's GEMMs are lfm::gemm (no cuBLAS). The forward pass is held to journal §9's
+// perplexity bar instead of bitwise identity with the cuBLAS build.
+#include <lfm/gemm.cuh>
+#else
 #include <cublas_v2.h>
+#endif
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
@@ -19,7 +25,9 @@
 using bf16 = __nv_bfloat16;
 namespace {
 void cuda_check(cudaError_t s) { if (s != cudaSuccess) throw std::runtime_error(cudaGetErrorString(s)); }
+#ifndef LFM3_NATIVE_GEMM
 void blas_check(cublasStatus_t s) { if (s != CUBLAS_STATUS_SUCCESS) throw std::runtime_error("cuBLAS error " + std::to_string(s)); }
+#endif
 template<class T> struct Buffer {
   T* p = nullptr;
   explicit Buffer(size_t n) { cuda_check(cudaMalloc(&p, lfm::checked_product({n, sizeof(T)}))); }
@@ -98,9 +106,17 @@ __global__ void scatter(const bf16* k, const bf16* v, bf16* kc, bf16* vc,
     kc[dst] = k[i]; vc[dst] = v[i];
   }
 }
-__global__ void probabilities(const bf16* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start) {
+#ifdef LFM3_NATIVE_GEMM
+// Native GEMM build: scores and probs rows are `pitch` apart, and columns [end, pitch) of probs are zero.
+#define LFM3_PITCH_PARAMETER ,int pitch
+#define LFM3_ROW_STRIDE pitch
+#else
+#define LFM3_PITCH_PARAMETER
+#define LFM3_ROW_STRIDE end
+#endif
+__global__ void probabilities(const bf16* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start LFM3_PITCH_PARAMETER) {
   const int row=blockIdx.x%rows,tid=threadIdx.x;
-  const size_t base=size_t(blockIdx.x)*end;
+  const size_t base=size_t(blockIdx.x)*LFM3_ROW_STRIDE;
   const int position=start+row;
   const int begin=window?max(0,position-window+1):0;
   // ATen persistent-softmax order: lane-strided accumulators, XOR butterfly.
@@ -125,6 +141,9 @@ __global__ void probabilities(const bf16* scores,bf16* probs,int rows,int end,in
     int t=tid+i*32;
     if(t<end) probs[base+t]=__float2bfloat16_rn(elements[i]/sum);
   }
+#ifdef LFM3_NATIVE_GEMM
+  for(int t=end+tid;t<pitch;t+=32) probs[base+t]=__float2bfloat16_rn(0.f);
+#endif
 }
 template<bool Maximum> __device__ float block_softmax_reduce(float value,float* shared) {
   const int tid=threadIdx.x,lane=tid%32;
@@ -148,10 +167,10 @@ template<bool Maximum> __device__ float block_softmax_reduce(float value,float* 
 }
 // ATen FP32 forward switches from persistent warp to register/block at 2049.
 // See native/third_party/PYTORCH_LICENSE and audit/CONTEXT.md for attribution.
-__global__ void probabilities_large(const bf16* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start) {
+__global__ void probabilities_large(const bf16* scores,bf16* probs,int rows,int end,int start,int window,int dim,int key_start LFM3_PITCH_PARAMETER) {
   const int tid=threadIdx.x,row=blockIdx.x%rows,position=start+row;
   const int begin=window?max(0,position-window+1):0;
-  const size_t base=size_t(blockIdx.x)*end;
+  const size_t base=size_t(blockIdx.x)*LFM3_ROW_STRIDE;
   float elements[32];
   const int iterations=(end+1023)/1024;
   float maximum=-3.402823466e38f;
@@ -170,6 +189,9 @@ __global__ void probabilities_large(const bf16* scores,bf16* probs,int rows,int 
   sum=block_softmax_reduce<false>(sum,shared);
   for(int i=0;i<iterations;++i) if(tid+i*1024<end)
     probs[base+tid+i*1024]=__float2bfloat16_rn(expf(elements[i]-maximum)/sum);
+#ifdef LFM3_NATIVE_GEMM
+  for(int t=end+tid;t<pitch;t+=1024) probs[base+t]=__float2bfloat16_rn(0.f);
+#endif
 }
 unsigned grid(size_t n) { return (n + 255) / 256; }
 lfm::Json read_json(const std::string& path) {
@@ -191,12 +213,50 @@ std::vector<int> ids(const lfm::Json& req, const std::string& key, int vocab) {
   return out;
 }
 
+#ifdef LFM3_NATIVE_GEMM
+// Attention rows are padded to a multiple of 8 keys (the GEMM's K granularity) with zero probability.
+inline int key_pitch(int keys) { return (keys+7)/8*8; }
+inline size_t gemm_workspace_bytes(const lfm::RuntimeShape& s,int context) {
+  // Split-K P·V scratch for up to 8 query rows (decode, and prefill tiles of <= 8 rows).
+  return lfm::gemm::workspace_bytes(8,s.head_dim,key_pitch(context),s.query_heads);
+}
+inline size_t padded_attention_scratch(const lfm::RuntimeShape& s) {
+  return size_t(lfm::text::scratch_rows(s.context))*key_pitch(s.context)*s.query_heads;
+}
+// scores[h] (rows x pitch) = Q_h · K_{h/group}ᵀ over cache positions [key_start, key_start+end). `context` is
+// the capacity of the cache that holds the keys (its per-head stride).
+inline void head_scores(const lfm::RuntimeShape& s,int context,const bf16* queries,const bf16* key_cache,
+                        int key_start,int rows,int end,bf16* scores) {
+  lfm::gemm::Problem p;
+  p.a=queries; p.b=key_cache+size_t(key_start)*s.head_dim; p.c=scores;
+  p.m=rows; p.n=end; p.k=s.head_dim;
+  p.lda=s.hidden; p.ldb=s.head_dim; p.ldc=key_pitch(end);
+  p.stride_a=s.head_dim; p.stride_b=(long long)context*s.head_dim; p.stride_c=(long long)rows*key_pitch(end);
+  p.batch=s.query_heads; p.group=s.query_heads/s.kv_heads;
+  lfm::gemm::run(p);
+}
+// out_h (rows x head_dim, row stride hidden) = P_h (rows x pitch) · V_{h/group}[key_start, key_start+end).
+inline void head_values(const lfm::RuntimeShape& s,int context,const bf16* probs,const bf16* value_cache,
+                        int key_start,int rows,int end,bf16* out,void* workspace,size_t workspace_size) {
+  lfm::gemm::Problem p;
+  p.a=probs; p.b=value_cache+size_t(key_start)*s.head_dim; p.c=out;
+  p.m=rows; p.n=s.head_dim; p.k=key_pitch(end); p.b_rows=end; p.b_k_contiguous=false;
+  p.lda=key_pitch(end); p.ldb=s.head_dim; p.ldc=s.hidden;
+  p.stride_a=(long long)rows*key_pitch(end); p.stride_b=(long long)context*s.head_dim; p.stride_c=s.head_dim;
+  p.batch=s.query_heads; p.group=s.query_heads/s.kv_heads;
+  p.workspace=static_cast<float*>(workspace); p.workspace_size=workspace_size;
+  lfm::gemm::run(p);
+}
+#endif
+
 class Runner {
  public:
   lfm::ModelConfig config;
   lfm::RuntimeShape s;
   std::shared_ptr<lfm::Safetensors> weights;
+#ifndef LFM3_NATIVE_GEMM
   cublasHandle_t blas = nullptr;
+#endif
   Buffer<bf16> hidden, normalized, projected, operated, updated, q, k, v, gates, attended, gated, a, b, act, logits;
   Buffer<int> positions, tokens;
   Buffer<unsigned char> workspace;
@@ -218,9 +278,14 @@ class Runner {
         q(size_t(s.context)*s.hidden), k(size_t(s.context)*s.kv_width()), v(size_t(s.context)*s.kv_width()),
         gates(size_t(s.context)*s.query_heads), attended(size_t(s.context)*s.hidden), gated(size_t(s.context)*s.hidden),
         a(size_t(s.context)*s.mlp), b(size_t(s.context)*s.mlp), act(size_t(s.context)*s.mlp), logits(s.vocabulary),
+#ifdef LFM3_NATIVE_GEMM
+        positions(s.context), tokens(s.context), workspace(gemm_workspace_bytes(s,s.context)),
+        score_buffer(padded_attention_scratch(s)), probability_buffer(padded_attention_scratch(s)),
+#else
         positions(s.context), tokens(s.context), workspace(4096*1024*2+16*1024*8),
         score_buffer(lfm::text::attention_scratch_elements(s.context,s.query_heads)),
         probability_buffer(lfm::text::attention_scratch_elements(s.context,s.query_heads)),
+#endif
         pointer_a(s.query_heads),pointer_b(s.query_heads),pointer_c(s.query_heads) {
     // Validate the complete selected text schema before launching any forward kernels.
     weight("embed_tokens.weight", {s.vocabulary, s.hidden}); weight("embedding_norm.weight", {s.hidden});
@@ -252,6 +317,10 @@ class Runner {
         frequencies.emplace_back(nullptr);
       }
     }
+#ifdef LFM3_NATIVE_GEMM
+    reset();
+  }
+#else
     blas_check(cublasCreate(&blas));
     lfm::finish_handle_setup(blas,[](cublasHandle_t handle) noexcept {cublasDestroy(handle);},[&] {
       // Match PyTorch 2.10's non-Hopper cuBLAS workspace budget.
@@ -262,6 +331,7 @@ class Runner {
     });
   }
   ~Runner() { if (blas) cublasDestroy(blas); }
+#endif
   const bf16* weight(const std::string& name, std::initializer_list<int64_t> shape) {
     const auto& t = weights->at(config.tensor_prefix + name);
     if (t.dtype != "BF16" || t.shape != std::vector<int64_t>(shape)) throw std::runtime_error("weight contract: " + name);
@@ -287,12 +357,28 @@ class Runner {
     f.write(reinterpret_cast<const char*>(data.data()),n*sizeof(bf16));
     if (!f) throw std::runtime_error("trace write failed");
   }
+#ifdef LFM3_NATIVE_GEMM
+  // Traces rows of `width` values stored `pitch` apart, as `count` contiguous rows.
+  void dump_rows(const std::string& name, const bf16* ptr, size_t count, int width, int pitch) {
+    if (width == pitch) return dump(name, ptr, count*width);
+    if (trace.empty() || (trace_logits_only && name!="logits")) return;
+    std::vector<bf16> data(count*width);
+    cuda_check(cudaMemcpy2D(data.data(),width*sizeof(bf16),ptr,pitch*sizeof(bf16),width*sizeof(bf16),count,cudaMemcpyDeviceToHost));
+    std::ofstream f(trace+"/"+std::to_string(step)+"."+name+".bf16",std::ios::binary);
+    f.write(reinterpret_cast<const char*>(data.data()),data.size()*sizeof(bf16));
+    if (!f) throw std::runtime_error("trace write failed");
+  }
+#endif
   void linear(const std::string& name, const bf16* x, bf16* out, int rows, int input, int output) {
+#ifdef LFM3_NATIVE_GEMM
+    lfm::gemm::run(lfm::gemm::linear(x,w(name),out,rows,input,output));
+#else
     float alpha=1, beta=0;
     // Row-major X W^T = column-major W X^T, with W stored row-major.
     blas_check(cublasGemmEx(blas,CUBLAS_OP_T,CUBLAS_OP_N,output,rows,input,&alpha,
       w(name),CUDA_R_16BF,input,x,CUDA_R_16BF,input,&beta,out,CUDA_R_16BF,output,
       CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+#endif
   }
   void normalize(const bf16* x, const std::string& weight_name, bf16* out, int rows, int width) {
     norm<<<rows,norm_threads(rows,width)>>>(x,w(weight_name),out,width,s.epsilon);
@@ -303,6 +389,17 @@ class Runner {
     const auto range=lfm::text::attention_key_range(s.context,cursor,total_rows,first,rows,window);
     const int key_start=range.begin;
     const int end=range.span();
+#ifdef LFM3_NATIVE_GEMM
+    const int pitch=key_pitch(end);
+    head_scores(s,s.context,q.p+size_t(first)*s.hidden,keys[layer]->p,key_start,rows,end,score_buffer.p);
+    if(end<=2048) probabilities<<<rows*s.query_heads,32>>>(score_buffer.p,probability_buffer.p,rows,end,cursor+first,window,s.head_dim,key_start,pitch);
+    else probabilities_large<<<rows*s.query_heads,1024>>>(score_buffer.p,probability_buffer.p,rows,end,cursor+first,window,s.head_dim,key_start,pitch);
+    std::string label="layers."+std::to_string(layer)+".self_attn.probabilities";
+    if(total_rows>lfm::text::scratch_rows(s.context)) label+=".tile"+std::to_string(first);
+    dump_rows(label,probability_buffer.p,size_t(s.query_heads)*rows,end,pitch);
+    head_values(s,s.context,probability_buffer.p,values[layer]->p,key_start,rows,end,attended.p+size_t(first)*s.hidden,
+                workspace.p,gemm_workspace_bytes(s,s.context));
+#else
     std::vector<const bf16*> ap(s.query_heads),bp(s.query_heads);
     std::vector<bf16*> cp(s.query_heads);
     for(int h=0;h<s.query_heads;++h) {
@@ -336,6 +433,7 @@ class Runner {
       reinterpret_cast<const void* const*>(pointer_a.p),CUDA_R_16BF,s.head_dim,
       reinterpret_cast<const void* const*>(pointer_b.p),CUDA_R_16BF,end,&beta,
       reinterpret_cast<void* const*>(pointer_c.p),CUDA_R_16BF,s.hidden,s.query_heads,CUBLAS_COMPUTE_32F,CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+#endif
   }
   void attention(int layer,int rows,int window) {
     const int tile=lfm::text::scratch_rows(s.context);
