@@ -31,9 +31,20 @@ def resource_gate(baseline, sample):
     memory = sample["gpu"]
     if (type(memory.get("cuda_free_bytes")) is not int or type(memory.get("cuda_total_bytes")) is not int or
         not 0 < memory["cuda_free_bytes"] <= memory["cuda_total_bytes"] or
-        memory["cuda_total_bytes"] != baseline["gpu"]["cuda_total_bytes"] or
-        memory["cuda_free_bytes"] < baseline["gpu"]["cuda_free_bytes"]-128*1024*1024):
+        memory["cuda_total_bytes"] != baseline["gpu"]["cuda_total_bytes"]):
+        raise AssertionError("invalid device-wide CUDA memory reading")
+    if exact_accounting(baseline["gpu"]):
+        # G4 (validation/g4-gates-v2/PLAN.md): the worker's own engine-buffer bytes decide; on Thor's unified memory
+        # the device-wide reading also moves with host activity and is recorded only.
+        if (not exact_accounting(memory) or memory["app_live_bytes"] > baseline["gpu"]["app_live_bytes"]):
+            raise AssertionError("warm engine-buffer bytes grew above the first warm sample")
+    elif memory["cuda_free_bytes"] < baseline["gpu"]["cuda_free_bytes"]-128*1024*1024:
         raise AssertionError("fixed warm device-wide CUDA free-memory budget exceeded")
+
+
+def exact_accounting(stats):
+    """True when the worker reports valid engine-buffer accounting (native build with LFM_ALLOCATION_METRICS=1)."""
+    return type(stats.get("app_live_bytes")) is int and stats.get("app_metrics_valid") is True
 
 
 def validate_response(response, reference, require_pairs=True):
@@ -175,9 +186,13 @@ def main():
         for sid in (a,b):call(f"/sessions/{sid}/close",{})
         post_close=service._submit(lambda:worker.call(dict(op='stats')),lambda:None)
         report['post_close_gpu']=post_close;save()
-        if (post_close.get('sessions')!=0 or post_close.get('reserved_tokens')!=0 or
-            type(post_close.get('cuda_free_bytes')) is not int or
-            post_close['cuda_free_bytes']<empty_gpu['cuda_free_bytes']-16*1024*1024):
+        if exact_accounting(empty_gpu):
+            recovered=exact_accounting(post_close) and post_close['app_live_bytes']==empty_gpu['app_live_bytes']
+            report['memory_judged_by']='worker engine-buffer bytes (exact); device-wide readings recorded only'
+        else:
+            recovered=type(post_close.get('cuda_free_bytes')) is int and post_close['cuda_free_bytes']>=empty_gpu['cuda_free_bytes']-16*1024*1024
+            report['memory_judged_by']='device-wide free memory (no engine-buffer accounting)'
+        if (post_close.get('sessions')!=0 or post_close.get('reserved_tokens')!=0 or not recovered):
             raise AssertionError('post-close device allocations not recovered within fixed16MiB allowance')
         if service.sessions or service.failed:raise AssertionError("leaked sessions/failed service")
         if hashlib.sha256(args.worker.read_bytes()).hexdigest()!=binary_hash or any(hashlib.sha256(p.read_bytes()).hexdigest()!=hashes[p.name] for p in source_paths):

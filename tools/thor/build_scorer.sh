@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Build the native perplexity scorer in the pinned compiler image (same flags as liquid-lfm3).
-# Usage (in container): build_scorer.sh OUTDIR [native-gemm]
+# Usage (in container): build_scorer.sh OUTDIR [native-gemm|cublas]   (default native-gemm, like the engine; G4)
 #   native-gemm: the engine without cuBLAS (LFM3_NATIVE_GEMM, lfm::gemm; G4)
 set -euo pipefail
-out=$1; mode=${2:-cublas}; N=/workspace/liquid-CUDA/native
+out=$1; mode=${2:-native-gemm}; N=/workspace/liquid-CUDA/native
 case $mode in
   cublas) flags=(); libs=(-lcublas) ;;
   native-gemm) flags=(-DLFM3_NATIVE_GEMM); libs=() ;;

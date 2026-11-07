@@ -5,7 +5,8 @@ option(LIQUID_PROFILE_NVTX "Enable diagnostic host-side NVTX component ranges" O
 option(LIQUID_LFM3_OPS_TESTS "Build the isolated LFM3 operator test bridge" OFF)
 # G4: the LFM3 engine's GEMMs from lfm::gemm (native/include/lfm/gemm.cuh) instead of cuBLAS; the
 # engine targets then link no cuBLAS. Held to journal §9's perplexity bar, not bitwise identity.
-option(LIQUID_LFM3_NATIVE_GEMM "LFM3 engine without cuBLAS (lfm::gemm)" OFF)
+# G4: the engine runs on lfm::gemm by default (validation/g4-gates-v2/). OFF builds the cuBLAS engine, kept for A/B.
+option(LIQUID_LFM3_NATIVE_GEMM "LFM3 engine without cuBLAS (lfm::gemm)" ON)
 
 find_package(CUDAToolkit REQUIRED)
 find_package(Threads REQUIRED)

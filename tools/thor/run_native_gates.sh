@@ -8,16 +8,24 @@
 # KEEP_GOING=1 runs every stage and lists the failing ones in OUT/failures (inventory mode); the exit
 # status is then 1 if any stage failed. Both modes run the native (single-binary) server gate last.
 # FORWARD_ARGS passes extra flags to the forward gate (--activation-tolerance for the native-GEMM build).
+# TIERS=pin|golden (native-GEMM build, validation/g4-gates-v2/PLAN.md): forward and context run --native-tiers and
+# write (pin) or check (golden) PIN_DIR/forward.json and PIN_DIR/context.json (PIN_DIR is a container path), and
+# every stage runs with LFM_ALLOCATION_METRICS=1 so http-batch judges exact engine-buffer bytes.
 set -uo pipefail
 build=$1; tag=$2
 case "${KEEP_GOING:-0}" in 0|1) ;; *) echo "KEEP_GOING must be 0 or 1"; exit 2 ;; esac
+case "${TIERS:-}" in "") tier_args=(); context_tier=(); metrics=() ;;
+  pin|golden) [ -n "${PIN_DIR:-}" ] || { echo "TIERS needs PIN_DIR"; exit 2; }
+    tier_args=(--native-tiers --$TIERS "$PIN_DIR/forward.json"); context_tier=(--native-tiers --$TIERS "$PIN_DIR/context.json")
+    metrics=(-e LFM_ALLOCATION_METRICS=1) ;;
+  *) echo "TIERS must be pin or golden"; exit 2 ;; esac
 W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
 out="$B/$tag-gates"; test ! -e "$out" || { echo "exists: $out"; exit 1; }; mkdir "$out"
 status(){ printf '{"stage":"%s","rc":%s,"unix":%s}\n' "$1" "$2" "$(date +%s)" > "$out/status.json"; }
 bins="liquid-lfm3 liquid-lfm3-worker text-sampling-oracle liquid-lfm3-server"
 for f in $bins; do test -x "$B/$build/$f" || { echo "missing $B/$build/$f"; exit 1; }; done
-python3 -c 'import json,sys; print(json.dumps(dict(build=sys.argv[1], keep_going=sys.argv[2] == "1", forward_args=sys.argv[3])))' \
-  "$build" "${KEEP_GOING:-0}" "${FORWARD_ARGS:-}" > "$out/mode.json"
+python3 -c 'import json,sys; print(json.dumps(dict(build=sys.argv[1], keep_going=sys.argv[2] == "1", forward_args=sys.argv[3], tiers=sys.argv[4], pin_dir=sys.argv[5])))' \
+  "$build" "${KEEP_GOING:-0}" "${FORWARD_ARGS:-}" "${TIERS:-}" "${PIN_DIR:-}" > "$out/mode.json"
 (cd "$B/$build" && sha256sum $bins) > "$out/binaries.sha256" \
   || { echo "cannot hash binaries"; exit 1; }
 status parse-timing null
@@ -26,7 +34,7 @@ for _ in 1 2 3; do
   r=$( { /usr/bin/time -f "%e s %M KB" "$out/tokcount" $W/models/LFM3-Omni-2B/tokenizer.json 128000; } 2>&1 ); echo "$r" >> "$out/parse-timing.log"
   [ "$(echo "$r" | head -1)" = 125033 ] || { status parse-timing 1; exit 1; }
 done
-EX="docker exec -e TRITON_PTXAS_PATH=/workspace/tools/ptxas -e TRITON_PTXAS_BLACKWELL_PATH=/workspace/tools/ptxas -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1 /opt/venv/bin/python3"
+EX="docker exec ${metrics[*]} -e TRITON_PTXAS_PATH=/workspace/tools/ptxas -e TRITON_PTXAS_BLACKWELL_PATH=/workspace/tools/ptxas -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1 /opt/venv/bin/python3"
 failed=0
 run(){ name=$1; shift; status "$name" null; $EX "$@" > "$out/$name.log" 2>&1; rc=$?; [ $rc = 0 ] && return 0
   status "$name" $rc; [ "${KEEP_GOING:-0}" = 1 ] || exit $rc; echo "$name rc=$rc" >> "$out/failures"; failed=1; }
@@ -44,8 +52,8 @@ for pin in "request.json:5651a375a4dd1144c6f49e72a666cf2423ef3062b5502821381a693
     || { status control-pin 1; echo "control $f differs from the accepted one"; exit 1; }
 done
 LONG=$C/context32k-bounded-prefill-v1/decode_into32768/request.json
-run forward        $T/check_lfm3_forward.py --checkpoint $CK --binary $N/liquid-lfm3 --output $O-forward ${FORWARD_ARGS:-}
-run context        $T/check_lfm3_context.py --checkpoint $CK --binary $N/liquid-lfm3 --suite full --reuse-reference $C/context-full-bounded-release-v2 --timeout 180 --output $O-context
+run forward        $T/check_lfm3_forward.py --checkpoint $CK --binary $N/liquid-lfm3 --output $O-forward ${FORWARD_ARGS:-} "${tier_args[@]}"
+run context        $T/check_lfm3_context.py --checkpoint $CK --binary $N/liquid-lfm3 --suite full --reuse-reference $C/context-full-bounded-release-v2 --timeout 180 --output $O-context "${context_tier[@]}"
 run sampling       $T/check_lfm3_sampling.py --checkpoint $CK --binary $N/liquid-lfm3 --request $REQ --oracle $N/text-sampling-oracle --output $O-sampling
 run worker         $T/check_lfm3_worker.py --checkpoint $CK --worker $N/liquid-lfm3-worker --single $N/liquid-lfm3 --request $REQ --long-request $LONG --oracle $N/text-sampling-oracle --output $O-worker
 run grouped-worker $T/check_lfm3_batch_worker.py --checkpoint $CK --worker $N/liquid-lfm3-worker --request $REQ --oracle $N/text-sampling-oracle --long-request $LONG --output $O-grouped-worker

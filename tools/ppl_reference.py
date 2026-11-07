@@ -77,8 +77,15 @@ def main():
     p.add_argument("--configs", nargs="+", default=["sdpa", "eager"])
     p.add_argument("--eager-max-length", type=int, default=4096, help="eager materializes L x L attention in FP32")
     p.add_argument("--max-windows", type=int, default=0, help="cap windows per length (0 = all)")
+    p.add_argument("--dtype", choices=["bfloat16", "float32"], default="bfloat16",
+                   help="float32: a precision anchor (G4 tier 2b); engines are named hf-CONFIG-fp32, TF32 disabled")
     a = p.parse_args()
     a.output.mkdir(parents=True, exist_ok=False)
+    if a.dtype == "float32":
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        torch.set_float32_matmul_precision("highest")
+    suffix = "-fp32" if a.dtype == "float32" else ""
 
     processor = AutoProcessor.from_pretrained(a.model, trust_remote_code=True)
     tok = processor.tokenizer
@@ -91,6 +98,9 @@ def main():
                "window_rule": "[BOS] + next L-1 corpus tokens, non-overlapping; score positions 1..L-1",
                "nll_definition": "-log_softmax(lm_head(final hidden).float(), -1)[next token], all 128000 logits",
                "versions": {"torch": torch.__version__, "transformers": transformers.__version__},
+               "dtype": a.dtype, "precision": {"matmul_allow_tf32": torch.backends.cuda.matmul.allow_tf32,
+                                              "cudnn_allow_tf32": torch.backends.cudnn.allow_tf32,
+                                              "float32_matmul_precision": torch.get_float32_matmul_precision()},
                "windows": {}, "results": []}
     windows = {}
     for length in a.lengths:
@@ -101,28 +111,28 @@ def main():
         summary["windows"][str(length)] = {"count": int(w.shape[0]), "file": path.name, "sha256": sha256(path)}
 
     for config in a.configs:
-        model = AutoModelForMultimodalLM.from_pretrained(a.model, dtype=torch.bfloat16, device_map="cuda",
+        model = AutoModelForMultimodalLM.from_pretrained(a.model, dtype=getattr(torch, a.dtype), device_map="cuda",
                                                          trust_remote_code=True, attn_implementation=config).eval()
         actual = model.model.language_model.config._attn_implementation
         if actual != config:
             raise RuntimeError(f"requested attn_implementation={config} but the language model runs {actual}")
         for length in a.lengths:
             if config == "eager" and length > a.eager_max_length:
-                summary["results"].append({"engine": f"hf-{config}", "length": length, "skipped": "length above eager limit"})
+                summary["results"].append({"engine": f"hf-{config}{suffix}", "length": length, "skipped": "length above eager limit"})
                 continue
             t0 = time.perf_counter()
             nll = score(model, windows[length])
             seconds = time.perf_counter() - t0
             if not np.isfinite(nll).all():
-                raise RuntimeError(f"non-finite NLL for hf-{config} at length {length}")
-            path = a.output / f"nll-hf-{config}-{length}.f32"
+                raise RuntimeError(f"non-finite NLL for hf-{config}{suffix} at length {length}")
+            path = a.output / f"nll-hf-{config}{suffix}-{length}.f32"
             nll.tofile(path)
-            write_meta(a.output / f"nll-hf-{config}-{length}.meta.json", engine=f"hf-{config}", length=length,
+            write_meta(a.output / f"nll-hf-{config}{suffix}-{length}.meta.json", engine=f"hf-{config}{suffix}", length=length,
                        windows_file=f"windows-{length}.i32", windows_sha256=summary["windows"][str(length)]["sha256"],
-                       nll_sha256=sha256(path), attn_implementation=actual,
+                       nll_sha256=sha256(path), attn_implementation=actual, dtype=a.dtype,
                        versions=summary["versions"])
             mean = float(nll.astype(np.float64).mean())
-            summary["results"].append({"engine": f"hf-{config}", "length": length, "windows": int(nll.shape[0]),
+            summary["results"].append({"engine": f"hf-{config}{suffix}", "length": length, "windows": int(nll.shape[0]),
                                        "scored_tokens": int(nll.size), "mean_nll": mean, "perplexity": math.exp(mean),
                                        "seconds": seconds, "file": path.name, "sha256": sha256(path)})
             print(json.dumps(summary["results"][-1]), flush=True)

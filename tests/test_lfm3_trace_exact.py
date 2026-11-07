@@ -99,3 +99,32 @@ def test_forward_tolerance_mode_requires_exact_logit_traces(tmp_path):
     (tmp_path / "0.logits.f32").write_bytes(struct.pack("<ff", 1.0, 2.5))
     with pytest.raises(ValueError, match="not the rounding"):
         gate.check_exact_logits(tmp_path, True, "case")
+
+
+def load_forward():
+    spec = importlib.util.spec_from_file_location("forward_gate_tiers", TOOLS / "check_lfm3_forward.py")
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+    return gate
+
+
+def test_forward_tier1_manifest_is_exact(tmp_path):
+    gate = load_forward()
+    (tmp_path / "0.logits.bf16").write_bytes(b"\x80\x3f")
+    (tmp_path / "0.layers.0.x.bf16").write_bytes(b"\x00\x40")
+    pinned = {"baseline": gate.trace_manifest(tmp_path, [5, 6])}
+    gate.compare_manifest(pinned, {"baseline": gate.trace_manifest(tmp_path, [5, 6])})
+    for damage in ("ids", "bytes", "extra", "missing", "fixtures"):
+        actual = {"baseline": gate.trace_manifest(tmp_path, [5, 6])}
+        if damage == "ids":
+            actual["baseline"]["generated_ids"] = [5, 7]
+        if damage == "bytes":
+            actual["baseline"]["files"]["0.logits.bf16"] = "0" * 64
+        if damage == "extra":
+            actual["baseline"]["files"]["1.logits.bf16"] = "0" * 64
+        if damage == "missing":
+            del actual["baseline"]["files"]["0.layers.0.x.bf16"]
+        if damage == "fixtures":
+            actual["single"] = actual["baseline"]
+        with pytest.raises(AssertionError, match="tier 1"):
+            gate.compare_manifest(pinned, actual)

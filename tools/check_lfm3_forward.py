@@ -12,6 +12,42 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lfm3_trace_exact import exact_logit_steps  # noqa: E402
 
 
+def trace_manifest(native, generated_ids):
+    """Tier 1: SHA-256 of every native trace file, and the free-running ids."""
+    files = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(native.iterdir()) if p.is_file()}
+    return dict(generated_ids=generated_ids, files=files)
+
+
+def compare_manifest(golden, actual):
+    if set(golden) != set(actual):
+        raise AssertionError(f"tier 1: fixture set differs from the pin: {sorted(set(golden) ^ set(actual))}")
+    for case in golden:
+        g, a = golden[case], actual[case]
+        if g["generated_ids"] != a["generated_ids"]:
+            raise AssertionError(f"tier 1: {case}: generated ids differ from the pin")
+        if set(g["files"]) != set(a["files"]):
+            raise AssertionError(f"tier 1: {case}: trace files differ from the pin: {sorted(set(g['files']) ^ set(a['files']))[:8]}")
+        changed = [n for n in g["files"] if g["files"][n] != a["files"][n]]
+        if changed:
+            raise AssertionError(f"tier 1: {case}: {len(changed)} trace files differ from the pin, e.g. {changed[:4]}")
+
+
+def tier2a(tools, output, name, run):
+    """Tier 2a: native's median activation distance from the FP32 anchor ≤ the worse of eager's and SDPA's."""
+    out = output / f"{name}.fidelity.json"
+    run([sys.executable, tools / "compare_trace_spread.py", output / "fp32", out, "--cases", name,
+         "--candidate", "eager", output / name / "reference", output,
+         "--candidate", "sdpa", output / "sdpa" / name / "reference", output / "sdpa",
+         "--candidate", "native", output / name / "native", output], output / f"{name}.fidelity.log")
+    row = json.loads(out.read_text())["cases"][0]
+    c = row["candidates"]
+    median = {k: c[k]["activation_rel_rms_median"] for k in ("eager", "sdpa", "native")}
+    if any(v is None for v in median.values()):
+        raise AssertionError(f"tier 2a: {name}: no common activation files")
+    return dict(case=name, common_files=row["common_files"], compared_through_step=row["compared_through_step"],
+                median_rel_rms=median, passed=median["native"] <= max(median["eager"], median["sdpa"]))
+
+
 def check_exact_logits(native, activation_tolerance, name):
     """Native-GEMM traces carry the exact FP32 logits the engine used: all steps or none, and each .bf16 trace must
     be their rounding (lfm3_trace_exact). Tolerance mode exists for that engine, so there they are required."""
@@ -30,7 +66,21 @@ def main():
                    help="Judge activations by compare_lfm3_traces tolerances instead of bitwise BF16 equality with eager "
                         "(the native-GEMM build, G4). Teacher argmax, free-running greedy, reset, stop and suppression "
                         "stay exact.")
+    p.add_argument("--native-tiers", action="store_true",
+                   help="G4 gates for the native-GEMM engine (validation/g4-gates-v2/PLAN.md): tier 1, bitwise against a "
+                        "pinned manifest of its own traces (--golden or --pin); tier 2a, median activation distance from an "
+                        "FP32 anchor no larger than the worse of HF eager and HF SDPA, and tokens exact against eager. "
+                        "Distances from eager are recorded, not judged.")
+    pin = p.add_mutually_exclusive_group()
+    pin.add_argument("--golden", type=Path, help="tier 1: the pinned manifest to compare against")
+    pin.add_argument("--pin", type=Path, help="tier 1: write the manifest of this run (only if tier 2a passes)")
     args = p.parse_args()
+    if args.native_tiers:
+        args.activation_tolerance = True
+        if not (args.golden or args.pin):
+            p.error("--native-tiers needs --golden or --pin")
+    elif args.golden or args.pin:
+        p.error("--golden and --pin need --native-tiers")
     args.output.mkdir(parents=True, exist_ok=False)
     tools = Path(__file__).resolve().parent
     env = dict(os.environ)
@@ -43,7 +93,7 @@ def main():
         if result.returncode:
             raise RuntimeError(f"command failed ({result.returncode}): see {log}")
 
-    reports = []
+    reports, manifest, fidelity = [], {}, []
     for name, extra, steps in [
         ("baseline", [], 16),
         ("arithmetic", ["--prompt", "What is 17 plus 25? Answer briefly."], 16),
@@ -55,7 +105,10 @@ def main():
              "--output", directory, "--tokens", steps, *extra], args.output / (name + ".reference.log"))
         run([args.binary, "--experimental", args.checkpoint, directory / "request.json", directory / "native.json"],
             directory / "native.log")
-        exact = [] if args.activation_tolerance else ["--require-exact"]
+        if args.native_tiers:  # eager distances are information only; the teacher argmax check stays exact
+            exact = ["--max-relative-rms", "inf", "--max-logit-error", "inf"]
+        else:
+            exact = [] if args.activation_tolerance else ["--require-exact"]
         run([sys.executable, tools / "compare_lfm3_traces.py", directory, *exact], directory / "comparison.log")
         request = json.loads((directory / "request.json").read_text())
         expected = json.loads((directory / "reference.json").read_text())["generated_ids"]
@@ -72,6 +125,13 @@ def main():
         assert generation["reset_exact_logits_ok"], name
         assert not set(expected) & set(request["suppress_tokens"])
         exact_logits = check_exact_logits(directory / "native", args.activation_tolerance, name)
+        if args.native_tiers:
+            manifest[name] = trace_manifest(directory / "native", generation["generated_ids"])
+            for attention, flags in (("sdpa", ["--attention", "sdpa"]), ("fp32", ["--dtype", "float32"])):
+                run([sys.executable, tools / "lfm3_reference.py", "--checkpoint", args.checkpoint,
+                     "--output", args.output / attention / name, "--tokens", steps, *flags, *extra],
+                    args.output / f"{name}.{attention}.reference.log")
+            fidelity.append(tier2a(tools, args.output, name, run))
         comparison = json.loads((directory / "comparison.json").read_text())
         reports.append(dict(case=name, activation_checks=comparison["checks"], tokens=len(expected),
                             max_relative_rms=max(x["relative_rms"] for x in comparison["results"]),
@@ -105,7 +165,17 @@ def main():
                                 env=env, capture_output=True, text=True)
         assert result.returncode == 1, (i, result.stderr)
         assert not (args.output / f"invalid-{i}-output.json").exists()
+    if args.native_tiers:
+        failed = [f["case"] for f in fidelity if not f["passed"]]
+        if failed:
+            raise AssertionError(f"tier 2a: native farther from FP32 than eager and SDPA in {failed}")
+        if args.pin:
+            args.pin.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+        else:
+            compare_manifest(json.loads(args.golden.read_text()), manifest)
     report = dict(cases=reports, stop_check=True, suppression_check=True, invalid_requests_rejected=len(invalid),
+                  native_tiers=dict(tier1=("pinned " + str(args.pin)) if args.pin else ("matches " + str(args.golden)),
+                                    tier2a=fidelity) if args.native_tiers else None,
                   final_cache_slot_checked=True,
                   binary_sha256=hashlib.sha256(args.binary.read_bytes()).hexdigest(),
                   activations="tolerance (compare_lfm3_traces defaults)" if args.activation_tolerance else "bitwise BF16",

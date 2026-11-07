@@ -280,3 +280,48 @@ def test_legacy_adoption_uses_only_cpu_processor_and_checks_saved_request(tmp_pa
     actual, metadata = context.reuse_references(checkpoint, source, output, [("case", 1, 1, True)], allow_legacy=True)
     assert actual["case"][0] == request
     assert "legacy-adopted" in metadata["provenance"]
+
+
+def test_native_tiers_pin_then_golden(tmp_path, monkeypatch):
+    # G4 tier 1: --pin writes a manifest of the teacher logit traces and ids; --golden must match it bit for bit.
+    checkpoint = tmp_path / "checkpoint"
+    checkpoint.mkdir()
+    for name in ["config.json", "modeling_lfm3.py", "lfm3_conv.py", "model.safetensors"]:
+        (checkpoint / name).write_text("{}")
+    binary = tmp_path / "runner"
+    binary.write_text("mock")
+    state = {"logit": 0x4000}
+    monkeypatch.setattr(context, "reject_before_weights", lambda *a: ["mocked"])
+    monkeypatch.setattr(context, "cases", lambda suite: [("mock", 1, 1, True)])
+
+    def reference(checkpoint, output, selected):
+        directory = output / "mock/reference"
+        directory.mkdir(parents=True)
+        for step in range(2):
+            (directory / f"{step}.logits.bf16").write_bytes(bf16(0x3f80, 0x4000))
+        return {"mock": (dict(input_ids=[1], teacher_ids=[1], capacity=2, check_reset=True),
+                          dict(teacher_argmax=[1, 1], generated_ids=[1, 1]))}, dict(
+                              layer_types=["conv"], vocab=2, attention="eager", dtype="bfloat16")
+
+    def native(binary, checkpoint, directory, request, label, env, timeout):
+        if label == "teacher":
+            trace = Path(request["trace_directory"])
+            for step in range(2):
+                # A native engine differs from eager in its logits (here 0x4001 vs 0x4000) but keeps the argmax.
+                (trace / f"{step}.logits.bf16").write_bytes(bf16(0x3f80, state["logit"]))
+        return dict(teacher_argmax=[1, 1], generated_ids=[] if label == "teacher" else [1, 1], decode_forward_calls=1)
+
+    monkeypatch.setattr(context, "make_references", reference)
+    monkeypatch.setattr(context, "run_native", native)
+    pin = tmp_path / "pin.json"
+    state["logit"] = 0x4001
+    for run, flag in (("pin", ["--pin", str(pin)]), ("same", ["--golden", str(pin)])):
+        monkeypatch.setattr(sys, "argv", ["check", "--checkpoint", str(checkpoint), "--binary", str(binary),
+                                         "--output", str(tmp_path / run), "--suite", "smoke", "--native-tiers", *flag])
+        context.main()
+        assert json.loads((tmp_path / run / "summary.json").read_text())["status"] == "passed"
+    state["logit"] = 0x4002  # a regression: the argmax is unchanged, the bits are not
+    monkeypatch.setattr(sys, "argv", ["check", "--checkpoint", str(checkpoint), "--binary", str(binary),
+                                     "--output", str(tmp_path / "changed"), "--suite", "smoke", "--native-tiers", "--golden", str(pin)])
+    with pytest.raises(RuntimeError, match="tier 1"):
+        context.main()

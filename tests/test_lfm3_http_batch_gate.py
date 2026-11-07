@@ -39,3 +39,18 @@ def test_fixed_host_and_device_resource_budgets(damage):
     if damage:
         with pytest.raises(AssertionError):gate.resource_gate(baseline,sample)
     else:gate.resource_gate(baseline,sample)
+
+
+@pytest.mark.parametrize('damage',[None,'host-noise','growth','accounting-lost','invalid'])
+def test_exact_engine_buffer_accounting_decides_when_present(damage):
+    # G4: with LFM_ALLOCATION_METRICS=1 the worker reports its engine-buffer bytes; growth fails, device-wide noise does not.
+    gpu=dict(cuda_free_bytes=70<<30,cuda_total_bytes=128<<30,app_live_bytes=128956672,app_metrics_valid=True)
+    baseline={'server':dict(rss_bytes=1<<28,descriptors=8),'worker':dict(rss_bytes=1<<32,descriptors=43),'gpu':dict(gpu)}
+    sample=copy.deepcopy(baseline)
+    if damage=='host-noise':sample['gpu']['cuda_free_bytes']-=512<<20  # far beyond the 128 MiB device-wide budget
+    if damage=='growth':sample['gpu']['app_live_bytes']+=2
+    if damage=='accounting-lost':del sample['gpu']['app_live_bytes']
+    if damage=='invalid':sample['gpu']['app_metrics_valid']=False
+    if damage in ('growth','accounting-lost','invalid'):
+        with pytest.raises(AssertionError,match='engine-buffer'):gate.resource_gate(baseline,sample)
+    else:gate.resource_gate(baseline,sample)

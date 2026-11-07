@@ -166,7 +166,9 @@ def validate_sample(sample, request, vocabulary, native=False):
         require(math.isfinite(calls / seconds), "nonfinite decode throughput")
     if native:
         require(sample.get("backend") == "native-cuda-experimental", "unexpected native backend")
-        require(sample.get("attention") == "eager-bf16", "unexpected native attention")
+        # eager-bf16: the cuBLAS engine; eager-fp32-scores: the native-GEMM engine (G4), whose greedy parity with
+        # Transformers is measured here as for any engine, not assumed.
+        require(sample.get("attention") in ("eager-bf16", "eager-fp32-scores"), "unexpected native attention")
         require(ids(sample.get("input_ids"), "native input_ids", vocabulary) == request["input_ids"],
                 "native input mismatch")
         require(sample.get("warmup_runs") == 1 and type(sample.get("warmup_runs")) is int,
@@ -230,7 +232,7 @@ def summarize(reference, samples, request, vocabulary, attention, binary_hash):
     return dict(greedy_exact=exact, accepted_parity_benchmark=exact, mismatches=mismatches,
                 first_mismatch=min((row["first_mismatch"] for row in mismatches), default=None),
                 input_tokens=len(request["input_ids"]), max_new_tokens=request["max_new_tokens"],
-                reference_attention=attention, native_attention="eager-bf16",
+                reference_attention=attention, native_attention=samples[0].get("attention"),
                 native=stats(samples), transformers=stats(ref_samples), samples=SAMPLES,
                 native_warmup_runs_per_process=1, native_processes=SAMPLES,
                 reference_warmup_runs_total=1, reference_initial_oracle_generation=True,

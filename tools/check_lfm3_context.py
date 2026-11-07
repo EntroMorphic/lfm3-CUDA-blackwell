@@ -301,7 +301,16 @@ def main():
     parser.add_argument("--atol", type=float, default=0.0, help="Explicit opt-in absolute logit tolerance")
     parser.add_argument("--rtol", type=float, default=0.0, help="Explicit opt-in relative logit tolerance")
     parser.add_argument("--timeout", type=float, default=1800, help="Seconds per native invocation")
+    parser.add_argument("--native-tiers", action="store_true",
+                        help="G4 gates for the native-GEMM engine (validation/g4-gates-v2/PLAN.md): teacher argmax and "
+                             "free-running ids stay exact against eager; logit distances from eager are recorded, not "
+                             "judged; tier 1 compares every teacher logit trace and the ids with a pinned manifest")
+    pin = parser.add_mutually_exclusive_group()
+    pin.add_argument("--golden", type=Path, help="tier 1: the pinned manifest to compare against")
+    pin.add_argument("--pin", type=Path, help="tier 1: write the manifest of this run")
     args = parser.parse_args()
+    if args.native_tiers != bool(args.golden or args.pin):
+        parser.error("--native-tiers needs exactly one of --golden or --pin, and they need --native-tiers")
     require(all(math.isfinite(x) and x >= 0 for x in (args.atol, args.rtol)), "invalid tolerance")
     require(math.isfinite(args.timeout) and args.timeout > 0, "invalid timeout")
     require(not args.allow_legacy_reference or args.reuse_reference is not None,
@@ -311,8 +320,11 @@ def main():
     env = dict(os.environ)
     env["LD_LIBRARY_PATH"] = str(Path(sys.prefix) / "lib/python3.12/site-packages/nvidia/cu13/lib") + ":" + env.get("LD_LIBRARY_PATH", "")
     selected = cases(args.suite)
+    manifest = {}
+    # Native tiers: logit distances from eager are information; argmax stays exact (validation/g4-gates-v2/PLAN.md).
+    logit_atol = 1e30 if args.native_tiers else args.atol
     summary = dict(status="running", suite=args.suite, cases=[], maximum4096_checked=False,
-                   atol=args.atol, rtol=args.rtol,
+                   atol=args.atol, rtol=args.rtol, native_tiers=args.native_tiers,
                    reuse_reference=str(args.reuse_reference.resolve()) if args.reuse_reference else None,
                    requested_cases=[name for name, _, _, _ in selected])
 
@@ -372,7 +384,7 @@ def main():
                 try:
                     comparisons.append(compare_logits((directory / "reference" / filename).read_bytes(),
                                                       (trace / filename).read_bytes(), metadata["vocab"],
-                                                      args.atol, args.rtol))
+                                                      logit_atol, args.rtol))
                     require(actual_argmax[step] == expected["teacher_argmax"][step], "teacher argmax mismatch")
                 except Exception as error:
                     raise RuntimeError(f"{name} step={step}: {error}") from error
@@ -385,11 +397,26 @@ def main():
                 require(generation.get("generated_ids") == expected["generated_ids"], f"{name}: free-running token mismatch")
                 require(generation.get("decode_forward_calls") == len(expected["generated_ids"]) - 1,
                         f"{name}: free-running decode count mismatch")
+            if args.native_tiers:
+                manifest[name] = dict(generated_ids=generation["generated_ids"] if free_running else None,
+                                      files={p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(trace.iterdir())})
             report.update(status="passed", final_slot_consumed=True, reset_exact=True,
                           greedy_checked=free_running,
                           greedy_final_slot_consumed=(len(expected["generated_ids"]) == decodes + 1) if free_running else None)
             progress("case_complete", name)
             print(name, "PASS", flush=True)
+        if args.native_tiers:
+            progress("tier1")
+            if args.pin:
+                write_json(args.pin, manifest)
+                summary["tier1"] = f"pinned {args.pin}"
+            else:
+                golden = json.loads(args.golden.read_text())
+                require(set(golden) == set(manifest), f"tier 1: case set differs from the pin: {sorted(set(golden) ^ set(manifest))}")
+                for case in golden:
+                    require(golden[case]["generated_ids"] == manifest[case]["generated_ids"], f"tier 1: {case}: ids differ from the pin")
+                    require(golden[case]["files"] == manifest[case]["files"], f"tier 1: {case}: logit traces differ from the pin")
+                summary["tier1"] = f"matches {args.golden}"
         summary.update(status="passed", maximum4096_checked=args.suite == "full")
         progress("complete")
     except Exception as error:
