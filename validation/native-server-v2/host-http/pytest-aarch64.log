@@ -1,0 +1,115 @@
+...............................................F.s...................... [ 45%]
+...s..ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 91%]
+sssssssssssss                                                            [100%]
+=================================== FAILURES ===================================
+______________________ test_frontend_is_serialized[asan] _______________________
+
+harness_binary = PosixPath('/tmp/pytest-of-ztflynn/pytest-0/http1/harness-asan')
+
+    def test_frontend_is_serialized(harness_binary):
+        with running(harness_binary) as h:
+            a, b = session(h), session(h)
+            heavy = [{"role": "user", "content": "éa" * 1_200_000}]  # 3.6 MB, under the 4 MiB body limit
+            thread, result = in_thread(generate, h, a, 8, heavy)
+            statuses = []
+            deadline = time.monotonic() + 20
+            while thread.is_alive() and time.monotonic() < deadline:
+                statuses.append(generate(h, b, 2)[0])
+                time.sleep(0.01)
+            thread.join(60)
+>           assert result["value"] == (400, {"error": "invalid_request"})
+E           KeyError: 'value'
+
+tests/test_lfm3_http_native.py:483: KeyError
+=============================== warnings summary ===============================
+tests/test_lfm3_http_native.py::test_listener_closes_and_second_signal_exits[plain]
+  /usr/lib/python3/dist-packages/_pytest/threadexception.py:73: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-16 (<lambda>)
+  
+  Traceback (most recent call last):
+    File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+      self.run()
+    File "/usr/lib/python3.12/threading.py", line 1010, in run
+      self._target(*self._args, **self._kwargs)
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 139, in <lambda>
+      thread = threading.Thread(target=lambda: result.setdefault("value", function(*args)))
+                                                                          ^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 91, in call
+      return parse_response(response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 103, in parse_response
+      version, status, _ = lines[0].split(" ", 2)
+      ^^^^^^^^^^^^^^^^^^
+  ValueError: not enough values to unpack (expected 3, got 1)
+  
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+tests/test_lfm3_http_native.py::test_frontend_is_serialized[asan]
+  /usr/lib/python3/dist-packages/_pytest/threadexception.py:73: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-22 (<lambda>)
+  
+  Traceback (most recent call last):
+    File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+      self.run()
+    File "/usr/lib/python3.12/threading.py", line 1010, in run
+      self._target(*self._args, **self._kwargs)
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 139, in <lambda>
+      thread = threading.Thread(target=lambda: result.setdefault("value", function(*args)))
+                                                                          ^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 134, in generate
+      return h.call("POST", "/generate", dict(session_id=sid, messages=messages, max_new_tokens=count, **extra))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 90, in call
+      response = self.raw(("\r\n".join(lines) + "\r\n\r\n").encode("latin-1") + payload, timeout=timeout)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 72, in raw
+      block = s.recv(65536)
+              ^^^^^^^^^^^^^
+  TimeoutError: timed out
+  
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+tests/test_lfm3_http_native.py::test_listener_closes_and_second_signal_exits[asan]
+  /usr/lib/python3/dist-packages/_pytest/threadexception.py:73: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-24 (<lambda>)
+  
+  Traceback (most recent call last):
+    File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+      self.run()
+    File "/usr/lib/python3.12/threading.py", line 1010, in run
+      self._target(*self._args, **self._kwargs)
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 139, in <lambda>
+      thread = threading.Thread(target=lambda: result.setdefault("value", function(*args)))
+                                                                          ^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 91, in call
+      return parse_response(response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 103, in parse_response
+      version, status, _ = lines[0].split(" ", 2)
+      ^^^^^^^^^^^^^^^^^^
+  ValueError: not enough values to unpack (expected 3, got 1)
+  
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+tests/test_lfm3_http_native.py::test_listener_closes_and_second_signal_exits[tsan]
+  /usr/lib/python3/dist-packages/_pytest/threadexception.py:73: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-32 (<lambda>)
+  
+  Traceback (most recent call last):
+    File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+      self.run()
+    File "/usr/lib/python3.12/threading.py", line 1010, in run
+      self._target(*self._args, **self._kwargs)
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 139, in <lambda>
+      thread = threading.Thread(target=lambda: result.setdefault("value", function(*args)))
+                                                                          ^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 91, in call
+      return parse_response(response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 103, in parse_response
+      version, status, _ = lines[0].split(" ", 2)
+      ^^^^^^^^^^^^^^^^^^
+  ValueError: not enough values to unpack (expected 3, got 1)
+  
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_lfm3_http_native.py::test_frontend_is_serialized[asan] - Ke...
+1 failed, 75 passed, 81 skipped, 4 warnings in 6349.24s (1:45:49)

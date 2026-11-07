@@ -195,6 +195,7 @@ int main(int argc, char** argv) try {
     else if (o == "--max-sessions") settings.max_sessions = std::stoi(v);
     else if (o == "--queue-size") settings.queue_size = std::stoi(v);
     else if (o == "--handlers") settings.handlers = std::stoi(v);
+    else if (o == "--engine-timeout") settings.engine_timeout = std::stod(v);
     else throw std::runtime_error("unsupported option " + o);
   }
   const char* token = std::getenv("LFM3_SERVER_TOKEN");
@@ -225,6 +226,8 @@ int main(int argc, char** argv) try {
     int received = 0;
     sigwait(&signals, &received);
     server->stop();
+    sigwait(&signals, &received);
+    std::_Exit(1);
   });
   std::cout << "{\"ready\":true,\"port\":" << server->port() << "}\n" << std::flush;
   server->serve();

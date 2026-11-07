@@ -7,17 +7,23 @@
 // Host-only: the engine is behind Backend (one resident-protocol line in, one reply line out, called
 // only from the engine-owner thread), so this layer is tested on any host against a fake engine.
 //
-// Deliberate differences from the Python server, each at a boundary no conforming client reaches:
+// Deliberate differences from the Python server, each at a boundary no conforming client reaches
+// (tests/test_lfm3_http_framing.py and tools/lfm3_http_diff.py measure the rest as identical):
 //  - Number literals that underflow a double (|x| < 2.2e-308, e.g. 1e-400) are rejected; Python reads
 //    them as 0.0 or a subnormal. lfm::Json's existing rule.
-//  - Malformed HTTP (two-word request lines, obs-fold header continuations, header lines without a
-//    colon, unsupported methods) is answered with a JSON error instead of http.server's HTML page.
+//  - Where http.server answers with an HTML error page, or with a body and no status line (HTTP/0.9
+//    style, e.g. two-word request lines and HTTP/2.0), the native server sends a status line and a JSON
+//    error. Statuses are the same except that HTTP/2.0 gets 505 with a status line. Unsupported methods
+//    get 501 as JSON.
 //  - A frontend failure that is not a validation error (none is known) answers 400 instead of
 //    dropping the connection.
+//  - Text is decoded by the engine, outside the frontend lock, so a request arriving during another
+//    request's decode is not refused with 429 frontend_busy.
 //  - Shutdown requests cancellation of running generations at their next token boundary instead of
-//    waiting for them to finish.
-//  - After a fatal engine error the process keeps answering 503, as the Python server does, but keeps
-//    its GPU allocations until it exits (the engine is in-process; there is no worker to kill).
+//    waiting for them to finish; a second SIGTERM/SIGINT exits at once.
+//  - After a fatal engine error, including an engine call longer than engine_timeout, the process
+//    keeps answering 503 as the Python server does, but keeps its GPU allocations until it exits (the
+//    engine is in-process; there is no worker to kill).
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -291,11 +297,13 @@ class Backend {
 struct Settings {
   int max_sessions = 2, total_capacity = 32768, queue_size = 4, handlers = 8;
   double request_timeout = 330, socket_timeout = 10, session_idle_timeout = 300;
+  // One engine call (lfm3_worker_client's per-RPC worker timeout): past it the service fails closed.
+  double engine_timeout = 300;
   void validate() const {
     const auto in = [](long long v, long long lo, long long hi) { return v >= lo && v <= hi; };
     if (!in(max_sessions, 1, 2) || !in(total_capacity, 2, 32768) || !in(queue_size, 1, 64) || !in(handlers, 1, 128))
       throw std::invalid_argument("invalid server settings");
-    for (const double t : {request_timeout, socket_timeout, session_idle_timeout})
+    for (const double t : {request_timeout, socket_timeout, session_idle_timeout, engine_timeout})
       if (!std::isfinite(t) || !(t > 0 && t <= 86400)) throw std::invalid_argument("invalid timeout");
   }
 };
@@ -319,10 +327,23 @@ class Service {
   Service(Backend& backend, const lfm3_text::Tokenizer& tokenizer, Policy policy, Settings settings)
       : backend_(backend), tokenizer_(tokenizer), policy_(std::move(policy)), settings_(settings) {
     settings_.validate();
-    owner_ = std::thread([this] { run(); });
+    owner_ = std::thread([this] {
+      run();
+      std::lock_guard g(done_lock_);
+      owner_done_ = true;
+      done_cv_.notify_all();
+    });
+    watchdog_ = std::thread([this] { watch(); });
   }
   ~Service() {
-    if (owner_.joinable()) { stopping_ = true; owner_.join(); }
+    stopping_ = true;
+    {
+      std::lock_guard g(done_lock_);
+      watchdog_stop_ = true;
+      done_cv_.notify_all();
+    }
+    if (watchdog_.joinable()) watchdog_.join();
+    if (owner_.joinable()) owner_.join();
   }
   Service(const Service&) = delete;
   Service& operator=(const Service&) = delete;
@@ -410,14 +431,17 @@ class Service {
     return submit(run, [this, sid] { release(sid, nullptr); }, nullptr);
   }
 
-  std::string generate(const Json& body) {
+  // `body` is shared, not copied, and dropped as soon as the prompt is encoded.
+  std::string generate(std::shared_ptr<const Json> body) {
     const auto deadline = Clock::now() + seconds(settings_.request_timeout);
-    auto request = std::make_shared<Generation>(validate_generation(body));
+    auto request = std::make_shared<Generation>(validate_generation(*body, body));
+    body.reset();
     const auto sid = request->sid;
     Event event = std::make_shared<std::atomic<bool>>(false);
     const int capacity = lease(sid, "generate", event);
     try {
       frontend_call([&] { request->input = encode(*request, capacity); }, deadline);
+      request->drop_body();
     } catch (...) {
       release(sid, event);
       throw;
@@ -442,13 +466,14 @@ class Service {
     return submit(run, [this, sid, event] { release(sid, event); }, nullptr, deadline);
   }
 
-  std::string generate_batch(const Json& body) {
+  std::string generate_batch(std::shared_ptr<const Json> body) {
     const auto deadline = Clock::now() + seconds(settings_.request_timeout);
-    const auto& o = object_of(body);
+    const auto& o = object_of(*body);
     const auto* list = o.size() == 1 && o.count("requests") ? std::get_if<Json::Array>(&o.at("requests").value) : nullptr;
     if (!list || list->size() != 2) throw std::invalid_argument("batch requires exactly two requests");
     auto requests = std::make_shared<std::array<Generation, 2>>();
-    for (size_t i = 0; i < 2; ++i) (*requests)[i] = validate_generation((*list)[i]);
+    for (size_t i = 0; i < 2; ++i) (*requests)[i] = validate_generation((*list)[i], body);
+    body.reset();
     const std::array<std::string, 2> sids{(*requests)[0].sid, (*requests)[1].sid};
     if (sids[0] == sids[1]) throw std::invalid_argument("duplicate batch session");
     const std::array<Event, 2> events{std::make_shared<std::atomic<bool>>(false), std::make_shared<std::atomic<bool>>(false)};
@@ -476,6 +501,7 @@ class Service {
           (*requests)[i].input = encode((*requests)[i], capacities[i]);
         }
       }, deadline);
+      for (auto& r : *requests) r.drop_body();
     } catch (...) {
       cleanup();
       throw;
@@ -560,7 +586,23 @@ class Service {
       }
     }
     queue_cv_.notify_all();
-    if (owner_.joinable()) owner_.join();
+    // As lfm3_server.Service.close: a bounded wait for the engine owner. An engine call that never
+    // returns cannot be reclaimed in-process; the caller exits instead (cleanup_failed()).
+    bool done;
+    {
+      std::unique_lock g(done_lock_);
+      done = done_cv_.wait_for(g, seconds(settings_.engine_timeout + 5), [&] { return owner_done_; });
+      watchdog_stop_ = true;
+      done_cv_.notify_all();
+    }
+    if (watchdog_.joinable()) watchdog_.join();
+    if (!done) {
+      owner_.detach();
+      std::lock_guard g(lock_);
+      cleanup_failed_ = true;
+      return;
+    }
+    owner_.join();
     fatal();
   }
 
@@ -575,10 +617,11 @@ class Service {
   struct Generation {
     std::string sid;
     const Json* messages = nullptr;
-    std::shared_ptr<Json> body;  // keeps `messages` alive
+    std::shared_ptr<const Json> body;  // the parsed request; keeps `messages` alive until encoding
     int count = 0;
     Sampling sampling;
     std::vector<int> input;
+    void drop_body() { messages = nullptr; body.reset(); }
   };
   struct Response {
     Obj body;
@@ -611,7 +654,7 @@ class Service {
 
   // lfm3_server.Service._validate_generation (before any lease): fields, types, ranges, the messages
   // themselves and the sampling options.
-  Generation validate_generation(const Json& item) const {
+  Generation validate_generation(const Json& item, std::shared_ptr<const Json> owner) const {
     const auto& o = object_of(item);
     static const std::set<std::string> allowed = {"session_id", "messages", "max_new_tokens", "sampling"};
     for (const auto& [key, value] : o)
@@ -624,8 +667,8 @@ class Service {
     Generation g;
     g.sid = session_id_of(o.at("session_id"));
     g.count = int(integer(o.at("max_new_tokens"), 1, 32768));
-    g.body = std::make_shared<Json>(item);
-    g.messages = &g.body->at("messages");
+    g.body = std::move(owner);
+    g.messages = &o.at("messages");
     (void)lfm3_text::parse_messages(*g.messages);
     g.sampling = sampling_options(o.count("sampling") ? &o.at("sampling") : nullptr, policy_.vocabulary);
     return g;
@@ -799,11 +842,16 @@ class Service {
     for (const auto& [sid, event] : targets)
       if (event && event->load() && !send_cancel(sid)) throw WorkerFailure("pre-dispatch cancellation was not admitted");
     std::string reply;
+    call_started_ = Clock::now().time_since_epoch().count();
+    in_call_ = true;
     try {
       reply = backend_.call(line);
     } catch (const std::exception& e) {
+      in_call_ = false;
       throw WorkerFailure(std::string("worker RPC failed: ") + e.what());
     }
+    in_call_ = false;
+    if (timed_out_) throw WorkerFailure("engine call exceeded the engine timeout");
     while (!reply.empty() && reply.back() == '\n') reply.pop_back();
     if (reply.size() > kMaxBody) throw WorkerFailure("worker frame exceeds limit");
     Json result;
@@ -875,6 +923,30 @@ class Service {
     }
     // Do not release a running generation lease or pretend cancellation.
     throw ApiError(504, "request_deadline_outcome_unknown");
+  }
+
+  // lfm3_worker_client's per-RPC deadline: an engine call running past engine_timeout fails the
+  // service closed (503 for everything, sessions dropped) and requests cancellation of whatever is
+  // running. The late reply is then refused as a failure.
+  void watch() {
+    std::unique_lock g(done_lock_);
+    while (!watchdog_stop_) {
+      done_cv_.wait_for(g, std::chrono::milliseconds(100));
+      if (watchdog_stop_ || !in_call_ || timed_out_) continue;
+      const auto started = Clock::time_point(Clock::duration(call_started_.load()));
+      if (Clock::now() - started < seconds(settings_.engine_timeout)) continue;
+      timed_out_ = true;
+      {
+        std::lock_guard l(lock_);
+        failed_ = true;
+        sessions_.clear();
+      }
+      std::lock_guard a(active_lock_);
+      for (auto& [sid, active] : active_) {
+        if (active.sent) continue;
+        try { write_frame(active.token); active.sent = true; } catch (const WorkerFailure&) {}
+      }
+    }
   }
 
   void reap_idle() {
@@ -962,7 +1034,12 @@ class Service {
   std::map<std::string, Active> active_;
   bool backend_closed_ = false;  // guarded by active_lock_
   std::uint64_t sequence_ = 0;   // owner thread only
-  std::thread owner_;
+  std::atomic<bool> in_call_{false}, timed_out_{false};
+  std::atomic<Clock::rep> call_started_{0};
+  std::mutex done_lock_;
+  std::condition_variable done_cv_;
+  bool owner_done_ = false, watchdog_stop_ = false;  // guarded by done_lock_
+  std::thread owner_, watchdog_;
 };
 
 // ------------------------------------------------------------------ HTTP
@@ -1030,43 +1107,40 @@ class Connection {
   }
 
  private:
-  // Returns 0 on success, -1 to close silently (empty request), or an HTTP status to refuse with.
-  int read_head(Request& r, Clock::time_point deadline) {
-    std::vector<std::string> lines;
+  // One raw line as BufferedReader.readline(limit) returns it: up to and including '\n', at most
+  // `limit` bytes, shorter at end of stream (empty: the stream ended).
+  std::string read_line(size_t limit, Clock::time_point deadline) {
     std::string line;
-    size_t total = 0;
-    for (;;) {
-      char c;
-      if (!read_byte(c, deadline)) {
-        if (lines.empty() && line.empty()) return -1;
-        throw std::runtime_error("connection closed in headers");
-      }
-      if (++total > 65536 + 100 * 65537) return 431;
-      if (c != '\n') {
-        line += c;
-        if (lines.empty() ? line.size() > 65536 : line.size() > 65537) return lines.empty() ? 414 : 431;
-        continue;
-      }
-      if (!line.empty() && line.back() == '\r') line.pop_back();
-      if (lines.empty()) { lines.push_back(line); line.clear(); continue; }
-      if (line.empty()) break;
-      lines.push_back(line);
-      line.clear();
-      if (lines.size() > 101) return 431;
+    char c;
+    while (line.size() < limit && read_byte(c, deadline)) {
+      line += c;
+      if (c == '\n') break;
     }
-    // BaseHTTPRequestHandler.parse_request: whitespace-separated words, HTTP/1.x versions.
+    return line;
+  }
+
+  // BaseHTTPRequestHandler.handle_one_request + parse_request, and http.client.parse_headers followed
+  // by email.feedparser (compat32) header parsing. Returns 0 on success, -1 to close silently, or an
+  // HTTP status to refuse with.
+  int read_head(Request& r, Clock::time_point deadline) {
+    const auto request_line = read_line(65537, deadline);
+    if (request_line.empty()) return -1;
+    if (request_line.size() > 65536) return 414;
+    std::string line = request_line;
+    while (!line.empty() && (line.back() == '\r' || line.back() == '\n')) line.pop_back();
+    // str.split() on the latin-1 decoded line: ASCII whitespace, \x1c-\x1f, \x85 and \xa0.
     std::vector<std::string> words;
     {
       std::string w;
-      for (const char c : lines[0]) {
-        if (c == ' ' || c == '\t' || c == '\v' || c == '\f' || c == '\r' || c == '\x1c' || c == '\x1d' || c == '\x1e' || c == '\x1f') {
-          if (!w.empty()) { words.push_back(w); w.clear(); }
-        } else w += c;
+      for (const unsigned char c : line) {
+        const bool space = c == ' ' || (c >= 0x09 && c <= 0x0d) || (c >= 0x1c && c <= 0x1f) || c == 0x85 || c == 0xa0;
+        if (space) { if (!w.empty()) { words.push_back(w); w.clear(); } }
+        else w += char(c);
       }
       if (!w.empty()) words.push_back(w);
     }
     if (words.empty()) return -1;
-    if (words.size() != 3) return 400;
+    if (words.size() != 3) return 400;  // two words is HTTP/0.9, which only http.server's GET path accepts
     const auto& version = words[2];
     if (version.rfind("HTTP/", 0) != 0) return 400;
     const auto number = version.substr(5);
@@ -1084,17 +1158,52 @@ class Connection {
       const auto first = r.path.find_first_not_of('/');
       r.path = "/" + (first == std::string::npos ? std::string() : r.path.substr(first));
     }
-    for (size_t i = 1; i < lines.size(); ++i) {
-      const auto& h = lines[i];
-      const auto colon = h.find(':');
-      if (colon == std::string::npos || colon == 0 || h[0] == ' ' || h[0] == '\t') return 400;
-      for (size_t k = 0; k < colon; ++k) {
-        const unsigned char c = h[k];
-        if (c < 0x21 || c > 0x7e) return 400;
+    // http.client.parse_headers: raw lines until a bare line ending or end of stream.
+    std::string block;
+    for (int count = 0;;) {
+      const auto raw = read_line(65537, deadline);
+      if (raw.size() > 65536) return 431;
+      if (++count > 100) return 431;  // http.client counts the terminating line too: 99 headers at most
+      if (raw.empty() || raw == "\r\n" || raw == "\n") break;
+      block += raw;
+    }
+    // email.feedparser: logical lines split on \r\n, \r or \n (each keeps its ending).
+    std::vector<std::string> lines;
+    for (size_t i = 0; i < block.size();) {
+      size_t j = i;
+      while (j < block.size() && block[j] != '\r' && block[j] != '\n') ++j;
+      if (j < block.size()) j += (block[j] == '\r' && j + 1 < block.size() && block[j + 1] == '\n') ? 2 : 1;
+      lines.push_back(block.substr(i, j - i));
+      i = j;
+    }
+    const auto header_start = [](const std::string& l) {
+      // headerRE: '^(From |[\041-\071\073-\176]*:|[\t ])'
+      if (l.rfind("From ", 0) == 0 || (!l.empty() && (l[0] == ' ' || l[0] == '\t'))) return true;
+      for (const unsigned char c : l) {
+        if (c == ':') return true;
+        if (c < 0x21 || c > 0x7e) return false;
       }
-      auto value = h.substr(colon + 1);
-      value.erase(0, value.find_first_not_of(" \t") == std::string::npos ? value.size() : value.find_first_not_of(" \t"));
-      r.headers.emplace_back(lower(h.substr(0, colon)), value);
+      return false;
+    };
+    std::vector<std::vector<std::string>> fields;  // source lines of each header
+    for (size_t i = 0; i < lines.size(); ++i) {
+      const auto& l = lines[i];
+      if (!header_start(l)) break;  // a blank or malformed line ends the headers; the rest is body
+      if (l[0] == ' ' || l[0] == '\t') {
+        if (!fields.empty()) fields.back().push_back(l);  // a leading continuation is dropped
+        continue;
+      }
+      if (l.rfind("From ", 0) == 0) continue;  // unix-from line (or defect): not a header
+      if (l[0] == ':') continue;               // missing header name: dropped, parsing continues
+      fields.push_back({l});
+    }
+    for (const auto& source : fields) {
+      const auto colon = source[0].find(':');
+      std::string value = source[0].substr(colon + 1);
+      value.erase(0, std::min(value.size(), value.find_first_not_of(" \t")));
+      for (size_t i = 1; i < source.size(); ++i) value += source[i];
+      while (!value.empty() && (value.back() == '\r' || value.back() == '\n')) value.pop_back();
+      r.headers.emplace_back(lower(source[0].substr(0, colon)), value);
     }
     return 0;
   }
@@ -1135,7 +1244,7 @@ class Connection {
     ::gmtime_r(&now, &tm);
     std::strftime(date, sizeof date, "%a, %d %b %Y %H:%M:%S GMT", &tm);
     std::string out = "HTTP/1.0 " + std::to_string(status) + " " + reason_phrase(status) + "\r\n";
-    out += "Server: LFM3Local\r\nDate: ";
+    out += "Server: LFM3Local \r\nDate: ";  // http.server: server_version + " " + sys_version ("")
     out += date;
     out += "\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: " + std::to_string(body.size()) +
            "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n" + body;
@@ -1194,11 +1303,22 @@ class Connection {
         body += buffer_;
       }
       body.resize(length);
-      const Json request = strict_json(body);
+      // A parsed body is a tree several times the size of its text. Bodies over 1 MiB are parsed one
+      // at a time; with the try-only frontend lock this bounds the trees alive at once.
+      std::shared_ptr<const Json> parsed;
+      {
+        static std::mutex large;
+        std::unique_lock guard(large, std::defer_lock);
+        if (length > (size_t(1) << 20)) guard.lock();
+        parsed = std::make_shared<const Json>(strict_json(body));
+      }
+      std::string().swap(body);
+      std::string().swap(buffer_);
+      const Json& request = *parsed;
       std::string result;
       if (r.path == "/sessions") result = service_.create(request);
-      else if (r.path == "/generate") result = service_.generate(request);
-      else if (r.path == "/generate_batch") result = service_.generate_batch(request);
+      else if (r.path == "/generate") result = service_.generate(std::move(parsed));
+      else if (r.path == "/generate_batch") result = service_.generate_batch(std::move(parsed));
       else {
         // /sessions/<32 URL-safe characters>/(reset|close|cancel)
         const std::string prefix = "/sessions/";
@@ -1249,7 +1369,7 @@ class Server {
     if (::pipe2(wake_, O_CLOEXEC | O_NONBLOCK) != 0) { ::close(listener_); throw std::runtime_error("pipe failed"); }
   }
   ~Server() {
-    ::close(listener_);
+    if (listener_ >= 0) ::close(listener_);
     ::close(wake_[0]);
     ::close(wake_[1]);
   }
@@ -1282,6 +1402,9 @@ class Server {
         --active_;
       }
     }
+    // Admission is over: refuse new connections at once rather than leaving them in the backlog.
+    ::close(listener_);
+    listener_ = -1;
   }
   // Waits up to `limit` for running handlers to send their replies.
   void drain(std::chrono::nanoseconds limit) {

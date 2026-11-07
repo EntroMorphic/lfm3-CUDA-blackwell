@@ -3,11 +3,13 @@
 // resident protocol of liquid-lfm3-worker, driven in-process by one engine-owner thread).
 //
 //   liquid-lfm3-server --experimental MODEL_DIRECTORY [--token-file FILE] [--port N] [--request-timeout S]
-//                      [--socket-timeout S] [--session-idle-timeout S] [--total-capacity N]
+//                      [--socket-timeout S] [--session-idle-timeout S] [--engine-timeout S] [--total-capacity N]
 //                      [--max-sessions N] [--queue-size N] [--handlers N]
 // The bearer token comes from --token-file (an owned mode-0600 file) or LFM3_SERVER_TOKEN. --port 0
 // picks a free port. Once listening, one line {"ready":true,"port":N} is written to stdout. SIGTERM or
-// SIGINT stops admission, cancels running generations at their next token boundary, and exits 0.
+// SIGINT stops admission, cancels running generations at their next token boundary, and exits 0; a
+// second signal exits at once (status 1). An engine call longer than --engine-timeout (default 300 s,
+// the Python worker client's) fails the server closed: every request then gets 503; restart it.
 #define LFM3_WORKER_CORE_ONLY
 #include "lfm3_worker.cu"
 #include <lfm/lfm3_http.hpp>
@@ -68,6 +70,7 @@ int main(int argc,char** argv) try {
     else if(option=="--request-timeout") settings.request_timeout=real(option,value);
     else if(option=="--socket-timeout") settings.socket_timeout=real(option,value);
     else if(option=="--session-idle-timeout") settings.session_idle_timeout=real(option,value);
+    else if(option=="--engine-timeout") settings.engine_timeout=real(option,value);
     else if(option=="--total-capacity") settings.total_capacity=whole(option,value);
     else if(option=="--max-sessions") settings.max_sessions=whole(option,value);
     else if(option=="--queue-size") settings.queue_size=whole(option,value);
@@ -106,10 +109,13 @@ int main(int argc,char** argv) try {
   auto service=std::make_unique<lfm::http::Service>(backend,tokenizer,policy,settings);
   auto server=std::make_unique<lfm::http::Server>(*service,token,port);
   token.assign(token.size(),'\0');
+  // First SIGTERM/SIGINT: orderly shutdown. A second one: exit now.
   std::thread waiter([&] {
     int received=0;
     sigwait(&signals,&received);
     server->stop();
+    sigwait(&signals,&received);
+    std::_Exit(1);
   });
   std::cout<<"{\"ready\":true,\"port\":"<<server->port()<<"}\n"<<std::flush;
   server->serve();

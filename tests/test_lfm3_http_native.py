@@ -237,13 +237,16 @@ def test_request_line_and_header_limits(harness_binary):
             return parse_response(raw)[0] if raw else None
         assert status(b"GET /health HTTP/2.0\r\n\r\n") == 505
         for line in (b"GET /health HTTP/1\r\n\r\n", b"GET /health FTP/1.0\r\n\r\n", b"GET /health HTTP/1.x\r\n\r\n",
-                     b"GET /health\r\n\r\n", b"GET / health HTTP/1.0\r\n\r\n", b"GET /health HTTP/1.0\r\nNoColon\r\n\r\n",
-                     b"GET /health HTTP/1.0\r\n folded: x\r\n\r\n"):
+                     b"GET /health\r\n\r\n", b"GET / health HTTP/1.0\r\n\r\n"):
             assert status(line) == 400, line
+        # email.feedparser: a line without a colon ends the headers; a leading continuation is dropped.
+        assert status(b"GET /health HTTP/1.0\r\nNoColon\r\n\r\n") == 200
+        assert status(b"GET /health HTTP/1.0\r\n folded: x\r\n\r\n") == 200
         assert status(b"GET /" + b"a" * 70000 + b" HTTP/1.0\r\n\r\n") == 414
         assert status(b"GET /health HTTP/1.0\r\nX: " + b"a" * 70000 + b"\r\n\r\n") == 431
-        assert status(b"GET /health HTTP/1.0\r\n" + b"X: y\r\n" * 101 + b"\r\n") == 431
-        assert status(b"GET /health HTTP/1.0\r\n" + b"X: y\r\n" * 100 + b"\r\n") == 200
+        # http.client counts the terminating blank line toward its 100-line limit.
+        assert status(b"GET /health HTTP/1.0\r\n" + b"X: y\r\n" * 100 + b"\r\n") == 431
+        assert status(b"GET /health HTTP/1.0\r\n" + b"X: y\r\n" * 99 + b"\r\n") == 200
         assert status(b"GET /health HTTP/1.0\n\n") == 200
         assert status(b"\r\n") is None
 
@@ -495,5 +498,58 @@ def test_shutdown_cancels_running_generation(harness_binary):
         assert h.process.stderr.read() == b""
         status, body = result["value"]
         assert status == 200 and body["cancelled"] is True
+    finally:
+        h.process.kill()
+
+
+def peak_rss(pid):
+    for line in Path(f"/proc/{pid}/status").read_text().splitlines():
+        if line.startswith("VmHWM:"):
+            return int(line.split()[1]) * 1024
+    raise AssertionError("no VmHWM")
+
+
+def test_large_bodies_are_parsed_one_at_a_time(harness_binary):
+    if not harness_binary.name.endswith("-plain"):
+        pytest.skip("memory is measured on the uninstrumented build")
+    with running(harness_binary) as h:
+        before = peak_rss(h.process.pid)
+        body = b'{"session_id":"' + b"A" * 32 + b'","max_new_tokens":8,"messages":[' + b",".join([b"0"] * 2_000_000) + b"]}"
+        results = []
+
+        def send():
+            results.append(h.call("POST", "/generate", raw=body, timeout=120))
+        threads = [threading.Thread(target=send) for _ in range(8)]
+        [t.start() for t in threads]
+        [t.join(120) for t in threads]
+        assert results == [(400, {"error": "invalid_request"})] * 8
+        # One parse tree is ~275 MB here; eight unserialized parses plus a deep copy reached 2.2 GB.
+        assert peak_rss(h.process.pid) - before < 1_000_000_000
+
+
+def test_engine_timeout_fails_closed(harness_binary):
+    with running(harness_binary, "--token-delay-ms", "400", "--engine-timeout", "1") as h:
+        a = session(h)
+        started = time.monotonic()
+        assert generate(h, a, 20) == (503, {"error": "worker_unavailable"})
+        assert time.monotonic() - started < 4
+        assert h.call("GET", "/health", auth=False) == (503, {"ready": False, "gpu_batching": False})
+        assert h.call("POST", "/sessions", {"capacity": 64}) == (503, {"error": "worker_unavailable"})
+
+
+def test_listener_closes_and_second_signal_exits(harness_binary):
+    h = Harness(harness_binary, "--create-delay-ms", "8000")
+    try:
+        thread, _ = in_thread(h.call, "POST", "/sessions", {"capacity": 64})
+        time.sleep(0.5)
+        h.process.send_signal(signal.SIGTERM)
+        time.sleep(0.5)
+        with pytest.raises(ConnectionRefusedError):
+            socket.create_connection(("127.0.0.1", h.port), timeout=2)
+        assert h.process.poll() is None  # still waiting for the engine call
+        started = time.monotonic()
+        h.process.send_signal(signal.SIGTERM)
+        assert h.process.wait(timeout=5) == 1 and time.monotonic() - started < 2
+        thread.join(10)
     finally:
         h.process.kill()
