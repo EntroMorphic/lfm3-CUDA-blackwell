@@ -311,6 +311,11 @@ def main():
     args = parser.parse_args()
     if args.native_tiers != bool(args.golden or args.pin):
         parser.error("--native-tiers needs exactly one of --golden or --pin, and they need --native-tiers")
+    if args.pin and args.pin.exists():
+        parser.error(f"--pin {args.pin} exists; re-pinning is deliberate: remove it first")
+    golden = json.loads(args.golden.read_text()) if args.golden else None  # fail now, not after hours
+    if args.golden and not {k for k in golden if not k.startswith("_")}:
+        parser.error(f"--golden {args.golden} is empty")
     require(all(math.isfinite(x) and x >= 0 for x in (args.atol, args.rtol)), "invalid tolerance")
     require(math.isfinite(args.timeout) and args.timeout > 0, "invalid timeout")
     require(not args.allow_legacy_reference or args.reuse_reference is not None,
@@ -325,6 +330,7 @@ def main():
     logit_atol = 1e30 if args.native_tiers else args.atol
     summary = dict(status="running", suite=args.suite, cases=[], maximum4096_checked=False,
                    atol=args.atol, rtol=args.rtol, native_tiers=args.native_tiers,
+                   logit_atol_used=1e30 if args.native_tiers else args.atol,
                    reuse_reference=str(args.reuse_reference.resolve()) if args.reuse_reference else None,
                    requested_cases=[name for name, _, _, _ in selected])
 
@@ -408,10 +414,11 @@ def main():
         if args.native_tiers:
             progress("tier1")
             if args.pin:
-                write_json(args.pin, manifest)
+                write_json(args.pin, dict(manifest, _provenance=dict(binary_sha256=summary["binary_sha256"],
+                                                                     suite=args.suite, plan="validation/g4-gates-v2/PLAN.md")))
                 summary["tier1"] = f"pinned {args.pin}"
             else:
-                golden = json.loads(args.golden.read_text())
+                golden = {k: v for k, v in golden.items() if not k.startswith("_")}
                 require(set(golden) == set(manifest), f"tier 1: case set differs from the pin: {sorted(set(golden) ^ set(manifest))}")
                 for case in golden:
                     require(golden[case]["generated_ids"] == manifest[case]["generated_ids"], f"tier 1: {case}: ids differ from the pin")

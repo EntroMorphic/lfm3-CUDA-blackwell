@@ -7,7 +7,7 @@
 # Usage: run_native_gates.sh BUILD_DIR_NAME OUT_TAG
 # KEEP_GOING=1 runs every stage and lists the failing ones in OUT/failures (inventory mode); the exit
 # status is then 1 if any stage failed. Both modes run the native (single-binary) server gate last.
-# FORWARD_ARGS passes extra flags to the forward gate (--activation-tolerance for the native-GEMM build).
+# FORWARD_ARGS passes extra flags to the forward gate. A native-GEMM build requires TIERS (checked below).
 # TIERS=pin|golden (native-GEMM build, validation/g4-gates-v2/PLAN.md): forward and context run --native-tiers and
 # write (pin) or check (golden) PIN_DIR/forward.json and PIN_DIR/context.json (PIN_DIR is a container path), and
 # every stage runs with LFM_ALLOCATION_METRICS=1 so http-batch judges exact engine-buffer bytes.
@@ -24,6 +24,10 @@ out="$B/$tag-gates"; test ! -e "$out" || { echo "exists: $out"; exit 1; }; mkdir
 status(){ printf '{"stage":"%s","rc":%s,"unix":%s}\n' "$1" "$2" "$(date +%s)" > "$out/status.json"; }
 bins="liquid-lfm3 liquid-lfm3-worker text-sampling-oracle liquid-lfm3-server"
 for f in $bins; do test -x "$B/$build/$f" || { echo "missing $B/$build/$f"; exit 1; }; done
+# A native-GEMM build (no cuBLAS in liquid-lfm3) cannot pass the eager-bitwise forward/context gates: it needs TIERS.
+if ! readelf -d "$B/$build/liquid-lfm3" | grep -q "libcublas"; then
+  [ -n "${TIERS:-}" ] || { echo "$build is a native-GEMM build: set TIERS=pin|golden and PIN_DIR"; exit 2; }
+elif [ -n "${TIERS:-}" ]; then echo "$build links cuBLAS: TIERS is for native-GEMM builds"; exit 2; fi
 python3 -c 'import json,sys; print(json.dumps(dict(build=sys.argv[1], keep_going=sys.argv[2] == "1", forward_args=sys.argv[3], tiers=sys.argv[4], pin_dir=sys.argv[5])))' \
   "$build" "${KEEP_GOING:-0}" "${FORWARD_ARGS:-}" "${TIERS:-}" "${PIN_DIR:-}" > "$out/mode.json"
 (cd "$B/$build" && sha256sum $bins) > "$out/binaries.sha256" \

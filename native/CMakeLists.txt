@@ -67,6 +67,8 @@ if(LIQUID_LFM3_OPS_TESTS)
   target_link_libraries(lfm3-decode-batch-probe PRIVATE CUDA::cudart)
   lfm3_engine_gemm(lfm3-decode-batch-probe)
   set_target_properties(lfm3-decode-batch-probe PROPERTIES CUDA_ARCHITECTURES 110)
+  # Probes the cuBLAS engine's BF16-score softmax kernels directly, so it always builds that engine (G4: the default
+  # engine is lfm::gemm, with FP32 scores; tools/check_lfm3_forward.py --native-tiers covers it).
   add_executable(lfm3-serving-ops-probe tests/lfm3_serving_ops_probe.cu src/safetensors.cpp)
   target_include_directories(lfm3-serving-ops-probe PRIVATE include)
   target_compile_features(lfm3-serving-ops-probe PRIVATE cxx_std_20 cuda_std_20)

@@ -8,9 +8,13 @@ not judged: the same with hf-eager in place of hf-sdpa where it exists.
 
 Every file is loaded through ppl_compare's checks: windows match summary.json, each NLL file's metadata binds it to
 those windows and to its own hash. The anchor must be recorded as dtype float32.
-Usage: ppl_fidelity.py --anchor DIR --references DIR --engine-dir DIR --engine NAME [--output OUT.json]
+The engine must not be an HF reference, must name its scorer, and must not be a byte copy of a reference file; with
+--expect-sha256, every engine NLL file must have the hash listed there ("SHA  nll-ENGINE-L.f32" lines).
+Exit codes: 0 PASS, 1 FAIL, 2 invalid input (no verdict; the report says so).
+Usage: ppl_fidelity.py --anchor DIR --references DIR --engine-dir DIR --engine NAME [--expect-sha256 FILE] [--output OUT.json]
 """
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -35,7 +39,28 @@ def main():
     p.add_argument("--engine-dir", type=Path, required=True)
     p.add_argument("--engine", required=True)
     p.add_argument("--output", type=Path)
+    p.add_argument("--expect-sha256", type=Path, help="lines 'SHA  nll-ENGINE-L.f32' the engine files must match")
     a = p.parse_args()
+    if a.output:  # never leave an earlier verdict behind
+        a.output.write_text(json.dumps(dict(status="running", engine=a.engine)) + "\n")
+    try:
+        return run(a)
+    except (InputError, KeyError, ValueError, OSError) as error:
+        if a.output:
+            a.output.write_text(json.dumps(dict(status="invalid input", engine=a.engine, error=str(error))) + "\n")
+        print(f"TIER 2b: NO VERDICT (invalid input): {error}", file=sys.stderr)
+        return 2
+
+
+def run(a):
+    if a.engine.startswith("hf-"):
+        raise InputError(f"{a.engine} is an HF reference, not an engine under test")
+    expected = {}
+    if a.expect_sha256:
+        for line in a.expect_sha256.read_text().split("\n"):
+            if line.strip():
+                digest, name = line.split()
+                expected[Path(name).name] = digest
     rows = []
     for length in LENGTHS:
         windows, sha = windows_sha(a.anchor, length)
@@ -47,10 +72,20 @@ def main():
         meta = json.loads((a.anchor / f"nll-hf-sdpa-fp32-{length}.meta.json").read_text())
         if meta.get("dtype") != "float32" or meta.get("attn_implementation") != "sdpa":
             raise InputError(f"anchor at {length} is not recorded as float32 with sdpa attention")
-        engine, _ = load_nll(a.engine_dir, a.engine, length, sha, count, True)
+        engine, engine_sha = load_nll(a.engine_dir, a.engine, length, sha, count, True)
+        engine_meta = json.loads((a.engine_dir / f"nll-{a.engine}-{length}.meta.json").read_text())
+        if not (isinstance(engine_meta.get("scorer_sha256"), str) and len(engine_meta["scorer_sha256"]) == 64):
+            raise InputError(f"nll-{a.engine}-{length}.meta.json does not name the scorer that produced it")
+        name = f"nll-{a.engine}-{length}.f32"
+        if expected and expected.get(name) != engine_sha:
+            raise InputError(f"{name}: hash {engine_sha[:16]} is not the expected {str(expected.get(name))[:16]}")
+        for ref_dir in (a.references, a.anchor):
+            for ref_file in ref_dir.glob(f"nll-hf-*-{length}.f32"):
+                if hashlib.sha256(ref_file.read_bytes()).hexdigest() == engine_sha:
+                    raise InputError(f"{name} is a byte copy of {ref_file.name}")
         anchor = anchor.astype(np.float64)
         dev = lambda x: np.abs(x.astype(np.float64) - anchor).mean(axis=1)  # per-window mean |deviation|
-        row = dict(length=length, windows=int(count), engine_mean_abs_dev=float(dev(engine).mean()))
+        row = dict(length=length, windows=int(count), engine_nll_sha256=engine_sha, engine_mean_abs_dev=float(dev(engine).mean()))
         for ref in ("hf-sdpa", "hf-eager"):
             loaded = load_nll(a.references, ref, length, sha, count, ref == "hf-sdpa")
             if loaded is None:  # hf-eager does not exist above 4,096
@@ -65,7 +100,7 @@ def main():
         row["verdict"] = ("farther than SDPA (FAIL)" if row["fails"] else
                           "closer than SDPA" if sd["ci95"][1] < -EQUAL_EPS else "as close as SDPA")
         rows.append(row)
-    report = dict(definition=__doc__.split("\n\n")[0], epsilon=EQUAL_EPS, engine=a.engine, rows=rows,
+    report = dict(status="complete", definition=__doc__.split("\n\n")[0], epsilon=EQUAL_EPS, engine=a.engine, rows=rows,
                   passes=not any(r["fails"] for r in rows))
     if a.output:
         a.output.write_text(json.dumps(report, indent=2) + "\n")

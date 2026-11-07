@@ -34,6 +34,8 @@ def nll(d, engine, L, values, attn=None, dtype=None):
     np.asarray(values, np.float32).tofile(path)
     meta = dict(engine=engine, length=L, windows_sha256=json.loads((d / "summary.json").read_text())["windows"][str(L)]["sha256"],
                 nll_sha256=sha(path), attn_implementation=attn)
+    if not engine.startswith("hf-"):
+        meta["scorer_sha256"] = "a" * 64
     if dtype:
         meta["dtype"] = dtype
     (d / f"nll-{engine}-{L}.meta.json").write_text(json.dumps(meta))
@@ -52,9 +54,9 @@ def build(tmp_path, engine_noise, sdpa_noise, eager=True):
         nll(tmp_path / "engine", "native-gemm", L, base + engine_noise * rng.standard_normal(base.size))
 
 
-def run(tmp_path):
+def run(tmp_path, engine="native-gemm", engine_dir="engine", extra=()):
     return subprocess.run([sys.executable, str(TOOL), "--anchor", str(tmp_path / "anchor"), "--references", str(tmp_path / "refs"),
-                           "--engine-dir", str(tmp_path / "engine"), "--engine", "native-gemm", "--output", str(tmp_path / "out.json")],
+                           "--engine-dir", str(tmp_path / engine_dir), "--engine", engine, "--output", str(tmp_path / "out.json"), *extra],
                           capture_output=True, text=True)
 
 
@@ -84,12 +86,41 @@ def test_an_anchor_not_recorded_as_fp32_is_rejected(tmp_path):
     meta = tmp_path / "anchor/nll-hf-sdpa-fp32-256.meta.json"
     m = json.loads(meta.read_text()); m["dtype"] = "bfloat16"; meta.write_text(json.dumps(m))
     r = run(tmp_path)
-    assert r.returncode != 0 and "float32" in (r.stdout + r.stderr)
+    assert r.returncode == 2 and "float32" in (r.stdout + r.stderr)
+    assert json.loads((tmp_path / "out.json").read_text())["status"] == "invalid input"
 
 
 def test_tampered_nll_is_rejected(tmp_path):
     build(tmp_path, 0.01, 0.01)
+    assert run(tmp_path).returncode == 0  # a passing report exists...
     p = tmp_path / "engine/nll-native-gemm-257.f32"
     data = bytearray(p.read_bytes()); data[0] ^= 1; p.write_bytes(bytes(data))
+    r = run(tmp_path)  # ...and must not survive an invalid rerun
+    assert r.returncode == 2 and "differ from the sha256" in (r.stdout + r.stderr)
+    assert json.loads((tmp_path / "out.json").read_text())["status"] == "invalid input"
+
+
+def test_an_anchor_with_the_wrong_attention_is_rejected(tmp_path):
+    build(tmp_path, 0.01, 0.01)
+    meta = tmp_path / "anchor/nll-hf-sdpa-fp32-4096.meta.json"
+    m = json.loads(meta.read_text()); m["attn_implementation"] = "eager"; meta.write_text(json.dumps(m))
+    assert run(tmp_path).returncode == 2
+
+
+def test_an_hf_reference_or_a_copy_is_not_an_engine(tmp_path):
+    build(tmp_path, 0.01, 0.01)
+    assert run(tmp_path, engine="hf-sdpa", engine_dir="refs").returncode == 2
+    for L in LENGTHS:  # the engine files replaced by byte copies of the SDPA reference
+        src = tmp_path / f"refs/nll-hf-sdpa-{L}.f32"
+        nll(tmp_path / "engine", "native-gemm", L, np.fromfile(src, np.float32))
     r = run(tmp_path)
-    assert r.returncode != 0 and "differ from the sha256" in (r.stdout + r.stderr)
+    assert r.returncode == 2 and "byte copy" in r.stderr
+
+
+def test_expected_hashes_are_enforced(tmp_path):
+    build(tmp_path, 0.01, 0.01)
+    lines = [f"{sha(tmp_path / f'engine/nll-native-gemm-{L}.f32')}  x/nll-native-gemm-{L}.f32" for L in LENGTHS]
+    (tmp_path / "ok.sha").write_text("\n".join(lines) + "\n")
+    assert run(tmp_path, extra=("--expect-sha256", str(tmp_path / "ok.sha"))).returncode == 0
+    (tmp_path / "bad.sha").write_text("\n".join(lines[:1] + ["0" * 64 + "  nll-native-gemm-257.f32"] + lines[2:]) + "\n")
+    assert run(tmp_path, extra=("--expect-sha256", str(tmp_path / "bad.sha"))).returncode == 2

@@ -54,3 +54,16 @@ def test_exact_engine_buffer_accounting_decides_when_present(damage):
     if damage in ('growth','accounting-lost','invalid'):
         with pytest.raises(AssertionError,match='engine-buffer'):gate.resource_gate(baseline,sample)
     else:gate.resource_gate(baseline,sample)
+
+
+@pytest.mark.parametrize('case,ok',[('exact-equal',True),('exact-leak',False),('exact-lost',False),
+                                    ('device-within',True),('device-beyond',False)])
+def test_post_close_recovery(case,ok):
+    exact=dict(cuda_free_bytes=70<<30,app_live_bytes=0,app_metrics_valid=True)
+    device=dict(cuda_free_bytes=70<<30)
+    empty,post={'exact-equal':(exact,dict(exact,cuda_free_bytes=60<<30)),  # device-wide noise ignored
+                'exact-leak':(exact,dict(exact,app_live_bytes=4096)),
+                'exact-lost':(exact,dict(cuda_free_bytes=70<<30)),
+                'device-within':(device,dict(cuda_free_bytes=(70<<30)-(16<<20))),
+                'device-beyond':(device,dict(cuda_free_bytes=(70<<30)-(16<<20)-1))}[case]
+    assert gate.post_close_recovered(empty,post)[0] is ok

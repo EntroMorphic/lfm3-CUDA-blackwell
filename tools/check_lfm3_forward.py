@@ -19,6 +19,7 @@ def trace_manifest(native, generated_ids):
 
 
 def compare_manifest(golden, actual):
+    golden = {k: v for k, v in golden.items() if not k.startswith("_")}  # provenance is not a fixture
     if set(golden) != set(actual):
         raise AssertionError(f"tier 1: fixture set differs from the pin: {sorted(set(golden) ^ set(actual))}")
     for case in golden:
@@ -32,13 +33,32 @@ def compare_manifest(golden, actual):
             raise AssertionError(f"tier 1: {case}: {len(changed)} trace files differ from the pin, e.g. {changed[:4]}")
 
 
+def finish_tiers(pin, golden, binary, manifest, fidelity):
+    """Tier 2a must pass before tier 1 pins anything; then pin (with provenance) or compare with the pin."""
+    failed = [f["case"] for f in fidelity if not f["passed"]]
+    if failed:
+        raise AssertionError(f"tier 2a: native farther from FP32 than eager and SDPA in {failed}")
+    if pin:
+        pinned = dict(manifest)
+        pinned["_provenance"] = dict(binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
+                                     tier2a=fidelity, plan="validation/g4-gates-v2/PLAN.md")
+        pin.write_text(json.dumps(pinned, indent=2, sort_keys=True) + "\n")
+    else:
+        compare_manifest(json.loads(golden.read_text()), manifest)
+
+
 def tier2a(tools, output, name, run):
     """Tier 2a: native's median activation distance from the FP32 anchor ≤ the worse of eager's and SDPA's."""
     out = output / f"{name}.fidelity.json"
+    # compare_trace_spread reads a candidate ROOT/SUBDIR as ROOT/CASE/SUBDIR: pass roots, not case directories.
+    anchor = json.loads((output / "fp32" / name / "reference.json").read_text())
+    precision = anchor.get("precision", {})
+    if anchor.get("dtype") != "float32" or precision.get("matmul_allow_tf32") or precision.get("cudnn_allow_tf32"):
+        raise AssertionError(f"tier 2a: {name}: the anchor is not recorded as FP32 with TF32 disabled")
     run([sys.executable, tools / "compare_trace_spread.py", output / "fp32", out, "--cases", name,
-         "--candidate", "eager", output / name / "reference", output,
-         "--candidate", "sdpa", output / "sdpa" / name / "reference", output / "sdpa",
-         "--candidate", "native", output / name / "native", output], output / f"{name}.fidelity.log")
+         "--candidate", "eager", output / "reference", output,
+         "--candidate", "sdpa", output / "sdpa" / "reference", output / "sdpa",
+         "--candidate", "native", output / "native", output], output / f"{name}.fidelity.log")
     row = json.loads(out.read_text())["cases"][0]
     c = row["candidates"]
     median = {k: c[k]["activation_rel_rms_median"] for k in ("eager", "sdpa", "native")}
@@ -79,6 +99,12 @@ def main():
         args.activation_tolerance = True
         if not (args.golden or args.pin):
             p.error("--native-tiers needs --golden or --pin")
+        if args.pin and args.pin.exists():
+            p.error(f"--pin {args.pin} exists; re-pinning is deliberate: remove it first")
+        if args.golden:
+            golden = json.loads(args.golden.read_text())  # fail now, not after hours
+            if not golden:
+                p.error(f"--golden {args.golden} is empty")
     elif args.golden or args.pin:
         p.error("--golden and --pin need --native-tiers")
     args.output.mkdir(parents=True, exist_ok=False)
@@ -166,19 +192,14 @@ def main():
         assert result.returncode == 1, (i, result.stderr)
         assert not (args.output / f"invalid-{i}-output.json").exists()
     if args.native_tiers:
-        failed = [f["case"] for f in fidelity if not f["passed"]]
-        if failed:
-            raise AssertionError(f"tier 2a: native farther from FP32 than eager and SDPA in {failed}")
-        if args.pin:
-            args.pin.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-        else:
-            compare_manifest(json.loads(args.golden.read_text()), manifest)
+        finish_tiers(args.pin, args.golden, args.binary, manifest, fidelity)
     report = dict(cases=reports, stop_check=True, suppression_check=True, invalid_requests_rejected=len(invalid),
                   native_tiers=dict(tier1=("pinned " + str(args.pin)) if args.pin else ("matches " + str(args.golden)),
                                     tier2a=fidelity) if args.native_tiers else None,
                   final_cache_slot_checked=True,
                   binary_sha256=hashlib.sha256(args.binary.read_bytes()).hexdigest(),
-                  activations="tolerance (compare_lfm3_traces defaults)" if args.activation_tolerance else "bitwise BF16",
+                  activations=("native tiers: eager distances recorded, not judged; tier 2a against FP32" if args.native_tiers
+                               else "tolerance (compare_lfm3_traces defaults)" if args.activation_tolerance else "bitwise BF16"),
                   scope="actual BF16 checkpoint activations/logits, teacher forcing and free-running greedy; eager attention only")
     (args.output / "summary.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))

@@ -221,6 +221,7 @@ def validate_reference(reference, request, vocabulary, attention):
 def summarize(reference, samples, request, vocabulary, attention, binary_hash):
     expected, ref_samples = validate_reference(reference, request, vocabulary, attention)
     require(isinstance(samples, list) and len(samples) == SAMPLES, "expected three native samples")
+    require(len({sample.get("attention") for sample in samples}) == 1, "native samples disagree on the engine label")
     mismatches = []
     for backend, rows in (("native", samples), ("transformers", ref_samples)):
         for index, sample in enumerate(rows):
@@ -233,6 +234,8 @@ def summarize(reference, samples, request, vocabulary, attention, binary_hash):
                 first_mismatch=min((row["first_mismatch"] for row in mismatches), default=None),
                 input_tokens=len(request["input_ids"]), max_new_tokens=request["max_new_tokens"],
                 reference_attention=attention, native_attention=samples[0].get("attention"),
+                eager_parity_claim=("applies" if samples[0].get("attention") == "eager-bf16" else
+                                    "does not apply (native-GEMM engine, G4); greedy agreement is measured, not assumed"),
                 native=stats(samples), transformers=stats(ref_samples), samples=SAMPLES,
                 native_warmup_runs_per_process=1, native_processes=SAMPLES,
                 reference_warmup_runs_total=1, reference_initial_oracle_generation=True,

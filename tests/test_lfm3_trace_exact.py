@@ -1,4 +1,5 @@
 """Exact FP32 logit traces (G4): rounding, all-or-none presence, nonfinite rejection, and gate wiring."""
+import hashlib
 import importlib.util
 from pathlib import Path
 import random
@@ -128,3 +129,62 @@ def test_forward_tier1_manifest_is_exact(tmp_path):
             actual["single"] = actual["baseline"]
         with pytest.raises(AssertionError, match="tier 1"):
             gate.compare_manifest(pinned, actual)
+
+
+def _tier2a_tree(root, native_noise, anchor_dtype="float32"):
+    import json
+    import numpy as np
+    rng = np.random.default_rng(0)
+    base = rng.standard_normal(256)
+    bf = lambda x: (np.asarray(x, np.float32).view(np.uint32) >> 16).astype(np.uint16).tobytes()
+    ref = dict(input_ids=[1, 2], generated_ids=[5])
+    # The layout check_lfm3_forward writes: OUT/fp32/CASE, OUT/CASE/{reference,native}, OUT/sdpa/CASE.
+    for d, noise, sub in ((root / "fp32/case", 0.0, "reference"), (root / "case", 0.02, "reference"),
+                          (root / "sdpa/case", 0.015, "reference"), (root / "case", native_noise, "native")):
+        (d / sub).mkdir(parents=True, exist_ok=True)
+        meta = dict(ref)
+        if d.parent.name == "fp32":
+            meta.update(dtype=anchor_dtype, precision=dict(matmul_allow_tf32=False, cudnn_allow_tf32=False))
+        (d / "reference.json").write_text(json.dumps(meta))
+        for step in range(2):
+            (d / sub / f"{step}.layers.0.x.bf16").write_bytes(bf(base * (1 + noise * rng.standard_normal(256))))
+
+
+@pytest.mark.parametrize("native_noise,passed", [(0.01, True), (0.05, False)])
+def test_forward_tier2a_on_the_gate_layout(tmp_path, native_noise, passed):
+    import subprocess
+    gate = load_forward()
+    _tier2a_tree(tmp_path, native_noise)
+    run = lambda command, log: subprocess.run([str(x) for x in command], check=True, capture_output=True)
+    row = gate.tier2a(TOOLS, tmp_path, "case", run)
+    assert row["common_files"] == 2 and row["passed"] is passed
+
+
+def test_forward_tier2a_requires_an_fp32_anchor(tmp_path):
+    gate = load_forward()
+    _tier2a_tree(tmp_path, 0.01, anchor_dtype="bfloat16")
+    with pytest.raises(AssertionError, match="not recorded as FP32"):
+        gate.tier2a(TOOLS, tmp_path, "case", lambda *a: None)
+
+
+def test_forward_golden_ignores_pin_provenance(tmp_path):
+    gate = load_forward()
+    (tmp_path / "0.logits.bf16").write_bytes(b"\x80\x3f")
+    m = {"baseline": gate.trace_manifest(tmp_path, [5])}
+    gate.compare_manifest(dict(m, _provenance={"binary_sha256": "x"}), m)
+
+
+def test_forward_pins_only_after_tier2a_passes(tmp_path):
+    gate = load_forward()
+    binary = tmp_path / "liquid-lfm3"
+    binary.write_bytes(b"binary")
+    pin = tmp_path / "pin.json"
+    manifest = {"baseline": dict(generated_ids=[5], files={"0.logits.bf16": "0" * 64})}
+    with pytest.raises(AssertionError, match="tier 2a"):
+        gate.finish_tiers(pin, None, binary, manifest, [dict(case="baseline", passed=False)])
+    assert not pin.exists()
+    gate.finish_tiers(pin, None, binary, manifest, [dict(case="baseline", passed=True)])
+    import json
+    pinned = json.loads(pin.read_text())
+    assert pinned["_provenance"]["binary_sha256"] == hashlib.sha256(b"binary").hexdigest() and "baseline" in pinned
+    gate.finish_tiers(None, pin, binary, manifest, [dict(case="baseline", passed=True)])  # golden round-trip

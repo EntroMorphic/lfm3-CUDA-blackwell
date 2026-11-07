@@ -42,6 +42,16 @@ def resource_gate(baseline, sample):
         raise AssertionError("fixed warm device-wide CUDA free-memory budget exceeded")
 
 
+def post_close_recovered(empty, post_close):
+    """After closing every session: exact engine-buffer bytes back to the empty-session value when the worker reports
+    them, else device-wide free memory within 16 MiB of it. Returns (recovered, how it was judged)."""
+    if exact_accounting(empty):
+        return (exact_accounting(post_close) and post_close["app_live_bytes"] == empty["app_live_bytes"],
+                "worker engine-buffer bytes (exact); device-wide readings recorded only")
+    return (type(post_close.get("cuda_free_bytes")) is int and post_close["cuda_free_bytes"] >= empty["cuda_free_bytes"] - 16 * 1024 * 1024,
+            "device-wide free memory (no engine-buffer accounting)")
+
+
 def exact_accounting(stats):
     """True when the worker reports valid engine-buffer accounting (native build with LFM_ALLOCATION_METRICS=1)."""
     return type(stats.get("app_live_bytes")) is int and stats.get("app_metrics_valid") is True
@@ -186,14 +196,9 @@ def main():
         for sid in (a,b):call(f"/sessions/{sid}/close",{})
         post_close=service._submit(lambda:worker.call(dict(op='stats')),lambda:None)
         report['post_close_gpu']=post_close;save()
-        if exact_accounting(empty_gpu):
-            recovered=exact_accounting(post_close) and post_close['app_live_bytes']==empty_gpu['app_live_bytes']
-            report['memory_judged_by']='worker engine-buffer bytes (exact); device-wide readings recorded only'
-        else:
-            recovered=type(post_close.get('cuda_free_bytes')) is int and post_close['cuda_free_bytes']>=empty_gpu['cuda_free_bytes']-16*1024*1024
-            report['memory_judged_by']='device-wide free memory (no engine-buffer accounting)'
+        recovered,report['memory_judged_by']=post_close_recovered(empty_gpu,post_close)
         if (post_close.get('sessions')!=0 or post_close.get('reserved_tokens')!=0 or not recovered):
-            raise AssertionError('post-close device allocations not recovered within fixed16MiB allowance')
+            raise AssertionError('post-close allocations not recovered (engine-buffer bytes exactly, else device-wide within 16 MiB)')
         if service.sessions or service.failed:raise AssertionError("leaked sessions/failed service")
         if hashlib.sha256(args.worker.read_bytes()).hexdigest()!=binary_hash or any(hashlib.sha256(p.read_bytes()).hexdigest()!=hashes[p.name] for p in source_paths):
             raise AssertionError("source or binary changed during soak")

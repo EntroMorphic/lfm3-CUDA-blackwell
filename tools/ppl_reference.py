@@ -98,7 +98,11 @@ def main():
                "window_rule": "[BOS] + next L-1 corpus tokens, non-overlapping; score positions 1..L-1",
                "nll_definition": "-log_softmax(lm_head(final hidden).float(), -1)[next token], all 128000 logits",
                "versions": {"torch": torch.__version__, "transformers": transformers.__version__},
-               "dtype": a.dtype, "precision": {"matmul_allow_tf32": torch.backends.cuda.matmul.allow_tf32,
+               "dtype": a.dtype,
+               "precision_note": ("FP32 SDPA runs PyTorch's memory-efficient attention, whose GEMMs use 3xTF32 (FP32-level "
+                                  "accuracy) regardless of the TF32 flags (mem_eff_attention/gemm_kernel_utils.h)")
+                                 if a.dtype == "float32" else None,
+               "precision": {"matmul_allow_tf32": torch.backends.cuda.matmul.allow_tf32,
                                               "cudnn_allow_tf32": torch.backends.cudnn.allow_tf32,
                                               "float32_matmul_precision": torch.get_float32_matmul_precision()},
                "windows": {}, "results": []}

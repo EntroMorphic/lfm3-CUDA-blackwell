@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # One verification round on Thor (host), sequential so jobs never share the GPU; stops at first failure.
+# The cuBLAS engine's regression round (G6): it builds -DLIQUID_LFM3_NATIVE_GEMM=OFF and the cuBLAS scorer explicitly,
+# because the default engine is now lfm::gemm (G4) and its NLL baseline is the cuBLAS one (ppl-v1).
 #   1 build native targets (cmake-g6-vR) and the scorer (score-vR) from the current source tree
 #   2 perplexity: run_ppl.sh ppl-vR with score-vR, then ppl_compare (must PASS, inputs verified)
 #   3 native NLL must be byte-identical to the committed baseline (validation-only scorer changes)
@@ -21,10 +23,10 @@ for s in build-native build-scorer ppl compare nll-identity redteam gates; do ou
 for g in forward context sampling worker grouped-worker server cancellation http-cancellation 32k http-batch; do outputs+=("g6r$R-$g"); done
 for o in "${outputs[@]}"; do test ! -e "$B/$o" || { echo "round $R output already exists: $B/$o"; exit 1; }; done
 step build-native docker run --rm --network none -v $W/liquid-CUDA/native:/src/native:ro -v $W:/workspace $IMG \
-  bash -c "bash /workspace/liquid-CUDA/tools/thor/build_native.sh /workspace/liquid-CUDA/build/cmake-g6-v$R; rc=\$?; chown -R 1000:1000 /workspace/liquid-CUDA/build/cmake-g6-v$R /workspace/liquid-CUDA/build/cmake-g6-v$R.cmake.log /workspace/liquid-CUDA/build/cmake-g6-v$R.build.log 2>/dev/null; exit \$rc"
+  bash -c "bash /workspace/liquid-CUDA/tools/thor/build_native.sh /workspace/liquid-CUDA/build/cmake-g6-v$R -DLIQUID_LFM3_NATIVE_GEMM=OFF; rc=\$?; chown -R 1000:1000 /workspace/liquid-CUDA/build/cmake-g6-v$R /workspace/liquid-CUDA/build/cmake-g6-v$R.cmake.log /workspace/liquid-CUDA/build/cmake-g6-v$R.build.log 2>/dev/null; exit \$rc"
 mkdir "$B/score-v$R"
 step build-scorer docker run --rm --network none -v $W:/workspace $IMG \
-  bash -c "bash /workspace/liquid-CUDA/tools/thor/build_scorer.sh /workspace/liquid-CUDA/build/score-v$R; rc=\$?; chown -R 1000:1000 /workspace/liquid-CUDA/build/score-v$R; exit \$rc"
+  bash -c "bash /workspace/liquid-CUDA/tools/thor/build_scorer.sh /workspace/liquid-CUDA/build/score-v$R cublas; rc=\$?; chown -R 1000:1000 /workspace/liquid-CUDA/build/score-v$R; exit \$rc"
 step ppl bash $T/thor/run_ppl.sh ppl-v$R score-v$R
 step compare python3 $T/ppl_compare.py "$B/ppl-v$R"
 status nll-identity null

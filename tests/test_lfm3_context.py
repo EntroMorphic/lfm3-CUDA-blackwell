@@ -290,7 +290,7 @@ def test_native_tiers_pin_then_golden(tmp_path, monkeypatch):
         (checkpoint / name).write_text("{}")
     binary = tmp_path / "runner"
     binary.write_text("mock")
-    state = {"logit": 0x4000}
+    state = {"logit": 0x4000, "exact": 2.0}
     monkeypatch.setattr(context, "reject_before_weights", lambda *a: ["mocked"])
     monkeypatch.setattr(context, "cases", lambda suite: [("mock", 1, 1, True)])
 
@@ -307,20 +307,27 @@ def test_native_tiers_pin_then_golden(tmp_path, monkeypatch):
         if label == "teacher":
             trace = Path(request["trace_directory"])
             for step in range(2):
-                # A native engine differs from eager in its logits (here 0x4001 vs 0x4000) but keeps the argmax.
+                # A native engine differs from eager in its logits (here 0x4001 vs 0x4000) but keeps the argmax, and
+                # writes its exact FP32 logits too (bits 0x40008001 and 0x40008002 both round to 0x4001).
                 (trace / f"{step}.logits.bf16").write_bytes(bf16(0x3f80, state["logit"]))
+                (trace / f"{step}.logits.f32").write_bytes(struct.pack("<ff", 1.0, state["exact"]))
         return dict(teacher_argmax=[1, 1], generated_ids=[] if label == "teacher" else [1, 1], decode_forward_calls=1)
 
     monkeypatch.setattr(context, "make_references", reference)
     monkeypatch.setattr(context, "run_native", native)
     pin = tmp_path / "pin.json"
-    state["logit"] = 0x4001
+    as_float = lambda bits: struct.unpack("<f", struct.pack("<I", bits))[0]
+    state.update(logit=0x4001, exact=as_float(0x40008001))
     for run, flag in (("pin", ["--pin", str(pin)]), ("same", ["--golden", str(pin)])):
         monkeypatch.setattr(sys, "argv", ["check", "--checkpoint", str(checkpoint), "--binary", str(binary),
                                          "--output", str(tmp_path / run), "--suite", "smoke", "--native-tiers", *flag])
         context.main()
         assert json.loads((tmp_path / run / "summary.json").read_text())["status"] == "passed"
-    state["logit"] = 0x4002  # a regression: the argmax is unchanged, the bits are not
+    pinned = json.loads(pin.read_text())
+    assert set(pinned["mock"]["files"]) == {"0.logits.bf16", "1.logits.bf16", "0.logits.f32", "1.logits.f32"}
+    assert "binary_sha256" in pinned["_provenance"]
+    # A regression only in the exact logits (the .bf16 rounding is unchanged) must still fail tier 1.
+    state.update(exact=as_float(0x40008002))
     monkeypatch.setattr(sys, "argv", ["check", "--checkpoint", str(checkpoint), "--binary", str(binary),
                                      "--output", str(tmp_path / "changed"), "--suite", "smoke", "--native-tiers", "--golden", str(pin)])
     with pytest.raises(RuntimeError, match="tier 1"):
