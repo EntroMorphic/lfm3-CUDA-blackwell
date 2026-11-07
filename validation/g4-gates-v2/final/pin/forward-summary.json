@@ -1,0 +1,104 @@
+{
+  "cases": [
+    {
+      "case": "baseline",
+      "activation_checks": 4240,
+      "tokens": 16,
+      "max_relative_rms": 0.03434164077043533,
+      "max_logit_abs": 0.28125,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true,
+      "exact_fp32_logit_traces": true
+    },
+    {
+      "case": "arithmetic",
+      "activation_checks": 530,
+      "tokens": 2,
+      "max_relative_rms": 0.028976062312722206,
+      "max_logit_abs": 0.25,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true,
+      "exact_fp32_logit_traces": true
+    },
+    {
+      "case": "window257",
+      "activation_checks": 1060,
+      "tokens": 4,
+      "max_relative_rms": 0.05202164128422737,
+      "max_logit_abs": 0.1875,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true,
+      "exact_fp32_logit_traces": true
+    },
+    {
+      "case": "single",
+      "activation_checks": 1060,
+      "tokens": 4,
+      "max_relative_rms": 0.0378059558570385,
+      "max_logit_abs": 0.25,
+      "teacher_argmax_exact": true,
+      "greedy_exact": true,
+      "reset_exact_logits": true,
+      "exact_fp32_logit_traces": true
+    }
+  ],
+  "stop_check": true,
+  "suppression_check": true,
+  "invalid_requests_rejected": 8,
+  "native_tiers": {
+    "tier1": "pinned /workspace/liquid-CUDA/validation/g4-gates-v2/pins/forward.json",
+    "tier2a": [
+      {
+        "case": "baseline",
+        "common_files": 3536,
+        "compared_through_step": 16,
+        "median_rel_rms": {
+          "eager": 0.010374471228918217,
+          "sdpa": 0.008858491647799912,
+          "native": 0.009167309925589227
+        },
+        "passed": true
+      },
+      {
+        "case": "arithmetic",
+        "common_files": 442,
+        "compared_through_step": 2,
+        "median_rel_rms": {
+          "eager": 0.010393770992873485,
+          "sdpa": 0.009278556577067554,
+          "native": 0.009155246478473326
+        },
+        "passed": true
+      },
+      {
+        "case": "window257",
+        "common_files": 884,
+        "compared_through_step": 4,
+        "median_rel_rms": {
+          "eager": 0.010925998487432493,
+          "sdpa": 0.01017934805946025,
+          "native": 0.010307142533307698
+        },
+        "passed": true
+      },
+      {
+        "case": "single",
+        "common_files": 884,
+        "compared_through_step": 4,
+        "median_rel_rms": {
+          "eager": 0.013868658191649254,
+          "sdpa": 0.013886481644791565,
+          "native": 0.013563801192625128
+        },
+        "passed": true
+      }
+    ]
+  },
+  "final_cache_slot_checked": true,
+  "binary_sha256": "a75e26b1f357e8bc1dc0adc6301f37207b531e414ab146fbb9352340709d3376",
+  "activations": "native tiers: eager distances recorded, not judged; tier 2a against FP32",
+  "scope": "actual BF16 checkpoint activations/logits, teacher forcing and free-running greedy; eager attention only"
+}

@@ -1,0 +1,36 @@
+== build-default 12:09:01
+a75e26b1f357e8bc1dc0adc6301f37207b531e414ab146fbb9352340709d3376  liquid-lfm3
+1fee41fe57813af7b30e8f038847d742a16d9b814f6567af9176ee75bcb50ce4  liquid-lfm3-worker
+2213bbb289f1f885b24df934ef9256db2e5a2661f5943058c87bbd9787e69db3  liquid-lfm3-server
+c2a9d1f6b1608abb22a36c172c53fce5f60156e94a6a0b66edb7a6c90e859daf  text-sampling-oracle
+50e34f2ffd3fda3627b354b6f3e6d361635f609f54788bf05c2258dd3bfc48b2  lfm3-decode-batch-probe
+warnings: 0
+== build-cublas 12:10:42
+2dcd128ccdaf4b5375c1e299ff0536751ef9e8641ec3015ff50bfc89f4156c42  liquid-lfm3
+57f3bca596df67f567e3efea7b0bc6d284beac6f36e5a026842d6747c7ced930  liquid-lfm3-worker
+e7e07451a0d2e8d10b3cae121f68f7e2f6bca51697067eee3e56e07868d67f97  liquid-lfm3-server
+c2a9d1f6b1608abb22a36c172c53fce5f60156e94a6a0b66edb7a6c90e859daf  text-sampling-oracle
+74138fb3cd3f092e06b1d1fea51e1df7efa5d3272876e27af5bcc420ee4a92d7  lfm3-decode-batch-probe
+warnings: 0
+== identities 12:12:02
+liquid-lfm3 default vs native-v6: same; cublas option vs cmake-server-v3: same
+liquid-lfm3-worker default vs native-v6: same; cublas option vs cmake-server-v3: same
+liquid-lfm3-server default vs native-v6: same; cublas option vs cmake-server-v3: same
+lfm3-decode-batch-probe default vs native-v6: same; cublas option vs cmake-server-v3: same
+liquid-lfm3 default: 2475848 bytes; needed: libcudart.so.13 libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+liquid-lfm3-worker default: 2555416 bytes; needed: libcudart.so.13 libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+liquid-lfm3-server default: 2733136 bytes; needed: libcudart.so.13 libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+== tier3-scorer 12:12:02
+lfm3-score built sha256 a4427549e226beb5
+scorer mode: native-gemm; needed: libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6 ld-linux-aarch64.so.1 
+256: NLL bitwise identical to attempt 3
+257: NLL bitwise identical to attempt 3
+4096: NLL bitwise identical to attempt 3
+32768: NLL bitwise identical to attempt 3
+== gates-pin 12:16:53
+pin gates rc=0
+{"stage":"done","rc":0,"unix":1794080117}
+== gates-golden 12:35:17
+golden gates rc=0
+{"stage":"done","rc":0,"unix":1794081223}
+ALL DONE 12:53:43
