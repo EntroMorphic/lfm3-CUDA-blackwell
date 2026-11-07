@@ -1,0 +1,11 @@
+Thor, 2026-11-07. Default liquid-lfm3 (cmake-server-v3), window 0 of ppl-v5/windows-257.i32,
+prompt 65 tokens, 192 teacher-forced steps, trace_logits_only. Three interactive passes:
+
+positions 193 mean NLL of these positions 2.6501
+max |logit|: median 20.8 max 24.9; ulp at argmax logit: median 0.0625
+p_max median 0.507
+expected NLL bias from bf16 logit rounding (nats/token): mean 7.982e-05 median 9.461e-05 min 2.711e-08 max 2.290e-04
+
+Monte Carlo, 128 draws, no control variate:      mean 1.844e-04  standard error 9.5e-05   (under-resolved)
+Monte Carlo, 64 draws, control variate eps.p:    mean 8.041e-05  standard error 3.3e-06
+second-order formula on the same 192 positions:       7.985e-05
