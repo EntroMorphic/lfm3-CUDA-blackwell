@@ -36,7 +36,7 @@ def main():
         raise ValueError("empty content")
     cases = [("prefill8192", 8192, 0), ("decode_into32768", 32767, 1), ("prefill32768", 32768, 0)]
     metadata = dict(status="running", binary_sha256=binary_hash, reference_backend="Transformers SDPA",
-                    native_backend="native tiled eager-bf16", torch=torch.__version__, transformers=transformers.__version__,
+                    native_backend="native tiled (attention label from the binary's results)", torch=torch.__version__, transformers=transformers.__version__,
                     max_logit_error=args.max_logit_error, max_relative_rms=args.max_relative_rms,
                     cases=[], limitations="Not eager bitwise parity; finite fixed fixtures; no performance claim")
     def save():

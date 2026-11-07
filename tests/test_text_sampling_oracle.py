@@ -95,13 +95,50 @@ def test_replay_rejects_malformed_vocabulary_argument(oracle,tmp_path,vocab):
 
 
 # G4: an FP32-logit engine (the native-GEMM build) samples from exact FP32 logits and writes them as
-# STEP.logits.f32 next to the rounded BF16 trace. The oracle must replay the exact values. Here the BF16
-# trace is uniform over 4 ids (seed 42 selects ID 3), but the exact trace puts ID 3 at -1000, leaving a
-# uniform 3-way support (seed 42 selects ID 2): only a replay of the FP32 file accepts ID 2.
-@pytest.mark.parametrize("generated,exact,ok",[(2,"good",True),(3,"good",False),(3,None,True),(2,"short",False)])
-def test_replay_prefers_the_exact_fp32_trace(oracle,tmp_path,generated,exact,ok):
-    if exact=="good":(tmp_path/"0.logits.f32").write_bytes(struct.pack("<ffff",0.0,0.0,0.0,-1000.0))
-    if exact=="short":(tmp_path/"0.logits.f32").write_bytes(struct.pack("<fff",0.0,0.0,0.0))
-    result=_replay(oracle,tmp_path,generated)
+# STEP.logits.f32 for every step, with STEP.logits.bf16 their round-to-nearest-even rounding. The oracle must
+# replay the exact values. FP32 [16, 16, 16, 15.97] rounds to BF16 [16, 16, 16, 16] (0x4180): the rounded trace
+# is uniform (seed 42's draw 0.755156 selects ID 3), the exact one puts 3/(3+e^-0.03) = 0.75558 before ID 3,
+# so the draw selects ID 2. Only a replay of the FP32 file accepts ID 2.
+EXACT=struct.pack("<ffff",16.0,16.0,16.0,15.97)
+ROUNDED=struct.pack("<HHHH",0x4180,0x4180,0x4180,0x4180)
+
+
+def _replay_exact(oracle,tmp_path,generated,files):
+    request=dict(do_sample=True,temperature=1.0,top_k=0,top_p=1.0,min_p=0.0,
+                 repetition_penalty=1.0,seed=42,suppress_tokens=[])
+    (tmp_path/"request.json").write_text(json.dumps(request))
+    (tmp_path/"result.json").write_text(json.dumps(dict(generated_ids=generated)))
+    for name,data in files.items():(tmp_path/name).write_bytes(data)
+    return subprocess.run([str(oracle),str(tmp_path/"request.json"),str(tmp_path/"result.json"),str(tmp_path),"4"],
+                          capture_output=True,text=True)
+
+
+@pytest.mark.parametrize("generated,exact,ok",[([2],True,True),([3],True,False),([3],False,True),([2],False,False)])
+def test_replay_uses_the_exact_fp32_trace(oracle,tmp_path,generated,exact,ok):
+    # With the exact file the draw selects ID 2; without it the same rounded trace replays ID 3, as before.
+    files={"0.logits.bf16":ROUNDED}
+    if exact:files["0.logits.f32"]=EXACT
+    result=_replay_exact(oracle,tmp_path,generated,files)
     assert result.returncode==(0 if ok else 1),result.stderr
-    if exact=="short":assert "wrong-size FP32 trace" in result.stderr
+
+
+@pytest.mark.parametrize("damage,message",[
+    ("short",          "wrong-size FP32 trace"),
+    ("nan",            "nonfinite FP32 trace"),
+    ("not-rounding",   "not the rounding of the FP32 trace"),
+    ("missing-bf16",   "missing/wrong-size BF16 trace"),
+    ("partial",        "every step or none"),
+])
+def test_replay_rejects_inconsistent_exact_traces(oracle,tmp_path,damage,message):
+    files={"0.logits.f32":EXACT,"0.logits.bf16":ROUNDED}
+    generated=[2]
+    if damage=="short":files["0.logits.f32"]=EXACT[:-4]
+    if damage=="nan":files["0.logits.f32"]=struct.pack("<ffff",16.0,float("nan"),16.0,15.97)
+    if damage=="not-rounding":files["0.logits.bf16"]=struct.pack("<HHHH",0x4180,0x4180,0x4180,0x417F)
+    if damage=="missing-bf16":del files["0.logits.bf16"]
+    if damage=="partial":
+        # Two steps; step 1 has only a BF16 trace. The exact step-0 replay must not silently mix formats.
+        generated=[2,2]
+        files["1.logits.bf16"]=ROUNDED
+    result=_replay_exact(oracle,tmp_path,generated,files)
+    assert result.returncode==1 and message in result.stderr,(result.returncode,result.stderr)

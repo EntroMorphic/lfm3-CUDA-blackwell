@@ -129,7 +129,8 @@ def test_help_needs_no_gpu_or_model_packages():
     assert "--suite" in result.stdout
 
 
-@pytest.mark.parametrize("damage", [None, "tokens", "logits", "unexpected_activation"])
+@pytest.mark.parametrize("damage", [None, "tokens", "logits", "unexpected_activation",
+                                    "exact", "exact-partial", "exact-not-rounding"])
 def test_main_mocked_end_to_end(tmp_path, monkeypatch, damage):
     checkpoint = tmp_path / "checkpoint"
     checkpoint.mkdir()
@@ -161,12 +162,18 @@ def test_main_mocked_end_to_end(tmp_path, monkeypatch, damage):
                 (trace / f"{step}.logits.bf16").write_bytes(bf16(0x3f80, 0x4001 if damage == "logits" else 0x4000))
             if damage == "unexpected_activation":
                 (trace / "unanticipated.bf16").write_bytes(b"activation")
+            # G4: an FP32-logit engine adds STEP.logits.f32; [1.0, 2.0] rounds exactly to the BF16 above, while
+            # [1.0, 2.5] does not. Exact traces are accepted only for every step and only as the .bf16's source.
+            if damage and damage.startswith("exact"):
+                for step in range(1 if damage == "exact-partial" else 2):
+                    value = 2.5 if damage == "exact-not-rounding" and step == 1 else 2.0
+                    (trace / f"{step}.logits.f32").write_bytes(struct.pack("<ff", 1.0, value))
         return dict(teacher_argmax=[1, 0] if damage == "tokens" else [1, 1],
                     generated_ids=[] if label == "teacher" else [1, 1], decode_forward_calls=1)
 
     monkeypatch.setattr(context, "make_references", reference)
     monkeypatch.setattr(context, "run_native", native)
-    if damage:
+    if damage and damage != "exact":
         with pytest.raises(RuntimeError):
             context.main()
         summary = json.loads((output / "summary.json").read_text())

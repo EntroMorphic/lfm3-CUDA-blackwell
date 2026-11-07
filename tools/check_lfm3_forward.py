@@ -8,6 +8,19 @@ import subprocess
 import sys
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lfm3_trace_exact import exact_logit_steps  # noqa: E402
+
+
+def check_exact_logits(native, activation_tolerance, name):
+    """Native-GEMM traces carry the exact FP32 logits the engine used: all steps or none, and each .bf16 trace must
+    be their rounding (lfm3_trace_exact). Tolerance mode exists for that engine, so there they are required."""
+    steps = sorted(int(p.name.split(".")[0]) for p in native.glob("*.logits.bf16"))
+    exact = exact_logit_steps(native, steps)
+    if activation_tolerance and not exact:
+        raise AssertionError(f"{name}: --activation-tolerance requires the engine's exact .logits.f32 traces")
+    return exact
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--checkpoint", type=Path, required=True)
@@ -58,11 +71,13 @@ def main():
         assert generation["generated_ids"] == expected, f"free-running token mismatch: {name}"
         assert generation["reset_exact_logits_ok"], name
         assert not set(expected) & set(request["suppress_tokens"])
+        exact_logits = check_exact_logits(directory / "native", args.activation_tolerance, name)
         comparison = json.loads((directory / "comparison.json").read_text())
         reports.append(dict(case=name, activation_checks=comparison["checks"], tokens=len(expected),
                             max_relative_rms=max(x["relative_rms"] for x in comparison["results"]),
                             max_logit_abs=max(x["max_abs"] for x in comparison["results"] if ".logits." in x["name"]),
-                            teacher_argmax_exact=True, greedy_exact=True, reset_exact_logits=True))
+                            teacher_argmax_exact=True, greedy_exact=True, reset_exact_logits=True,
+                            exact_fp32_logit_traces=exact_logits))
         print(name, "PASS", flush=True)
     # Deterministic stopping and suppression: use known first argmax as stop.
     directory = args.output / "baseline"

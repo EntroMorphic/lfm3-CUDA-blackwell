@@ -1,0 +1,25 @@
+# Produced 2026-11-07 on Thor, in build/:
+$ cat score-g4-v1/mode.txt
+native-gemm
+$ sha256sum score-g4-v1/lfm3-score
+ea3141e75d45eff4d183c759c523bbe4ec6a8cc4522d3d57289609169a7eb467  score-g4-v1/lfm3-score
+$ cat score-g4-v1/sources.sha256
+2adf40fa1d9edbd4d29147fd4abd41343f042927f80903793014fa79a92e20f5  /workspace/liquid-CUDA/native/tests/lfm3_score.cu
+b3121da9a3a78351ac4a51bdf29fb770d3c9bbbd196f193e294f794494a9dfcb  /workspace/liquid-CUDA/native/src/lfm3_main.cu
+27a95da46ed4f7fa43918ba20b8d287affb5fbe47c5c42fc8fa3be3ae2bcded6  /workspace/liquid-CUDA/native/src/safetensors.cpp
+d04c7cecf91d699760022707f24ab33ccd92f20efdf743426153055819f99c79  /workspace/liquid-CUDA/native/include/lfm/gemm.cuh
+$ readelf -d score-g4-v1/lfm3-score | grep NEEDED
+ 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-aarch64.so.1]
+$ nm -C score-g4-v1/lfm3-score | grep -c lfm::gemm
+173
+$ nm -C score-g4-v1/lfm3-score | grep -ci cublas
+0
+$ sha256sum ppl-g4-v1/nll-native-gemm-4096.f32 ppl-v5/nll-native-4096.f32 ppl-g4-v1/nll-native-gemm-256.f32 ppl-v5/nll-native-256.f32
+c1ceb3727edadbb115795273567d5a427ee373583cc9838f6504a0f377b91135  ppl-g4-v1/nll-native-gemm-4096.f32
+c1ceb3727edadbb115795273567d5a427ee373583cc9838f6504a0f377b91135  ppl-v5/nll-native-4096.f32
+3a8bfbb0a4c3c803b3477538d040f56ff6ee0eaf95afc666ee789d71eac36916  ppl-g4-v1/nll-native-gemm-256.f32
+2d2b08cfe4342f38e8adf2ee63f4d4088ddf2f3620f9083bcea9b155fb3180e8  ppl-v5/nll-native-256.f32

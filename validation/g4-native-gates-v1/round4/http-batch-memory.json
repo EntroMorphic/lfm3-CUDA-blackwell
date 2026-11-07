@@ -1,0 +1,26 @@
+{
+ "metrics-native-v6-http-batch": {
+  "status": "passed",
+  "samples": 645,
+  "app_live_bytes": {
+   "empty": 0,
+   "post_close": 0,
+   "soak_distinct": [
+    128956672
+   ]
+  },
+  "post_close_minus_empty_device_mib": 40
+ },
+ "metrics-native-v5-http-batch": {
+  "status": "passed",
+  "samples": 656,
+  "app_live_bytes": {
+   "empty": 0,
+   "post_close": 0,
+   "soak_distinct": [
+    166705408
+   ]
+  },
+  "post_close_minus_empty_device_mib": 302
+ }
+}

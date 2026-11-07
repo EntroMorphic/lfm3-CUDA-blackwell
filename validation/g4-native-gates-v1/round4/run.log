@@ -1,0 +1,65 @@
+== build-default 09:05:49
+100c8ffe936515a98ad3379fdf44c470b3bd8f9d6776b590948b068e91fa7e93  liquid-lfm3
+226147739bb0f9a3ab6757caed00da852168120db5737e6936f953b62e707d4d  liquid-lfm3-worker
+148ab89107b49bc35e848e36708532241215f804b66ff825979b4d566f84ac1d  liquid-lfm3-server
+c2a9d1f6b1608abb22a36c172c53fce5f60156e94a6a0b66edb7a6c90e859daf  text-sampling-oracle
+a075eeedbfb92d5429877fc787d079fd68fd4fdb8e12401665b451c5165fd009  lfm3-decode-batch-probe
+warnings: 0
+== build-native 09:07:06
+a75e26b1f357e8bc1dc0adc6301f37207b531e414ab146fbb9352340709d3376  liquid-lfm3
+b0fc7e1cab12db515693acfd66018aed9c9297c0359bca8ac2f4e8a94d917c89  liquid-lfm3-worker
+2213bbb289f1f885b24df934ef9256db2e5a2661f5943058c87bbd9787e69db3  liquid-lfm3-server
+c2a9d1f6b1608abb22a36c172c53fce5f60156e94a6a0b66edb7a6c90e859daf  text-sampling-oracle
+5a618984def44ec1564ef7b38076979cce322f24d9ef07fde69517fad9f3d01b  lfm3-decode-batch-probe
+warnings: 0
+== compare-default 09:08:48
+liquid-lfm3 stripped:same
+liquid-lfm3-worker stripped:same
+liquid-lfm3-server stripped:same
+text-sampling-oracle stripped:DIFF
+lfm3-decode-batch-probe stripped:same
+== build-scorer 09:08:48
+lfm3-score built sha256 a4427549e226beb5
+== ppl-bit-identity 09:09:09
+256: NLL bitwise identical to attempt 3
+257: NLL bitwise identical to attempt 3
+4096: NLL bitwise identical to attempt 3
+32768: NLL bitwise identical to attempt 3
+== spread-references 09:14:16
+== spread-native 09:15:55
+baseline: native traces byte-identical to v5
+arithmetic: native traces byte-identical to v5
+window257: native traces byte-identical to v5
+single: native traces byte-identical to v5
+== spread-compare 09:16:02
+baseline: through step 16, 3536 common files; anchor files not traced by {'eager': 0, 'sdpa': 704, 'native': 0}
+  eager   act rel_rms median 0.0104 max 0.0270  logits KL mean 4.43e-04 max 2.19e-03 (16 steps)  max_abs 0.250
+  sdpa    act rel_rms median 0.0089 max 0.0235  logits KL mean 2.11e-04 max 1.02e-03 (16 steps)  max_abs 0.193
+  native  act rel_rms median 0.0092 max 0.0231  logits KL mean 2.25e-04 max 1.06e-03 (16 steps)  max_abs 0.191
+arithmetic: through step 2, 442 common files; anchor files not traced by {'eager': 0, 'sdpa': 88, 'native': 0}
+  eager   act rel_rms median 0.0104 max 0.0201  logits KL mean 1.00e-06 max 1.97e-06 (2 steps)  max_abs 0.213
+  sdpa    act rel_rms median 0.0093 max 0.0181  logits KL mean 6.59e-07 max 1.30e-06 (2 steps)  max_abs 0.182
+  native  act rel_rms median 0.0092 max 0.0181  logits KL mean 1.43e-06 max 2.86e-06 (2 steps)  max_abs 0.199
+window257: through step 4, 884 common files; anchor files not traced by {'eager': 0, 'sdpa': 176, 'native': 0}
+  eager   act rel_rms median 0.0109 max 0.0261  logits KL mean 6.06e-07 max 1.21e-06 (4 steps)  max_abs 0.212
+  sdpa    act rel_rms median 0.0102 max 0.0272  logits KL mean 5.30e-07 max 6.95e-07 (4 steps)  max_abs 0.233
+  native  act rel_rms median 0.0103 max 0.0313  logits KL mean 6.99e-07 max 1.27e-06 (4 steps)  max_abs 0.159
+single: through step 4, 884 common files; anchor files not traced by {'eager': 0, 'sdpa': 176, 'native': 0}
+  eager   act rel_rms median 0.0139 max 0.0402  logits KL mean 3.02e-04 max 6.03e-04 (4 steps)  max_abs 0.209
+  sdpa    act rel_rms median 0.0139 max 0.0381  logits KL mean 2.82e-04 max 6.03e-04 (4 steps)  max_abs 0.367
+  native  act rel_rms median 0.0136 max 0.0408  logits KL mean 3.80e-04 max 1.01e-03 (4 steps)  max_abs 0.218
+baseline {'matmul_allow_tf32': False, 'cudnn_allow_tf32': False, 'float32_matmul_precision': 'highest'}
+arithmetic {'matmul_allow_tf32': False, 'cudnn_allow_tf32': False, 'float32_matmul_precision': 'highest'}
+window257 {'matmul_allow_tf32': False, 'cudnn_allow_tf32': False, 'float32_matmul_precision': 'highest'}
+single {'matmul_allow_tf32': False, 'cudnn_allow_tf32': False, 'float32_matmul_precision': 'highest'}
+== http-batch-metrics 09:16:11
+rc=127
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+FileNotFoundError: [Errno 2] No such file or directory: '/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/metrics-native-v6-http-batch/summary.json'
+== gates-native 09:16:11
+gates rc=1
+forward rc=1
+context rc=1
+{"stage":"done-with-failures","rc":1,"unix":1794069155}
+ALL DONE 09:32:35

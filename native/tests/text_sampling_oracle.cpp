@@ -1,4 +1,5 @@
 // Independent-process wiring oracle: replay materialized logits, not model code.
+#include <cmath>
 #include <filesystem>
 #include <lfm/model_config.hpp>
 #include <lfm/text_sampling.hpp>
@@ -57,15 +58,30 @@ int main(int argc,char** argv) try {
   if(generated.empty()) throw std::runtime_error("missing generation");
   std::vector<int> history;
   bool differs=false;
+  // Exact traces are all-or-none: an engine that samples from FP32 logits writes STEP.logits.f32 for every
+  // step, and each STEP.logits.bf16 must then be its round-to-nearest-even rounding.
+  const bool exact_traces=std::filesystem::exists(std::string(argv[3])+"/0.logits.f32");
   for(size_t step=0;step<generated.size();++step) {
     // An engine that samples from FP32 logits (the native-GEMM build) writes STEP.logits.f32 with the exact
     // values it used; replay those. Otherwise the BF16 trace is exact.
     const std::string stem=std::string(argv[3])+"/"+std::to_string(step);
     std::vector<float> logits(vocab);
-    if(std::filesystem::exists(stem+".logits.f32")) {
+    if(std::filesystem::exists(stem+".logits.f32")!=exact_traces)
+      throw std::runtime_error("FP32 traces must exist for every step or none (step "+std::to_string(step)+")");
+    if(exact_traces) {
       std::ifstream file(stem+".logits.f32",std::ios::binary);
       if(!file.read(reinterpret_cast<char*>(logits.data()),std::streamsize(vocab)*4) || file.peek()!=std::char_traits<char>::eof())
         throw std::runtime_error("wrong-size FP32 trace");
+      std::ifstream rounded(stem+".logits.bf16",std::ios::binary);
+      std::vector<std::uint16_t> raw(vocab);
+      if(!rounded.read(reinterpret_cast<char*>(raw.data()),vocab*2) || rounded.peek()!=std::char_traits<char>::eof())
+        throw std::runtime_error("missing/wrong-size BF16 trace");
+      for(int i=0;i<vocab;++i) {
+        if(!std::isfinite(logits[i])) throw std::runtime_error("nonfinite FP32 trace");
+        std::uint32_t bits; std::memcpy(&bits,&logits[i],sizeof(bits));
+        const std::uint16_t nearest_even=std::uint16_t((bits+0x7FFFu+((bits>>16)&1u))>>16);
+        if(raw[i]!=nearest_even) throw std::runtime_error("BF16 trace is not the rounding of the FP32 trace at step "+std::to_string(step));
+      }
     } else {
       std::ifstream file(stem+".logits.bf16",std::ios::binary);
       std::vector<std::uint16_t> raw(vocab);

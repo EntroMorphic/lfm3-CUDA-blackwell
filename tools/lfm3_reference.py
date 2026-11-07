@@ -26,7 +26,15 @@ def main():
     p.add_argument("--input-ids-file", type=Path, help="Replay input_ids from a saved native request")
     p.add_argument("--trace-first-layers", type=int, default=24, help="Limit diagnostic activation capture, not model execution")
     args = p.parse_args()
+    # Never mix runs: stale traces (e.g. an earlier run's .logits.f32 or later steps) would be read as this run's.
+    if args.output.exists() and any(args.output.iterdir()):
+        raise SystemExit(f"output directory {args.output} is not empty")
     args.output.mkdir(parents=True, exist_ok=True)
+    if args.dtype == "float32":
+        # A precision anchor: no TF32 anywhere (cuDNN defaults to allowing it).
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        torch.set_float32_matmul_precision("highest")
     model = AutoModelForMultimodalLM.from_pretrained(
         str(args.checkpoint), dtype=getattr(torch, args.dtype), device_map="cuda",
         trust_remote_code=True, attn_implementation=args.attention,
@@ -150,7 +158,11 @@ def main():
                    check_reset=True, trace_directory=str(args.output / "native"))
     (args.output / "request.json").write_text(json.dumps(request, indent=2) + "\n")
     (args.output / "shapes.json").write_text(json.dumps(shapes, indent=2) + "\n")
-    metadata = dict(backend="Transformers", attention=args.attention, torch=torch.__version__,
+    metadata = dict(backend="Transformers", attention=args.attention, dtype=args.dtype,
+                    precision=dict(matmul_allow_tf32=torch.backends.cuda.matmul.allow_tf32,
+                                   cudnn_allow_tf32=torch.backends.cudnn.allow_tf32,
+                                   float32_matmul_precision=torch.get_float32_matmul_precision()),
+                    torch=torch.__version__,
                     transformers=transformers.__version__, generated_ids=generated,
                     text=processor.decode(generated, skip_special_tokens=True), input_ids=input_ids[0].tolist(),
                     suppress_tokens=suppress, stop_tokens=eos,

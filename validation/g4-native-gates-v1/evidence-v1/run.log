@@ -1,0 +1,23 @@
+== decode-rate 10:09:42
+decode-rate summary written
+== http-batch-metrics 10:14:26
+rc=0
+{"status": "passed", "samples": 623, "app_live_bytes": {"empty": 0, "post_close": 0, "soak_distinct": [128956672]}, "post_close_minus_empty_device_mib": 79}
+== spread-compare 10:24:37
+baseline: through step 16, 3536 common files; anchor files not traced by {'eager': 0, 'sdpa': 704, 'native': 0}
+  eager   act rel_rms median 0.0104 max 0.0270  logits KL mean 4.43e-04 max 2.19e-03 (16 steps)  max_abs 0.250
+  sdpa    act rel_rms median 0.0089 max 0.0235  logits KL mean 2.11e-04 max 1.02e-03 (16 steps)  max_abs 0.193
+  native  act rel_rms median 0.0092 max 0.0231  logits KL mean 2.25e-04 max 1.06e-03 (16 steps)  max_abs 0.191
+arithmetic: through step 2, 442 common files; anchor files not traced by {'eager': 0, 'sdpa': 88, 'native': 0}
+  eager   act rel_rms median 0.0104 max 0.0201  logits KL mean 1.00e-06 max 1.97e-06 (2 steps)  max_abs 0.213
+  sdpa    act rel_rms median 0.0093 max 0.0181  logits KL mean 6.59e-07 max 1.30e-06 (2 steps)  max_abs 0.182
+  native  act rel_rms median 0.0092 max 0.0181  logits KL mean 1.43e-06 max 2.86e-06 (2 steps)  max_abs 0.199
+window257: through step 4, 884 common files; anchor files not traced by {'eager': 0, 'sdpa': 176, 'native': 0}
+  eager   act rel_rms median 0.0109 max 0.0261  logits KL mean 6.06e-07 max 1.21e-06 (4 steps)  max_abs 0.212
+  sdpa    act rel_rms median 0.0102 max 0.0272  logits KL mean 5.30e-07 max 6.95e-07 (4 steps)  max_abs 0.233
+  native  act rel_rms median 0.0103 max 0.0313  logits KL mean 6.99e-07 max 1.27e-06 (4 steps)  max_abs 0.159
+single: through step 4, 884 common files; anchor files not traced by {'eager': 0, 'sdpa': 176, 'native': 0}
+  eager   act rel_rms median 0.0139 max 0.0402  logits KL mean 3.02e-04 max 6.03e-04 (4 steps)  max_abs 0.209
+  sdpa    act rel_rms median 0.0139 max 0.0381  logits KL mean 2.82e-04 max 6.03e-04 (4 steps)  max_abs 0.367
+  native  act rel_rms median 0.0136 max 0.0408  logits KL mean 3.80e-04 max 1.01e-03 (4 steps)  max_abs 0.218
+ALL DONE 10:24:47

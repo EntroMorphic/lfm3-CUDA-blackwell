@@ -1,0 +1,135 @@
+{
+  "definition": "Summarize a decode-rate run (tools/thor/g4_native_evidence.sh): prefill seconds and teacher-forced decode rate.",
+  "lengths": [
+    {
+      "prompt_tokens": 86,
+      "forced_decode_steps": 128,
+      "default": {
+        "repetitions": 3,
+        "engine": {
+          "attention": "eager-bf16",
+          "gemm": "cublas"
+        },
+        "prefill_seconds_median": 0.03152,
+        "decode_tokens_per_second_median": 38.81304846172973
+      },
+      "native": {
+        "repetitions": 3,
+        "engine": {
+          "attention": "eager-fp32-scores",
+          "gemm": "lfm-gemm"
+        },
+        "prefill_seconds_median": 0.0314695,
+        "decode_tokens_per_second_median": 59.89621109670898
+      },
+      "teacher_argmax_agreement": [
+        129,
+        129
+      ]
+    },
+    {
+      "prompt_tokens": 1024,
+      "forced_decode_steps": 128,
+      "default": {
+        "repetitions": 3,
+        "engine": {
+          "attention": "eager-bf16",
+          "gemm": "cublas"
+        },
+        "prefill_seconds_median": 0.0679274,
+        "decode_tokens_per_second_median": 38.870685126193074
+      },
+      "native": {
+        "repetitions": 3,
+        "engine": {
+          "attention": "eager-fp32-scores",
+          "gemm": "lfm-gemm"
+        },
+        "prefill_seconds_median": 0.133459,
+        "decode_tokens_per_second_median": 58.806773805257684
+      },
+      "teacher_argmax_agreement": [
+        128,
+        129
+      ]
+    },
+    {
+      "prompt_tokens": 4096,
+      "forced_decode_steps": 128,
+      "default": {
+        "repetitions": 3,
+        "engine": {
+          "attention": "eager-bf16",
+          "gemm": "cublas"
+        },
+        "prefill_seconds_median": 0.551209,
+        "decode_tokens_per_second_median": 37.3514332153456
+      },
+      "native": {
+        "repetitions": 3,
+        "engine": {
+          "attention": "eager-fp32-scores",
+          "gemm": "lfm-gemm"
+        },
+        "prefill_seconds_median": 0.86929,
+        "decode_tokens_per_second_median": 57.375175375291924
+      },
+      "teacher_argmax_agreement": [
+        126,
+        129
+      ]
+    },
+    {
+      "prompt_tokens": 32000,
+      "forced_decode_steps": 128,
+      "default": {
+        "repetitions": 3,
+        "engine": {
+          "attention": "eager-bf16",
+          "gemm": "cublas"
+        },
+        "prefill_seconds_median": 6.64641,
+        "decode_tokens_per_second_median": 30.534642506130783
+      },
+      "native": {
+        "repetitions": 3,
+        "engine": {
+          "attention": "eager-fp32-scores",
+          "gemm": "lfm-gemm"
+        },
+        "prefill_seconds_median": 9.52213,
+        "decode_tokens_per_second_median": 49.038763610172474
+      },
+      "teacher_argmax_agreement": [
+        125,
+        129
+      ]
+    }
+  ],
+  "files": {
+    "default-86-1.json": "9a7452d202ddfe2748f35f97b9b334f44f0f7dcbeb79436566d62248651ccc00",
+    "default-86-2.json": "7294f5f55188b86b2e30a20382fd31f27c221a7baf91b584a1a89b19cac2e649",
+    "default-86-3.json": "14a6a48e0693f01699cb184964bdb39c37a9b65e0559c07dc2e4fe0d9cbb9e97",
+    "native-86-1.json": "52767d3cb6dd0ecf13333b1480b3fbd9024755aba15ca25c2e3e157626c63b07",
+    "native-86-2.json": "def2657f0ef7e40c2a46a0ab720c34d4f1fc82dde4fe4ac021f1f97df42c3eca",
+    "native-86-3.json": "ad16c15453e967721283d0da8f376e0aabcd687fd56c0776fe058e0a88e71516",
+    "default-1024-1.json": "bc1ea638b678ec91ff7c4d2d3fd118a75d3966673d3e6e5a93a8e4c4cb5cb9b1",
+    "default-1024-2.json": "39126bbe70b42d002f69ea7068dfc62c728bcba92c2c8fe0d87502c840188599",
+    "default-1024-3.json": "5c076f2d301e21be08a7525800d00b734d0b3bdf6a9d6f56847198a7271a17ac",
+    "native-1024-1.json": "7eb8f1216e346d617cec4217c6238b3e112d2fa56bb2602eeb500f77e38ecaf9",
+    "native-1024-2.json": "95978d7dcaaa98dc16820fa189e264d9f3d496c1ad1bc5d66ab3d965c8d5ecf9",
+    "native-1024-3.json": "8ed11a33d17d66d9f676a002758d1d612d9bc9b3540e3324492e5bbdc2082e29",
+    "default-4096-1.json": "2f4f2edb54a1fd5a9f82bb70abe53928a50e2cbc1a31d435261ccf36287e83e7",
+    "default-4096-2.json": "90da255013ef237d10d285bdb0bf0a681b9098c1f91faf4e7d4e8c513d366c8f",
+    "default-4096-3.json": "988f63b52790a6a7a35c57f60b95bdf6b760309b2d02e990c07e1bfe35b488e5",
+    "native-4096-1.json": "29077293f94ee42bb28738d10372ebb2bc2af3f99ffcae61d8dc0fb6cd4234f2",
+    "native-4096-2.json": "44f8d9d78e88531fa2fdd8e9d5edcbfc31f9c09ea503d5341bb993cd784602c9",
+    "native-4096-3.json": "84e790f38171409fd4981e4d3d3248ef042d1032882ca050cc066b5885643353",
+    "default-32000-1.json": "dc4e90ac46d718a84e106a246767322a913f8b89d58280f55135ae57e7deb058",
+    "default-32000-2.json": "4f3c585e19c08084bd5fee9f56a83b1d3a35c8cf28c34dd7b5a1f436cef208d6",
+    "default-32000-3.json": "f092f9bcb8df7be961d515b857ffcfee0a182e45f722249833b0abea5780e3b4",
+    "native-32000-1.json": "4c9c2a22c3aabcb18e5eb65293e04b20f502f37221489c22c2b4a2f1fe44a36c",
+    "native-32000-2.json": "ce0ac8c1e449ef882b1c6468f85c167eb8e3c80568cc9503382f72d33b0fe0f1",
+    "native-32000-3.json": "420cb6f3dc2bbc15cdd52dcf0a1a1e2dfea4e3a03c4d153151828d6d19cc71f3"
+  }
+}

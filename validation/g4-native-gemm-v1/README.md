@@ -55,3 +55,23 @@ present in the cuBLAS baseline. The native GEMM's noise-level change moves the C
 +1.6×10⁻⁵, just past ε = 10⁻⁵. At 32K there are only 9 windows.
 
 The bar is §9's as decided, and this run fails it. It has not been reinterpreted.
+
+## Corrections (2026-11-07, red-team)
+
+- **"Evidence that it is not a defect" is weaker than stated.** The 50/50 window split has almost no power:
+  a real shift of this size (about 0.1 of the per-window standard deviation) also splits close to 50/50.
+  The paired statistics (`../g4-native-gates-v1/paired-stats.json`, from `tools/g4_paired_stats.py`) give
+  native − cuBLAS at 257 = +7.9×10⁻⁵ with a 95% CI of [−4.5, +20.3]×10⁻⁵: consistent with noise, and
+  equally consistent with a small systematic difference. No M = 257 shape was ever probed, so the source
+  is not established.
+- **The 32K verdict rests on 9 windows.** The percentile bootstrap used by the §9 bar is too narrow at n = 9;
+  a Student-t interval for native − cuBLAS at 32K is [−0.6, +20.4]×10⁻⁵, which includes zero, while the
+  bootstrap's excludes it. The bar is read as decided, with the bootstrap.
+- `sha256.txt` hashes the scorer's sources; it omits `native/src/lfm3_decode_batch.cuh`, which this attempt also
+  changed (it is not part of the scorer).
+- **Provenance of the bitwise-identical 4,096 NLL file** (checked 2026-11-07, `scorer-provenance.txt`): the scorer
+  `score-g4-v1` was built in `native-gemm` mode, has 173 `lfm::gemm` symbols and no cuBLAS symbol or NEEDED entry, and
+  its sources hash to this attempt's commit. Its 256 NLL file differs from cuBLAS while the 4,096 file is identical, consistent
+  with the probe's 100% identical outputs on the 4,096-row shapes.
+- The default-build identity check covered `liquid-lfm3`, worker and server, not `lfm3-decode-batch-probe`. This
+  attempt's default probe (74138f…) was never compared; round 4 of `../g4-native-gates-v1/` compared only the v6 probe.

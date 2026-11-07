@@ -242,30 +242,35 @@ inline size_t gemm_workspace_bytes(const lfm::RuntimeShape& s,int context) {
   // Split-K P·V scratch for up to 8 query rows (decode, and prefill tiles of <= 8 rows).
   return lfm::gemm::workspace_bytes(8,s.head_dim,key_pitch(context),s.query_heads);
 }
+// Prefill runs attention one KV-head group (query_heads/kv_heads heads) at a time; decode runs all heads in
+// one call. Per-element GEMM arithmetic is independent of the batch count, so the split changes no bit; it
+// cuts the FP32 score scratch by kv_heads (1 GiB -> 256 MiB at capacity 4096).
 inline size_t padded_attention_scratch(const lfm::RuntimeShape& s) {
-  return size_t(lfm::text::scratch_rows(s.context))*key_pitch(s.context)*s.query_heads;
+  const size_t pitch=key_pitch(s.context), group=s.query_heads/s.kv_heads;
+  return std::max(size_t(lfm::text::scratch_rows(s.context))*pitch*group, pitch*s.query_heads);
 }
 // scores[h] (rows x pitch) = Q_h · K_{h/group}ᵀ over cache positions [key_start, key_start+end). `context` is
 // the capacity of the cache that holds the keys (its per-head stride).
+// `heads` query heads starting at `queries`, whose KV heads start at `key_cache` (a multiple of the group).
 inline void head_scores(const lfm::RuntimeShape& s,int context,const bf16* queries,const bf16* key_cache,
-                        int key_start,int rows,int end,float* scores) {
+                        int key_start,int rows,int end,float* scores,int heads=0) {
   lfm::gemm::Problem p;
   p.a=queries; p.b=key_cache+size_t(key_start)*s.head_dim; p.c=nullptr; p.c_f32=scores;
   p.m=rows; p.n=end; p.k=s.head_dim;
   p.lda=s.hidden; p.ldb=s.head_dim; p.ldc=key_pitch(end);
   p.stride_a=s.head_dim; p.stride_b=(long long)context*s.head_dim; p.stride_c=(long long)rows*key_pitch(end);
-  p.batch=s.query_heads; p.group=s.query_heads/s.kv_heads;
+  p.batch=heads?heads:s.query_heads; p.group=s.query_heads/s.kv_heads;
   lfm::gemm::run(p);
 }
 // out_h (rows x head_dim, row stride hidden) = P_h (rows x pitch) · V_{h/group}[key_start, key_start+end).
 inline void head_values(const lfm::RuntimeShape& s,int context,const bf16* probs,const bf16* value_cache,
-                        int key_start,int rows,int end,bf16* out,void* workspace,size_t workspace_size) {
+                        int key_start,int rows,int end,bf16* out,void* workspace,size_t workspace_size,int heads=0) {
   lfm::gemm::Problem p;
   p.a=probs; p.b=value_cache+size_t(key_start)*s.head_dim; p.c=out;
   p.m=rows; p.n=s.head_dim; p.k=key_pitch(end); p.b_rows=end; p.b_k_contiguous=false;
   p.lda=key_pitch(end); p.ldb=s.head_dim; p.ldc=s.hidden;
   p.stride_a=(long long)rows*key_pitch(end); p.stride_b=(long long)context*s.head_dim; p.stride_c=s.head_dim;
-  p.batch=s.query_heads; p.group=s.query_heads/s.kv_heads;
+  p.batch=heads?heads:s.query_heads; p.group=s.query_heads/s.kv_heads;
   p.workspace=static_cast<float*>(workspace); p.workspace_size=workspace_size;
   lfm::gemm::run(p);
 }
@@ -396,12 +401,13 @@ class Runner {
   }
 #ifdef LFM3_NATIVE_GEMM
   // Traces rows of `width` values stored `pitch` apart, as `count` contiguous rows.
-  void dump_rows(const std::string& name, const bf16* ptr, size_t count, int width, int pitch) {
-    if (width == pitch) return dump(name, ptr, count*width);
+  // `append`: a later KV-head group of the same tensor (prefill), written after the earlier groups.
+  void dump_rows(const std::string& name, const bf16* ptr, size_t count, int width, int pitch, bool append=false) {
+    if (width == pitch && !append) return dump(name, ptr, count*width);
     if (trace.empty() || (trace_logits_only && name!="logits")) return;
     std::vector<bf16> data(count*width);
     cuda_check(cudaMemcpy2D(data.data(),width*sizeof(bf16),ptr,pitch*sizeof(bf16),width*sizeof(bf16),count,cudaMemcpyDeviceToHost));
-    std::ofstream f(trace+"/"+std::to_string(step)+"."+name+".bf16",std::ios::binary);
+    std::ofstream f(trace+"/"+std::to_string(step)+"."+name+".bf16",append?std::ios::binary|std::ios::app:std::ios::binary);
     f.write(reinterpret_cast<const char*>(data.data()),data.size()*sizeof(bf16));
     if (!f) throw std::runtime_error("trace write failed");
   }
@@ -443,14 +449,20 @@ class Runner {
     const int end=range.span();
 #ifdef LFM3_NATIVE_GEMM
     const int pitch=key_pitch(end);
-    head_scores(s,s.context,q.p+size_t(first)*s.hidden,keys[layer]->p,key_start,rows,end,score_buffer.p);
-    if(end<=2048) probabilities<<<rows*s.query_heads,32>>>(score_buffer.p,probability_buffer.p,rows,end,cursor+first,window,s.head_dim,key_start,pitch);
-    else probabilities_large<<<rows*s.query_heads,1024>>>(score_buffer.p,probability_buffer.p,rows,end,cursor+first,window,s.head_dim,key_start,pitch);
     std::string label="layers."+std::to_string(layer)+".self_attn.probabilities";
     if(total_rows>lfm::text::scratch_rows(s.context)) label+=".tile"+std::to_string(first);
-    dump_rows(label,probability_buffer.p,size_t(s.query_heads)*rows,end,pitch);
-    head_values(s,s.context,probability_buffer.p,values[layer]->p,key_start,rows,end,attended.p+size_t(first)*s.hidden,
-                workspace.p,gemm_workspace_bytes(s,s.context));
+    // Decode (one row): all heads at once. Prefill: one KV-head group at a time (see padded_attention_scratch).
+    const int group=rows==1?s.query_heads:s.query_heads/s.kv_heads;
+    for(int h0=0;h0<s.query_heads;h0+=group) {
+      const size_t kv=size_t(h0/(s.query_heads/s.kv_heads))*s.context*s.head_dim;
+      head_scores(s,s.context,q.p+size_t(first)*s.hidden+size_t(h0)*s.head_dim,keys[layer]->p+kv,key_start,rows,end,
+                  score_buffer.p,group);
+      if(end<=2048) probabilities<<<rows*group,32>>>(score_buffer.p,probability_buffer.p,rows,end,cursor+first,window,s.head_dim,key_start,pitch);
+      else probabilities_large<<<rows*group,1024>>>(score_buffer.p,probability_buffer.p,rows,end,cursor+first,window,s.head_dim,key_start,pitch);
+      dump_rows(label,probability_buffer.p,size_t(group)*rows,end,pitch,h0>0);
+      head_values(s,s.context,probability_buffer.p,values[layer]->p+kv,key_start,rows,end,
+                  attended.p+size_t(first)*s.hidden+size_t(h0)*s.head_dim,workspace.p,gemm_workspace_bytes(s,s.context),group);
+    }
 #else
     std::vector<const bf16*> ap(s.query_heads),bp(s.query_heads);
     std::vector<bf16*> cp(s.query_heads);
@@ -727,7 +739,12 @@ int main(int argc,char** argv) try {
     if(!reset_ok) throw std::runtime_error("reset exact-logit regression");
   }
   std::ofstream f(argv[4]);
+#ifdef LFM3_NATIVE_GEMM
+  // lfm::gemm, eager attention with FP32 scores, FP32 logits (G4); not the cuBLAS eager-BF16 engine.
+  f<<"{\"backend\":\"native-cuda-experimental\",\"attention\":\"eager-fp32-scores\",\"gemm\":\"lfm-gemm\",\"logits\":\"fp32\",\"input_ids\":"; print_ids(f,input);
+#else
   f<<"{\"backend\":\"native-cuda-experimental\",\"attention\":\"eager-bf16\",\"input_ids\":"; print_ids(f,input);
+#endif
   f<<",\"generated_ids\":"; print_ids(f,generated); f<<",\"teacher_argmax\":"; print_ids(f,argmax);
   f<<",\"prefill_seconds\":"<<elapsed(begin,prefill_end)<<",\"decode_seconds\":"<<elapsed(prefill_end,end)
    <<",\"decode_forward_calls\":"<<(forced.empty()?std::max(0,int(generated.size())-1):int(forced.size()))

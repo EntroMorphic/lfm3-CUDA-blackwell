@@ -8,7 +8,6 @@ validation, not a throughput benchmark.
 import argparse
 import gc
 import hashlib
-import array
 import json
 import math
 import os
@@ -22,6 +21,9 @@ import sys
 CONTENT_TEXT = "Context boundary verification: count 17, 25, 42; remember the earlier numbers."
 SOURCE_FILES = ["config.json", "modeling_lfm3.py", "lfm3_conv.py"]
 
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lfm3_trace_exact import exact_logit_steps  # noqa: E402
 
 def require(condition, message):
     if not condition:
@@ -92,18 +94,6 @@ def reject_before_weights(binary, checkpoint, output, env, timeout, run=subproce
                 f"{name}: did not reject before weights with expected diagnostic; see {name}.log")
         results.append(name)
     return results
-
-
-def bf16_rounding_of(exact):
-    """Round-to-nearest-even BF16 bytes of little-endian FP32 bytes (finite values)."""
-    words = array.array("I")
-    words.frombytes(exact)
-    if sys.byteorder != "little":
-        words.byteswap()
-    out = array.array("H", (((w + 0x7FFF + ((w >> 16) & 1)) >> 16) & 0xFFFF for w in words))
-    if sys.byteorder != "little":
-        out.byteswap()
-    return out.tobytes()
 
 
 def compare_logits(reference, native, vocab, atol=0.0, rtol=0.0):
@@ -369,11 +359,10 @@ def main():
                 wanted |= {f"{step}.logits.f32" for step in range(decodes + 1)}
             require(actual == wanted and all(not p.is_symlink() for p in trace.iterdir()),
                     f"{name}: missing logits or unexpected full activation files: {actual ^ wanted}")
-            for step in range(decodes + 1):
-                exact = trace / f"{step}.logits.f32"
-                if exact.exists():
-                    require(bf16_rounding_of((exact).read_bytes()) == (trace / f"{step}.logits.bf16").read_bytes(),
-                            f"{name} step={step}: BF16 trace is not the rounding of the FP32 trace")
+            try:
+                exact_logit_steps(trace, range(decodes + 1))
+            except ValueError as error:
+                raise RuntimeError(f"{name}: {error}") from error
             actual_argmax = result.get("teacher_argmax")
             require(isinstance(actual_argmax, list) and len(actual_argmax) == decodes + 1,
                     f"{name}: teacher argmax count mismatch")
