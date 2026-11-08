@@ -43,6 +43,14 @@ target_link_libraries(liquid-lfm3-server PRIVATE CUDA::cudart Threads::Threads)
 lfm3_engine_gemm(liquid-lfm3-server)
 set_target_properties(liquid-lfm3-server PROPERTIES CUDA_ARCHITECTURES 110)
 
+# #2 step 2 (A2): the native codec decoder (FP32 activations; no cuBLAS, no cuFFT).
+add_executable(liquid-codec src/codec_main.cu src/safetensors.cpp)
+target_include_directories(liquid-codec PRIVATE include)
+target_compile_features(liquid-codec PRIVATE cxx_std_20 cuda_std_20)
+target_compile_options(liquid-codec PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
+target_link_libraries(liquid-codec PRIVATE CUDA::cudart)
+set_target_properties(liquid-codec PROPERTIES CUDA_ARCHITECTURES 110)
+
 add_executable(liquid-native src/main.cu src/safetensors.cpp src/tokenizer.cpp)
 target_include_directories(liquid-native PRIVATE include)
 if(LIQUID_PROFILE_NVTX)

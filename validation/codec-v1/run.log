@@ -1,0 +1,63 @@
+== sources 20:03:31
+  f9ea8039f18d23b1f3cbc0cdf584818abbf522897a5b1650c22feeaadd6a4a17  native/include/lfm/codec.cuh
+  9c0f44cfc5571b8d1453ac9cbde0ad3155b628a630695bac5c735dd4bf9bdda9  native/src/codec_main.cu
+  0f72a48a0423519f7fe4941d1e6d8a3a017f60a517d7d4ed6c65dc2e9343ab82  native/CMakeLists.txt
+  e8ecbaa198701976cdd96d66385d267965acce03df63fff7749a1355fe6babb8  tools/lfm3_codec_check.py
+  89182509681191329566f03464b5dd46b6f9ea59ad1893293a30e0ac0ad17fcd  tools/thor/codec_round.sh
+power: NV Power Mode: 120W
+== build 20:03:31
+warnings: 0
+  2cc017428f94c236b1c0654d6f727932e739444c18b4dfeaf7f73dc58dcbf19a  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/codec-v2/cmake/liquid-codec
+== interleaved-study 20:03:40
+{"frames": 264, "chunk_frames": 264, "samples": 506880, "decode_ms": 69.1334, "audio_seconds": 21.12, "device_bytes": 230708452}
+{"frames": 264, "chunk_frames": 12, "samples": 506880, "decode_ms": 274.329, "audio_seconds": 21.12, "device_bytes": 157491364}
+{"frames": 264, "chunk_frames": 1, "samples": 506880, "decode_ms": 3178.73, "audio_seconds": 21.12, "device_bytes": 154295380}
+== ref-interleaved 20:03:46
+{"frames": 372, "chunk_frames": 372, "samples": 714240, "decode_ms": 88.9298, "audio_seconds": 29.76, "device_bytes": 262087204}
+{"frames": 372, "chunk_frames": 12, "samples": 714240, "decode_ms": 386.445, "audio_seconds": 29.76, "device_bytes": 157491364}
+{"frames": 372, "chunk_frames": 1, "samples": 714240, "decode_ms": 4514.17, "audio_seconds": 29.76, "device_bytes": 154295380}
+== tts-fox-female 20:03:53
+{"frames": 40, "chunk_frames": 40, "samples": 76800, "decode_ms": 26.1949, "audio_seconds": 3.2, "device_bytes": 165626596}
+{"frames": 40, "chunk_frames": 12, "samples": 76800, "decode_ms": 51.6923, "audio_seconds": 3.2, "device_bytes": 157491364}
+{"frames": 40, "chunk_frames": 1, "samples": 76800, "decode_ms": 469.755, "audio_seconds": 3.2, "device_bytes": 154295380}
+== tts-fox-male 20:03:56
+{"frames": 45, "chunk_frames": 45, "samples": 86400, "decode_ms": 21.0067, "audio_seconds": 3.6, "device_bytes": 167079316}
+{"frames": 45, "chunk_frames": 12, "samples": 86400, "decode_ms": 50.5509, "audio_seconds": 3.6, "device_bytes": 157491364}
+{"frames": 45, "chunk_frames": 1, "samples": 86400, "decode_ms": 530.06, "audio_seconds": 3.6, "device_bytes": 154295380}
+== tts-museum-female 20:03:58
+{"frames": 142, "chunk_frames": 142, "samples": 272640, "decode_ms": 40.9267, "audio_seconds": 11.36, "device_bytes": 195262084}
+{"frames": 142, "chunk_frames": 12, "samples": 272640, "decode_ms": 148.935, "audio_seconds": 11.36, "device_bytes": 157491364}
+{"frames": 142, "chunk_frames": 1, "samples": 272640, "decode_ms": 1717.55, "audio_seconds": 11.36, "device_bytes": 154295380}
+== tts-museum-male 20:04:02
+{"frames": 152, "chunk_frames": 152, "samples": 291840, "decode_ms": 44.1109, "audio_seconds": 12.16, "device_bytes": 198167524}
+{"frames": 152, "chunk_frames": 12, "samples": 291840, "decode_ms": 161.004, "audio_seconds": 12.16, "device_bytes": 157491364}
+{"frames": 152, "chunk_frames": 1, "samples": 291840, "decode_ms": 1836.7, "audio_seconds": 12.16, "device_bytes": 154295380}
+== stages 20:04:06
+latents     native   140.3  fp32   140.3  hf-bf16   53.5  (dB vs fp64)
+embeddings  native   132.1  fp32   136.8  hf-bf16   53.3  (dB vs fp64)
+layer0      native   126.0  fp32   133.5  hf-bf16   48.3  (dB vs fp64)
+layer1      native   124.6  fp32   131.6  hf-bf16   46.5  (dB vs fp64)
+layer2      native   124.7  fp32   131.2  hf-bf16   46.2  (dB vs fp64)
+layer3      native   124.2  fp32   130.4  hf-bf16   45.5  (dB vs fp64)
+layer4      native   124.6  fp32   130.4  hf-bf16   45.7  (dB vs fp64)
+layer5      native   123.6  fp32   129.1  hf-bf16   45.1  (dB vs fp64)
+layer6      native   123.5  fp32   128.2  hf-bf16   45.1  (dB vs fp64)
+layer7      native   122.7  fp32   127.5  hf-bf16   43.8  (dB vs fp64)
+final_norm  native   120.6  fp32   125.5  hf-bf16   41.7  (dB vs fp64)
+lin         native   124.9  fp32   127.3  hf-bf16   46.7  (dB vs fp64)
+== report 20:04:08
+interleaved-study  native/fp64  109.6  native/fp32  100.7  (fp32/fp64  102.2)  bar  31.7  stream12 True stream1 True  PASS
+ref-interleaved    native/fp64  107.8  native/fp32   99.3  (fp32/fp64  101.2)  bar  33.2  stream12 True stream1 True  PASS
+tts-fox-female     native/fp64  108.3  native/fp32  109.2  (fp32/fp64  113.6)  bar  31.4  stream12 True stream1 True  PASS
+tts-fox-male       native/fp64  101.8  native/fp32  104.2  (fp32/fp64  109.9)  bar  25.5  stream12 True stream1 True  PASS
+tts-museum-female  native/fp64  106.5  native/fp32  107.2  (fp32/fp64  102.3)  bar  33.4  stream12 True stream1 True  PASS
+tts-museum-male    native/fp64   96.6  native/fp32  104.1  (fp32/fp64   99.6)  bar  28.7  stream12 True stream1 True  PASS
+A2 PASS
+== asr 20:04:08
+interleaved-study: WER 0.000 (0/64)
+ref-interleaved: WER 0.000 (0/86)
+tts-fox-female: WER 0.111 (1/9)
+tts-fox-male: WER 0.000 (0/9)
+tts-museum-female: WER 0.040 (1/25)
+tts-museum-male: WER 0.000 (0/25)
+ALL DONE rc=0 20:04:26

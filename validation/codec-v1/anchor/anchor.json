@@ -1,0 +1,267 @@
+{
+ "environment": {
+  "torch": "2.10.0+cu130",
+  "cuda": "13.0",
+  "gpu": "NVIDIA Thor"
+ },
+ "results": {
+  "interleaved-study": {
+   "frames": 264,
+   "bf16_equals_trace": true,
+   "steps_equal_decode": true,
+   "stream_vs_whole": {
+    "snr_db": 34.13492172737688,
+    "max_abs": 0.041348863393068314
+   },
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true,
+   "vs_fp64": {
+    "fp32": {
+     "snr_db": 102.23066109806877,
+     "max_abs": 1.733035364392954e-05
+    },
+    "bf16": {
+     "snr_db": 31.727945245074697,
+     "max_abs": 0.04992854990593703
+    },
+    "bf16-eager": {
+     "snr_db": 31.035127155759604,
+     "max_abs": 0.04892140673271446
+    },
+    "bf16-stream": {
+     "snr_db": 34.7407269981435,
+     "max_abs": 0.02282137094499493
+    }
+   },
+   "vs_fp32": {
+    "bf16": {
+     "snr_db": 31.72907367382216,
+     "max_abs": 0.049923958256840706
+    },
+    "bf16-eager": {
+     "snr_db": 31.036140108192782,
+     "max_abs": 0.04891175590455532
+    },
+    "bf16-stream": {
+     "snr_db": 34.7423311537467,
+     "max_abs": 0.02280670404434204
+    }
+   }
+  },
+  "ref-interleaved": {
+   "frames": 372,
+   "bf16_equals_trace": true,
+   "steps_equal_decode": true,
+   "stream_vs_whole": {
+    "snr_db": 36.29788405864486,
+    "max_abs": 0.030635982751846313
+   },
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true,
+   "vs_fp64": {
+    "fp32": {
+     "snr_db": 101.17580378403206,
+     "max_abs": 2.2322737184958877e-05
+    },
+    "bf16": {
+     "snr_db": 32.19511424005835,
+     "max_abs": 0.08424727027415303
+    },
+    "bf16-eager": {
+     "snr_db": 33.21148947980129,
+     "max_abs": 0.07022247617243794
+    },
+    "bf16-stream": {
+     "snr_db": 30.46098388352476,
+     "max_abs": 0.10975867912928011
+    }
+   },
+   "vs_fp32": {
+    "bf16": {
+     "snr_db": 32.196404633621555,
+     "max_abs": 0.08422842621803284
+    },
+    "bf16-eager": {
+     "snr_db": 33.212780183665615,
+     "max_abs": 0.07020363211631775
+    },
+    "bf16-stream": {
+     "snr_db": 30.461982621233275,
+     "max_abs": 0.10974422842264175
+    }
+   }
+  },
+  "tts-fox-female": {
+   "frames": 40,
+   "bf16_equals_trace": true,
+   "steps_equal_decode": true,
+   "stream_vs_whole": {
+    "snr_db": 35.2871615608524,
+    "max_abs": 0.018739014863967896
+   },
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true,
+   "vs_fp64": {
+    "fp32": {
+     "snr_db": 113.57242465326726,
+     "max_abs": 2.15643614126515e-06
+    },
+    "bf16": {
+     "snr_db": 30.979243081576307,
+     "max_abs": 0.04606724208623575
+    },
+    "bf16-eager": {
+     "snr_db": 31.387552376692174,
+     "max_abs": 0.06913601369032996
+    },
+    "bf16-stream": {
+     "snr_db": 31.48047121414578,
+     "max_abs": 0.04848404537104509
+    }
+   },
+   "vs_fp32": {
+    "bf16": {
+     "snr_db": 30.97915765456134,
+     "max_abs": 0.046069398522377014
+    },
+    "bf16-eager": {
+     "snr_db": 31.38758510263909,
+     "max_abs": 0.06913663446903229
+    },
+    "bf16-stream": {
+     "snr_db": 31.48039090949514,
+     "max_abs": 0.04848606884479523
+    }
+   }
+  },
+  "tts-fox-male": {
+   "frames": 45,
+   "bf16_equals_trace": true,
+   "steps_equal_decode": true,
+   "stream_vs_whole": {
+    "snr_db": 35.63670759702646,
+    "max_abs": 0.025880463421344757
+   },
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true,
+   "vs_fp64": {
+    "fp32": {
+     "snr_db": 109.85708242864398,
+     "max_abs": 4.979621883061114e-06
+    },
+    "bf16": {
+     "snr_db": 25.53050907639029,
+     "max_abs": 0.13015445984262233
+    },
+    "bf16-eager": {
+     "snr_db": 24.1111940797354,
+     "max_abs": 0.167368385612712
+    },
+    "bf16-stream": {
+     "snr_db": 27.39157980717868,
+     "max_abs": 0.10427399642127758
+    }
+   },
+   "vs_fp32": {
+    "bf16": {
+     "snr_db": 25.53021557644444,
+     "max_abs": 0.1301593566313386
+    },
+    "bf16-eager": {
+     "snr_db": 24.11095761320603,
+     "max_abs": 0.16737280786037445
+    },
+    "bf16-stream": {
+     "snr_db": 27.39122907405457,
+     "max_abs": 0.10427889320999384
+    }
+   }
+  },
+  "tts-museum-female": {
+   "frames": 142,
+   "bf16_equals_trace": true,
+   "steps_equal_decode": true,
+   "stream_vs_whole": {
+    "snr_db": 32.212687951506965,
+    "max_abs": 0.05883054994046688
+   },
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true,
+   "vs_fp64": {
+    "fp32": {
+     "snr_db": 102.27130464704123,
+     "max_abs": 2.4418084578571586e-05
+    },
+    "bf16": {
+     "snr_db": 31.90503039754021,
+     "max_abs": 0.05177598281985342
+    },
+    "bf16-eager": {
+     "snr_db": 33.44947700860779,
+     "max_abs": 0.03288189743664699
+    },
+    "bf16-stream": {
+     "snr_db": 34.43525035439845,
+     "max_abs": 0.032192454235820345
+    }
+   },
+   "vs_fp32": {
+    "bf16": {
+     "snr_db": 31.906396805197215,
+     "max_abs": 0.05176257714629173
+    },
+    "bf16-eager": {
+     "snr_db": 33.44903759934369,
+     "max_abs": 0.03288445249199867
+    },
+    "bf16-stream": {
+     "snr_db": 34.43452933620418,
+     "max_abs": 0.03219500929117203
+    }
+   }
+  },
+  "tts-museum-male": {
+   "frames": 152,
+   "bf16_equals_trace": true,
+   "steps_equal_decode": true,
+   "stream_vs_whole": {
+    "snr_db": 34.902123617125774,
+    "max_abs": 0.052323315758258104
+   },
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true,
+   "vs_fp64": {
+    "fp32": {
+     "snr_db": 99.6335892371198,
+     "max_abs": 5.286730779038851e-05
+    },
+    "bf16": {
+     "snr_db": 25.624546828023366,
+     "max_abs": 0.2433340938457755
+    },
+    "bf16-eager": {
+     "snr_db": 28.74496575585372,
+     "max_abs": 0.1654140788169951
+    },
+    "bf16-stream": {
+     "snr_db": 24.34070305286739,
+     "max_abs": 0.2928889559277801
+    }
+   },
+   "vs_fp32": {
+    "bf16": {
+     "snr_db": 25.625888035198365,
+     "max_abs": 0.24330271035432816
+    },
+    "bf16-eager": {
+     "snr_db": 28.746990792788438,
+     "max_abs": 0.16536155343055725
+    },
+    "bf16-stream": {
+     "snr_db": 24.34177824964628,
+     "max_abs": 0.2928575724363327
+    }
+   }
+  }
+ }
+}
