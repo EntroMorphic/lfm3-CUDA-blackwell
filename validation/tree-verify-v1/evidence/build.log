@@ -1,0 +1,20 @@
+In member function ‘void std::__new_allocator<_Tp>::deallocate(_Tp*, size_type) [with _Tp = int]’,
+    inlined from ‘constexpr void std::allocator< <template-parameter-1-1> >::deallocate(_Tp*, std::size_t) [with _Tp = int]’ at /usr/include/c++/13/bits/allocator.h:210:36,
+    inlined from ‘static constexpr void std::allocator_traits<std::allocator<_CharT> >::deallocate(allocator_type&, pointer, size_type) [with _Tp = int]’ at /usr/include/c++/13/bits/alloc_traits.h:517:17,
+    inlined from ‘constexpr void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(pointer, std::size_t) [with _Tp = int; _Alloc = std::allocator<int>]’ at /usr/include/c++/13/bits/stl_vector.h:390:16,
+    inlined from ‘constexpr std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = int; _Alloc = std::allocator<int>]’ at /usr/include/c++/13/bits/stl_vector.h:369:14,
+    inlined from ‘constexpr std::vector<_Tp, _Alloc>::~vector() [with _Tp = int; _Alloc = std::allocator<int>]’ at /usr/include/c++/13/bits/stl_vector.h:738:1,
+    inlined from ‘std::vector<lfm3_tree::Draft> lfm3_tree::ngram_tree(const std::vector<int>&, int, int)’ at /workspace/liquid-CUDA/native/tests/../src/lfm3_tree.cuh:420:1:
+/usr/include/c++/13/bits/new_allocator.h:172:25: warning: ‘void operator delete(void*, std::size_t)’ called on pointer ‘<unknown>’ with nonzero offset [1, 8589934584] [-Wfree-nonheap-object]
+  172 |         _GLIBCXX_OPERATOR_DELETE(_GLIBCXX_SIZED_DEALLOC(__p, __n));
+      |         ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In member function ‘_Tp* std::__new_allocator<_Tp>::allocate(size_type, const void*) [with _Tp = int]’,
+    inlined from ‘constexpr _Tp* std::allocator< <template-parameter-1-1> >::allocate(std::size_t) [with _Tp = int]’ at /usr/include/c++/13/bits/allocator.h:198:41,
+    inlined from ‘static constexpr _Tp* std::allocator_traits<std::allocator<_CharT> >::allocate(allocator_type&, size_type) [with _Tp = int]’ at /usr/include/c++/13/bits/alloc_traits.h:482:22,
+    inlined from ‘constexpr std::_Vector_base<_Tp, _Alloc>::pointer std::_Vector_base<_Tp, _Alloc>::_M_allocate(std::size_t) [with _Tp = int; _Alloc = std::allocator<int>]’ at /usr/include/c++/13/bits/stl_vector.h:381:36,
+    inlined from ‘constexpr void std::vector<_Tp, _Alloc>::_M_range_initialize(_ForwardIterator, _ForwardIterator, std::forward_iterator_tag) [with _ForwardIterator = __gnu_cxx::__normal_iterator<const int*, std::vector<int> >; _Tp = int; _Alloc = std::allocator<int>]’ at /usr/include/c++/13/bits/stl_vector.h:1691:47,
+    inlined from ‘constexpr std::vector<_Tp, _Alloc>::vector(_InputIterator, _InputIterator, const allocator_type&) [with _InputIterator = __gnu_cxx::__normal_iterator<const int*, std::vector<int> >; <template-parameter-2-2> = void; _Tp = int; _Alloc = std::allocator<int>]’ at /usr/include/c++/13/bits/stl_vector.h:711:20,
+    inlined from ‘std::vector<lfm3_tree::Draft> lfm3_tree::ngram_tree(const std::vector<int>&, int, int)’ at /workspace/liquid-CUDA/native/tests/../src/lfm3_tree.cuh:418:103:
+/usr/include/c++/13/bits/new_allocator.h:151:49: note: returned from ‘void* operator new(std::size_t)’
+  151 |         return static_cast<_Tp*>(_GLIBCXX_OPERATOR_NEW(__n * sizeof(_Tp)));
+      |                                   ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
