@@ -1,0 +1,28 @@
+== sources 20:18:20
+  f9ea8039f18d23b1f3cbc0cdf584818abbf522897a5b1650c22feeaadd6a4a17  native/include/lfm/codec.cuh
+  8c24f0304ec57ebf332e92314c3a2aee897d921a4ea8f462f2514bb87c0101e8  native/src/codec_main.cu
+  3d4b5af073751c263173f5b493e2978f85ee62a6647fc65d34009cb7774a0d00  tools/lfm3_codec_widening_check.py
+  9a641f47d1de415d943eb859ca397f2e62c4a0a61c5bd5607af22f4f563fa0c2  tools/thor/codec_redteam.sh
+== build 20:18:20
+warnings: 0
+== same output as codec-v2, and selftest (reset; 7- and 5-frame chunks; empty finalize; whole again) 20:18:32
+interleaved-study: equal_to_codec-v2=true "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk264_reset_empty_finalize": true}
+ref-interleaved: equal_to_codec-v2=true "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk372_reset_empty_finalize": true}
+tts-fox-female: equal_to_codec-v2=true "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk40_reset_empty_finalize": true}
+tts-fox-male: equal_to_codec-v2=true "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk45_reset_empty_finalize": true}
+tts-museum-female: equal_to_codec-v2=true "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk142_reset_empty_finalize": true}
+tts-museum-male: equal_to_codec-v2=true "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk152_reset_empty_finalize": true}
+== refused-inputs 20:18:41
+eos: refused: liquid-codec: codec: code out of range [0, 2016)
+neg: refused: liquid-codec: codec: code out of range [0, 2016)
+ragged: refused: liquid-codec: codes file is not a whole number of 12-code frames
+empty: refused: liquid-codec: codes file is not a whole number of 12-code frames
+chunk '-1': refused
+chunk 'x': refused
+chunk '3x': refused
+== fp64-widening 20:18:42
+{"case": "tts-fox-female", "widening_changes_fp64": true, "unwidened_vs_widened_db": 123.26059860410503, "widened_equals_saved_anchor": true, "native_vs_widened_db": 108.274571341706, "native_vs_unwidened_db": 108.43928980340898}
+== nsys-1-frame-chunks 20:18:49
+/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/codec-rt1/chunk1_cuda_api_sum.csv
+/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/codec-rt1/chunk1_cuda_gpu_kern_sum.csv
+ALL DONE 20:18:53

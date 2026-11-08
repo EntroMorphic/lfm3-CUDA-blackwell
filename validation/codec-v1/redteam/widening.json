@@ -1,0 +1,1 @@
+{"case": "tts-fox-female", "widening_changes_fp64": true, "unwidened_vs_widened_db": 123.26059860410503, "widened_equals_saved_anchor": true, "native_vs_widened_db": 108.274571341706, "native_vs_unwidened_db": 108.43928980340898}

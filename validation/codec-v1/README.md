@@ -84,8 +84,8 @@ Findings:
 **Speed:**
 - Whole sequence: 29.8 s of audio in 90 ms (330× real time).
 - 12-frame chunks (the interleaved cadence): 383 ms (78×).
-- 1-frame chunks: 4.5 s (6.6×). Each call costs about 12 ms whatever its size. The cause is not profiled: each call
-  makes two synchronous copies and about 60 kernel launches.
+- 1-frame chunks: 4.5 s (6.6×). Each call costs about 12 ms whatever its size. Profiled in the red-team below: the
+  time is GPU time in the linear kernel at 6 rows, not copies or launches.
 
 **Device memory:**
 - 154.3 MB for streaming. 147 MB of that is the codec checkpoint as uploaded, **encoder included** (about half),
@@ -97,5 +97,36 @@ Findings:
 - Not yet in the single binary; the codec is still a separate tool.
 - The checkpoint upload includes the encoder, which text → audio does not need. Uploading only the decoder would
   save about 74 MB.
-- Per-call overhead matters for 1-frame streaming: capture as a CUDA graph, or use async copies.
+- 1-frame streaming is slow in the linear kernel at few rows (red-team). The fix is a small-row GEMM, which the
+  depth decoder needs too.
 - C3 (listening) is still Tripp's.
+
+## Red-team (2026-11-07, `redteam/`)
+
+`tools/thor/codec_redteam.sh` rebuilt the decoder with a self-test added to `liquid-codec`.
+
+What held:
+- **Output unchanged.** All six whole decodes equal codec-v2's bit for bit.
+- **Untested stream paths.** Reset and re-decode, 7- and 5-frame chunks (the last chunk partial), finalizing with
+  a separate empty call, and a whole decode after a reset all equal the first decode bit for bit, for all six
+  cases.
+- **Refused inputs.** The EOS code 2016, negative codes, a file that is not whole frames, an empty file, and chunk
+  sizes `-1`, `x` and `3x` are all refused.
+- **The FP64 anchor's widening takes effect** (`widening.json`). Without the patches the FP64 decode differs, but
+  only at 123 dB. The patched decode equals the saved anchor. Native is 108.3 dB from either, so the FP32 islands
+  sit below native's own error and the verdict does not depend on them.
+
+What was wrong:
+- **The cause of the slow 1-frame streaming was guessed wrongly.** nsys, tts-fox-female in 1-frame chunks:
+
+  | Where | Share | Detail |
+  |---|---|---|
+  | GPU, linear kernel (BF16 weights) | 92% of kernel time | 2,080 calls at 195 µs each, about 10 ms of each 12 ms call |
+  | Host, `cudaMemcpy` | — | mostly waiting for those kernels |
+  | Host, kernel launches | 35 ms total | 6.7 µs each |
+
+  At 6 rows the 64×64-tiled kernel has 8 to 36 thread blocks for 20 SMs. Each block streams its weight tile with
+  32-byte reads, so a call stays far above the weight-bandwidth floor (72 MB of weights, about 0.4 ms).
+- **The fix:** a small-row kernel, one warp per output column over a group of rows. It keeps a reduction order
+  that does not depend on the row count, so stream equals whole bit for bit still holds by construction. The
+  depth decoder (step 3) runs at 12 rows, so the kernel is built there and the codec switched to it.
