@@ -1,0 +1,83 @@
+{
+ "results": {
+  "interleaved-study": {
+   "native_vs_fp64": 122.55830868969069,
+   "native_vs_fp32": 101.69745026259224,
+   "fp32_vs_fp64": 102.23066109806877,
+   "hf_bf16_vs_fp32": 31.72907367382216,
+   "hf_eager_vs_fp32": 31.036140108192782,
+   "hf_stream_vs_fp32": 34.7423311537467,
+   "native_max_abs_vs_fp64": 1.4078882196177922e-06,
+   "stream12_bitwise_equal_whole": true,
+   "stream1_bitwise_equal_whole": true,
+   "a2_bar_db": 31.72907367382216,
+   "a2_pass": true
+  },
+  "ref-interleaved": {
+   "native_vs_fp64": 123.63884159849016,
+   "native_vs_fp32": 101.41540195278185,
+   "fp32_vs_fp64": 101.17580378403206,
+   "hf_bf16_vs_fp32": 32.196404633621555,
+   "hf_eager_vs_fp32": 33.212780183665615,
+   "hf_stream_vs_fp32": 30.461982621233275,
+   "native_max_abs_vs_fp64": 2.1220045146042033e-06,
+   "stream12_bitwise_equal_whole": true,
+   "stream1_bitwise_equal_whole": true,
+   "a2_bar_db": 33.212780183665615,
+   "a2_pass": true
+  },
+  "tts-fox-female": {
+   "native_vs_fp64": 123.8683655789925,
+   "native_vs_fp32": 112.98991804119773,
+   "fp32_vs_fp64": 113.57242465326726,
+   "hf_bf16_vs_fp32": 30.97915765456134,
+   "hf_eager_vs_fp32": 31.38758510263909,
+   "hf_stream_vs_fp32": 31.48039090949514,
+   "native_max_abs_vs_fp64": 7.70493973706321e-07,
+   "stream12_bitwise_equal_whole": true,
+   "stream1_bitwise_equal_whole": true,
+   "a2_bar_db": 31.38758510263909,
+   "a2_pass": true
+  },
+  "tts-fox-male": {
+   "native_vs_fp64": 115.95810285109295,
+   "native_vs_fp32": 107.06606367508641,
+   "fp32_vs_fp64": 109.85708242864398,
+   "hf_bf16_vs_fp32": 25.53021557644444,
+   "hf_eager_vs_fp32": 24.11095761320603,
+   "hf_stream_vs_fp32": 27.39122907405457,
+   "native_max_abs_vs_fp64": 3.208413595415932e-06,
+   "stream12_bitwise_equal_whole": true,
+   "stream1_bitwise_equal_whole": true,
+   "a2_bar_db": 25.53021557644444,
+   "a2_pass": true
+  },
+  "tts-museum-female": {
+   "native_vs_fp64": 116.72666263769358,
+   "native_vs_fp32": 103.74259863996032,
+   "fp32_vs_fp64": 102.27130464704123,
+   "hf_bf16_vs_fp32": 31.906396805197215,
+   "hf_eager_vs_fp32": 33.44903759934369,
+   "hf_stream_vs_fp32": 34.43452933620418,
+   "native_max_abs_vs_fp64": 4.608853416500358e-06,
+   "stream12_bitwise_equal_whole": true,
+   "stream1_bitwise_equal_whole": true,
+   "a2_bar_db": 33.44903759934369,
+   "a2_pass": true
+  },
+  "tts-museum-male": {
+   "native_vs_fp64": 112.72532357567155,
+   "native_vs_fp32": 97.99733935955898,
+   "fp32_vs_fp64": 99.6335892371198,
+   "hf_bf16_vs_fp32": 25.625888035198365,
+   "hf_eager_vs_fp32": 28.746990792788438,
+   "hf_stream_vs_fp32": 24.34177824964628,
+   "native_max_abs_vs_fp64": 1.2328997722993451e-05,
+   "stream12_bitwise_equal_whole": true,
+   "stream1_bitwise_equal_whole": true,
+   "a2_bar_db": 28.746990792788438,
+   "a2_pass": true
+  }
+ },
+ "all_pass": true
+}

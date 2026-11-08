@@ -1,0 +1,42 @@
+== sources 20:27:47
+  335d87a0298a6d6dbf7db600a05b61d9df07a3c6834be5b6ae727ea7e7af5740  native/include/lfm/fp32_ops.cuh
+  4d00168656e9a2e311ae457791dc3390b1d8daf9bc02b1e807ce41f3a396cd83  native/include/lfm/depth.cuh
+  3f3ba080657792e46e8b01c1d8a6945cf2cc41a226099191e83e4736eb658e13  native/src/depth_main.cu
+  4fd6a10d6a95443b697a37afcf54fb6dbd8d85f234d638b4a42a54e4ae189140  native/CMakeLists.txt
+  210abc0f3ecb9c8bd369a6560cb5cc7fd9be058fc82504ea79ddb9a239529a86  tools/lfm3_depth_check.py
+  bfc94313a14bd55db0b225bb67823bf1832475438bbaece8a87ba9ffdb5edf6a  tools/thor/depth_round.sh
+power: NV Power Mode: 120W
+== build 20:27:47
+warnings: 0
+  823d140a7716802136f740d1f9d8f578be2fd7e96aa0f88a1e2dd23acee78953  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/depth-v1/cmake/liquid-depth
+== ref-interleaved 20:27:56
+{"frames": 373, "ms_per_frame": 8.59846, "buffer_bytes": 673376}
+== interleaved-study 20:28:00
+{"frames": 265, "ms_per_frame": 9.53387, "buffer_bytes": 673376}
+== tts-fox-female 20:28:04
+{"frames": 41, "ms_per_frame": 10.2036, "buffer_bytes": 673376}
+== tts-fox-male 20:28:05
+{"frames": 46, "ms_per_frame": 10.9296, "buffer_bytes": 673376}
+== tts-museum-female 20:28:07
+{"frames": 143, "ms_per_frame": 8.72247, "buffer_bytes": 673376}
+== tts-museum-male 20:28:09
+{"frames": 153, "ms_per_frame": 7.14445, "buffer_bytes": 673376}
+== check 20:28:11
+positions 12252
+A1 native median rel-L2 vs fp32 7.385e-07 (p99 1.559e-06)  vs fp64 1.565e-07 (max 6.718e-07)
+A1 sdpa   median rel-L2 vs fp32 4.379e-03 (p99 1.016e-02)  vs fp64 4.379e-03 (max 2.170e-02)
+A1 eager  median rel-L2 vs fp32 4.910e-03 (p99 1.151e-02)  vs fp64 4.910e-03 (max 2.586e-02)
+A1 fp32   median rel-L2 vs fp32 0.000e+00 (p99 0.000e+00)  vs fp64 7.218e-07 (max 3.378e-06)
+A1 bar 4.910e-03: PASS
+B1 mean KL(fp64 || native) = 1.546e-12 nats
+B1 mean KL(fp64 || sdpa  ) = 1.939e-03 nats
+B1 mean KL(fp64 || eager ) = 2.076e-03 nats
+B1 mean KL(fp64 || fp32  ) = 8.991e-11 nats
+B1 native - sdpa  -1.939e-03  CI [-1.970e-03, -1.907e-03]  better
+B1 native - eager -2.076e-03  CI [-2.111e-03, -2.042e-03]  better
+B1 as written (biased) NLL native_minus_sdpa 1.196e-03  CI [9.054e-05, 2.315e-03]  worse
+B1 as written (biased) NLL fp64_minus_sdpa   1.196e-03  CI [9.053e-05, 2.315e-03]  worse
+B1 as written (biased) NLL fp32_minus_sdpa   1.196e-03  CI [9.056e-05, 2.315e-03]  worse
+B1 as written (biased) NLL eager_minus_sdpa  2.304e-03  CI [8.279e-04, 3.796e-03]  worse
+B1: PASS
+ALL DONE rc=0 20:28:16

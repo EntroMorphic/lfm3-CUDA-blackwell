@@ -51,6 +51,14 @@ target_compile_options(liquid-codec PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fma
 target_link_libraries(liquid-codec PRIVATE CUDA::cudart)
 set_target_properties(liquid-codec PROPERTIES CUDA_ARCHITECTURES 110)
 
+# #2 step 3 (A1/B1): the native depth decoder on recorded passes.
+add_executable(liquid-depth src/depth_main.cu src/safetensors.cpp)
+target_include_directories(liquid-depth PRIVATE include)
+target_compile_features(liquid-depth PRIVATE cxx_std_20 cuda_std_20)
+target_compile_options(liquid-depth PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
+target_link_libraries(liquid-depth PRIVATE CUDA::cudart)
+set_target_properties(liquid-depth PROPERTIES CUDA_ARCHITECTURES 110)
+
 add_executable(liquid-native src/main.cu src/safetensors.cpp src/tokenizer.cpp)
 target_include_directories(liquid-native PRIVATE include)
 if(LIQUID_PROFILE_NVTX)

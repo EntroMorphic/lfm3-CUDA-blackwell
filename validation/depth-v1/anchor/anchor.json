@@ -1,0 +1,45 @@
+{
+ "environment": {
+  "torch": "2.10.0+cu130",
+  "cuda": "13.0",
+  "gpu": "NVIDIA Thor"
+ },
+ "results": {
+  "ref-interleaved": {
+   "frames": 373,
+   "sdpa_equals_trace": true,
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true
+  },
+  "interleaved-study": {
+   "frames": 265,
+   "sdpa_equals_trace": true,
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true
+  },
+  "tts-fox-female": {
+   "frames": 41,
+   "sdpa_equals_trace": true,
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true
+  },
+  "tts-fox-male": {
+   "frames": 46,
+   "sdpa_equals_trace": true,
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true
+  },
+  "tts-museum-female": {
+   "frames": 143,
+   "sdpa_equals_trace": true,
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true
+  },
+  "tts-museum-male": {
+   "frames": 153,
+   "sdpa_equals_trace": true,
+   "eager_differs_from_sdpa": true,
+   "bf16_unchanged_by_widening": true
+  }
+ }
+}

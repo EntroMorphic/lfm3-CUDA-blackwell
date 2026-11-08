@@ -11,6 +11,7 @@
 // each conv layer's gated input, the last 29 keys and values of each attention layer, and the 960 unfinished
 // overlap-add samples. Every kernel computes each row the same way whatever the chunk, so a streamed decode is
 // bitwise equal to a whole-sequence one.
+#include <lfm/fp32_ops.cuh>
 #include <lfm/safetensors.hpp>
 
 #include <cuda_bf16.h>
@@ -33,20 +34,20 @@ constexpr int kHeads = 8, kKvHeads = 2, kHeadDim = 64, kWindow = 30, kPast = kWi
 constexpr int kConv = 7, kConvPast = kConv - 1;
 constexpr int kStack = 6;                     // trunk rows (STFT frames) per codec frame
 constexpr int kFft = 1280, kHop = 320, kBins = kFft / 2 + 1, kSpec = 2 * kBins;  // 641 bins, 1282 values
+constexpr int kSpecPad = 1288;  // the spectrum's row stride and the DFT's K: 1282 padded with zeros to a multiple of 8
 constexpr int kTrim = (kFft - kHop) / 2, kTail = 2 * kTrim;                      // 480, 960
 constexpr int kSamplesPerFrame = kStack * kHop;                                  // 1920
 constexpr double kRopeTheta = 1e6;
 constexpr float kNormEps = 1e-5f;
 inline bool is_attention_layer(int i) { return i == 2 || i == 4 || i == 6; }
 
-inline void check(cudaError_t s, const char* what) {
-  if (s != cudaSuccess) throw std::runtime_error(std::string(what) + ": " + cudaGetErrorString(s));
-}
+using fp32::check;
+template <class T>
+using DeviceArray = fp32::DeviceArray<T>;
 
 namespace kernels {
 using bf16 = __nv_bfloat16;
-__device__ inline float value(float x) { return x; }
-__device__ inline float value(bf16 x) { return __bfloat162float(x); }
+using fp32::kernels::value;
 
 // latents[t][q*4+j] = ((code // basis_j) % level_j - half_j) / half_j, as HF (integer ops, then FP32 division).
 __global__ void fsq(const int32_t* codes, float* latents, int frames) {
@@ -55,61 +56,6 @@ __global__ void fsq(const int32_t* codes, float* latents, int frames) {
   const int j = i % kFsqDim, code = codes[i / kFsqDim];
   const int basis[4] = {1, 8, 56, 336}, level[4] = {8, 7, 6, 6}, half[4] = {4, 3, 3, 3};
   latents[i] = float((code / basis[j]) % level[j] - half[j]) / float(half[j]);
-}
-
-// Y[M,N] = X[M,K] . W[N,K]^T (+ bias). FP32 FMA; each output's K-sum runs in ascending k whatever M, so a row's
-// result does not depend on the other rows in the call.
-template <class W>
-__global__ void __launch_bounds__(256) linear(const float* X, const W* w, const bf16* bias, float* Y, int M, int N, int K) {
-  constexpr int BM = 64, BN = 64, BK = 16;
-  __shared__ float xs[BK][BM + 4], ws[BK][BN + 4];
-  const int tx = threadIdx.x % 16, ty = threadIdx.x / 16, row0 = blockIdx.y * BM, col0 = blockIdx.x * BN;
-  float acc[4][4] = {};
-  for (int k0 = 0; k0 < K; k0 += BK) {
-    for (int i = threadIdx.x; i < BM * BK; i += 256) {
-      const int r = i / BK, k = i % BK, gr = row0 + r, gk = k0 + k;
-      xs[k][r] = gr < M && gk < K ? X[size_t(gr) * K + gk] : 0.0f;
-    }
-    for (int i = threadIdx.x; i < BN * BK; i += 256) {
-      const int c = i / BK, k = i % BK, gc = col0 + c, gk = k0 + k;
-      ws[k][c] = gc < N && gk < K ? value(w[size_t(gc) * K + gk]) : 0.0f;
-    }
-    __syncthreads();
-#pragma unroll
-    for (int k = 0; k < BK; ++k) {
-      float a[4], b[4];
-#pragma unroll
-      for (int i = 0; i < 4; ++i) a[i] = xs[k][ty + 16 * i], b[i] = ws[k][tx + 16 * i];
-#pragma unroll
-      for (int i = 0; i < 4; ++i)
-#pragma unroll
-        for (int j = 0; j < 4; ++j) acc[i][j] = __fmaf_rn(a[i], b[j], acc[i][j]);
-    }
-    __syncthreads();
-  }
-#pragma unroll
-  for (int i = 0; i < 4; ++i)
-#pragma unroll
-    for (int j = 0; j < 4; ++j) {
-      const int r = row0 + ty + 16 * i, c = col0 + tx + 16 * j;
-      if (r < M && c < N) Y[size_t(r) * N + c] = bias ? __fadd_rn(acc[i][j], value(bias[c])) : acc[i][j];
-    }
-}
-
-// One warp per row: y = w * (x / sqrt(mean(x^2) + eps)), plus `residual` when given. In place is allowed.
-__global__ void rms_norm(const float* x, const bf16* w, float* y, const float* residual, int rows, int width) {
-  const int row = (blockIdx.x * blockDim.x + threadIdx.x) / 32, lane = threadIdx.x % 32;
-  if (row >= rows) return;
-  const float* xr = x + size_t(row) * width;
-  float sum = 0.0f;
-  for (int d = lane; d < width; d += 32) sum = __fmaf_rn(xr[d], xr[d], sum);
-  for (int o = 16; o; o /= 2) sum = __fadd_rn(sum, __shfl_down_sync(0xffffffffu, sum, o));
-  sum = __shfl_sync(0xffffffffu, sum, 0);
-  const float inv = __fdiv_rn(1.0f, __fsqrt_rn(__fadd_rn(__fdiv_rn(sum, float(width)), kNormEps)));
-  for (int d = lane; d < width; d += 32) {
-    const float v = __fmul_rn(value(w[d]), __fmul_rn(xr[d], inv));
-    y[size_t(row) * width + d] = residual ? __fadd_rn(residual[size_t(row) * width + d], v) : v;
-  }
 }
 
 // rows[t*6 + r] = frames[t] (nearest-exact upsampling by an integer factor).
@@ -141,20 +87,6 @@ __global__ void conv7_history(const float* P, const float* old_history, float* n
   if (i >= kConvPast * kHidden) return;
   const int j = i / kHidden, d = i % kHidden, row = M - kConvPast + j;
   new_history[i] = row >= 0 ? gated_input(P, row, d) : old_history[(kConvPast + row) * kHidden + d];
-}
-
-// Rotary embedding (rotate-half pairs d, d+32, all 32 pairs), angle and rotation in FP64, rounded once.
-__global__ void rotary(float* x, int rows, int heads, long long position0) {
-  const int i = blockIdx.x * blockDim.x + threadIdx.x;
-  if (i >= rows * heads * (kHeadDim / 2)) return;
-  const int d = i % (kHeadDim / 2), head_row = i / (kHeadDim / 2), t = head_row / heads;
-  const double inverse = 1.0 / pow(kRopeTheta, double(2 * d) / kHeadDim);
-  double s, c;
-  sincos(double(position0 + t) * inverse, &s, &c);
-  float* v = x + size_t(head_row) * kHeadDim;
-  const double a = v[d], b = v[d + kHeadDim / 2];
-  v[d] = float(a * c - b * s);
-  v[d + kHeadDim / 2] = float(b * c + a * s);
 }
 
 // Keys/values of this chunk into cache slots [29, 29+M); slot s holds position position0 - 29 + s.
@@ -206,22 +138,22 @@ __global__ void window_attention(const float* q, const float* kc, const float* v
   out[size_t(t) * kHidden + h * kHeadDim + lane + 32] = __fmul_rn(o1, g);
 }
 
-// a = silu(a) * b
-__global__ void swiglu(float* a, const float* b, size_t n) {
-  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
-  if (i < n) a[i] = __fmul_rn(__fdiv_rn(a[i], __fadd_rn(1.0f, expf(-a[i]))), b[i]);
-}
-
-// lin output [M, 1282] = (log-magnitude[641], phase[641]) -> spectrum (Re[641], Im[641]), in FP64.
+// lin output [M, 1282] = (log-magnitude[641], phase[641]) -> spectrum (Re[641], Im[641], 6 zeros) at row stride
+// 1288, in FP64.
 __global__ void polar(const float* lin, float* spec, int M) {
+  constexpr int per_row = kSpecPad / 2;  // 644: 641 bins, then 3 threads writing the 6 padding zeros
   const int i = blockIdx.x * blockDim.x + threadIdx.x;
-  if (i >= M * kBins) return;
-  const int t = i / kBins, k = i % kBins;
+  if (i >= M * per_row) return;
+  const int t = i / per_row, k = i % per_row;
+  if (k >= kBins) {
+    spec[size_t(t) * kSpecPad + kSpec + 2 * (k - kBins)] = spec[size_t(t) * kSpecPad + kSpec + 2 * (k - kBins) + 1] = 0.0f;
+    return;
+  }
   const double magnitude = exp(double(lin[size_t(t) * kSpec + k]));
   double s, c;
   sincos(double(lin[size_t(t) * kSpec + kBins + k]), &s, &c);
-  spec[size_t(t) * kSpec + k] = float(magnitude * c);
-  spec[size_t(t) * kSpec + kBins + k] = float(magnitude * s);
+  spec[size_t(t) * kSpecPad + k] = float(magnitude * c);
+  spec[size_t(t) * kSpecPad + kBins + k] = float(magnitude * s);
 }
 
 // Overlap-add of M windowed frames onto the carried tail. sums[i] (audio) and sums[L + i] (window^2 envelope) for
@@ -247,22 +179,6 @@ __global__ void emit(const float* sums, float* out, float* tail, int M, int begi
   if (i < kTail) tail[i] = sums[kHop * M + i], tail[kTail + i] = sums[L + kHop * M + i];
 }
 }  // namespace kernels
-
-template <class T>
-struct DeviceArray {
-  T* p = nullptr;
-  size_t n = 0;
-  DeviceArray() = default;
-  explicit DeviceArray(size_t count) : n(count) {
-    check(cudaMalloc(&p, count * sizeof(T)), "codec cudaMalloc");
-    check(cudaMemset(p, 0, count * sizeof(T)), "codec cudaMemset");
-  }
-  DeviceArray(DeviceArray&& o) noexcept : p(o.p), n(o.n) { o.p = nullptr; o.n = 0; }
-  DeviceArray& operator=(DeviceArray&& o) noexcept { std::swap(p, o.p); std::swap(n, o.n); return *this; }
-  DeviceArray(const DeviceArray&) = delete;
-  ~DeviceArray() { if (p) cudaFree(p); }
-  size_t bytes() const { return n * sizeof(T); }
-};
 
 class Decoder {
  public:
@@ -370,7 +286,7 @@ class Decoder {
                *k_norm = nullptr;                                                              // attention layers
   };
 
-  static int blocks(size_t threads) { return int((threads + 255) / 256); }
+  static int blocks(size_t threads) { return fp32::blocks(threads); }
 
   const bf16* tensor(const std::string& name, std::vector<int64_t> shape, const char* dtype = "BF16") const {
     const auto& t = weights_->at(name);
@@ -411,18 +327,18 @@ class Decoder {
         l.out_proj = tensor(p + "conv.out_proj.weight", {kHidden, kHidden});
       }
     }
-    // Inverse real DFT (torch.fft.irfft, norm="backward") times the synthesis window, as a [1280, 1282] matrix over
-    // (Re[0..640], Im[0..640]). Built in FP64 with exact argument reduction; the imaginary parts of bins 0 and 640
+    // Inverse real DFT (torch.fft.irfft, norm="backward") times the synthesis window, as a [1280, 1288] matrix over
+    // (Re[0..640], Im[0..640], 6 zero columns). Built in FP64 with exact argument reduction; the imaginary parts of bins 0 and 640
     // are ignored, as irfft does.
-    std::vector<float> window(kFft), basis(size_t(kFft) * kSpec);
+    std::vector<float> window(kFft), basis(size_t(kFft) * kSpecPad);
     check(cudaMemcpy(window.data(), window_, kFft * sizeof(float), cudaMemcpyDeviceToHost), "codec window");
     const double pi = 3.14159265358979323846;
     for (int n = 0; n < kFft; ++n)
       for (int k = 0; k < kBins; ++k) {
         const double angle = 2.0 * pi * double((int64_t(k) * n) % kFft) / kFft;
         const double weight = (k == 0 || k == kBins - 1 ? 1.0 : 2.0) / kFft * double(window[n]);
-        basis[size_t(n) * kSpec + k] = float(weight * std::cos(angle));
-        basis[size_t(n) * kSpec + kBins + k] = k == 0 || k == kBins - 1 ? 0.0f : float(-weight * std::sin(angle));
+        basis[size_t(n) * kSpecPad + k] = float(weight * std::cos(angle));
+        basis[size_t(n) * kSpecPad + kBins + k] = k == 0 || k == kBins - 1 ? 0.0f : float(-weight * std::sin(angle));
       }
     basis_ = DeviceArray<float>(basis.size());
     check(cudaMemcpy(basis_.p, basis.data(), basis.size() * sizeof(float), cudaMemcpyHostToDevice), "codec basis");
@@ -430,10 +346,10 @@ class Decoder {
 
   template <class W>
   void linear(const float* x, const W* w, const bf16* bias, float* y, int M, int N, int K) {
-    kernels::linear<W><<<dim3((N + 63) / 64, (M + 63) / 64), 256>>>(x, w, bias, y, M, N, K);
+    fp32::linear(x, w, bias, y, M, N, K);
   }
   void norm(const float* x, const bf16* w, float* y, const float* residual, int rows, int width) {
-    kernels::rms_norm<<<blocks(size_t(rows) * 32), 256>>>(x, w, y, residual, rows, width);
+    fp32::rms_norm(x, w, y, residual, rows, width, kNormEps);
   }
 
   void dump(const char* name, const float* p, size_t n) {
@@ -470,8 +386,8 @@ class Decoder {
         linear(normed_.p, l.gate, nullptr, gate, M, kHeads, kHidden);
         norm(q, l.q_norm, q, nullptr, M * kHeads, kHeadDim);
         norm(k, l.k_norm, k, nullptr, M * kKvHeads, kHeadDim);
-        kernels::rotary<<<blocks(size_t(M) * kHeads * kHeadDim / 2), 256>>>(q, M, kHeads, position0);
-        kernels::rotary<<<blocks(size_t(M) * kKvHeads * kHeadDim / 2), 256>>>(k, M, kKvHeads, position0);
+        fp32::rotary(q, M, kHeads, kHeadDim, position0, kRopeTheta);
+        fp32::rotary(k, M, kKvHeads, kHeadDim, position0, kRopeTheta);
         auto &kc = keys_[i][current_], &vc = values_[i][current_];
         kernels::store_kv<<<blocks(size_t(M) * kKvHeads * kHeadDim), 256>>>(k, v, kc.p, vc.p, M);
         kernels::window_attention<<<blocks(size_t(M) * kHeads * 32), 256>>>(q, kc.p, vc.p, gate, projected_.p, M,
@@ -490,7 +406,7 @@ class Decoder {
       norm(hidden_.p, l.ffn_norm, normed_.p, nullptr, M, kHidden);
       linear(normed_.p, l.w1, nullptr, ffn_a_.p, M, kFfn, kHidden);
       linear(normed_.p, l.w3, nullptr, ffn_b_.p, M, kFfn, kHidden);
-      kernels::swiglu<<<blocks(size_t(M) * kFfn), 256>>>(ffn_a_.p, ffn_b_.p, size_t(M) * kFfn);
+      fp32::swiglu(ffn_a_.p, ffn_b_.p, size_t(M) * kFfn);
       linear(ffn_a_.p, l.w2, nullptr, mixed_.p, M, kHidden, kFfn);
       norm(mixed_.p, l.post_ffn_norm, hidden_.p, hidden_.p, M, kHidden);
       char name[16];
@@ -502,8 +418,8 @@ class Decoder {
     dump("final_norm", normed_.p, size_t(M) * kHidden);
     linear(normed_.p, lin_, lin_bias_, wide_.p, M, kSpec, kHidden);
     dump("lin", wide_.p, size_t(M) * kSpec);
-    kernels::polar<<<blocks(size_t(M) * kBins), 256>>>(wide_.p, ffn_b_.p, M);
-    linear(ffn_b_.p, basis_.p, nullptr, frames_.p, M, kFft, kSpec);
+    kernels::polar<<<blocks(size_t(M) * kSpecPad / 2), 256>>>(wide_.p, ffn_b_.p, M);
+    linear(ffn_b_.p, basis_.p, nullptr, frames_.p, M, kFft, kSpecPad);
     dump("frames", frames_.p, size_t(M) * kFft);
     check(cudaGetLastError(), "codec trunk");
     dump_dir.clear();

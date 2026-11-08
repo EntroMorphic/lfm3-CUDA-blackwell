@@ -130,3 +130,37 @@ What was wrong:
 - **The fix:** a small-row kernel, one warp per output column over a group of rows. It keeps a reduction order
   that does not depend on the row count, so stream equals whole bit for bit still holds by construction. The
   depth decoder (step 3) runs at 12 rows, so the kernel is built there and the codec switched to it.
+
+## Shared GEMM (2026-11-07, `shared-gemm/`)
+
+The codec now uses `lfm::fp32::linear` (`native/include/lfm/fp32_ops.cuh`), the row-group warp GEMM built for the
+depth decoder (`../depth-v1/`). The DFT's K is padded from 1282 to 1288, a multiple of 8, so its loads are aligned.
+Rerun with `tools/thor/codec_round.sh` (codec-v3).
+
+**A2 still PASS, and more accurate.** dB against FP64:
+
+| Case | Native, tiled GEMM | Native, shared GEMM | HF FP32 |
+|---|---|---|---|
+| interleaved-study | 109.6 | 122.6 | 102.2 |
+| ref-interleaved | 107.8 | 123.6 | 101.2 |
+| tts-fox-female | 108.3 | 123.9 | 113.6 |
+| tts-fox-male | 101.8 | 116.0 | 109.9 |
+| tts-museum-female | 106.5 | 116.7 | 102.3 |
+| tts-museum-male | 96.6 | 112.7 | 99.6 |
+
+- Native is now above HF FP32 in every case, by 6–22 dB. The lane-split reduction is shorter than a sequential
+  K-sum.
+- Every stage is above HF FP32 (`stages.txt`): 133–145 dB against 125–140.
+- Streamed decodes (12-frame and 1-frame) still equal the whole decode bit for bit.
+- Whisper still gives HF's transcripts.
+
+Time for ref-interleaved (29.8 s of audio):
+
+| Mode | Tiled GEMM | Shared GEMM | Real time |
+|---|---|---|---|
+| 1-frame chunks | 4,500 ms | **870 ms** | 34× |
+| 12-frame chunks | 383 ms | **174 ms** | 171× |
+| Whole sequence | 90 ms | 129 ms | — |
+
+The whole-sequence decode is slower because the weights are re-read per 16-row group. That path is for tests; TTS
+streams.

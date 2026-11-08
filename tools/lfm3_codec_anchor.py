@@ -40,10 +40,11 @@ def compare(x, ref):
     return dict(snr_db=snr_db(x, ref), max_abs=float(np.abs(np.asarray(x, np.float64) - ref).max()))
 
 
-def widen_fp32_islands():
-    """Patch the model's hard FP32 casts to compute in max(FP32, input dtype): unchanged for BF16/FP32 inputs."""
+def widen_fp32_islands(lfm3_model=None):
+    """Patch the model's hard FP32 casts to compute in max(FP32, input dtype): unchanged for BF16/FP32 inputs.
+    `lfm3_model` is any Lfm3Model of the checkpoint (default: the codec's trunk)."""
     import importlib
-    lfm3 = importlib.import_module(type(_CODEC.decoder.lfm).__module__)
+    lfm3 = importlib.import_module(type(_CODEC.decoder.lfm if lfm3_model is None else lfm3_model).__module__)
 
     def wide(t):
         return torch.float64 if t.dtype == torch.float64 else torch.float32
