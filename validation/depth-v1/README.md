@@ -91,8 +91,8 @@ construction. The run shows it:
 
 The true model fails the as-written test, so that test cannot judge fidelity. The KL from FP64 at the same
 positions is exact (summed over all 2,017 codes, no sampling noise), and it is unbiased. It is the expected NLL
-penalty a model pays against the true distribution. **This replaces the bar's B1 measure, pending Tripp's
-approval** (`journal/lfm3-tts-quality-bar.md`).
+penalty a model pays against the true distribution. **This replaces the bar's B1 measure, approved by
+Tripp 2026-11-07** (`journal/lfm3-tts-quality-bar.md`).
 
 ## Cost (`native/runs.jsonl`), unoptimized
 
