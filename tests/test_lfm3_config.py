@@ -1,6 +1,7 @@
 import copy
 import json
 from pathlib import Path
+import shutil
 import subprocess
 
 import pytest
@@ -94,3 +95,31 @@ def test_actual_omni_checkpoint(probe, tmp_path):
     data = json.loads(result.stdout)
     assert data["layers"] == 24
     assert [sum(x["kind"] == kind for x in data["schedule"]) for kind in range(3)] == [13, 6, 5]
+
+
+def test_each_checkpoint_keeps_its_own_context_limit(tmp_path):
+    # The engine ceiling is 262,144 (text_serving_limits.hpp); each checkpoint's card limit is ModelConfig's:
+    # LFM3-Omni-2B 32K (its card, though its backbone config allows 128,000), LFM3-1.7B 256K.
+    models = Path(__file__).resolve().parents[2] / "models"
+    omni, base = models / "LFM3-Omni-2B/config.json", models / "LFM3-1.7B/config.json"
+    if not (omni.exists() and base.exists()):
+        pytest.skip("checkpoint configs not present")
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("g++ required")
+    source = tmp_path / "limits.cpp"
+    source.write_text(r'''
+#include <lfm/model_config.hpp>
+#include <cstdlib>
+#include <iostream>
+int main(int argc, char** argv) {
+  try { auto c = lfm::ModelConfig::load(argv[1], std::atoi(argv[2])); std::cout << c.shape.context << "\n"; return 0; }
+  catch (const std::exception& e) { std::cout << "rejected\n"; return 0; }
+}
+''')
+    exe = tmp_path / "limits"
+    subprocess.run([compiler, "-std=c++20", "-I", str(ROOT / "native/include"), str(source), "-o", str(exe)], check=True)
+    run = lambda cfg, cap: subprocess.run([str(exe), str(cfg), str(cap)], capture_output=True, text=True,  # noqa: E731
+                                          check=True).stdout.strip()
+    assert run(omni, 32768) == "32768" and run(omni, 32769) == "rejected"
+    assert run(base, 262144) == "262144" and run(base, 262145) == "rejected"

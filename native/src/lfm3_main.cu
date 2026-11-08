@@ -195,24 +195,19 @@ __global__ void probabilities_large(const LFM3_SCORE* scores,bf16* probs,int row
   const int tid=threadIdx.x,row=blockIdx.x%rows,position=start+row;
   const int begin=window?max(0,position-window+1):0;
   const size_t base=size_t(blockIdx.x)*LFM3_ROW_STRIDE;
-  float elements[32];
-  const int iterations=(end+1023)/1024;
+  // Each pass recomputes a key's masked, scaled score (the same arithmetic every time) instead of keeping it in a
+  // per-thread array: an array of 32 covered 32,768 keys, so longer contexts would have overrun it.
+  auto score=[&](int t) {
+    return t+key_start>=begin && t+key_start<=position ? float(LFM3_SCALED_SCORE(scores[base+t])) : -INFINITY;
+  };
   float maximum=-3.402823466e38f;
-  for(int i=0;i<iterations;++i) {
-    const int t=tid+i*1024;
-    float value=-INFINITY;
-    if(t<end && t+key_start>=begin && t+key_start<=position)
-      value=LFM3_SCALED_SCORE(scores[base+t]);
-    elements[i]=value;
-    if(t<end) maximum=fmaxf(maximum,value);
-  }
+  for(int t=tid;t<end;t+=1024) maximum=fmaxf(maximum,score(t));
   __shared__ float shared[32];
   maximum=block_softmax_reduce<true>(maximum,shared);
   float sum=0;
-  for(int i=0;i<iterations;++i) if(tid+i*1024<end) sum=__fadd_rn(sum,expf(elements[i]-maximum));
+  for(int t=tid;t<end;t+=1024) sum=__fadd_rn(sum,expf(score(t)-maximum));
   sum=block_softmax_reduce<false>(sum,shared);
-  for(int i=0;i<iterations;++i) if(tid+i*1024<end)
-    probs[base+tid+i*1024]=__float2bfloat16_rn(expf(elements[i]-maximum)/sum);
+  for(int t=tid;t<end;t+=1024) probs[base+t]=__float2bfloat16_rn(expf(score(t)-maximum)/sum);
 #ifdef LFM3_NATIVE_GEMM
   for(int t=end+tid;t<pitch;t+=1024) probs[base+t]=__float2bfloat16_rn(0.f);
 #endif
@@ -625,7 +620,7 @@ int main(int argc,char** argv) try {
   lfm::text::scratch_rows(capacity);
   const bool long_context=request.has("experimental_long_context") && request.at("experimental_long_context").boolean();
   if(capacity>4096 && !long_context)
-    throw std::runtime_error("capacity must be 1..4096 unless experimental_long_context is enabled (unaccepted 32K bring-up)");
+    throw std::runtime_error("capacity must be 1..4096 unless experimental_long_context is enabled (unaccepted long-context bring-up)");
   auto cfg=lfm::ModelConfig::load(std::string(argv[2])+"/config.json",capacity);
   if(!cfg.is_lfm3() || !cfg.sandwich_norm || !cfg.tied || cfg.shape.conv_width!=7 || cfg.shape.head_dim!=128 || cfg.shape.hidden!=2048)
     throw std::runtime_error("runner requires tied, sandwich-normalized width-7 LFM3 with hidden=2048, head_dim=128");

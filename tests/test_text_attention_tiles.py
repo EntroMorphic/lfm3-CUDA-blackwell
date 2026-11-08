@@ -134,7 +134,7 @@ int main(int argc,char** argv) {
       catch(const std::runtime_error&) {rejected=true;}
       assert(rejected);
     };
-    bad(0,0,1,0,1,0); bad(32769,0,1,0,1,0);
+    bad(0,0,1,0,1,0); bad(262145,0,1,0,1,0);
     bad(32768,-1,1,0,1,0); bad(32768,32768,1,0,1,0);
     bad(32768,32767,2,0,1,0); bad(32768,0,0,0,1,0);
     bad(32768,0,129,-1,1,0); bad(32768,0,129,129,1,0);

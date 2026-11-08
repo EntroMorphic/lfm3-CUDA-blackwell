@@ -566,7 +566,7 @@ struct Message {
   std::string tool_call_id;
 };
 
-inline constexpr int kMaxContextTokens = 32768;
+inline constexpr int kMaxContextTokens = 262144;  // the engine ceiling; ModelConfig holds each checkpoint's
 inline constexpr size_t kMaxTextBytes = 4 * 1024 * 1024;
 inline constexpr size_t kMaxMessages = 4096;
 
@@ -737,9 +737,9 @@ inline std::string render_chat(const std::vector<Message>& all) {
 // TextFrontend.encode_messages checks these before it validates the messages; callers that parse
 // messages themselves call this first to keep the same order of rejections.
 inline void check_capacity(int capacity, int max_new_tokens) {
-  if (capacity < 1 || capacity > kMaxContextTokens) throw std::runtime_error("lfm3 chat: capacity must be an integer in 1..32768");
+  if (capacity < 1 || capacity > kMaxContextTokens) throw std::runtime_error("lfm3 chat: capacity must be an integer in 1..262144");
   if (max_new_tokens < 1 || max_new_tokens > kMaxContextTokens)
-    throw std::runtime_error("lfm3 chat: max_new_tokens must be an integer in 1..32768");
+    throw std::runtime_error("lfm3 chat: max_new_tokens must be an integer in 1..262144");
   if (max_new_tokens >= capacity) throw std::runtime_error("lfm3 chat: capacity must fit a nonempty prompt plus max_new_tokens");
 }
 

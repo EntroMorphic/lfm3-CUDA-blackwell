@@ -142,7 +142,7 @@ def test_capacity_is_checked_before_messages(tool, tmp_path):
 def test_capacity_rules(tool, tmp_path):
     m = [{"role": "user", "content": "hello"}]
     rc, out = run(tool, tmp_path, "chat", [{"messages": m, "capacity": 16, "max_new_tokens": 16},
-                                           {"messages": m, "capacity": 32769, "max_new_tokens": 16},
+                                           {"messages": m, "capacity": 262145, "max_new_tokens": 16},
                                            {"messages": m, "capacity": 20, "max_new_tokens": 10},
                                            {"messages": m, "capacity": 64, "max_new_tokens": 10}])
     assert rc == 0

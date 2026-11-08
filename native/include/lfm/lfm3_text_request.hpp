@@ -61,9 +61,9 @@ inline std::vector<int> message_input_ids(const Tokenizer& t, const Json& reques
   if (request.has("input_ids")) throw std::runtime_error("messages cannot be combined with input_ids");
   // tools/lfm3_chat.make_request order: integer ranges, then the messages, then encode_messages
   // (which adds the prompt-plus-output fit).
-  if (capacity < 1 || capacity > kMaxContextTokens) throw std::runtime_error("lfm3 chat: capacity must be an integer in 1..32768");
+  if (capacity < 1 || capacity > kMaxContextTokens) throw std::runtime_error("lfm3 chat: capacity must be an integer in 1..262144");
   if (max_new_tokens < 1 || max_new_tokens > kMaxContextTokens)
-    throw std::runtime_error("lfm3 chat: max_new_tokens must be an integer in 1..32768");
+    throw std::runtime_error("lfm3 chat: max_new_tokens must be an integer in 1..262144");
   const auto messages = parse_messages(request.at("messages"));
   auto ids = encode_messages(t, messages, capacity, max_new_tokens);
   for (const int id : ids)

@@ -62,10 +62,10 @@ int main(int argc, char** argv) try {
   if (argc != 5) throw std::runtime_error("usage: lfm3-score MODEL_DIR WINDOWS.i32 LENGTH OUT.f32");
   const std::string model = argv[1];
   const std::string length_text = argv[3];
-  if (length_text.empty() || length_text.size() > 5 || length_text.find_first_not_of("0123456789") != std::string::npos)
+  if (length_text.empty() || length_text.size() > 6 || length_text.find_first_not_of("0123456789") != std::string::npos)
     throw std::runtime_error("LENGTH must be a decimal integer");
   const int length = std::stoi(length_text);
-  if (length < 2 || length > 32768) throw std::runtime_error("LENGTH must be 2..32768");
+  if (length < 2 || length > lfm::text::max_context) throw std::runtime_error("LENGTH must be 2..262144");
   std::ifstream in(argv[2], std::ios::binary | std::ios::ate);
   if (!in) throw std::runtime_error("cannot open windows file");
   const auto bytes = size_t(in.tellg());

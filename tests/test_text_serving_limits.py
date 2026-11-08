@@ -18,13 +18,15 @@ def test_limits_and_memory_are_bounded(tmp_path):
 #include <stdexcept>
 using namespace lfm::text;
 int main() {
-  assert(max_context==32768);
+  assert(max_context==262144);  // the engine ceiling (LFM3-1.7B); checkpoints' own limits are ModelConfig's
   assert(scratch_rows(4096)==4096);
   assert(scratch_rows(4097)==128);
   assert(attention_scratch_elements(32768,16)*2*2==268435456);
   require_budget(32767,1,32768);
   require_budget(32768,0,32768);
-  for(int bad:{0,32769,128000,262144}) {
+  assert(scratch_rows(32769)==128 && scratch_rows(262144)==128);
+  require_budget(262143,1,262144);
+  for(int bad:{0,-1,262145,1<<20}) {
     bool rejected=false;
     try { scratch_rows(bad); } catch(const std::runtime_error&) { rejected=true; }
     assert(rejected);
