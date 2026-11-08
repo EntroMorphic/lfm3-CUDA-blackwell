@@ -1,0 +1,77 @@
+{
+ "asr": "/workspace/models/whisper-large-v3",
+ "results": [
+  {
+   "case": "ref-interleaved",
+   "mode": "interleaved",
+   "audio_seconds": 29.76,
+   "intended": "That's an interesting idea. Reflective recursion is a concept from computer science where a program can examine its own code and adjust its behavior, and it does mirror a kind of self\u2011reflection that we use in cognition. In psychology, people constantly monitor their thoughts and actions, updating their strategies based on what they\u2019ve learned, which is a very similar process. So while we don\u2019t have a formal term for it in the brain, the underlying mechanisms do share a lot of overlap.",
+   "transcript": "That's an interesting idea. Reflective recursion is a concept from computer science where a program can examine its own code and adjust its behavior, and it does mirror a kind of self-reflection that we use in cognition. In psychology, people constantly monitor their thoughts and actions, updating their strategies based on what they've learned, which is a very similar process. So while we don't have a formal term for it in the brain, the underlying mechanisms do share a lot of overlap.",
+   "normalized_intended": "that is an interesting idea reflective recursion is a concept from computer science where a program can examine its own code and adjust its behavior and it does mirror a kind of self reflection that we use in cognition in psychology people constantly monitor their thoughts and actions updating their strategies based on what they have learned which is a very similar process so while we do not have a formal term for it in the brain the underlying mechanisms do share a lot of overlap",
+   "normalized_transcript": "that is an interesting idea reflective recursion is a concept from computer science where a program can examine its own code and adjust its behavior and it does mirror a kind of self reflection that we use in cognition in psychology people constantly monitor their thoughts and actions updating their strategies based on what they have learned which is a very similar process so while we do not have a formal term for it in the brain the underlying mechanisms do share a lot of overlap",
+   "reference_words": 86,
+   "word_errors": 0,
+   "wer": 0.0
+  },
+  {
+   "case": "interleaved-study",
+   "mode": "interleaved",
+   "audio_seconds": 21.12,
+   "intended": "Sure, here are three quick tips: first, set up a dedicated study space that\u2019s free of distractions so you can stay in the zone; second, break your work into short, focused sessions with regular breaks to keep your mind fresh; and third, turn off notifications and put your phone out of reach during study time. Those habits together can really boost your focus.",
+   "transcript": "Sure. Here are three quick tips. First, set up a dedicated study space that's free of distractions so you can stay in the zone. Second, break your work into short, focused sessions with regular breaks to keep your mind fresh. And third, turn off notifications and put your phone out of reach during study time. Those habits together can really boost your focus.",
+   "normalized_intended": "sure here are 3 quick tips 1 set up a dedicated study space that is free of distractions so you can stay in the zone 2 break your work into short focused sessions with regular breaks to keep your mind fresh and 3 turn off notifications and put your phone out of reach during study time those habits together can really boost your focus",
+   "normalized_transcript": "sure here are 3 quick tips 1 set up a dedicated study space that is free of distractions so you can stay in the zone 2 break your work into short focused sessions with regular breaks to keep your mind fresh and 3 turn off notifications and put your phone out of reach during study time those habits together can really boost your focus",
+   "reference_words": 64,
+   "word_errors": 0,
+   "wer": 0.0
+  },
+  {
+   "case": "tts-fox-female",
+   "mode": "audio",
+   "audio_seconds": 3.2,
+   "intended": "The quick brown fox jumps over the lazy dog",
+   "transcript": "A quick brown fox jumps over the lazy dog.",
+   "normalized_intended": "the quick brown fox jumps over the lazy dog",
+   "normalized_transcript": "a quick brown fox jumps over the lazy dog",
+   "reference_words": 9,
+   "word_errors": 1,
+   "wer": 0.1111111111111111
+  },
+  {
+   "case": "tts-fox-male",
+   "mode": "audio",
+   "audio_seconds": 3.6,
+   "intended": "The quick brown fox jumps over the lazy dog",
+   "transcript": "The quick brown fox jumps over the lazy dog.",
+   "normalized_intended": "the quick brown fox jumps over the lazy dog",
+   "normalized_transcript": "the quick brown fox jumps over the lazy dog",
+   "reference_words": 9,
+   "word_errors": 0,
+   "wer": 0.0
+  },
+  {
+   "case": "tts-museum-female",
+   "mode": "audio",
+   "audio_seconds": 11.36,
+   "intended": "On March 3rd, 2024, the museum reopened after a two-year renovation; visitors could finally see the restored murals, which date back nearly four hundred years.",
+   "transcript": "On March 3, 1944, the museum reopened after a two-year renovation. Visitors could finally see the restored murals, which date back nearly 400 years.",
+   "normalized_intended": "on march 3 2024 the museum reopened after a 2 year renovation visitors could finally see the restored murals which date back nearly 400 years",
+   "normalized_transcript": "on march 3 1944 the museum reopened after a 2 year renovation visitors could finally see the restored murals which date back nearly 400 years",
+   "reference_words": 25,
+   "word_errors": 1,
+   "wer": 0.04
+  },
+  {
+   "case": "tts-museum-male",
+   "mode": "audio",
+   "audio_seconds": 12.16,
+   "intended": "On March 3rd, 2024, the museum reopened after a two-year renovation; visitors could finally see the restored murals, which date back nearly four hundred years.",
+   "transcript": "On March 3, 2024, the museum reopened after a two-year renovation. Visitors could finally see the restored murals, which date back nearly 400 years.",
+   "normalized_intended": "on march 3 2024 the museum reopened after a 2 year renovation visitors could finally see the restored murals which date back nearly 400 years",
+   "normalized_transcript": "on march 3 2024 the museum reopened after a 2 year renovation visitors could finally see the restored murals which date back nearly 400 years",
+   "reference_words": 25,
+   "word_errors": 0,
+   "wer": 0.0
+  }
+ ]
+}

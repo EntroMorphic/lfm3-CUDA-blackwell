@@ -1,0 +1,25 @@
+== sources
+  e76a5419c752430add584199c1cc01c9b85a0aca4b28b0ca3ad9b7bc8b928819  tools/lfm3_audio_trace.py
+  c0e8d5285b90d839efb28bb6004626e280e8c4e263dd66a24d59739277c06d6d  tools/lfm3_asr.py
+  175865717995d72e10db3096321c5f20e1b43e906827afc529a1bf08502d9a5b  tools/thor/tts_trace_round.sh
+power: NV Power Mode: 120W
+== ref-interleaved 18:49:51
+{"case": "ref-interleaved", "generated_slots": 474, "audio_frames": 372, "audio_seconds": 29.76, "generation_seconds": 18.550669356998696}
+== interleaved-study 18:50:20
+{"case": "interleaved-study", "generated_slots": 341, "audio_frames": 264, "audio_seconds": 21.12, "generation_seconds": 13.81106118200114}
+== tts-fox-female 18:50:41
+{"case": "tts-fox-female", "generated_slots": 42, "audio_frames": 40, "audio_seconds": 3.2, "generation_seconds": 2.4236317700015206}
+== tts-fox-male 18:50:51
+{"case": "tts-fox-male", "generated_slots": 47, "audio_frames": 45, "audio_seconds": 3.6, "generation_seconds": 2.580735994000861}
+== tts-museum-female 18:51:01
+{"case": "tts-museum-female", "generated_slots": 144, "audio_frames": 142, "audio_seconds": 11.36, "generation_seconds": 6.376215145999595}
+== tts-museum-male 18:51:14
+{"case": "tts-museum-male", "generated_slots": 154, "audio_frames": 152, "audio_seconds": 12.16, "generation_seconds": 6.752171692001866}
+== asr 18:51:28
+interleaved-study: WER 0.016 (1/64)
+ref-interleaved: WER 0.035 (3/86)
+tts-fox-female: WER 0.111 (1/9)
+tts-fox-male: WER 0.000 (0/9)
+tts-museum-female: WER 0.080 (2/25)
+tts-museum-male: WER 0.040 (1/25)
+ALL DONE 18:51:41
