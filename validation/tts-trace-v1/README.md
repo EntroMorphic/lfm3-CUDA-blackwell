@@ -20,24 +20,34 @@ it are stable.
 
 1. **Attention.** All three components run SDPA in BF16.
    - Backbone: 11 attention layers (6 full, 5 sliding, window 256). Prefill is causal with no mask and GQA (11
-     calls). Decode: 473 steps × 11 = 5,203 calls; 3,923 with no mask and GQA, and 1,280 (the 5 sliding layers on
-     the 256 steps after the sequence passes the window) with an explicit boolean mask and KV heads expanded to 16.
+     calls). Decode: 473 steps × 11 = 5,203 calls; 3,923 with no mask and GQA, and 1,280 = 5 sliding layers × 256
+     steps with an explicit boolean mask and KV heads expanded to 16. The masked calls begin at the decode step whose
+     key count reaches 255, in both cases that get that far (prompt 37 + 217 unmasked steps; prompt 33 + 221). The
+     decode masks' contents were not recorded (the trace keeps only the first multi-query mask per component). The
+     backbone is the text engine's, already gated.)
    - Depth decoder: bidirectional, no mask, GQA 32/8, head dim 32; 373 frames × 3 passes × 3 layers = 3,357 calls.
      Kernel: `pytorch_flash::flash_fwd_kernel`.
    - Codec: 3 sliding layers over the whole sequence at once (not streaming), boolean mask, 8/8 heads, head dim 64.
      Kernel: CUTLASS memory-efficient attention (`fmha_cutlassF_bf16_aligned_64x64_rf_sm80`).
    - The model's causal conv (backbone and codec) is a **Triton kernel** (`_prefill`, `lfm3_conv.py`), JIT-compiled;
      Triton's bundled ptxas does not know sm_110a, so runs need `TRITON_PTXAS_PATH` (round 1 failed without it).
-2. **Codec runtime dtype: BF16** (all 73.6M parameters; 2,688 FP32 buffer elements: the ISTFT window and rotary
-   tables). The ISTFT runs a cuFFT kernel (`regular_fft<640…>`) and overlap-add by `col2im`.
+2. **Codec runtime dtype: BF16** for every parameter (73.6M, encoder included). It also has 2,688 FP32 buffer
+   elements, not itemized; they include the 1,280-sample synthesis window. The trunk and `lin` run in BF16. So the
+   641 log-magnitudes and phases are **rounded to BF16 before** `exp`/`polar` (FP32 from there on). This is
+   probably the codec's largest BF16 error, and it matters for A2. The ISTFT runs a cuFFT kernel
+   (`regular_fft<640…>`) and overlap-add by `col2im`. The output waveform is FP32: `summary.json`'s
+   `waveform.dtype_before_float` is the codec's *parameter* dtype, a misnamed field (renamed for later runs).
 3. **Codec window: 30 keys including the query itself** (29 past + self), causal: the first rows allow 1, 2, …, 30,
    then 30 for every later row.
 4. **RNG: exactly 64 Philox offsets per frame**, in every frame of every case. How they divide between the `randperm`
    and the 12 multinomial draws was not measured. Constant consumption makes replay positions predictable; bitwise
    replay would still need PyTorch's exact use of them.
-5. **EOS:** in each utterance, exactly one frame contains EOS codes, and only in some codebooks (4, 4, 4, 2, 1, 1 of
-   12 in the six cases); every other frame has none. The whole-frame rewrite to 2016 is therefore always triggered
-   by a partial EOS. A native engine must reproduce "any codebook" detection, not "all".
+5. **EOS** (half answered). Generation stops at the first frame with any EOS code, so "one EOS frame per
+   utterance" holds by construction and is not a finding. The finding is that the EOS frame is **always partial**
+   (4, 4, 4, 2, 1, 1 of 12 codebooks in the six cases). So the whole-frame rewrite to 2016 is always triggered by
+   a partial EOS, and an "all codebooks" rule would never stop. The EOS frame is not decoded (`audio_frames` =
+   sampled frames − 1). The other half of the question, how stable EOS placement is under a native LM with forced
+   codes, needs the native depth decoder (step 3).
 6. **Golden dumps:** recorded for every frame of every case (above). They allow checking the depth decoder (A1) and
    the codec (A2) with forced codes, no RNG involved.
 
@@ -66,3 +76,24 @@ being counted in the cadence (as the source reads). TTS mode is `T1 A… T1`: th
   both sides and tested (`tests/test_lfm3_asr.py`).
 - This is one seed per case and six cases: a baseline for the method, not yet the C1 bar, which needs a fixed prompt
   set and several seeds to measure seed-to-seed variation.
+- All six clips are shorter than 30 s. Whisper's long-form path in `lfm3_asr.py` is therefore **not yet exercised**;
+  the C1 prompt set must include a longer clip.
+
+## Red-team (2026-11-07)
+
+What was checked:
+- **No attention call escaped the patch.** The counts close: 5,203 = 473 × 11, 3,357 = 373 × 9, and the codec's 3
+  calls equal its 3 attention layers.
+- **The RNG is CUDA only.** `randperm` runs on the hidden state's device and `multinomial` on CUDA logits. The CPU
+  generator plays no part, so the CUDA offset is the whole RNG state of a frame.
+- **The sampling settings are the model card's.** `audio_temperature=0.4` and `audio_repetition_penalty=1.2` are
+  given for speech, TTS and interleaved alike, and `generation_config.json` holds the same values plus
+  `audio_repetition_window=64`.
+- **Determinism rests on two runs** (this one and the committed output), on the same machine and container.
+
+What was corrected above:
+- Q5's "one EOS frame" holds by construction, and the question was half open.
+- The backbone's masked decode calls were an interpretation; they are now stated as measured onset counts.
+- A field name made the waveform's dtype look like BF16; it is FP32.
+- The BF16 rounding of the codec's log-magnitudes is now recorded.
+- The ASR long-form path is untested.

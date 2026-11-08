@@ -190,7 +190,7 @@ def main(model_dir, out_dir, case, mode, seed, max_new, system, user, reference=
         slot_runs=[f"{k}{n}" for k, n in runs],
         waveform=dict(samples=len(waveform), peak=float(np.abs(waveform).max()) if len(waveform) else 0.0,
                       rms=float(np.sqrt((waveform.astype(np.float64) ** 2).mean())) if len(waveform) else 0.0,
-                      dtype_before_float=str(codec.dtype) if hasattr(codec, "dtype") else None),
+                      codec_parameter_dtype=str(codec.dtype) if hasattr(codec, "dtype") else None),
     )
     if reference:
         ref = Path(reference)

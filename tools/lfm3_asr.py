@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ASR round-trip for the audio quality bar (journal/lfm3-tts-quality-bar.md, C1).
 
-Transcribes each case's response.wav with Whisper large-v3 (English, greedy, long-form for > 30 s), normalizes the
+Transcribes each case's response.wav with Whisper large-v3 (English, greedy; long-form for > 30 s, not yet exercised), normalizes the
 transcript and the intended words with Whisper's English text normalizer (after folding typographic punctuation to
 ASCII; ordinal suffixes on numbers are then dropped on both sides), and reports word error rate (word-level
 Levenshtein distance / reference words). The intended words are the user prompt in TTS mode ("audio") and the
