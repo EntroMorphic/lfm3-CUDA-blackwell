@@ -6,12 +6,23 @@
 //   - each code is drawn from softmax(penalize(logits) / temperature): the repetition penalty (divide positive
 //     logits, multiply negative ones) applies once to every code this codebook emitted in the last 64 accepted
 //     frames. These are HF's defaults for speech (0.4, 1.2, 64; no top-k).
+//   - as HF's `_build_warpers`: temperature 0 is greedy (argmax of the penalized logits), and top_k > 0 keeps the k
+//     best penalized codes. HF's unset temperature (unit temperature with top_k, else greedy) is the caller's to map.
+//     Top-k ties at the k-th score keep the lowest codes (TextSampler's policy); HF keeps every tie. A top_k above
+//     the 2017 codes keeps them all, as HF's TopKLogitsWarper clamps it.
 // Draws use lfm::TextSampler, the text engine's sampler (one 64-bit Mersenne Twister draw per code; its
-// distribution is tested by tests/test_text_sampling_*.py). The order uses a second engine seeded from the same seed.
+// distribution is tested by tests/test_text_sampling_*.py). The code engine and the order engine are seeded from
+// two splitmix64 mixes of the seed, so neither shares a stream with a TextSampler built from the same seed.
 // PyTorch's Philox stream cannot be reproduced, so equality with HF is distributional, not bitwise.
+//
+// History lifetime, as HF's `_generate`: one FrameSampler per request; `accept` every frame the mode machine reports
+// as not EOS (Outcome::eos false), across interleaved blocks and audio -> text -> audio switches; never seeded from
+// the prompt's frames; never cleared within a request.
 #include <lfm/text_sampling.hpp>
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <deque>
 #include <random>
@@ -28,6 +39,7 @@ struct FrameSamplingOptions {
   double repetition_penalty = 1.2;
   int repetition_window = 64;  // accepted frames
   std::uint64_t seed = 0;
+  int top_k = 0;  // 0: no top-k
 };
 
 using Frame = std::array<int, kCodebooks>;
@@ -35,9 +47,7 @@ using Frame = std::array<int, kCodebooks>;
 class FrameSampler {
  public:
   explicit FrameSampler(FrameSamplingOptions options = {})
-      : options_(options), codes_(text_options(options)), order_rng_(mix(options.seed)) {
-    if (options.repetition_window < 0) throw std::invalid_argument("invalid audio repetition window");
-  }
+      : options_(checked(options)), codes_(text_options(options_)), order_rng_(mix(mix(options.seed))) {}
 
   // A uniformly random reveal order (Fisher-Yates with unbiased bounded draws).
   std::array<int, kCodebooks> order() {
@@ -89,18 +99,27 @@ class FrameSampler {
     for (const Frame& f : history_) h.push_back(f.at(size_t(codebook)));
     return h;
   }
-  // The exact sampling distribution of one code (no draw), for checking.
+  // The exact sampling distribution of one code (no draw), for checking. Greedy (temperature 0): the argmax alone.
   std::vector<TextCandidate> distribution(int codebook, const float* logits) const {
-    return codes_.distribution(logits, kCodes, history_codes(codebook));
+    auto d = codes_.distribution(logits, kCodes, history_codes(codebook));
+    if (options_.temperature == 0) d = {{d.front().token_id, 1.0L}};  // the highest penalized score, lowest code
+    return d;
   }
 
  private:
+  static FrameSamplingOptions checked(FrameSamplingOptions o) {
+    if (o.repetition_window < 0) throw std::invalid_argument("invalid audio repetition window");
+    if (!(o.temperature >= 0) || !std::isfinite(o.temperature)) throw std::invalid_argument("invalid audio temperature");
+    if (o.top_k < 0) throw std::invalid_argument("invalid audio top_k");
+    return o;
+  }
   static TextSamplingOptions text_options(const FrameSamplingOptions& o) {
     TextSamplingOptions t;
-    t.do_sample = true;
-    t.temperature = o.temperature;
+    t.do_sample = o.temperature > 0;  // HF: temperature 0 builds no warpers, i.e. argmax
+    t.temperature = o.temperature > 0 ? o.temperature : 1.0;
+    t.top_k = std::min(o.top_k, kCodes);
     t.repetition_penalty = o.repetition_penalty;
-    t.seed = o.seed;
+    t.seed = mix(o.seed);
     return t;
   }
   static std::uint64_t mix(std::uint64_t x) {  // splitmix64: decorrelates the order engine from the code engine

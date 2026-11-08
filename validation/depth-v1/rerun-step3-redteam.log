@@ -1,0 +1,19 @@
+positions 12252
+A1 native median rel-L2 vs fp32 7.385e-07 (p99 1.559e-06)  vs fp64 1.565e-07 (max 6.718e-07)
+A1 sdpa   median rel-L2 vs fp32 4.379e-03 (p99 1.016e-02)  vs fp64 4.379e-03 (max 2.170e-02)
+A1 eager  median rel-L2 vs fp32 4.910e-03 (p99 1.151e-02)  vs fp64 4.910e-03 (max 2.586e-02)
+A1 fp32   median rel-L2 vs fp32 0.000e+00 (p99 0.000e+00)  vs fp64 7.218e-07 (max 3.378e-06)
+A1 bar 4.910e-03: PASS
+B1 mean KL(fp64 || native) = 1.546e-12 nats
+B1 mean KL(fp64 || sdpa  ) = 1.939e-03 nats
+B1 mean KL(fp64 || eager ) = 2.076e-03 nats
+B1 mean KL(fp64 || fp32  ) = 8.991e-11 nats
+B1 native - sdpa  -1.939e-03  CI [-1.970e-03, -1.907e-03]  better
+B1 native - eager -2.076e-03  CI [-2.111e-03, -2.042e-03]  better
+B1 as written (biased) NLL native_minus_sdpa 1.196e-03  CI [9.054e-05, 2.315e-03]  worse
+B1 as written (biased) NLL fp64_minus_sdpa   1.196e-03  CI [9.053e-05, 2.315e-03]  worse
+B1 as written (biased) NLL fp32_minus_sdpa   1.196e-03  CI [9.056e-05, 2.315e-03]  worse
+B1 as written (biased) NLL eager_minus_sdpa  2.304e-03  CI [8.279e-04, 3.796e-03]  worse
+B1: PASS
+tripwire {'median_vs_fp64': '1.57e-07 <= 1e-06', 'max_vs_fp64': '6.72e-07 <= 1e-05', 'mean_kl_from_fp64': '1.55e-12 <= 1e-09'} PASS
+rc=0

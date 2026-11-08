@@ -58,7 +58,9 @@ Relative L2 distance of each sampled position's 2,017 logits (`native/a1b1.json`
 ## B1: distribution fidelity
 
 Measured at the sampling distribution: the repetition penalty 1.2 over the codebook's codes in the previous 64
-frames, then temperature 0.4, exactly as HF samples. These are the same 12,252 positions.
+accepted frames (EOS frames excluded, as HF), then temperature 0.4, exactly as HF samples. These are the same
+12,252 positions. (The first version took the previous 64 raw frames. Every trace's only EOS frame is its last, so
+the two agree bit for bit here; `native/a1b1.json` is the rerun, `rerun-step3-redteam.log` its log.)
 
 | Variant | Mean KL(p_FP64 ‖ p) |
 |---|---|
@@ -94,6 +96,25 @@ positions is exact (summed over all 2,017 codes, no sampling noise), and it is u
 penalty a model pays against the true distribution. **This replaces the bar's B1 measure, approved by
 Tripp 2026-11-07** (`journal/lfm3-tts-quality-bar.md`).
 
+## Regression tripwire
+
+A1 and B1 compare against HF BF16, so a regression to BF16-level error (cos/sin, activations, eps) would still pass
+them. `tools/lfm3_depth_check.py` therefore also fails unless native stays at the level it achieved:
+
+| | Limit | Native |
+|---|---|---|
+| Median relative L2 from FP64 | 1e-6 | 1.6e-7 |
+| Max relative L2 from FP64 | 1e-5 | 6.7e-7 |
+| Mean KL from FP64 | 1e-9 nats | 1.5e-12 |
+
+## Sanitizers (step-3 red-team)
+
+`compute-sanitizer` memcheck, racecheck, initcheck and synccheck on `liquid-depth` (6 frames of tts-fox-female):
+0 errors, 0 hazards, and output bit-identical to the plain run. The codec (40 frames of tts-fox-female): memcheck,
+initcheck and synccheck on the whole decode with the reset-and-streaming self-test, and on 1-frame and 7-frame
+chunks; racecheck on the whole decode with the self-test. All 0 errors, every output bit-identical to the plain
+whole decode. Summary lines and every output's SHA-256: `sanitizers.txt`.
+
 ## Cost (`native/runs.jsonl`), unoptimized
 
 - **Time:** 7.1–10.9 ms per frame for 3 passes with all 12 heads scored, against a frame budget of 80 ms.
@@ -104,7 +125,6 @@ Tripp 2026-11-07** (`journal/lfm3-tts-quality-bar.md`).
 
 ## Open
 
-- B2 (the sampler: penalty, temperature, multinomial, randperm order) and A4 (the mode machine).
 - After that, end to end: native LM hidden states instead of HF's, so EOS placement under a native LM (tts-trace-v1
   Q5) can be studied.
 - The depth decoder in the single binary.

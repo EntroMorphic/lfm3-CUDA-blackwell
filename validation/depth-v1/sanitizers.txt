@@ -1,0 +1,65 @@
+# compute-sanitizer (host /usr/local/cuda/bin, pinned libs build/racecheck-pinned-libs-v1), step-3 red-team 2026-11-08
+# binaries: build/depth-v1/cmake/liquid-depth, build/codec-v3/cmake/liquid-codec; codec-<tool>-<chunk>.log, chunk 0 = whole + LFM_CODEC_SELFTEST=1
+# 823d140a7716802136f740d1f9d8f578be2fd7e96aa0f88a1e2dd23acee78953  depth-v1/cmake/liquid-depth
+# 4d155b6db76f016b173d25aff91c30adb4e49082991ae29b99d1cae157503b49  codec-v3/cmake/liquid-codec
+== depth-initcheck.log
+{"frames": 6, "ms_per_frame": 118.542, "buffer_bytes": 673376}
+========= ERROR SUMMARY: 0 errors
+== depth-memcheck.log
+{"frames": 6, "ms_per_frame": 178.442, "buffer_bytes": 673376}
+========= ERROR SUMMARY: 0 errors
+== depth-racecheck.log
+{"frames": 6, "ms_per_frame": 9215.23, "buffer_bytes": 673376}
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)
+== depth-synccheck.log
+{"frames": 6, "ms_per_frame": 47.374, "buffer_bytes": 673376}
+========= ERROR SUMMARY: 0 errors
+== codec-initcheck-0.log
+{"frames": 40, "chunk_frames": 40, "samples": 76800, "decode_ms": 354.413, "audio_seconds": 3.2, "device_bytes": 165657316, "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk40_reset_empty_finalize": true}
+========= ERROR SUMMARY: 0 errors
+== codec-initcheck-1.log
+{"frames": 40, "chunk_frames": 1, "samples": 76800, "decode_ms": 1617.98, "audio_seconds": 3.2, "device_bytes": 154326100}
+========= ERROR SUMMARY: 0 errors
+== codec-initcheck-7.log
+{"frames": 40, "chunk_frames": 7, "samples": 76800, "decode_ms": 533.919, "audio_seconds": 3.2, "device_bytes": 156069364}
+========= ERROR SUMMARY: 0 errors
+== codec-memcheck-0.log
+{"frames": 40, "chunk_frames": 40, "samples": 76800, "decode_ms": 672.906, "audio_seconds": 3.2, "device_bytes": 165657316, "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk40_reset_empty_finalize": true}
+========= ERROR SUMMARY: 0 errors
+== codec-memcheck-1.log
+{"frames": 40, "chunk_frames": 1, "samples": 76800, "decode_ms": 2523.92, "audio_seconds": 3.2, "device_bytes": 154326100}
+========= ERROR SUMMARY: 0 errors
+== codec-memcheck-7.log
+{"frames": 40, "chunk_frames": 7, "samples": 76800, "decode_ms": 917.914, "audio_seconds": 3.2, "device_bytes": 156069364}
+========= ERROR SUMMARY: 0 errors
+== codec-racecheck-0.log
+{"frames": 40, "chunk_frames": 40, "samples": 76800, "decode_ms": 31375.9, "audio_seconds": 3.2, "device_bytes": 165657316, "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk40_reset_empty_finalize": true}
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)
+== codec-synccheck-0.log
+{"frames": 40, "chunk_frames": 40, "samples": 76800, "decode_ms": 78.3156, "audio_seconds": 3.2, "device_bytes": 165657316, "chunk7_reset_empty_finalize": true, "chunk5_reset_empty_finalize": true, "chunk40_reset_empty_finalize": true}
+========= ERROR SUMMARY: 0 errors
+== codec-synccheck-1.log
+{"frames": 40, "chunk_frames": 1, "samples": 76800, "decode_ms": 666.566, "audio_seconds": 3.2, "device_bytes": 154326100}
+========= ERROR SUMMARY: 0 errors
+== codec-synccheck-7.log
+{"frames": 40, "chunk_frames": 7, "samples": 76800, "decode_ms": 143.625, "audio_seconds": 3.2, "device_bytes": 156069364}
+========= ERROR SUMMARY: 0 errors
+
+# outputs: sha256 (plain.f32 = depth without a sanitizer; cplain.f32 = codec whole, cplain1.f32 = codec 1-frame chunks, no sanitizer)
+# ae3c5cb4f2e0e6215041b2dfbf21d1aa96d2bc00560f77b8f515b38799084a02  plain.f32
+# ae3c5cb4f2e0e6215041b2dfbf21d1aa96d2bc00560f77b8f515b38799084a02  memcheck.f32
+# ae3c5cb4f2e0e6215041b2dfbf21d1aa96d2bc00560f77b8f515b38799084a02  racecheck.f32
+# ae3c5cb4f2e0e6215041b2dfbf21d1aa96d2bc00560f77b8f515b38799084a02  initcheck.f32
+# ae3c5cb4f2e0e6215041b2dfbf21d1aa96d2bc00560f77b8f515b38799084a02  synccheck.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  cplain.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  cplain1.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-initcheck-0.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-initcheck-1.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-initcheck-7.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-memcheck-0.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-memcheck-1.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-memcheck-7.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-racecheck-0.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-synccheck-0.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-synccheck-1.f32
+# c38bc6cce687f547ae4b35b888c4bbddc42f14c81ffe1bec638c19a37de985a7  c-synccheck-7.f32

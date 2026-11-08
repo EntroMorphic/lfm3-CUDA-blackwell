@@ -6,7 +6,9 @@
 //
 // Rules, as HF:
 // - The requested mode appends its marker to the prompt unless the prompt already ends with one: <|audio_start|>
-//   (or <|audio_out|>) for audio, <|mixed_start|> for interleaved. With no mode, the prompt's last token chooses.
+//   (or <|audio_out|>) for audio, <|mixed_start|> for interleaved. With no mode, the prompt's last token chooses,
+//   except that a prompt ending on a replayed <|audio_out|> frame holding an EOS code resumes text, as a frame
+//   sampled inside the call would.
 // - Audio mode: every step is a frame. A frame with any EOS code (2016) is rewritten to all-EOS, fed back but not
 //   emitted (unless return_audio_eos), and switches to text.
 // - Interleaved: 6 text slots, then 12 frames, alternating; <|text_end|> ends the text and starts the audio tail,
@@ -15,7 +17,10 @@
 //   switches to audio and <|mixed_start|> opens a new interleaved block.
 // - Text steps never sample the placeholder tokens (<|audio|>, <|audio_out|>, image, video); text-only requests also
 //   never sample the two markers; suppress_mixed / suppress_audio_out remove either marker always.
-// - The last step (turn finished, or max_new_tokens reached) is not decoded. max_new_tokens must be positive.
+// - The last step (turn finished, or max_new_tokens reached) is not decoded, unless the caller supplied the cache
+//   (HF's `past_key_values`): then it is, so the cache covers every returned slot. max_new_tokens must be positive.
+// - The speech repetition history is the caller's (lfm::audio::FrameSampler): accept every frame whose
+//   Outcome::eos is false, for the whole request.
 #include <lfm/audio_sampling.hpp>
 
 #include <algorithm>
@@ -38,6 +43,7 @@ enum class Step { Text, Audio, Done };
 struct ModeOptions {
   Requested mode = Requested::None;
   bool suppress_mixed = false, suppress_audio_out = false, return_audio_eos = false;
+  bool caller_cache = false;  // the caller supplied the KV cache: decode the last step too
   int max_new_tokens = 0;
 };
 
@@ -58,12 +64,21 @@ class ModeMachine {
     if (o_.max_new_tokens < 1) throw std::invalid_argument("max_new_tokens must be positive");
   }
 
-  // Before the prefill: the marker to append to the prompt (-1 for none).
-  int begin(int last_prompt_token) {
+  // Before the prefill: the marker to append to the prompt (-1 for none). `last_replayed_frame`: the codes of the
+  // prompt's last <|audio_out|> placeholder, when the prompt replays speech (HF `audio_out_codes[-1]`).
+  // A prompt ending on <|audio_out|> must replay its frame: HF refuses placeholders without `audio_out_codes`.
+  int begin(int last_prompt_token, const Frame* last_replayed_frame = nullptr) {
+    if (last_prompt_token == t_.audio_out && !last_replayed_frame)
+      throw std::invalid_argument("ModeMachine: a prompt ending on <|audio_out|> needs its replayed frame");
+    // HF: only a prompt that ends on <|audio_out|>, and only an EOS code anywhere in that frame
+    const bool last_frame_eos = last_replayed_frame && last_prompt_token == t_.audio_out &&
+                                std::find(last_replayed_frame->begin(), last_replayed_frame->end(), kEosCode) !=
+                                    last_replayed_frame->end();
     int marker = -1;
     switch (o_.mode) {
       case Requested::None:
-        mode_ = last_prompt_token == t_.audio_start || last_prompt_token == t_.audio_out ? Mode::Audio
+        mode_ = last_frame_eos                                                          ? Mode::Text
+                : last_prompt_token == t_.audio_start || last_prompt_token == t_.audio_out ? Mode::Audio
                 : last_prompt_token == t_.mixed_start                                   ? Mode::Interleaved
                                                                                         : Mode::Text;
         break;
@@ -149,7 +164,7 @@ class ModeMachine {
       slots_left_ = speaking_ ? t_.n_audio : t_.n_text;
     }
     ++step_;
-    r.decode = !(finished_ || step_ >= o_.max_new_tokens);
+    r.decode = o_.caller_cache || !(finished_ || step_ >= o_.max_new_tokens);
     return r;
   }
 

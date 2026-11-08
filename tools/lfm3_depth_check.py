@@ -9,9 +9,13 @@ B1  Distribution fidelity, at the sampling distribution: the repetition penalty 
     - Primary: the exact KL(p_FP64 || p_m) at each position (no sampling). Paired per position against SDPA (and
       eager): 95% bootstrap CI of the mean difference. "worse" iff the CI lies entirely above +eps (FAIL), "better"
       iff entirely below -eps, else "equal" (eps = 1e-5 nats, as §9).
+      The penalty history is HF's: the last 64 accepted frames, i.e. EOS frames excluded.
     - As written in the bar: NLL of the reference's own sampled code, native minus SDPA. The codes were sampled
       from SDPA, so this difference is biased toward SDPA by construction: its expectation is KL(p_SDPA || p_m) >= 0.
       Reported, not used as the verdict.
+Regression tripwire (not part of the bar, but part of the exit code): native at the level it achieved, so a regression
+to BF16-level error (cos/sin, activations, eps), which A1/B1 alone would still pass, fails: median relative L2 from
+FP64 <= 1e-6 (achieved 1.6e-7), max <= 1e-5 (6.7e-7), mean KL from FP64 <= 1e-9 nats (1.5e-12; HF FP32 9e-11).
 Usage (lfm3-omni-dev): lfm3_depth_check.py TRACE_DIR ANCHOR_DIR NATIVE_DIR OUT_JSON CASE [CASE ...]
   NATIVE_DIR/CASE.native.f32: liquid-depth's output.
 """
@@ -21,7 +25,8 @@ from pathlib import Path
 
 import numpy as np
 
-PENALTY, TEMPERATURE, WINDOW, EPS = 1.2, 0.4, 64, 1e-5
+PENALTY, TEMPERATURE, WINDOW, EPS, EOS_CODE = 1.2, 0.4, 64, 1e-5, 2016
+TRIPWIRE = dict(median_vs_fp64=1e-6, max_vs_fp64=1e-5, mean_kl_from_fp64=1e-9)
 VARIANTS = ("native", "sdpa", "eager", "fp32")
 
 
@@ -41,6 +46,16 @@ def log_sampling(logits, history):
     s = np.where(history, np.where(logits < 0, logits * PENALTY, logits / PENALTY), logits) / TEMPERATURE
     s = s - s.max(-1, keepdims=True)
     return s - np.log(np.exp(s).sum(-1, keepdims=True))
+
+
+def penalty_histories(raw, frame_index, codebook_index):
+    """[n, 2017] bool: the codes of each position's codebook in the last WINDOW accepted (non-EOS) frames before it."""
+    accepted = np.nonzero(~(raw == EOS_CODE).any(1))[0]
+    history = np.zeros((len(frame_index), 2017), bool)
+    for n, (fr, c) in enumerate(zip(frame_index, codebook_index)):
+        before = accepted[accepted < fr][-WINDOW:]
+        history[n, raw[before, c]] = True
+    return history
 
 
 def bootstrap(d, seed=0, n=2000):
@@ -71,9 +86,7 @@ def main(trace_dir, anchor_dir, native_dir, out_json, cases):
         pick = sampled_positions(masked)
         fi, pi, ci = np.nonzero(pick)
         assert len(fi) == frames * 12, "every codebook is sampled exactly once per frame"
-        history = np.zeros((len(fi), 2017), bool)
-        for n, (fr, c) in enumerate(zip(fi, ci)):
-            history[n, raw[max(0, fr - WINDOW):fr, c]] = True
+        history = penalty_histories(raw, fi, ci)
         code = raw[fi, ci]
         sel = {k: v[fi, pi, ci].astype(np.float64) for k, v in logits.items()}
         lp = {k: log_sampling(v, history) for k, v in sel.items()}
@@ -105,8 +118,12 @@ def main(trace_dir, anchor_dir, native_dir, out_json, cases):
         ci = bootstrap(d)
         as_written[f"{v}_minus_sdpa"] = dict(mean=float(d.mean()), ci95=ci, verdict=verdict(ci))
     b1_pass = all(b1[f"native_minus_{r}"]["verdict"] != "worse" for r in ("sdpa", "eager"))
+    achieved = dict(median_vs_fp64=a1["native"]["median_vs_fp64"], max_vs_fp64=a1["native"]["max_vs_fp64"],
+                    mean_kl_from_fp64=b1["mean_kl_from_fp64"]["native"])
+    tripwire = dict(limits=TRIPWIRE, native=achieved, pass_=all(achieved[k] <= v for k, v in TRIPWIRE.items()))
     result = dict(positions=int(len(k["native"])), a1=dict(variants=a1, bar_median=bar, pass_=a1_pass),
-                  b1=dict(primary=b1, pass_=b1_pass, as_written_nll_vs_sdpa_biased=as_written), cases=per_case)
+                  b1=dict(primary=b1, pass_=b1_pass, as_written_nll_vs_sdpa_biased=as_written), tripwire=tripwire,
+                  cases=per_case)
     Path(out_json).write_text(json.dumps(result, indent=1) + "\n")
     print(f"positions {result['positions']}")
     for v in VARIANTS:
@@ -121,7 +138,8 @@ def main(trace_dir, anchor_dir, native_dir, out_json, cases):
     for key, x in as_written.items():
         print("B1 as written (biased) NLL %-17s %.3e  CI [%.3e, %.3e]  %s" % (key, x["mean"], *x["ci95"], x["verdict"]))
     print("B1:", "PASS" if b1_pass else "FAIL")
-    return a1_pass and b1_pass
+    print("tripwire", {k: "%.2e <= %.0e" % (achieved[k], v) for k, v in TRIPWIRE.items()}, "PASS" if tripwire["pass_"] else "FAIL")
+    return a1_pass and b1_pass and tripwire["pass_"]
 
 
 if __name__ == "__main__":

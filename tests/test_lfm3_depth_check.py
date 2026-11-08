@@ -31,3 +31,13 @@ def test_verdict_uses_eps():
     assert dc.verdict([-3e-5, -2e-5]) == "better"
     assert dc.verdict([-2e-5, 5e-6]) == "equal"
     assert dc.verdict([5e-6, 9e-6]) == "equal"   # above zero but within eps
+
+
+def test_penalty_history_skips_eos_frames_and_keeps_the_window():
+    raw = np.arange(100 * 12).reshape(100, 12) % 2016
+    raw[50, 3] = dc.EOS_CODE                      # an EOS frame mid-trace: never in the history
+    h = dc.penalty_histories(raw, np.array([0, 51, 99]), np.array([0, 0, 5]))
+    assert not h[0].any()
+    assert h[1].sum() == 50 and not h[1, raw[50, 0]]   # frames 0..49 only
+    want = [f for f in range(99) if f != 50][-64:]
+    assert set(np.nonzero(h[2])[0]) == set(raw[want, 5])

@@ -1,0 +1,348 @@
+{
+ "clean": {
+  "tests/test_audio_sampling.py": {
+   "passed": 32,
+   "total": 32,
+   "outcomes": {
+    "test_exact_distribution_matches_analytic[0]": "passed",
+    "test_exact_distribution_matches_analytic[1]": "passed",
+    "test_exact_distribution_matches_analytic[2]": "passed",
+    "test_exact_distribution_matches_analytic[3]": "passed",
+    "test_exact_distribution_matches_analytic[4]": "passed",
+    "test_exact_distribution_matches_analytic[5]": "passed",
+    "test_draws_follow_the_distribution[0]": "passed",
+    "test_draws_follow_the_distribution[1]": "passed",
+    "test_draws_follow_the_distribution[2]": "passed",
+    "test_draws_follow_the_distribution[3]": "passed",
+    "test_draws_follow_the_distribution[4]": "passed",
+    "test_draws_follow_the_distribution[5]": "passed",
+    "test_history_changes_the_distribution": "passed",
+    "test_reveal_order_is_uniform": "passed",
+    "test_frame_protocol_and_marginals": "passed",
+    "test_repeated_history_codes_are_one_penalty": "passed",
+    "test_top_k[1-1]": "passed",
+    "test_top_k[1-3]": "passed",
+    "test_top_k[5-1]": "passed",
+    "test_top_k[5-3]": "passed",
+    "test_top_k[50-1]": "passed",
+    "test_top_k[50-3]": "passed",
+    "test_temperature_zero_is_greedy[0]": "passed",
+    "test_temperature_zero_is_greedy[1]": "passed",
+    "test_temperature_zero_is_greedy[2]": "passed",
+    "test_temperature_zero_is_greedy[3]": "passed",
+    "test_temperature_zero_is_greedy[4]": "passed",
+    "test_temperature_zero_is_greedy[5]": "passed",
+    "test_top_k_above_the_codes_keeps_them_all": "passed",
+    "test_code_stream_is_not_a_same_seed_text_stream": "passed",
+    "test_window_and_eos_refusal": "passed",
+    "test_seeds_reproduce_and_differ": "passed"
+   }
+  },
+  "tests/test_audio_modes.py": {
+   "passed": 32,
+   "total": 32,
+   "outcomes": {
+    "test_native_equals_hf[text-only]": "passed",
+    "test_native_equals_hf[text-to-audio]": "passed",
+    "test_native_equals_hf[text-to-interleaved]": "passed",
+    "test_native_equals_hf[interleaved-eos-mid-block]": "passed",
+    "test_native_equals_hf[interleaved-im-end-in-text]": "passed",
+    "test_native_equals_hf[text-end-outside-block]": "passed",
+    "test_native_equals_hf[audio-max-new-cut]": "passed",
+    "test_native_equals_hf[audio-prompt-has-marker-return-eos]": "passed",
+    "test_native_equals_hf[markers-inside-block-are-text]": "passed",
+    "test_native_equals_hf[suppress-flags]": "passed",
+    "test_native_equals_hf[audio-eos-first-frame]": "passed",
+    "test_native_equals_hf[interleaved-prompt-has-marker]": "passed",
+    "test_native_equals_hf[two-blocks]": "passed",
+    "test_native_equals_hf[max-new-cut-in-interleaved]": "passed",
+    "test_native_equals_hf[text-max-new-cut]": "passed",
+    "test_native_equals_hf[replay-eos-frame-resumes-text]": "passed",
+    "test_native_equals_hf[replay-speech-frame-continues-audio]": "passed",
+    "test_native_equals_hf[replay-eos-frame-requested-audio]": "passed",
+    "test_native_equals_hf[caller-cache-text]": "passed",
+    "test_native_equals_hf[caller-cache-audio-max-cut]": "passed",
+    "test_native_equals_hf[caller-cache-interleaved]": "passed",
+    "test_native_equals_hf[history-across-switch-and-window]": "passed",
+    "test_native_equals_hf[trace-interleaved-study]": "passed",
+    "test_native_equals_hf[trace-ref-interleaved]": "passed",
+    "test_native_equals_hf[trace-tts-fox-female]": "passed",
+    "test_native_equals_hf[trace-tts-fox-male]": "passed",
+    "test_native_equals_hf[trace-tts-museum-female]": "passed",
+    "test_native_equals_hf[trace-tts-museum-male]": "passed",
+    "test_reference_covers_the_branches": "passed",
+    "test_max_new_tokens_zero_is_refused": "passed",
+    "test_eos_frame_is_ignored_unless_the_prompt_ends_on_audio_out": "passed",
+    "test_audio_out_without_its_frame_is_refused": "passed"
+   }
+  }
+ },
+ "numbers": {
+  "exact_max_abs": [
+   1.3877787807814457e-17,
+   2.7755575615628914e-17,
+   2.7755575615628914e-17,
+   5.551115123125783e-17,
+   5.551115123125783e-17,
+   2.7755575615628914e-17
+  ],
+  "draws_chi2": [
+   {
+    "p": 0.6529223291501212,
+    "bins": 174
+   },
+   {
+    "p": 0.8950751802945638,
+    "bins": 42
+   },
+   {
+    "p": 0.35335121170563366,
+    "bins": 59
+   },
+   {
+    "p": 0.4315719858681723,
+    "bins": 64
+   },
+   {
+    "p": 0.9177108537051479,
+    "bins": 34
+   },
+   {
+    "p": 0.15235499847232384,
+    "bins": 62
+   }
+  ],
+  "order_position_chi2_p": 0.933000652331828,
+  "order_pairs_min_bonferroni_p": 1.0,
+  "frame_marginal_min_bonferroni_p": 1.0
+ },
+ "planted": [
+  {
+   "bug": "codes written to the reveal position, scored from the first pick's logits",
+   "header": "audio_sampling.hpp",
+   "tests": 32,
+   "failed": 1,
+   "failing": [
+    "test_frame_protocol_and_marginals"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "passes scored without the codes revealed so far",
+   "header": "audio_sampling.hpp",
+   "tests": 32,
+   "failed": 1,
+   "failing": [
+    "test_frame_protocol_and_marginals"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "Sattolo's shuffle (cyclic permutations only) for the reveal order",
+   "header": "audio_sampling.hpp",
+   "tests": 32,
+   "failed": 1,
+   "failing": [
+    "test_reveal_order_is_uniform"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "the code engine shares the seed of a TextSampler",
+   "header": "audio_sampling.hpp",
+   "tests": 32,
+   "failed": 1,
+   "failing": [
+    "test_code_stream_is_not_a_same_seed_text_stream"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "temperature 0 is not greedy",
+   "header": "audio_sampling.hpp",
+   "tests": 32,
+   "failed": 6,
+   "failing": [
+    "test_temperature_zero_is_greedy[0]",
+    "test_temperature_zero_is_greedy[1]",
+    "test_temperature_zero_is_greedy[2]",
+    "test_temperature_zero_is_greedy[3]",
+    "test_temperature_zero_is_greedy[4]",
+    "test_temperature_zero_is_greedy[5]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "top_k ignored",
+   "header": "audio_sampling.hpp",
+   "tests": 32,
+   "failed": 6,
+   "failing": [
+    "test_top_k[1-1]",
+    "test_top_k[1-3]",
+    "test_top_k[5-1]",
+    "test_top_k[5-3]",
+    "test_top_k[50-1]",
+    "test_top_k[50-3]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "greedy distribution() reports a temperature-1 softmax",
+   "header": "audio_sampling.hpp",
+   "tests": 32,
+   "failed": 6,
+   "failing": [
+    "test_temperature_zero_is_greedy[0]",
+    "test_temperature_zero_is_greedy[1]",
+    "test_temperature_zero_is_greedy[2]",
+    "test_temperature_zero_is_greedy[3]",
+    "test_temperature_zero_is_greedy[4]",
+    "test_temperature_zero_is_greedy[5]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "top_k above 2017 refused instead of clamped",
+   "header": "audio_sampling.hpp",
+   "tests": 32,
+   "failed": 1,
+   "failing": [
+    "test_top_k_above_the_codes_keeps_them_all"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "the window keeps 63 frames",
+   "header": "audio_sampling.hpp",
+   "tests": 32,
+   "failed": 2,
+   "failing": [
+    "test_exact_distribution_matches_analytic[2]",
+    "test_window_and_eos_refusal"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "EOS only when all 12 codebooks are EOS",
+   "header": "audio_modes.hpp",
+   "tests": 32,
+   "failed": 18,
+   "failing": [
+    "test_native_equals_hf[audio-eos-first-frame]",
+    "test_native_equals_hf[audio-prompt-has-marker-return-eos]",
+    "test_native_equals_hf[caller-cache-interleaved]",
+    "test_native_equals_hf[history-across-switch-and-window]",
+    "test_native_equals_hf[interleaved-eos-mid-block]",
+    "test_native_equals_hf[interleaved-prompt-has-marker]",
+    "test_native_equals_hf[markers-inside-block-are-text]",
+    "test_native_equals_hf[replay-eos-frame-requested-audio]",
+    "test_native_equals_hf[replay-speech-frame-continues-audio]",
+    "test_native_equals_hf[text-to-audio]",
+    "test_native_equals_hf[text-to-interleaved]",
+    "test_native_equals_hf[trace-interleaved-study]",
+    "test_native_equals_hf[trace-ref-interleaved]",
+    "test_native_equals_hf[trace-tts-fox-female]",
+    "test_native_equals_hf[trace-tts-fox-male]",
+    "test_native_equals_hf[trace-tts-museum-female]",
+    "test_native_equals_hf[trace-tts-museum-male]",
+    "test_native_equals_hf[two-blocks]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "cadence still counted after <|text_end|>",
+   "header": "audio_modes.hpp",
+   "tests": 32,
+   "failed": 3,
+   "failing": [
+    "test_native_equals_hf[text-to-interleaved]",
+    "test_native_equals_hf[trace-interleaved-study]",
+    "test_native_equals_hf[trace-ref-interleaved]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "text-only requests may sample <|audio_start|>",
+   "header": "audio_modes.hpp",
+   "tests": 32,
+   "failed": 3,
+   "failing": [
+    "test_native_equals_hf[caller-cache-text]",
+    "test_native_equals_hf[text-max-new-cut]",
+    "test_native_equals_hf[text-only]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "a replayed EOS frame does not resume text",
+   "header": "audio_modes.hpp",
+   "tests": 32,
+   "failed": 2,
+   "failing": [
+    "test_eos_frame_is_ignored_unless_the_prompt_ends_on_audio_out",
+    "test_native_equals_hf[replay-eos-frame-resumes-text]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "a replayed EOS frame resumes text even when the prompt ends elsewhere",
+   "header": "audio_modes.hpp",
+   "tests": 32,
+   "failed": 1,
+   "failing": [
+    "test_eos_frame_is_ignored_unless_the_prompt_ends_on_audio_out"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "<|audio_out|> accepted without its replayed frame",
+   "header": "audio_modes.hpp",
+   "tests": 32,
+   "failed": 1,
+   "failing": [
+    "test_audio_out_without_its_frame_is_refused"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "the caller's cache is ignored",
+   "header": "audio_modes.hpp",
+   "tests": 32,
+   "failed": 3,
+   "failing": [
+    "test_native_equals_hf[caller-cache-audio-max-cut]",
+    "test_native_equals_hf[caller-cache-interleaved]",
+    "test_native_equals_hf[caller-cache-text]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "EOS frames reported as accepted speech",
+   "header": "audio_modes.hpp",
+   "tests": 32,
+   "failed": 18,
+   "failing": [
+    "test_native_equals_hf[audio-eos-first-frame]",
+    "test_native_equals_hf[audio-prompt-has-marker-return-eos]",
+    "test_native_equals_hf[caller-cache-interleaved]",
+    "test_native_equals_hf[history-across-switch-and-window]",
+    "test_native_equals_hf[interleaved-eos-mid-block]",
+    "test_native_equals_hf[interleaved-prompt-has-marker]",
+    "test_native_equals_hf[markers-inside-block-are-text]",
+    "test_native_equals_hf[replay-eos-frame-requested-audio]",
+    "test_native_equals_hf[replay-speech-frame-continues-audio]",
+    "test_native_equals_hf[text-to-audio]",
+    "test_native_equals_hf[text-to-interleaved]",
+    "test_native_equals_hf[trace-interleaved-study]",
+    "test_native_equals_hf[trace-ref-interleaved]",
+    "test_native_equals_hf[trace-tts-fox-female]",
+    "test_native_equals_hf[trace-tts-fox-male]",
+    "test_native_equals_hf[trace-tts-museum-female]",
+    "test_native_equals_hf[trace-tts-museum-male]",
+    "test_native_equals_hf[two-blocks]"
+   ],
+   "caught": true
+  }
+ ]
+}

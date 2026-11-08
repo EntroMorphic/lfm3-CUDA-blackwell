@@ -1,0 +1,5 @@
+# The share of 64-frame windows that hold a repeated code, over every codebook of tts-trace-v2/tts-museum-male (the
+# trace behind tests/data_audio_sampling_fixture.npz); windows start every 8 frames. Thor, lfm3-omni-dev, 2026-11-08:
+#   raw = torch.load(".../tts-trace-v2/tts-museum-male/frames.pt")["raw_codes"].reshape(-1, 12).numpy()
+#   reps = [64 - len(set(raw[s:s+64, c].tolist())) for s in range(0, len(raw) - 64, 8) for c in range(12)]
+frames 153, windows 144, with a repeat 0.0972, mean repeats 0.0972
