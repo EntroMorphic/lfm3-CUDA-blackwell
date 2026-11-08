@@ -1,0 +1,120 @@
+{
+ "sky-512": {
+  "max_new_tokens": 256,
+  "capacity": 512,
+  "hf_prompt_tokens": 21
+ },
+ "sky-2560": {
+  "max_new_tokens": 256,
+  "capacity": 2560,
+  "hf_prompt_tokens": 21
+ },
+ "sky-4096": {
+  "max_new_tokens": 256,
+  "capacity": 4096,
+  "hf_prompt_tokens": 21
+ },
+ "sky-32768": {
+  "max_new_tokens": 256,
+  "capacity": 32768,
+  "hf_prompt_tokens": 21
+ },
+ "code-512": {
+  "max_new_tokens": 256,
+  "capacity": 512,
+  "hf_prompt_tokens": 30
+ },
+ "code-2560": {
+  "max_new_tokens": 256,
+  "capacity": 2560,
+  "hf_prompt_tokens": 30
+ },
+ "code-4096": {
+  "max_new_tokens": 256,
+  "capacity": 4096,
+  "hf_prompt_tokens": 30
+ },
+ "code-32768": {
+  "max_new_tokens": 256,
+  "capacity": 32768,
+  "hf_prompt_tokens": 30
+ },
+ "arith-512": {
+  "max_new_tokens": 256,
+  "capacity": 512,
+  "hf_prompt_tokens": 41
+ },
+ "arith-2560": {
+  "max_new_tokens": 256,
+  "capacity": 2560,
+  "hf_prompt_tokens": 41
+ },
+ "arith-4096": {
+  "max_new_tokens": 256,
+  "capacity": 4096,
+  "hf_prompt_tokens": 41
+ },
+ "arith-32768": {
+  "max_new_tokens": 256,
+  "capacity": 32768,
+  "hf_prompt_tokens": 41
+ },
+ "poem-512": {
+  "max_new_tokens": 256,
+  "capacity": 512,
+  "hf_prompt_tokens": 22
+ },
+ "poem-2560": {
+  "max_new_tokens": 256,
+  "capacity": 2560,
+  "hf_prompt_tokens": 22
+ },
+ "poem-4096": {
+  "max_new_tokens": 256,
+  "capacity": 4096,
+  "hf_prompt_tokens": 22
+ },
+ "poem-32768": {
+  "max_new_tokens": 256,
+  "capacity": 32768,
+  "hf_prompt_tokens": 22
+ },
+ "memory-512": {
+  "max_new_tokens": 256,
+  "capacity": 512,
+  "hf_prompt_tokens": 64
+ },
+ "memory-2560": {
+  "max_new_tokens": 256,
+  "capacity": 2560,
+  "hf_prompt_tokens": 64
+ },
+ "memory-4096": {
+  "max_new_tokens": 256,
+  "capacity": 4096,
+  "hf_prompt_tokens": 64
+ },
+ "memory-32768": {
+  "max_new_tokens": 256,
+  "capacity": 32768,
+  "hf_prompt_tokens": 64
+ },
+ "doc-2560": {
+  "max_new_tokens": 200,
+  "capacity": 2560,
+  "needle": "violet harbor 42",
+  "hf_prompt_tokens": 2055
+ },
+ "doc-4096": {
+  "max_new_tokens": 200,
+  "capacity": 4096,
+  "needle": "violet harbor 42",
+  "hf_prompt_tokens": 3555
+ },
+ "doc-32768": {
+  "max_new_tokens": 200,
+  "capacity": 32768,
+  "needle": "violet harbor 42",
+  "hf_prompt_tokens": 30054
+ }
+}

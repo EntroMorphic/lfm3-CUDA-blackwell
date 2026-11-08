@@ -65,5 +65,37 @@ below were run; the 8-head band is bit-invariant by the same construction but wa
 - **Verification of the rebuilt engine (strict parsing, comments):** 0 warnings, no binary links cuBLAS; perplexity
   NLL bitwise identical to attempt 3 at 256, 257, 4,096 and 32,768; logits of 129 traced steps identical for the
   default and 4, 8 and 16 heads per call at capacity 2,560 (the 8-head band, not run before) and 32,768 (that hash
-  equals the 4,096-prompt hash in `../g4-prefill-heads-v1/run.log`). The tier-1 golden gates were not rerun: the
-  default path's logic is unchanged and its NLL and traces are bit-identical.
+  equals the 4,096-prompt hash in `../g4-prefill-heads-v1/run.log`).
+- **Every gate against the unchanged pins, on the rebuilt binaries** (`remediation/golden/`, `TIERS=golden`; the
+  binaries' hashes equal the build's): rc=0 at every stage (forward, context, sampling, worker, grouped worker,
+  cancellation, 32K, server, native server, http-batch, http-cancellation); forward and context tier 1 "matches"
+  the pins.
+
+## Coherency (`remediation/coherency/`, `tools/lfm3_coherency.py`, `tools/thor/g4_coherency.sh`)
+
+Real chat generations through the engines' own `messages` path (native chat template, tokenizer and decode),
+greedy, native (rebuilt) and cuBLAS (`g4-final-v2-cublas`), read in full (`report.md`). Five short prompts
+(explanation, code, arithmetic, poem, a multi-turn memory question) at capacities 512, 2,560, 4,096 and 32,768 —
+one per heads-per-call band (16, 8, 4, 16 in 128-row tiles) — and one WikiText-2 document per band above 512
+(2,055, 3,555 and 30,054 prompt tokens) with a fact planted in the middle and a question that needs both.
+
+- **Every output is fluent, on topic and correct where checkable:** the arithmetic (3:40 pm + 2 h 35 min = 6:15 pm),
+  the multi-turn recall ("Your name is Priya"), the Fibonacci explanation (O(n)), the Rayleigh-scattering
+  explanation. No degeneration (repeated 4-grams 0.00–0.14, the highest being the arithmetic's own repeated times).
+- **The planted fact is recalled by both engines at 2K, 3.5K and 30K tokens**, and each summary names the
+  documents' actual subjects (Du Fu; Robert Boulter; the 1933 Treasure Coast hurricane).
+- **Each short prompt gives the identical token sequence at all four capacities, in both engines**: the
+  heads-per-call bands and tile shapes do not change the output.
+- **Mechanics:** prompt token counts equal the HF chat template's in every case; every text equals the HF
+  tokenizer's decode of the generated ids; every case stopped by itself except the code prompt, which reaches the
+  256-token limit mid-sentence in both engines.
+- **Native and cuBLAS agree token for token** on sky, arithmetic, poem and the 2K document; they diverge on code
+  (after 84 tokens), memory (19), the 3.5K document (24) and the 30K document (9), and the diverged texts are
+  equally coherent. At 30K the native summary names two of the document's subjects and cuBLAS's four, an
+  observation on a single greedy sample, not a quality measure (the §9 perplexity at 32,768 is that measure).
+- Both engines share the model's own limits: the four-line poem's last line does not rhyme, and the 2K summary
+  folds the first article's filmography into Du Fu's biography.
+- The first run (`g4-coh-v1`, not committed) produced no output for the three documents: the case generator kept
+  the perplexity windows' BOS token in the text, and the native frontend correctly refused it as a reserved
+  placeholder. Fixed in the generator (decode with special tokens skipped); the report now records a missing
+  output as a failure instead of stopping.

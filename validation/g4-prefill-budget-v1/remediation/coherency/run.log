@@ -1,0 +1,9 @@
+== sources
+  9b294b135293516186ffc192fc6669c9a912936507d38cb82be8e197b7244061  tools/lfm3_coherency.py
+  5398b22e27e2693e97cae1db53c5a7c85d55009ed2ce8b065ce53ed5a87aaf46  tools/thor/g4_coherency.sh
+  native 8d9f65f1da48354c8024476773836d715073ca3a307e584b4db5aa15e7525168  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/g4-rt3-default/liquid-lfm3
+  cublas 2dcd128ccdaf4b5375c1e299ff0536751ef9e8641ec3015ff50bfc89f4156c42  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/g4-final-v2-cublas/liquid-lfm3
+== generate 17:59:53
+== report 18:03:26
+report written: /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/g4-coh-v2/report.md
+ALL DONE 18:03:27
