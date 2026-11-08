@@ -226,6 +226,7 @@ class TreeDecoder {
       }
     }
     cuda_check(cudaMemset(active_dev.p, 1, rows));
+    lfm3_batch::pack_model(base);
   }
 
   // Slot `slot` takes the base runner's state after its prefill (KV, conv states, committed length). The prefill's

@@ -16,6 +16,7 @@
 // - Token selection runs on the device, one block per row, in index order.
 // Attention keeps scores, the online softmax and P.V in FP32 (the serial path rounds probabilities to BF16 for P.V).
 #include <lfm/gemm.cuh>
+#include <lfm/gemm_lossless.cuh>
 
 #include <climits>
 #include <cstdint>
@@ -68,6 +69,56 @@ inline float* split_workspace(size_t floats) {
   return p;
 }
 inline void linear_tiled(const lfm::gemm::Problem& p, int rows, int in, int out);
+// LFM3_LOSSLESS=1: weights packed by pack_model() are read compressed (bitwise the same outputs).
+inline bool lossless_enabled() {
+  static const bool on = [] { const char* v = std::getenv("LFM3_LOSSLESS"); return v && std::string(v) == "1"; }();
+  return on;
+}
+// Lossless tiles, measured (lfm3_lossless_check, Thor): the decode needs resident warps, so smaller, shallower tiles
+// than the plain table. Above 32 rows the plain kernel is used (not yet measured for lossless).
+using LosslessS = lfm::gemm::detail::Tile<16, 64, 64, 1, 4, 3>;  // rows <= 16: 16.5 vs 19.2 ms a step's projections
+using LosslessM = lfm::gemm::detail::Tile<32, 64, 64, 2, 4, 3>;  // rows <= 32: 17.1 vs 19.3 ms
+template <class T>
+inline void launch(const lfm::gemm::Problem& p) {
+  if (lossless_enabled() && p.m <= 32) {
+    auto& table = lfm::gemm::packed_weights();
+    auto it = table.find(p.b);
+    if (it != table.end()) {
+      if (p.m <= 16) return lfm::gemm::detail::launch_wide_lossless<LosslessS>(p, it->second, 0);
+      return lfm::gemm::detail::launch_wide_lossless<LosslessM>(p, it->second, 0);
+    }
+  }
+  lfm::gemm::detail::launch_wide<T, true>(p, 0);
+}
+// Packs every projection and the tied LM head once (LFM3_LOSSLESS=1). Returns the packed and the original bytes.
+inline std::pair<size_t, size_t> pack_model(Runner& base) {
+  static std::pair<size_t, size_t> done{0, 0};
+  if (!lossless_enabled() || done.second) return done;
+  const auto& s = base.s;
+  auto add = [&](const std::string& name, int n, int k) {
+    const bf16* w = base.w(name);
+    if (lfm::gemm::packed_weights().count(w)) return;
+    auto packed = lfm::gemm::pack(w, n, k);
+    done.second += size_t(n) * k * 2;
+    if (packed) lfm::gemm::packed_weights()[w] = packed, done.first += size_t(n) * k * 104 / 64;
+    else done.first += size_t(n) * k * 2;
+  };
+  for (int i = 0; i < s.layers; ++i) {
+    const std::string p = "layers." + std::to_string(i) + ".";
+    if (base.config.attention[i]) {
+      add(p + "self_attn.q_proj.weight", s.hidden, s.hidden); add(p + "self_attn.o_proj.weight", s.hidden, s.hidden);
+      add(p + "self_attn.k_proj.weight", s.kv_width(), s.hidden); add(p + "self_attn.v_proj.weight", s.kv_width(), s.hidden);
+      add(p + "self_attn.gate_proj.weight", s.query_heads, s.hidden);
+    } else {
+      add(p + "conv.in_proj.weight", 3 * s.hidden, s.hidden); add(p + "conv.out_proj.weight", s.hidden, s.hidden);
+    }
+    add(p + "feed_forward.w1.weight", s.mlp, s.hidden); add(p + "feed_forward.w3.weight", s.mlp, s.hidden);
+    add(p + "feed_forward.w2.weight", s.hidden, s.mlp);
+  }
+  add("embed_tokens.weight", s.vocabulary, s.hidden);
+  cuda_check(cudaDeviceSynchronize());
+  return done;
+}
 inline void linear(const bf16* x, const bf16* w, bf16* y, int rows, int in, int out, float* y32 = nullptr) {
   const int splits = k_splits(in);
   if (splits > 1) {
@@ -92,27 +143,27 @@ inline void linear_tiled(const lfm::gemm::Problem& p, int rows, int in, int out)
   // LFM3_BATCH_TILES=base: Wide32/64/128 by row count only (for paired measurement against the tuned table)
   static const bool base_tiles = [] { const char* v = std::getenv("LFM3_BATCH_TILES"); return v && std::string(v) == "base"; }();
   if (base_tiles) {
-    if (rows <= 32) launch_wide<Wide32, true>(p, 0);
-    else if (rows <= 64) launch_wide<Wide64, true>(p, 0);
-    else launch_wide<Wide128, true>(p, 0);
+    if (rows <= 32) launch<Wide32>(p);
+    else if (rows <= 64) launch<Wide64>(p);
+    else launch<Wide128>(p);
     return;
   }
   const bool head = out >= 65536, up = out >= 6144 && out < 65536, longk = in > 4096;
   if (rows <= 16) {
-    if (head || (up && out == 7680)) launch_wide<W32, true>(p, 0);
-    else if (longk || out == 2048) launch_wide<C32, true>(p, 0);
-    else launch_wide<S16, true>(p, 0);  // conv input (6144), K/V (512), gates
+    if (head || (up && out == 7680)) launch<W32>(p);
+    else if (longk || out == 2048) launch<C32>(p);
+    else launch<S16>(p);  // conv input (6144), K/V (512), gates
   } else if (rows <= 32) {
-    if (head || up) launch_wide<W32, true>(p, 0);
-    else if (longk) launch_wide<N32, true>(p, 0);
-    else if (out == 2048) launch_wide<C32, true>(p, 0);
-    else launch_wide<lfm::gemm::detail::Wide32, true>(p, 0);
+    if (head || up) launch<W32>(p);
+    else if (longk) launch<N32>(p);
+    else if (out == 2048) launch<C32>(p);
+    else launch<lfm::gemm::detail::Wide32>(p);
   } else if (rows <= 64) {
-    if (head || out == 6144) launch_wide<H64, true>(p, 0);
-    else if (up) launch_wide<A64, true>(p, 0);
-    else launch_wide<B64, true>(p, 0);
+    if (head || out == 6144) launch<H64>(p);
+    else if (up) launch<A64>(p);
+    else launch<B64>(p);
   } else {
-    launch_wide<lfm::gemm::detail::Wide128, true>(p, 0);
+    launch<lfm::gemm::detail::Wide128>(p);
   }
 }
 
@@ -358,6 +409,7 @@ class BatchDecoder {
       }
     }
     cuda_check(cudaMemset(active_dev.p, 0, batch));
+    pack_model(base);
   }
 
   size_t device_bytes() const {
