@@ -5,6 +5,7 @@
 //           "max_new_tokens": N, "temperature": T (0: greedy), "seed": S, "row_seeds": [...] (optional),
 //           "stop": [ids] (default <|im_end|>), "serial": false, "warmup": false}
 // warmup: the whole decode runs once untimed first (Thor's GPU clock ramps up over about a second).
+// "all_prompts": true decodes every prompt once, in successive batches of `batch` rows (data generation).
 // serial: every row decodes alone in a batch of one (the same code path), for the row-independence gate.
 // OUT: per row its generated ids and how it ended; prefill and decode seconds; aggregate decode tokens/s (generated
 // tokens after the first, over decode-loop time, which includes selection and host bookkeeping).
@@ -77,9 +78,11 @@ int main(int argc, char** argv) try {
   if (req.has("stop")) { stop.clear(); for (auto& x : req.at("stop").array()) stop.push_back(x.integer()); }
   const auto& prompts = req.at("prompts").array();
   if (prompts.empty()) throw std::runtime_error("no prompts");
-  std::vector<Row> rows(batch);
+  const bool all_prompts = req.has("all_prompts") && req.at("all_prompts").boolean();
+  const int count = all_prompts ? int(prompts.size()) : batch;
+  std::vector<Row> rows(count);
   const uint64_t seed = req.has("seed") ? uint64_t(req.at("seed").integer()) : 0;
-  for (int r = 0; r < batch; ++r) {
+  for (int r = 0; r < count; ++r) {
     for (auto& x : prompts[r % prompts.size()].array()) rows[r].prompt.push_back(x.integer());
     if (rows[r].prompt.empty() || int(rows[r].prompt.size()) >= capacity) throw std::runtime_error("bad prompt length");
     rows[r].seed = req.has("row_seeds") ? uint64_t(req.at("row_seeds").array().at(r).integer()) : mix(seed + r);
@@ -93,7 +96,13 @@ int main(int argc, char** argv) try {
   double prefill = 0, seconds = 0;
   int steps = 0;
   size_t bytes = lfm3_batch::BatchDecoder(runner, serial ? 1 : batch).device_bytes();
-  if (serial) {
+  if (all_prompts) {
+    for (int first = 0; first < count; first += batch) {
+      auto [t, n] = decode(runner, rows, first, std::min(batch, count - first), max_new, temperature, stop, prefill);
+      seconds += t, steps += n;
+      std::cerr << "decoded " << std::min(count, first + batch) << " / " << count << "\n";
+    }
+  } else if (serial) {
     for (int r = 0; r < batch; ++r) { auto [t, n] = decode(runner, rows, r, 1, max_new, temperature, stop, prefill); seconds += t; steps += n; }
   } else {
     auto [t, n] = decode(runner, rows, 0, batch, max_new, temperature, stop, prefill);
@@ -105,9 +114,9 @@ int main(int argc, char** argv) try {
   f << "{\"batch\":" << batch << ",\"serial\":" << (serial ? "true" : "false") << ",\"capacity\":" << capacity
     << ",\"temperature\":" << temperature << ",\"prefill_seconds\":" << prefill << ",\"decode_seconds\":" << seconds
     << ",\"decode_steps\":" << steps << ",\"generated_tokens\":" << generated
-    << ",\"decode_tokens_per_second\":" << double(generated - batch) / seconds
+    << ",\"decode_tokens_per_second\":" << double(generated - count) / seconds
     << ",\"batch_device_bytes\":" << bytes << ",\"rows\":[";
-  for (int r = 0; r < batch; ++r) {
+  for (int r = 0; r < count; ++r) {
     f << (r ? "," : "") << "{\"seed\":" << rows[r].seed << ",\"end\":\"" << rows[r].end << "\",\"generated_ids\":";
     print_ids(f, rows[r].generated);
     f << "}";
@@ -115,7 +124,7 @@ int main(int argc, char** argv) try {
   f << "]}\n";
   if (!f) throw std::runtime_error("cannot write output");
   std::cout << "{\"batch\":" << batch << ",\"serial\":" << serial << ",\"generated\":" << generated
-            << ",\"decode_seconds\":" << seconds << ",\"decode_tok_s\":" << double(generated - batch) / seconds
+            << ",\"decode_seconds\":" << seconds << ",\"decode_tok_s\":" << double(generated - count) / seconds
             << ",\"prefill_seconds\":" << prefill << "}\n";
   return 0;
 } catch (const std::exception& e) {

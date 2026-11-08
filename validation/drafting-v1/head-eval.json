@@ -1,0 +1,3197 @@
+{
+ "summary": {
+  "8": {
+   "tokens": 25800,
+   "passes": 15111,
+   "tokens_per_pass": 1.7073654953345245
+  },
+  "16": {
+   "tokens": 25800,
+   "passes": 14356,
+   "tokens_per_pass": 1.797157982724993
+  },
+  "32": {
+   "tokens": 25800,
+   "passes": 13543,
+   "tokens_per_pass": 1.9050431957468803
+  },
+  "64": {
+   "tokens": 25800,
+   "passes": 13031,
+   "tokens_per_pass": 1.9798940986877447
+  }
+ },
+ "samples": 48,
+ "width": 4,
+ "max_depth": 8,
+ "per_sample": [
+  {
+   "8": {
+    "passes": 185,
+    "tokens": 276,
+    "tokens_per_pass": 1.491891891891892,
+    "accepted_depth_histogram": [
+     112,
+     55,
+     18,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 176,
+    "tokens": 276,
+    "tokens_per_pass": 1.5681818181818181,
+    "accepted_depth_histogram": [
+     105,
+     42,
+     29,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 173,
+    "tokens": 276,
+    "tokens_per_pass": 1.5953757225433527,
+    "accepted_depth_histogram": [
+     105,
+     40,
+     21,
+     7,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 170,
+    "tokens": 276,
+    "tokens_per_pass": 1.6235294117647059,
+    "accepted_depth_histogram": [
+     107,
+     36,
+     15,
+     8,
+     4,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 447,
+    "tokens": 768,
+    "tokens_per_pass": 1.7181208053691275,
+    "accepted_depth_histogram": [
+     197,
+     180,
+     70,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 424,
+    "tokens": 768,
+    "tokens_per_pass": 1.8113207547169812,
+    "accepted_depth_histogram": [
+     188,
+     129,
+     107,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 409,
+    "tokens": 768,
+    "tokens_per_pass": 1.8777506112469438,
+    "accepted_depth_histogram": [
+     189,
+     111,
+     80,
+     29,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 399,
+    "tokens": 768,
+    "tokens_per_pass": 1.9248120300751879,
+    "accepted_depth_histogram": [
+     184,
+     111,
+     65,
+     32,
+     4,
+     3,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 382,
+    "tokens": 768,
+    "tokens_per_pass": 2.0104712041884816,
+    "accepted_depth_histogram": [
+     121,
+     136,
+     125,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 345,
+    "tokens": 768,
+    "tokens_per_pass": 2.226086956521739,
+    "accepted_depth_histogram": [
+     99,
+     69,
+     177,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 310,
+    "tokens": 768,
+    "tokens_per_pass": 2.47741935483871,
+    "accepted_depth_histogram": [
+     96,
+     55,
+     74,
+     85,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 287,
+    "tokens": 768,
+    "tokens_per_pass": 2.6759581881533103,
+    "accepted_depth_histogram": [
+     91,
+     58,
+     54,
+     41,
+     23,
+     20,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 377,
+    "tokens": 609,
+    "tokens_per_pass": 1.6153846153846154,
+    "accepted_depth_histogram": [
+     192,
+     138,
+     47,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 358,
+    "tokens": 609,
+    "tokens_per_pass": 1.7011173184357542,
+    "accepted_depth_histogram": [
+     177,
+     111,
+     70,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 345,
+    "tokens": 609,
+    "tokens_per_pass": 1.7652173913043478,
+    "accepted_depth_histogram": [
+     179,
+     93,
+     48,
+     25,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 333,
+    "tokens": 609,
+    "tokens_per_pass": 1.8288288288288288,
+    "accepted_depth_histogram": [
+     171,
+     89,
+     43,
+     21,
+     7,
+     2,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 450,
+    "tokens": 768,
+    "tokens_per_pass": 1.7066666666666668,
+    "accepted_depth_histogram": [
+     199,
+     185,
+     66,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 429,
+    "tokens": 768,
+    "tokens_per_pass": 1.7902097902097902,
+    "accepted_depth_histogram": [
+     188,
+     144,
+     97,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 409,
+    "tokens": 768,
+    "tokens_per_pass": 1.8777506112469438,
+    "accepted_depth_histogram": [
+     180,
+     131,
+     67,
+     31,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 399,
+    "tokens": 768,
+    "tokens_per_pass": 1.9248120300751879,
+    "accepted_depth_histogram": [
+     175,
+     131,
+     53,
+     30,
+     9,
+     1,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 121,
+    "tokens": 190,
+    "tokens_per_pass": 1.5702479338842976,
+    "accepted_depth_histogram": [
+     70,
+     33,
+     18,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 115,
+    "tokens": 190,
+    "tokens_per_pass": 1.6521739130434783,
+    "accepted_depth_histogram": [
+     65,
+     25,
+     25,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 108,
+    "tokens": 190,
+    "tokens_per_pass": 1.7592592592592593,
+    "accepted_depth_histogram": [
+     61,
+     21,
+     18,
+     8,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 106,
+    "tokens": 190,
+    "tokens_per_pass": 1.7924528301886793,
+    "accepted_depth_histogram": [
+     62,
+     20,
+     13,
+     7,
+     3,
+     1,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 390,
+    "tokens": 665,
+    "tokens_per_pass": 1.705128205128205,
+    "accepted_depth_histogram": [
+     185,
+     135,
+     70,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 377,
+    "tokens": 665,
+    "tokens_per_pass": 1.7639257294429709,
+    "accepted_depth_histogram": [
+     182,
+     102,
+     93,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 345,
+    "tokens": 665,
+    "tokens_per_pass": 1.9275362318840579,
+    "accepted_depth_histogram": [
+     164,
+     84,
+     56,
+     41,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 334,
+    "tokens": 665,
+    "tokens_per_pass": 1.9910179640718564,
+    "accepted_depth_histogram": [
+     160,
+     83,
+     46,
+     30,
+     10,
+     5,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 442,
+    "tokens": 768,
+    "tokens_per_pass": 1.737556561085973,
+    "accepted_depth_histogram": [
+     190,
+     178,
+     74,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 421,
+    "tokens": 768,
+    "tokens_per_pass": 1.824228028503563,
+    "accepted_depth_histogram": [
+     188,
+     119,
+     114,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 394,
+    "tokens": 768,
+    "tokens_per_pass": 1.9492385786802031,
+    "accepted_depth_histogram": [
+     183,
+     97,
+     66,
+     48,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 370,
+    "tokens": 768,
+    "tokens_per_pass": 2.075675675675676,
+    "accepted_depth_histogram": [
+     169,
+     92,
+     52,
+     34,
+     15,
+     8,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 8,
+    "tokens": 11,
+    "tokens_per_pass": 1.375,
+    "accepted_depth_histogram": [
+     6,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 8,
+    "tokens": 11,
+    "tokens_per_pass": 1.375,
+    "accepted_depth_histogram": [
+     6,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 8,
+    "tokens": 11,
+    "tokens_per_pass": 1.375,
+    "accepted_depth_histogram": [
+     6,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 8,
+    "tokens": 11,
+    "tokens_per_pass": 1.375,
+    "accepted_depth_histogram": [
+     6,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 433,
+    "tokens": 768,
+    "tokens_per_pass": 1.7736720554272518,
+    "accepted_depth_histogram": [
+     175,
+     181,
+     77,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 412,
+    "tokens": 768,
+    "tokens_per_pass": 1.8640776699029127,
+    "accepted_depth_histogram": [
+     170,
+     128,
+     114,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 388,
+    "tokens": 768,
+    "tokens_per_pass": 1.9793814432989691,
+    "accepted_depth_histogram": [
+     164,
+     112,
+     68,
+     44,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 371,
+    "tokens": 768,
+    "tokens_per_pass": 2.070080862533693,
+    "accepted_depth_histogram": [
+     162,
+     104,
+     46,
+     44,
+     7,
+     8,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 459,
+    "tokens": 768,
+    "tokens_per_pass": 1.673202614379085,
+    "accepted_depth_histogram": [
+     227,
+     156,
+     76,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 443,
+    "tokens": 768,
+    "tokens_per_pass": 1.7336343115124153,
+    "accepted_depth_histogram": [
+     221,
+     120,
+     102,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 419,
+    "tokens": 768,
+    "tokens_per_pass": 1.8329355608591886,
+    "accepted_depth_histogram": [
+     218,
+     91,
+     73,
+     37,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 400,
+    "tokens": 768,
+    "tokens_per_pass": 1.92,
+    "accepted_depth_histogram": [
+     208,
+     87,
+     59,
+     26,
+     16,
+     4,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 307,
+    "tokens": 613,
+    "tokens_per_pass": 1.996742671009772,
+    "accepted_depth_histogram": [
+     89,
+     130,
+     88,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 285,
+    "tokens": 613,
+    "tokens_per_pass": 2.150877192982456,
+    "accepted_depth_histogram": [
+     84,
+     74,
+     127,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 263,
+    "tokens": 613,
+    "tokens_per_pass": 2.3307984790874525,
+    "accepted_depth_histogram": [
+     90,
+     53,
+     63,
+     57,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 244,
+    "tokens": 613,
+    "tokens_per_pass": 2.512295081967213,
+    "accepted_depth_histogram": [
+     84,
+     55,
+     35,
+     45,
+     16,
+     9,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 397,
+    "tokens": 768,
+    "tokens_per_pass": 1.9345088161209067,
+    "accepted_depth_histogram": [
+     125,
+     173,
+     99,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 371,
+    "tokens": 768,
+    "tokens_per_pass": 2.070080862533693,
+    "accepted_depth_histogram": [
+     125,
+     95,
+     151,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 341,
+    "tokens": 768,
+    "tokens_per_pass": 2.2521994134897363,
+    "accepted_depth_histogram": [
+     116,
+     75,
+     98,
+     52,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 322,
+    "tokens": 768,
+    "tokens_per_pass": 2.3850931677018634,
+    "accepted_depth_histogram": [
+     105,
+     75,
+     76,
+     47,
+     17,
+     2,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 422,
+    "tokens": 768,
+    "tokens_per_pass": 1.819905213270142,
+    "accepted_depth_histogram": [
+     168,
+     163,
+     91,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 401,
+    "tokens": 768,
+    "tokens_per_pass": 1.915211970074813,
+    "accepted_depth_histogram": [
+     162,
+     112,
+     127,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 383,
+    "tokens": 768,
+    "tokens_per_pass": 2.0052219321148823,
+    "accepted_depth_histogram": [
+     166,
+     99,
+     69,
+     49,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 360,
+    "tokens": 768,
+    "tokens_per_pass": 2.1333333333333333,
+    "accepted_depth_histogram": [
+     151,
+     94,
+     55,
+     39,
+     19,
+     2,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 496,
+    "tokens": 768,
+    "tokens_per_pass": 1.5483870967741935,
+    "accepted_depth_histogram": [
+     283,
+     155,
+     58,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 480,
+    "tokens": 768,
+    "tokens_per_pass": 1.6,
+    "accepted_depth_histogram": [
+     281,
+     111,
+     88,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 456,
+    "tokens": 768,
+    "tokens_per_pass": 1.6842105263157894,
+    "accepted_depth_histogram": [
+     269,
+     96,
+     58,
+     33,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 445,
+    "tokens": 768,
+    "tokens_per_pass": 1.7258426966292135,
+    "accepted_depth_histogram": [
+     261,
+     96,
+     51,
+     26,
+     9,
+     2,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 44,
+    "tokens": 69,
+    "tokens_per_pass": 1.5681818181818181,
+    "accepted_depth_histogram": [
+     24,
+     15,
+     5,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 43,
+    "tokens": 69,
+    "tokens_per_pass": 1.6046511627906976,
+    "accepted_depth_histogram": [
+     25,
+     10,
+     8,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 43,
+    "tokens": 69,
+    "tokens_per_pass": 1.6046511627906976,
+    "accepted_depth_histogram": [
+     25,
+     12,
+     4,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 43,
+    "tokens": 69,
+    "tokens_per_pass": 1.6046511627906976,
+    "accepted_depth_histogram": [
+     25,
+     12,
+     4,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 196,
+    "tokens": 315,
+    "tokens_per_pass": 1.6071428571428572,
+    "accepted_depth_histogram": [
+     103,
+     67,
+     26,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 184,
+    "tokens": 315,
+    "tokens_per_pass": 1.7119565217391304,
+    "accepted_depth_histogram": [
+     95,
+     48,
+     41,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 178,
+    "tokens": 315,
+    "tokens_per_pass": 1.7696629213483146,
+    "accepted_depth_histogram": [
+     93,
+     47,
+     24,
+     14,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 176,
+    "tokens": 315,
+    "tokens_per_pass": 1.7897727272727273,
+    "accepted_depth_histogram": [
+     96,
+     48,
+     14,
+     12,
+     3,
+     3,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 475,
+    "tokens": 768,
+    "tokens_per_pass": 1.6168421052631579,
+    "accepted_depth_histogram": [
+     245,
+     168,
+     62,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 459,
+    "tokens": 768,
+    "tokens_per_pass": 1.673202614379085,
+    "accepted_depth_histogram": [
+     242,
+     126,
+     91,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 437,
+    "tokens": 768,
+    "tokens_per_pass": 1.757437070938215,
+    "accepted_depth_histogram": [
+     228,
+     116,
+     65,
+     28,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 429,
+    "tokens": 768,
+    "tokens_per_pass": 1.7902097902097902,
+    "accepted_depth_histogram": [
+     223,
+     114,
+     56,
+     32,
+     4,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 405,
+    "tokens": 768,
+    "tokens_per_pass": 1.8962962962962964,
+    "accepted_depth_histogram": [
+     142,
+     163,
+     100,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 377,
+    "tokens": 768,
+    "tokens_per_pass": 2.037135278514589,
+    "accepted_depth_histogram": [
+     127,
+     110,
+     140,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 344,
+    "tokens": 768,
+    "tokens_per_pass": 2.2325581395348837,
+    "accepted_depth_histogram": [
+     125,
+     81,
+     71,
+     67,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 323,
+    "tokens": 768,
+    "tokens_per_pass": 2.3777089783281733,
+    "accepted_depth_histogram": [
+     122,
+     71,
+     56,
+     45,
+     18,
+     11,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 89,
+    "tokens": 134,
+    "tokens_per_pass": 1.5056179775280898,
+    "accepted_depth_histogram": [
+     55,
+     23,
+     11,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 86,
+    "tokens": 134,
+    "tokens_per_pass": 1.558139534883721,
+    "accepted_depth_histogram": [
+     54,
+     16,
+     16,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 83,
+    "tokens": 134,
+    "tokens_per_pass": 1.6144578313253013,
+    "accepted_depth_histogram": [
+     52,
+     15,
+     12,
+     4,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 83,
+    "tokens": 134,
+    "tokens_per_pass": 1.6144578313253013,
+    "accepted_depth_histogram": [
+     52,
+     15,
+     12,
+     4,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 431,
+    "tokens": 768,
+    "tokens_per_pass": 1.7819025522041763,
+    "accepted_depth_histogram": [
+     186,
+     154,
+     91,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 411,
+    "tokens": 768,
+    "tokens_per_pass": 1.8686131386861313,
+    "accepted_depth_histogram": [
+     178,
+     110,
+     123,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 383,
+    "tokens": 768,
+    "tokens_per_pass": 2.0052219321148823,
+    "accepted_depth_histogram": [
+     176,
+     88,
+     61,
+     58,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 356,
+    "tokens": 768,
+    "tokens_per_pass": 2.157303370786517,
+    "accepted_depth_histogram": [
+     163,
+     79,
+     49,
+     34,
+     23,
+     8,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 440,
+    "tokens": 696,
+    "tokens_per_pass": 1.5818181818181818,
+    "accepted_depth_histogram": [
+     239,
+     147,
+     54,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 417,
+    "tokens": 696,
+    "tokens_per_pass": 1.669064748201439,
+    "accepted_depth_histogram": [
+     222,
+     112,
+     83,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 401,
+    "tokens": 696,
+    "tokens_per_pass": 1.7356608478802993,
+    "accepted_depth_histogram": [
+     221,
+     95,
+     56,
+     29,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 395,
+    "tokens": 696,
+    "tokens_per_pass": 1.7620253164556963,
+    "accepted_depth_histogram": [
+     223,
+     91,
+     44,
+     28,
+     8,
+     1,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 12,
+    "tokens": 16,
+    "tokens_per_pass": 1.3333333333333333,
+    "accepted_depth_histogram": [
+     9,
+     2,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 12,
+    "tokens": 16,
+    "tokens_per_pass": 1.3333333333333333,
+    "accepted_depth_histogram": [
+     9,
+     2,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 12,
+    "tokens": 16,
+    "tokens_per_pass": 1.3333333333333333,
+    "accepted_depth_histogram": [
+     9,
+     2,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 12,
+    "tokens": 16,
+    "tokens_per_pass": 1.3333333333333333,
+    "accepted_depth_histogram": [
+     9,
+     2,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 423,
+    "tokens": 768,
+    "tokens_per_pass": 1.8156028368794326,
+    "accepted_depth_histogram": [
+     182,
+     137,
+     104,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 401,
+    "tokens": 768,
+    "tokens_per_pass": 1.915211970074813,
+    "accepted_depth_histogram": [
+     174,
+     87,
+     140,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 362,
+    "tokens": 768,
+    "tokens_per_pass": 2.1215469613259668,
+    "accepted_depth_histogram": [
+     154,
+     74,
+     70,
+     64,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 343,
+    "tokens": 768,
+    "tokens_per_pass": 2.239067055393586,
+    "accepted_depth_histogram": [
+     150,
+     71,
+     57,
+     34,
+     17,
+     14,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 380,
+    "tokens": 768,
+    "tokens_per_pass": 2.0210526315789474,
+    "accepted_depth_histogram": [
+     106,
+     161,
+     113,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 351,
+    "tokens": 768,
+    "tokens_per_pass": 2.1880341880341883,
+    "accepted_depth_histogram": [
+     97,
+     92,
+     162,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 312,
+    "tokens": 768,
+    "tokens_per_pass": 2.4615384615384617,
+    "accepted_depth_histogram": [
+     90,
+     70,
+     71,
+     81,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 288,
+    "tokens": 768,
+    "tokens_per_pass": 2.6666666666666665,
+    "accepted_depth_histogram": [
+     89,
+     67,
+     47,
+     40,
+     27,
+     18,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 449,
+    "tokens": 759,
+    "tokens_per_pass": 1.6904231625835189,
+    "accepted_depth_histogram": [
+     216,
+     157,
+     76,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 431,
+    "tokens": 759,
+    "tokens_per_pass": 1.7610208816705337,
+    "accepted_depth_histogram": [
+     213,
+     109,
+     109,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 397,
+    "tokens": 759,
+    "tokens_per_pass": 1.9118387909319898,
+    "accepted_depth_histogram": [
+     195,
+     84,
+     76,
+     42,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 387,
+    "tokens": 759,
+    "tokens_per_pass": 1.9612403100775193,
+    "accepted_depth_histogram": [
+     193,
+     83,
+     62,
+     34,
+     12,
+     3,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 476,
+    "tokens": 768,
+    "tokens_per_pass": 1.6134453781512605,
+    "accepted_depth_histogram": [
+     248,
+     164,
+     64,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 458,
+    "tokens": 768,
+    "tokens_per_pass": 1.6768558951965065,
+    "accepted_depth_histogram": [
+     240,
+     126,
+     92,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 440,
+    "tokens": 768,
+    "tokens_per_pass": 1.7454545454545454,
+    "accepted_depth_histogram": [
+     234,
+     112,
+     66,
+     28,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 422,
+    "tokens": 768,
+    "tokens_per_pass": 1.819905213270142,
+    "accepted_depth_histogram": [
+     222,
+     113,
+     51,
+     18,
+     13,
+     5,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 32,
+    "tokens": 51,
+    "tokens_per_pass": 1.59375,
+    "accepted_depth_histogram": [
+     17,
+     12,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 32,
+    "tokens": 51,
+    "tokens_per_pass": 1.59375,
+    "accepted_depth_histogram": [
+     17,
+     11,
+     4,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 32,
+    "tokens": 51,
+    "tokens_per_pass": 1.59375,
+    "accepted_depth_histogram": [
+     18,
+     10,
+     3,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 31,
+    "tokens": 51,
+    "tokens_per_pass": 1.6451612903225807,
+    "accepted_depth_histogram": [
+     17,
+     10,
+     2,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 471,
+    "tokens": 768,
+    "tokens_per_pass": 1.6305732484076434,
+    "accepted_depth_histogram": [
+     229,
+     188,
+     54,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 448,
+    "tokens": 768,
+    "tokens_per_pass": 1.7142857142857142,
+    "accepted_depth_histogram": [
+     214,
+     149,
+     85,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 425,
+    "tokens": 768,
+    "tokens_per_pass": 1.8070588235294118,
+    "accepted_depth_histogram": [
+     203,
+     125,
+     74,
+     23,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 415,
+    "tokens": 768,
+    "tokens_per_pass": 1.8506024096385543,
+    "accepted_depth_histogram": [
+     200,
+     117,
+     66,
+     26,
+     5,
+     1,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 107,
+    "tokens": 183,
+    "tokens_per_pass": 1.7102803738317758,
+    "accepted_depth_histogram": [
+     50,
+     39,
+     18,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 102,
+    "tokens": 183,
+    "tokens_per_pass": 1.7941176470588236,
+    "accepted_depth_histogram": [
+     49,
+     25,
+     28,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 96,
+    "tokens": 183,
+    "tokens_per_pass": 1.90625,
+    "accepted_depth_histogram": [
+     47,
+     22,
+     16,
+     11,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 91,
+    "tokens": 183,
+    "tokens_per_pass": 2.010989010989011,
+    "accepted_depth_histogram": [
+     45,
+     20,
+     11,
+     10,
+     5,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 55,
+    "tokens": 90,
+    "tokens_per_pass": 1.6363636363636365,
+    "accepted_depth_histogram": [
+     27,
+     22,
+     6,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 53,
+    "tokens": 90,
+    "tokens_per_pass": 1.6981132075471699,
+    "accepted_depth_histogram": [
+     25,
+     19,
+     9,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 52,
+    "tokens": 90,
+    "tokens_per_pass": 1.7307692307692308,
+    "accepted_depth_histogram": [
+     24,
+     19,
+     8,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 52,
+    "tokens": 90,
+    "tokens_per_pass": 1.7307692307692308,
+    "accepted_depth_histogram": [
+     24,
+     19,
+     8,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 87,
+    "tokens": 117,
+    "tokens_per_pass": 1.3448275862068966,
+    "accepted_depth_histogram": [
+     60,
+     24,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 83,
+    "tokens": 117,
+    "tokens_per_pass": 1.4096385542168675,
+    "accepted_depth_histogram": [
+     57,
+     18,
+     8,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 81,
+    "tokens": 117,
+    "tokens_per_pass": 1.4444444444444444,
+    "accepted_depth_histogram": [
+     55,
+     17,
+     8,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 80,
+    "tokens": 117,
+    "tokens_per_pass": 1.4625,
+    "accepted_depth_histogram": [
+     54,
+     17,
+     7,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 66,
+    "tokens": 106,
+    "tokens_per_pass": 1.606060606060606,
+    "accepted_depth_histogram": [
+     31,
+     30,
+     5,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 62,
+    "tokens": 106,
+    "tokens_per_pass": 1.7096774193548387,
+    "accepted_depth_histogram": [
+     27,
+     26,
+     9,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 61,
+    "tokens": 106,
+    "tokens_per_pass": 1.7377049180327868,
+    "accepted_depth_histogram": [
+     26,
+     25,
+     10,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 61,
+    "tokens": 106,
+    "tokens_per_pass": 1.7377049180327868,
+    "accepted_depth_histogram": [
+     27,
+     24,
+     9,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 368,
+    "tokens": 768,
+    "tokens_per_pass": 2.0869565217391304,
+    "accepted_depth_histogram": [
+     97,
+     142,
+     129,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 345,
+    "tokens": 768,
+    "tokens_per_pass": 2.226086956521739,
+    "accepted_depth_histogram": [
+     94,
+     79,
+     172,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 317,
+    "tokens": 768,
+    "tokens_per_pass": 2.4227129337539433,
+    "accepted_depth_histogram": [
+     97,
+     54,
+     101,
+     65,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 294,
+    "tokens": 768,
+    "tokens_per_pass": 2.6122448979591835,
+    "accepted_depth_histogram": [
+     93,
+     45,
+     81,
+     42,
+     24,
+     9,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 423,
+    "tokens": 768,
+    "tokens_per_pass": 1.8156028368794326,
+    "accepted_depth_histogram": [
+     158,
+     185,
+     80,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 394,
+    "tokens": 768,
+    "tokens_per_pass": 1.9492385786802031,
+    "accepted_depth_histogram": [
+     150,
+     114,
+     130,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 367,
+    "tokens": 768,
+    "tokens_per_pass": 2.092643051771117,
+    "accepted_depth_histogram": [
+     138,
+     100,
+     86,
+     43,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 350,
+    "tokens": 768,
+    "tokens_per_pass": 2.1942857142857144,
+    "accepted_depth_histogram": [
+     128,
+     98,
+     71,
+     39,
+     9,
+     5,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 72,
+    "tokens": 113,
+    "tokens_per_pass": 1.5694444444444444,
+    "accepted_depth_histogram": [
+     41,
+     21,
+     10,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 70,
+    "tokens": 113,
+    "tokens_per_pass": 1.6142857142857143,
+    "accepted_depth_histogram": [
+     41,
+     15,
+     14,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 67,
+    "tokens": 113,
+    "tokens_per_pass": 1.6865671641791045,
+    "accepted_depth_histogram": [
+     40,
+     11,
+     13,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 65,
+    "tokens": 113,
+    "tokens_per_pass": 1.7384615384615385,
+    "accepted_depth_histogram": [
+     38,
+     13,
+     8,
+     5,
+     1,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 455,
+    "tokens": 768,
+    "tokens_per_pass": 1.687912087912088,
+    "accepted_depth_histogram": [
+     200,
+     197,
+     58,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 430,
+    "tokens": 768,
+    "tokens_per_pass": 1.786046511627907,
+    "accepted_depth_histogram": [
+     190,
+     142,
+     98,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 413,
+    "tokens": 768,
+    "tokens_per_pass": 1.8595641646489105,
+    "accepted_depth_histogram": [
+     186,
+     122,
+     82,
+     23,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 402,
+    "tokens": 768,
+    "tokens_per_pass": 1.9104477611940298,
+    "accepted_depth_histogram": [
+     179,
+     121,
+     67,
+     29,
+     6,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 517,
+    "tokens": 768,
+    "tokens_per_pass": 1.4854932301740813,
+    "accepted_depth_histogram": [
+     306,
+     171,
+     40,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 499,
+    "tokens": 768,
+    "tokens_per_pass": 1.5390781563126252,
+    "accepted_depth_histogram": [
+     296,
+     137,
+     66,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 479,
+    "tokens": 768,
+    "tokens_per_pass": 1.6033402922755742,
+    "accepted_depth_histogram": [
+     279,
+     127,
+     57,
+     16,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 472,
+    "tokens": 768,
+    "tokens_per_pass": 1.6271186440677967,
+    "accepted_depth_histogram": [
+     281,
+     120,
+     42,
+     26,
+     1,
+     2,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 467,
+    "tokens": 768,
+    "tokens_per_pass": 1.6445396145610278,
+    "accepted_depth_histogram": [
+     232,
+     170,
+     65,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 449,
+    "tokens": 768,
+    "tokens_per_pass": 1.710467706013363,
+    "accepted_depth_histogram": [
+     225,
+     130,
+     94,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 422,
+    "tokens": 768,
+    "tokens_per_pass": 1.819905213270142,
+    "accepted_depth_histogram": [
+     215,
+     107,
+     62,
+     38,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 408,
+    "tokens": 768,
+    "tokens_per_pass": 1.8823529411764706,
+    "accepted_depth_histogram": [
+     207,
+     101,
+     52,
+     39,
+     8,
+     1,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 421,
+    "tokens": 768,
+    "tokens_per_pass": 1.824228028503563,
+    "accepted_depth_histogram": [
+     158,
+     180,
+     83,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 392,
+    "tokens": 768,
+    "tokens_per_pass": 1.9591836734693877,
+    "accepted_depth_histogram": [
+     146,
+     116,
+     130,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 369,
+    "tokens": 768,
+    "tokens_per_pass": 2.0813008130081303,
+    "accepted_depth_histogram": [
+     134,
+     112,
+     82,
+     41,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 350,
+    "tokens": 768,
+    "tokens_per_pass": 2.1942857142857144,
+    "accepted_depth_histogram": [
+     129,
+     104,
+     59,
+     39,
+     17,
+     2,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 515,
+    "tokens": 768,
+    "tokens_per_pass": 1.4912621359223301,
+    "accepted_depth_histogram": [
+     315,
+     148,
+     52,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 491,
+    "tokens": 768,
+    "tokens_per_pass": 1.5641547861507128,
+    "accepted_depth_histogram": [
+     301,
+     104,
+     86,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 466,
+    "tokens": 768,
+    "tokens_per_pass": 1.648068669527897,
+    "accepted_depth_histogram": [
+     287,
+     88,
+     60,
+     31,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 458,
+    "tokens": 768,
+    "tokens_per_pass": 1.6768558951965065,
+    "accepted_depth_histogram": [
+     283,
+     89,
+     50,
+     27,
+     6,
+     3,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 366,
+    "tokens": 626,
+    "tokens_per_pass": 1.710382513661202,
+    "accepted_depth_histogram": [
+     162,
+     148,
+     56,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 347,
+    "tokens": 626,
+    "tokens_per_pass": 1.8040345821325647,
+    "accepted_depth_histogram": [
+     154,
+     107,
+     86,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 331,
+    "tokens": 626,
+    "tokens_per_pass": 1.891238670694864,
+    "accepted_depth_histogram": [
+     156,
+     90,
+     50,
+     35,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 313,
+    "tokens": 626,
+    "tokens_per_pass": 2.0,
+    "accepted_depth_histogram": [
+     145,
+     87,
+     39,
+     25,
+     12,
+     5,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 34,
+    "tokens": 52,
+    "tokens_per_pass": 1.5294117647058822,
+    "accepted_depth_histogram": [
+     19,
+     12,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 33,
+    "tokens": 52,
+    "tokens_per_pass": 1.5757575757575757,
+    "accepted_depth_histogram": [
+     18,
+     11,
+     4,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 33,
+    "tokens": 52,
+    "tokens_per_pass": 1.5757575757575757,
+    "accepted_depth_histogram": [
+     18,
+     11,
+     4,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 33,
+    "tokens": 52,
+    "tokens_per_pass": 1.5757575757575757,
+    "accepted_depth_histogram": [
+     18,
+     11,
+     4,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 463,
+    "tokens": 768,
+    "tokens_per_pass": 1.6587473002159827,
+    "accepted_depth_histogram": [
+     228,
+     166,
+     69,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 446,
+    "tokens": 768,
+    "tokens_per_pass": 1.7219730941704037,
+    "accepted_depth_histogram": [
+     225,
+     121,
+     100,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 420,
+    "tokens": 768,
+    "tokens_per_pass": 1.8285714285714285,
+    "accepted_depth_histogram": [
+     215,
+     96,
+     75,
+     34,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 404,
+    "tokens": 768,
+    "tokens_per_pass": 1.900990099009901,
+    "accepted_depth_histogram": [
+     205,
+     95,
+     56,
+     36,
+     11,
+     1,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 444,
+    "tokens": 674,
+    "tokens_per_pass": 1.518018018018018,
+    "accepted_depth_histogram": [
+     257,
+     145,
+     42,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 415,
+    "tokens": 674,
+    "tokens_per_pass": 1.6240963855421686,
+    "accepted_depth_histogram": [
+     234,
+     103,
+     78,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 401,
+    "tokens": 674,
+    "tokens_per_pass": 1.680798004987531,
+    "accepted_depth_histogram": [
+     227,
+     92,
+     65,
+     17,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 393,
+    "tokens": 674,
+    "tokens_per_pass": 1.7150127226463103,
+    "accepted_depth_histogram": [
+     223,
+     88,
+     57,
+     21,
+     4,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 96,
+    "tokens": 140,
+    "tokens_per_pass": 1.4583333333333333,
+    "accepted_depth_histogram": [
+     57,
+     34,
+     5,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 94,
+    "tokens": 140,
+    "tokens_per_pass": 1.4893617021276595,
+    "accepted_depth_histogram": [
+     56,
+     30,
+     8,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 93,
+    "tokens": 140,
+    "tokens_per_pass": 1.5053763440860215,
+    "accepted_depth_histogram": [
+     56,
+     29,
+     6,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 93,
+    "tokens": 140,
+    "tokens_per_pass": 1.5053763440860215,
+    "accepted_depth_histogram": [
+     56,
+     29,
+     6,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 461,
+    "tokens": 768,
+    "tokens_per_pass": 1.665943600867679,
+    "accepted_depth_histogram": [
+     229,
+     158,
+     74,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 443,
+    "tokens": 768,
+    "tokens_per_pass": 1.7336343115124153,
+    "accepted_depth_histogram": [
+     219,
+     124,
+     100,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 422,
+    "tokens": 768,
+    "tokens_per_pass": 1.819905213270142,
+    "accepted_depth_histogram": [
+     210,
+     118,
+     55,
+     39,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 411,
+    "tokens": 768,
+    "tokens_per_pass": 1.8686131386861313,
+    "accepted_depth_histogram": [
+     213,
+     111,
+     39,
+     30,
+     13,
+     5,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "8": {
+    "passes": 55,
+    "tokens": 95,
+    "tokens_per_pass": 1.7272727272727273,
+    "accepted_depth_histogram": [
+     25,
+     21,
+     9,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "16": {
+    "passes": 53,
+    "tokens": 95,
+    "tokens_per_pass": 1.7924528301886793,
+    "accepted_depth_histogram": [
+     23,
+     19,
+     11,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "32": {
+    "passes": 53,
+    "tokens": 95,
+    "tokens_per_pass": 1.7924528301886793,
+    "accepted_depth_histogram": [
+     26,
+     16,
+     8,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "64": {
+    "passes": 50,
+    "tokens": 95,
+    "tokens_per_pass": 1.9,
+    "accepted_depth_histogram": [
+     23,
+     16,
+     6,
+     4,
+     1,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  }
+ ]
+}
