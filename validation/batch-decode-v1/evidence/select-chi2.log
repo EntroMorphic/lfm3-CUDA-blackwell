@@ -1,0 +1,5 @@
+case 0: draws 204800, bins 34, chi2 p = 0.620, zero-probability draws 0, entropy 2.27 nats
+case 1: draws 204800, bins 1194, chi2 p = 0.382, zero-probability draws 0, entropy 5.65 nats
+case 2: draws 204800, bins 13, chi2 p = 0.203, zero-probability draws 0, entropy 1.19 nats
+case 3: draws 204800, bins 8, chi2 p = 0.134, zero-probability draws 0, entropy 0.68 nats
+PASS

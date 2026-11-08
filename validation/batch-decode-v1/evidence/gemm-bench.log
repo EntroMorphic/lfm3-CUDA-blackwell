@@ -1,0 +1,18 @@
+model projection weights 3.457 GB per step, all distinct
+M    kernel    step ms       GB/s   GEMM tok/s    layers ms    head ms
+1    thin       14.350      240.9           70       12.391      1.959
+1    wide       14.214      243.2           70       12.257      1.957
+2    thin       15.973      216.4          125       13.997      1.976
+2    wide       14.290      241.9          140       12.290      2.000
+4    thin       14.038      246.2          285       12.081      1.958
+4    wide       14.518      238.1          276       12.557      1.961
+8    thin       17.041      202.9          469       14.715      2.326
+8    wide       14.451      239.2          554       12.481      1.970
+16   wide       14.591      236.9         1097       12.618      1.973
+32   wide       14.668      235.7         2182       12.674      1.994
+48   wide       18.885      183.0         2542       14.908      3.978
+64   wide       19.027      181.7         3364       15.046      3.980
+per shape M=1 thin: mlp w1/w3=127.8us(246GB/s) mlp w2=125.4us(251GB/s) conv in=102.9us(244GB/s) conv out=37.0us(227GB/s) attn q/o=37.0us(227GB/s) attn k/v=20.6us(102GB/s) attn gate=10.3us(6GB/s) lm head=1967.0us(267GB/s)
+per shape M=1 wide: mlp w1/w3=126.2us(249GB/s) mlp w2=123.5us(255GB/s) conv in=99.6us(253GB/s) conv out=37.0us(227GB/s) attn q/o=36.9us(227GB/s) attn k/v=22.6us(93GB/s) attn gate=22.8us(3GB/s) lm head=1960.0us(267GB/s)
+per shape M=32 wide: mlp w1/w3=127.1us(248GB/s) mlp w2=125.1us(251GB/s) conv in=101.0us(249GB/s) conv out=37.0us(227GB/s) attn q/o=37.0us(227GB/s) attn k/v=22.6us(93GB/s) attn gate=24.7us(3GB/s) lm head=2279.1us(230GB/s)
+wide rows independent of M (head row 0 bitwise equal for every M): yes

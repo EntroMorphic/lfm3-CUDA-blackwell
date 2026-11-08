@@ -1,0 +1,57 @@
+== sources
+  30f0fcd60b640a10cb62b70e5f25158167c6bcc0a1060a8cdb2e6dded7812a57  tools/thor/batch_round.sh
+  119ce77ab0c139bf3c0fef8c233c778c1ef6a1e7eda582a8e554e5128f7723c9  tools/batch_decode_fidelity.py
+  3b59783a905a2a4c57798da2c8dbfc2fc06bba642e5df6517817e8bade6a0053  tools/check_gpu_select.py
+  f723adf3ab66fa2c4c42514c4380f46a4dd91e1da2b108c279aa2576acd9bd0a  native/src/lfm3_batch.cuh
+  64a3aea84359e0e99bae740cd23d22b55a7a1bc10c38150664be849eb5453e55  native/src/lfm3_main.cu
+  9645bcc70d65583b4397820acd4bd734d5883829d3d967e071ab64fa9c8a5f9e  native/include/lfm/gemm.cuh
+  7ee3cf5d5c300813854554efc7fc2de0e5540a6900699ca521e2784fc48f7c0f  native/tests/lfm3_batch.cu
+  79c40028745f526eaebc88577a3b836921f826d15b6248a617b1344501bccf51  native/tests/lfm3_batch_teacher.cu
+  d5533d876397017f119a0446c9f748ae0fc0390d0356dcb952cd098f794f6f29  native/tests/lfm3_gpu_select_check.cu
+  d3c3ae832a37ba756b635ec11d2680278ea6ddeb6d991dcfb4385680ccaa77da  native/tests/lfm3_decode_batch_probe.cu
+  28a583a603aa214bd9d57be638a04aebab235fade17ea6233f8a3eacf2da07bd  native/tests/lfm3_decode_gemm_bench.cu
+  f4e3c0cb2bb7f948ba3b2354f02439d13071f91a6afd708784be01ed0d4f6343  native/tests/lfm3_decode_tile_sweep.cu
+  95f5e94b126563991ff6160092699e663004f4f8884449ebd2dd0544de205d98  lfm3-batch
+  52d065ae7533d2931c24a67bef6528c2eebf3e6d34a5503db69211d4352a2768  lfm3-batch-teacher
+  3993f784fca5ad3401100de2ebe7448d226e6a298d8e7ac608189359a3824b35  lfm3-gpu-select-check
+  EnableSystemMemoryPools: 0
+10:14:34 start used 3.0 GiB available 119.0 GiB
+== 1 row independence
+  greedy: 6/6 rows identical alone and in the batch; tokens [68, 512, 121, 42, 38, 512]
+  sampled: 6/6 rows identical alone and in the batch; tokens [72, 357, 162, 38, 31, 512]
+== 2 throughput
+10:15:39 before rates used 2.9 GiB available 119.0 GiB
+  batch 1 run 1: {"batch":1,"serial":0,"generated":256,"decode_seconds":4.12046,"decode_tok_s":61.8862,"prefill_seconds":0.0220383}
+  batch 1 run 2: {"batch":1,"serial":0,"generated":256,"decode_seconds":4.1454,"decode_tok_s":61.514,"prefill_seconds":0.0224197}
+  batch 8 run 1: {"batch":8,"serial":0,"generated":2048,"decode_seconds":4.19094,"decode_tok_s":486.764,"prefill_seconds":0.178676}
+  batch 8 run 2: {"batch":8,"serial":0,"generated":2048,"decode_seconds":4.18033,"decode_tok_s":487.999,"prefill_seconds":0.180755}
+  batch 16 run 1: {"batch":16,"serial":0,"generated":4096,"decode_seconds":4.26234,"decode_tok_s":957.22,"prefill_seconds":0.356693}
+  batch 16 run 2: {"batch":16,"serial":0,"generated":4096,"decode_seconds":4.26376,"decode_tok_s":956.903,"prefill_seconds":0.358342}
+  batch 32 run 1: {"batch":32,"serial":0,"generated":8192,"decode_seconds":4.64701,"decode_tok_s":1755.97,"prefill_seconds":0.71939}
+  batch 32 run 2: {"batch":32,"serial":0,"generated":8192,"decode_seconds":4.65892,"decode_tok_s":1751.48,"prefill_seconds":0.718967}
+  batch 64 run 1: {"batch":64,"serial":0,"generated":16384,"decode_seconds":5.05847,"decode_tok_s":3226.27,"prefill_seconds":1.44084}
+  batch 64 run 2: {"batch":64,"serial":0,"generated":16384,"decode_seconds":5.0649,"decode_tok_s":3222.18,"prefill_seconds":1.43992}
+  batch 32 sampled run 1: {"batch":32,"serial":0,"generated":8192,"decode_seconds":5.41316,"decode_tok_s":1507.44,"prefill_seconds":0.708569}
+  batch 32 sampled run 2: {"batch":32,"serial":0,"generated":8192,"decode_seconds":5.50181,"decode_tok_s":1483.15,"prefill_seconds":0.715285}
+  every row of every batch size equals batch 1: True
+10:17:58 after rates used 2.9 GiB available 119.1 GiB
+== 3 teacher-forced decode fidelity
+{"batch_decode_seconds":27.9651,"serial_decode_seconds":595.979,"rows":32,"steps":1024}
+     "verdict": "better"
+     "verdict": "better"
+     "verdict": "worse"
+   "pass": true
+== 4 device token selection
+  {"greedy_rows":8192,"greedy_mismatches":0,"case0":{"temperature":0.528,"scale":1,"draws":204800,"suppressed_drawn":0},"case1":{"temperature":1,"scale":1,"draws":204800,"suppressed_drawn":0},"case2":{"temperature":0.528,"scale":3,"draws":204800,"suppressed_drawn":0},"case3":{"temperature":0.1,"scale":1,"draws":204800,"suppressed_drawn":0}}
+  case 0: draws 204800, bins 34, chi2 p = 0.620, zero-probability draws 0, entropy 2.27 nats
+  case 1: draws 204800, bins 1194, chi2 p = 0.382, zero-probability draws 0, entropy 5.65 nats
+  case 2: draws 204800, bins 13, chi2 p = 0.203, zero-probability draws 0, entropy 1.19 nats
+  case 3: draws 204800, bins 8, chi2 p = 0.134, zero-probability draws 0, entropy 0.68 nats
+  PASS
+== 5 GEMM bench, tile sweep
+  wide rows independent of M (head row 0 bitwise equal for every M): yes
+  all tile shapes bitwise equal to the first: yes
+== 6 coherency texts
+  193 /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/batch-round-v1/coherency.md
+10:30:31 end used 3.4 GiB available 118.6 GiB
+ALL DONE 10:30:31

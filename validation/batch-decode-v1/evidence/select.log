@@ -1,0 +1,1 @@
+{"greedy_rows":8192,"greedy_mismatches":0,"case0":{"temperature":0.528,"scale":1,"draws":204800,"suppressed_drawn":0},"case1":{"temperature":1,"scale":1,"draws":204800,"suppressed_drawn":0},"case2":{"temperature":0.528,"scale":3,"draws":204800,"suppressed_drawn":0},"case3":{"temperature":0.1,"scale":1,"draws":204800,"suppressed_drawn":0}}
