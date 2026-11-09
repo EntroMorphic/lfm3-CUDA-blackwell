@@ -4,6 +4,9 @@
 // REQUEST: {"prompt_ids": [...], "mode": "audio" | "interleaved" | "text" | "none", "max_new_tokens": N, "seed": S,
 //           "capacity": C (default 4096), "forced_tokens": [...], "forced_frames": [[12 codes]...],
 //           "record_hidden": false, "chunks": [[ids...], ...]}
+//      or, rendered natively: {"messages": [...], "split": false, ...}: the chat (lfm/lfm3_text.hpp, the text
+//      binary's "messages" contract) instead of prompt_ids; with "split": true, [system, user] or [user] is read
+//      sentence by sentence (lfm/speech_text.hpp), each sentence one chunk as below, and the chunk json adds "text".
 // "chunks" (long-form TTS by sentences): each entry is one sentence's whole prompt, generated as its own request
 // with seed SEED * 1000 + k; the codec stream runs on across them, so OUT_STEM.wav is one stream. The outputs
 // concatenate the chunks (prompt: the first chunk's), and the json adds "chunks": [{frames, slots, ended_by_eos}].
@@ -16,6 +19,7 @@
 #include "../src/lfm3_main.cu"
 #include "../src/lfm3_batch.cuh"
 #include "../src/lfm3_speech.cuh"
+#include <lfm/speech_text.hpp>
 
 #include <cstdio>
 
@@ -68,13 +72,28 @@ int main(int argc, char** argv) try {
       o.forced_frames.push_back(fr);
     }
   std::vector<std::vector<int>> prompts;
-  if (req.has("chunks")) {
+  std::vector<std::string> chunk_texts;
+  const bool split = req.has("split") && req.at("split").boolean();
+  const bool chunked = req.has("chunks") || split;
+  if (chunked && (!o.forced_tokens.empty() || !o.forced_frames.empty())) throw std::runtime_error("chunks cannot be forced");
+  if (req.has("messages")) {
+    if (req.has("prompt_ids") || req.has("chunks")) throw std::runtime_error("messages cannot be combined with prompt_ids or chunks");
+    const std::string path = std::string(argv[1]) + "/tokenizer.json";
+    const auto tok = lfm::lfm3_text::load_checked(path, lfm::tokenizer_token_count(path, cfg.shape.vocabulary));
+    const auto messages = lfm::lfm3_text::parse_messages(req.at("messages"));
+    const auto chats = split ? lfm::speech_text::sentence_requests(messages) : std::vector{messages};
+    for (const auto& c : chats) {
+      prompts.push_back(lfm::lfm3_text::encode_messages(*tok, c, capacity, o.max_new_tokens));
+      if (split) chunk_texts.push_back(c.back().content);
+    }
+  } else if (split) {
+    throw std::runtime_error("split needs messages");
+  } else if (req.has("chunks")) {
     for (auto& c : req.at("chunks").array()) {
       prompts.emplace_back();
       for (auto& x : c.array()) prompts.back().push_back(x.integer());
     }
     if (prompts.empty()) throw std::runtime_error("chunks is empty");
-    if (!o.forced_tokens.empty() || !o.forced_frames.empty()) throw std::runtime_error("chunks cannot be forced");
   } else {
     prompts.emplace_back();
     for (auto& x : req.at("prompt_ids").array()) prompts.back().push_back(x.integer());
@@ -84,7 +103,7 @@ int main(int argc, char** argv) try {
   std::vector<ChunkInfo> chunk_info;
   const uint64_t seed = o.seed;
   for (size_t k = 0; k < prompts.size(); ++k) {
-    if (req.has("chunks")) o.seed = seed * 1000 + k;
+    if (chunked) o.seed = seed * 1000 + k;
     o.codec_continue = k > 0, o.codec_finalize = k + 1 == prompts.size();
     auto c = session.generate(prompts[k], o);
     chunk_info.push_back({c.frames.size(), c.slots.size(), c.raw_frames.size() > c.frames.size()});
@@ -128,11 +147,12 @@ int main(int argc, char** argv) try {
     f << "]";
   }
   f << "]";
-  if (req.has("chunks")) {
+  if (chunked) {
     f << ",\"chunks\":[";
     for (size_t k = 0; k < chunk_info.size(); ++k)
       f << (k ? "," : "") << "{\"frames\":" << chunk_info[k].frames << ",\"slots\":" << chunk_info[k].slots
-        << ",\"ended_by_eos\":" << (chunk_info[k].eos ? "true" : "false") << "}";
+        << ",\"ended_by_eos\":" << (chunk_info[k].eos ? "true" : "false")
+        << (chunk_texts.empty() ? "" : ",\"text\":" + lfm::lfm3_text::json_string(chunk_texts[k])) << "}";
     f << "]";
   }
   f << ",\"frames\":" << r.frames.size() << ",\"raw_frames\":" << r.raw_frames.size() << ",\"samples\":" << r.wav.size()

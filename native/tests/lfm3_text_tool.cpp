@@ -4,6 +4,10 @@
 //   lfm3-text-tool TOKENIZER.json decode IN.jsonl OUT.jsonl   {"ids": [..], "skip": b} -> {"text": s, "stream": s, "held": n, "tail": s}
 //   lfm3-text-tool TOKENIZER.json chat   IN.jsonl OUT.jsonl   {"messages": [..], "capacity": n, "max_new_tokens": n}
 //                                                             -> {"prompt": s, "ids": [..]}
+//   lfm3-text-tool TOKENIZER.json split  IN.jsonl OUT.jsonl   {"text": s}              -> {"sentences": [..]}
+//   lfm3-text-tool TOKENIZER.json spaces IN.jsonl OUT.jsonl   {"from": a, "to": b}     -> {"spaces": [code points]}
+//   lfm3-text-tool TOKENIZER.json speech IN.jsonl OUT.jsonl   {"messages": [..], "capacity": n, "max_new_tokens": n}
+//                                                             -> {"texts": [..], "ids": [[..]..]}  (lfm/speech_text.hpp)
 // A case the frontend rejects yields {"error": message}. "stream" is the concatenated output of the
 // incremental decoder, which must equal "text"; "held" is the most bytes it ever held back (at most 3)
 // and "tail" what finish() released (only replacement characters: an unfinished character at the end).
@@ -14,6 +18,7 @@
 #include <string>
 
 #include "lfm/lfm3_text.hpp"
+#include "lfm/speech_text.hpp"
 
 namespace {
 
@@ -41,7 +46,7 @@ std::string ids_json(const std::vector<int>& ids) {
 
 int main(int argc, char** argv) {
   if (argc != 5) {
-    std::cerr << "usage: lfm3-text-tool TOKENIZER.json encode|decode|chat IN.jsonl OUT.jsonl\n";
+    std::cerr << "usage: lfm3-text-tool TOKENIZER.json encode|decode|chat|split|spaces|speech IN.jsonl OUT.jsonl\n";
     return 2;
   }
   try {
@@ -49,7 +54,7 @@ int main(int argc, char** argv) {
     const auto tok = lfm::lfm3_text::Tokenizer::load(argv[1]);
     const auto t1 = std::chrono::steady_clock::now();
     const std::string mode = argv[2];
-    if (mode != "encode" && mode != "decode" && mode != "chat") throw std::runtime_error("unknown mode " + mode);
+    if (mode != "encode" && mode != "decode" && mode != "chat" && mode != "split" && mode != "spaces" && mode != "speech") throw std::runtime_error("unknown mode " + mode);
     std::ifstream in(argv[3], std::ios::binary);
     if (!in) throw std::runtime_error(std::string("cannot open ") + argv[3]);
     std::ofstream out(argv[4], std::ios::binary | std::ios::trunc);
@@ -78,6 +83,26 @@ int main(int argc, char** argv) {
           streamed += tail;
           result = "{\"text\":" + quote(tok.decode(ids, skip)) + ",\"stream\":" + quote(streamed) +
                    ",\"held\":" + std::to_string(held) + ",\"tail\":" + quote(tail) + "}";
+        } else if (mode == "split") {
+          result = "{\"sentences\":[";
+          const auto sentences = lfm::speech_text::split_sentences(j.at("text").string());
+          for (size_t i = 0; i < sentences.size(); ++i) result += (i ? "," : "") + quote(sentences[i]);
+          result += "]}";
+        } else if (mode == "spaces") {
+          std::vector<int> spaces;
+          for (int c = j.at("from").integer(); c < j.at("to").integer(); ++c)
+            if (lfm::speech_text::is_space(static_cast<std::uint32_t>(c))) spaces.push_back(c);
+          result = "{\"spaces\":" + ids_json(spaces) + "}";
+        } else if (mode == "speech") {
+          lfm::lfm3_text::check_capacity(j.at("capacity").integer(), j.at("max_new_tokens").integer());
+          const auto chats = lfm::speech_text::sentence_requests(lfm::lfm3_text::parse_messages(j.at("messages")));
+          std::string texts = "[", ids = "[";
+          for (size_t k = 0; k < chats.size(); ++k) {
+            texts += (k ? "," : "") + quote(chats[k].back().content);
+            ids += (k ? "," : "") + ids_json(lfm::lfm3_text::encode_messages(tok, chats[k], j.at("capacity").integer(),
+                                                                             j.at("max_new_tokens").integer()));
+          }
+          result = "{\"texts\":" + texts + "],\"ids\":" + ids + "]}";
         } else {
           lfm::lfm3_text::check_capacity(j.at("capacity").integer(), j.at("max_new_tokens").integer());
           const auto messages = lfm::lfm3_text::parse_messages(j.at("messages"));

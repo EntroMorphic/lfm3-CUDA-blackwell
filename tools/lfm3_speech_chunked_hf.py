@@ -37,7 +37,8 @@ def sentences(text):
         else:
             out.append(p)
     if len(out) > 1 and len(out[-1].split()) < MIN_WORDS:
-        out[-2] += " " + out.pop()
+        last = out.pop()  # (out[-2] += out.pop() would read one item and write another)
+        out[-1] += " " + last
     return out
 
 
