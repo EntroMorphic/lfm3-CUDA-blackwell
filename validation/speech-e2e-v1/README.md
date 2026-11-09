@@ -43,10 +43,16 @@ il-reflective, il-study and il-fridge: 0.000 WER at seeds 1-3, against the text 
 | e2e (10 cases, seeds 1-3) | 3.24 | 3.20 | 1.91 |
 | long (2 cases, seeds 4-15) | 3.45 | 3.43 | 2.06 |
 | fridge (il-fridge, seeds 4-15) | 2.85 | 2.84 | 2.08 |
+| e2e again, MAXN (2026-11-09, `build/speech-e2e-maxn-v1`) | 3.05 | 3.01 | 1.90 |
 
 "End to end" includes the prefill; HF's time always does. The rounds ran on different days, and Thor's power state
 was not recorded or held fixed, so compare engines within a round (native 1.4-1.7x HF), not rounds with each other.
-Native split long-form, end to end: 3.42.
+Native split long-form, end to end: 3.42; again in MAXN, 3.53 (30 runs, range 3.45-3.58; WER 0.000 on 30 of 30, 150 of
+150 chunks ended by EOS; `build/speech-split-maxn-v1`).
+Since 2026-11-09 Thor runs in MAXN, and every round records its power state (`tools/thor/power_state.sh`; it refuses to
+run outside MAXN). The clocks are not locked (jetson_clocks), so the GPU clock still scales with load. The MAXN e2e
+rerun produced bit-identical native outputs (30 of 30) and identical WERs in both engines, yet ran slower than the
+first e2e round. Speed spread of this size is the clock governor, not the code.
 
 ## C3 (listening): PASS
 Blind A/B, seed 1 of every case (`outputs/listening-c3-v1`, not in the repo; key in `listening-c3-v1.key.json`), Tripp,
