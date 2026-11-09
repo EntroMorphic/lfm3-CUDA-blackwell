@@ -8,3 +8,5 @@ aa7fcd0b4c2386b2a9040fd511e41fdbfcc00f9f69a5258e29f65f353660a6ef  native/src/lfm
 44875d52b2094d6b8664bd600816265098e6415d86e43b6964b1065571028eab  native/include/lfm/audio_sampling.hpp
 f0198ebff0ca7e58716f8148606f7f54d1a37758ec5af5c24de7ee95a6a7ccf9  native/include/lfm/codec.cuh
 4d00168656e9a2e311ae457791dc3390b1d8daf9bc02b1e807ce41f3a396cd83  native/include/lfm/depth.cuh
+645f1f54d0525b05db63873ef341f430d143d2c1b25aa638c916bd5a1069cdc4  speech-v3/lfm3-speech (native split)
+426dcde18451ec33ae26908d48b98fef9a1d85cf43418865c25531148e9827c2  speech-v3/lfm3-text-tool

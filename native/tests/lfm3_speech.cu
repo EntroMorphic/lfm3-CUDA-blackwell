@@ -81,7 +81,8 @@ int main(int argc, char** argv) try {
     const std::string path = std::string(argv[1]) + "/tokenizer.json";
     const auto tok = lfm::lfm3_text::load_checked(path, lfm::tokenizer_token_count(path, cfg.shape.vocabulary));
     const auto messages = lfm::lfm3_text::parse_messages(req.at("messages"));
-    const auto chats = split ? lfm::speech_text::sentence_requests(messages) : std::vector{messages};
+    const auto chats = split ? lfm::speech_text::sentence_requests(messages)
+                             : std::vector<std::vector<lfm::lfm3_text::Message>>{messages};
     for (const auto& c : chats) {
       prompts.push_back(lfm::lfm3_text::encode_messages(*tok, c, capacity, o.max_new_tokens));
       if (split) chunk_texts.push_back(c.back().content);

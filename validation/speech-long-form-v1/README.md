@@ -58,7 +58,16 @@ makes each sentence its own request, exactly as a single TTS request is built; n
 ## Open
 - A single sentence over ~40 words could still reach the crossing: the splitter should also break at commas past a
   length limit. Not yet done.
-- The split is built in Python (the request); the binary and server need a native sentence splitter and template.
+- ~~The split is built in Python~~ **Native since speech-v3 (2026-11-09):** `lfm3-speech` takes `"messages"` with
+  `"split": true` and splits (`native/include/lfm/speech_text.hpp`) and renders each sentence natively.
+  - The splitter equals the Python one on edge cases, 5,000 fuzzed texts, and whitespace on every code point.
+  - Every validation prompt's per-sentence ids equal the HF processor's (`tests/test_speech_text.py`, run in
+    lfm3-omni-dev).
+  - Native-split lighthouse s1 and bread s1 are bit-identical to the validated Python-built runs (raw frames,
+    emitted frames, waveform); so are unsplit tts-fox-female s1 and il-study s1 against speech-e2e-v1.
+  - The Python prototype's short-last-sentence join had a bug (crash on two parts, wrong part overwritten on
+    three or more), never reached by a validation prompt; fixed in both.
+  - Still open: the server.
 - HF BF16's better unsplit odds on this paragraph remain unexplained beyond "different rounding"; with the split,
   it no longer matters.
 
