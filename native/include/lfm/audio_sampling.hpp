@@ -10,9 +10,13 @@
 //     best penalized codes. HF's unset temperature (unit temperature with top_k, else greedy) is the caller's to map.
 //     Top-k ties at the k-th score keep the lowest codes (TextSampler's policy); HF keeps every tie. A top_k above
 //     the 2017 codes keeps them all, as HF's TopKLogitsWarper clamps it.
-// Draws use lfm::TextSampler, the text engine's sampler (one 64-bit Mersenne Twister draw per code; its
-// distribution is tested by tests/test_text_sampling_*.py). The code engine and the order engine are seeded from
-// two splitmix64 mixes of the seed, so neither shares a stream with a TextSampler built from the same seed.
+// Draws: the usual case (temperature > 0, no top-k) has its own path in double precision: the penalty, the softmax
+// exp((s - max) / T) and the inverse CDF in code order, one 64-bit Mersenne Twister draw (53 bits) per code. Its
+// probabilities equal lfm::TextSampler's long-double ones to double rounding (B2 checks both against the analytic
+// distribution). The long-double path costs ~4 ms per code on Thor's ARM cores, where long double is software
+// binary128; this one costs microseconds. Greedy and top-k use lfm::TextSampler (the text engine's sampler).
+// The code engine and the order engine are seeded from two splitmix64 mixes of the seed, so neither shares a stream
+// with a TextSampler built from the same seed.
 // PyTorch's Philox stream cannot be reproduced, so equality with HF is distributional, not bitwise.
 //
 // History lifetime, as HF's `_generate`: one FrameSampler per request; `accept` every frame the mode machine reports
@@ -47,7 +51,8 @@ using Frame = std::array<int, kCodebooks>;
 class FrameSampler {
  public:
   explicit FrameSampler(FrameSamplingOptions options = {})
-      : options_(checked(options)), codes_(text_options(options_)), order_rng_(mix(mix(options.seed))) {}
+      : options_(checked(options)), codes_(text_options(options_)), code_rng_(mix(options.seed)),
+        order_rng_(mix(mix(options.seed))) {}
 
   // A uniformly random reveal order (Fisher-Yates with unbiased bounded draws).
   std::array<int, kCodebooks> order() {
@@ -60,7 +65,29 @@ class FrameSampler {
   // One code of `codebook` from its 2017 logits, penalized by the codebook's recent history.
   int sample_code(int codebook, const float* logits) {
     if (codebook < 0 || codebook >= kCodebooks) throw std::invalid_argument("audio codebook out of range");
-    return codes_.sample(logits, kCodes, history_codes(codebook));
+    if (options_.temperature == 0 || options_.top_k) return codes_.sample(logits, kCodes, history_codes(codebook));
+    bool seen[kCodes] = {};
+    for (const Frame& f : history_) seen[f[size_t(codebook)]] = true;
+    double score[kCodes], maximum = -INFINITY;
+    for (int i = 0; i < kCodes; ++i) {
+      if (!std::isfinite(logits[i])) throw std::invalid_argument("audio logits must all be finite");
+      double v = logits[i];
+      if (seen[i]) v = v < 0 ? v * options_.repetition_penalty : v / options_.repetition_penalty;
+      score[i] = v;
+      maximum = std::max(maximum, v);
+    }
+    double total = 0;
+    for (int i = 0; i < kCodes; ++i) total += (score[i] = std::exp((score[i] - maximum) / options_.temperature));
+    const double target = double(code_rng_() >> 11) * (1.0 / 9007199254740992.0) * total;
+    double cumulative = 0;
+    int last = 0;
+    for (int i = 0; i < kCodes; ++i) {
+      if (score[i] <= 0) continue;
+      last = i;
+      cumulative += score[i];
+      if (target < cumulative) return i;
+    }
+    return last;  // rounding at the very end of the CDF
   }
 
   // One frame. `score(codes, masked, picked, logits)` must write the logits of every picked codebook c to
@@ -138,7 +165,7 @@ class FrameSampler {
 
   FrameSamplingOptions options_;
   TextSampler codes_;
-  std::mt19937_64 order_rng_;
+  std::mt19937_64 code_rng_, order_rng_;
   std::deque<Frame> history_;
 };
 

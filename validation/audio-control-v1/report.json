@@ -1,8 +1,8 @@
 {
  "clean": {
   "tests/test_audio_sampling.py": {
-   "passed": 32,
-   "total": 32,
+   "passed": 33,
+   "total": 33,
    "outcomes": {
     "test_exact_distribution_matches_analytic[0]": "passed",
     "test_exact_distribution_matches_analytic[1]": "passed",
@@ -33,7 +33,8 @@
     "test_temperature_zero_is_greedy[4]": "passed",
     "test_temperature_zero_is_greedy[5]": "passed",
     "test_top_k_above_the_codes_keeps_them_all": "passed",
-    "test_code_stream_is_not_a_same_seed_text_stream": "passed",
+    "test_code_stream_is_not_a_same_seed_text_stream[0]": "passed",
+    "test_code_stream_is_not_a_same_seed_text_stream[50]": "passed",
     "test_window_and_eos_refusal": "passed",
     "test_seeds_reproduce_and_differ": "passed"
    }
@@ -88,27 +89,27 @@
   ],
   "draws_chi2": [
    {
-    "p": 0.6529223291501212,
+    "p": 0.9988276228382967,
     "bins": 174
    },
    {
-    "p": 0.8950751802945638,
+    "p": 0.8922654309711768,
     "bins": 42
    },
    {
-    "p": 0.35335121170563366,
+    "p": 0.06786702616981563,
     "bins": 59
    },
    {
-    "p": 0.4315719858681723,
+    "p": 0.05025036187610956,
     "bins": 64
    },
    {
-    "p": 0.9177108537051479,
+    "p": 0.3131844028739964,
     "bins": 34
    },
    {
-    "p": 0.15235499847232384,
+    "p": 0.05818609948827054,
     "bins": 62
    }
   ],
@@ -120,7 +121,7 @@
   {
    "bug": "codes written to the reveal position, scored from the first pick's logits",
    "header": "audio_sampling.hpp",
-   "tests": 32,
+   "tests": 33,
    "failed": 1,
    "failing": [
     "test_frame_protocol_and_marginals"
@@ -130,7 +131,7 @@
   {
    "bug": "passes scored without the codes revealed so far",
    "header": "audio_sampling.hpp",
-   "tests": 32,
+   "tests": 33,
    "failed": 1,
    "failing": [
     "test_frame_protocol_and_marginals"
@@ -140,7 +141,7 @@
   {
    "bug": "Sattolo's shuffle (cyclic permutations only) for the reveal order",
    "header": "audio_sampling.hpp",
-   "tests": 32,
+   "tests": 33,
    "failed": 1,
    "failing": [
     "test_reveal_order_is_uniform"
@@ -150,17 +151,72 @@
   {
    "bug": "the code engine shares the seed of a TextSampler",
    "header": "audio_sampling.hpp",
-   "tests": 32,
+   "tests": 33,
    "failed": 1,
    "failing": [
-    "test_code_stream_is_not_a_same_seed_text_stream"
+    "test_code_stream_is_not_a_same_seed_text_stream[50]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "the double-path code engine shares a same-seed TextSampler's stream",
+   "header": "audio_sampling.hpp",
+   "tests": 33,
+   "failed": 1,
+   "failing": [
+    "test_code_stream_is_not_a_same_seed_text_stream[0]"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "the double path penalizes from codebook 0's history",
+   "header": "audio_sampling.hpp",
+   "tests": 33,
+   "failed": 4,
+   "failing": [
+    "test_draws_follow_the_distribution[1]",
+    "test_draws_follow_the_distribution[2]",
+    "test_draws_follow_the_distribution[3]",
+    "test_frame_protocol_and_marginals"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "the double path ignores the repetition penalty",
+   "header": "audio_sampling.hpp",
+   "tests": 33,
+   "failed": 6,
+   "failing": [
+    "test_draws_follow_the_distribution[1]",
+    "test_draws_follow_the_distribution[2]",
+    "test_draws_follow_the_distribution[3]",
+    "test_draws_follow_the_distribution[4]",
+    "test_draws_follow_the_distribution[5]",
+    "test_frame_protocol_and_marginals"
+   ],
+   "caught": true
+  },
+  {
+   "bug": "the double path ignores the temperature",
+   "header": "audio_sampling.hpp",
+   "tests": 33,
+   "failed": 8,
+   "failing": [
+    "test_code_stream_is_not_a_same_seed_text_stream[0]",
+    "test_draws_follow_the_distribution[0]",
+    "test_draws_follow_the_distribution[1]",
+    "test_draws_follow_the_distribution[2]",
+    "test_draws_follow_the_distribution[3]",
+    "test_draws_follow_the_distribution[4]",
+    "test_draws_follow_the_distribution[5]",
+    "test_frame_protocol_and_marginals"
    ],
    "caught": true
   },
   {
    "bug": "temperature 0 is not greedy",
    "header": "audio_sampling.hpp",
-   "tests": 32,
+   "tests": 33,
    "failed": 6,
    "failing": [
     "test_temperature_zero_is_greedy[0]",
@@ -175,7 +231,7 @@
   {
    "bug": "top_k ignored",
    "header": "audio_sampling.hpp",
-   "tests": 32,
+   "tests": 33,
    "failed": 6,
    "failing": [
     "test_top_k[1-1]",
@@ -190,7 +246,7 @@
   {
    "bug": "greedy distribution() reports a temperature-1 softmax",
    "header": "audio_sampling.hpp",
-   "tests": 32,
+   "tests": 33,
    "failed": 6,
    "failing": [
     "test_temperature_zero_is_greedy[0]",
@@ -205,7 +261,7 @@
   {
    "bug": "top_k above 2017 refused instead of clamped",
    "header": "audio_sampling.hpp",
-   "tests": 32,
+   "tests": 33,
    "failed": 1,
    "failing": [
     "test_top_k_above_the_codes_keeps_them_all"
@@ -215,7 +271,7 @@
   {
    "bug": "the window keeps 63 frames",
    "header": "audio_sampling.hpp",
-   "tests": 32,
+   "tests": 33,
    "failed": 2,
    "failing": [
     "test_exact_distribution_matches_analytic[2]",

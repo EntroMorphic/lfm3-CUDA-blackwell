@@ -200,11 +200,16 @@ def test_top_k_above_the_codes_keeps_them_all(oracle):
     assert np.abs(p - analytic(3)).max() < 1e-12
 
 
-def test_code_stream_is_not_a_same_seed_text_stream(oracle):
+@pytest.mark.parametrize("top_k", [0, 50])  # 0: the double path; 50: the TextSampler path
+def test_code_stream_is_not_a_same_seed_text_stream(oracle, top_k):
     # integration may give text and speech one seed: their draws must not share uniforms
     i = 3
-    out = np.array(run(oracle, ["pair", 4000, 9, int(FIXTURE["codebook"][i])], case_input(i)), np.int64).reshape(-1, 2)
+    args = ["pair", 4000, 9, int(FIXTURE["codebook"][i])] + ([0.4, top_k] if top_k else [])
+    out = np.array(run(oracle, args, case_input(i)), np.int64).reshape(-1, 2)
     p = analytic(i)
+    if top_k:
+        keep = np.argsort(-p, kind="stable")[:top_k]
+        q = np.zeros_like(p); q[keep] = p[keep]; p = q / q.sum()
     agree = (out[:, 0] == out[:, 1]).mean()
     # independent streams agree with probability sum p^2; a shared stream would agree on every draw
     assert abs(agree - (p ** 2).sum()) < 5 * np.sqrt((p ** 2).sum() / 4000) + 0.01, agree

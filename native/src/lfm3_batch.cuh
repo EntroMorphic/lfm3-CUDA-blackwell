@@ -368,6 +368,22 @@ __global__ void __launch_bounds__(1024) sample_rows(const float* logits, int voc
   if (t == 0) out[b] = found;
 }
 
+// A3 (journal/lfm3-tts-quality-bar.md): a speech frame's input embedding, as HF's get_audio_out_embeds: the sum of
+// its 12 codebook rows (row = code + codebook x 2017 of model.codebook_embedding), accumulated in FP32 in codebook
+// order and rounded to BF16 once. Rows whose first code is negative are text rows (left as embedded).
+__global__ void frame_embed(const bf16* table, const int* codes, bf16* hidden, int rows, int width, int codebooks,
+                            int codebook_size) {
+  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (i >= size_t(rows) * width) return;
+  const int r = i / width, d = i % width;
+  const int* c = codes + size_t(r) * codebooks;
+  if (c[0] < 0) return;
+  float sum = 0.f;
+  for (int k = 0; k < codebooks; ++k)
+    sum = __fadd_rn(sum, __bfloat162float(table[(size_t(c[k]) + size_t(k) * codebook_size) * width + d]));
+  hidden[i] = __float2bfloat16_rn(sum);
+}
+
 class BatchDecoder {
  public:
   Runner& base;  // weights, shape and the prefill engine; its capacity is every row's
@@ -375,13 +391,14 @@ class BatchDecoder {
   const int rows;
   Buffer<bf16> hidden, normalized, projected, operated, updated, q, k, v, gates, attended, gated, a, b, act;
   Buffer<float> logits, part_o, part_ml;
-  Buffer<int> tokens, positions, cursor_dev, picked;
+  Buffer<int> tokens, positions, cursor_dev, picked, frame_codes;
   Buffer<unsigned char> active_dev;
   Buffer<uint64_t> seeds_dev, steps_dev;
   std::vector<std::unique_ptr<Buffer<bf16>>> keys, values, states;  // per layer, all rows
   std::vector<int> cursor;
   std::vector<unsigned char> active;
   int max_splits;
+  std::vector<std::vector<uint16_t>>* embed_dump = nullptr;  // when set, step() appends row 0's input embedding
 
   BatchDecoder(Runner& runner, int batch)
       : base(runner), s(runner.s), rows(batch),
@@ -392,7 +409,8 @@ class BatchDecoder {
         b(size_t(batch) * s.mlp), act(size_t(batch) * s.mlp), logits(size_t(batch) * s.vocabulary),
         part_o(size_t(batch) * s.query_heads * ((s.context + kSplit - 1) / kSplit) * 128),
         part_ml(size_t(batch) * s.query_heads * ((s.context + kSplit - 1) / kSplit) * 2),
-        tokens(batch), positions(batch), cursor_dev(batch), picked(batch), active_dev(batch), seeds_dev(batch),
+        tokens(batch), positions(batch), cursor_dev(batch), picked(batch), frame_codes(size_t(batch) * 12),
+        active_dev(batch), seeds_dev(batch),
         steps_dev(batch), cursor(batch, 0), active(batch, 0), max_splits((s.context + kSplit - 1) / kSplit) {
     if (batch < 1 || batch > 128) throw std::invalid_argument("batch must be 1..128");
     if (s.head_dim != 128 || s.query_heads % s.kv_heads || s.query_heads / s.kv_heads > kGroupMax ||
@@ -437,6 +455,9 @@ class BatchDecoder {
     static_assert(std::is_same_v<LFM3_LOGIT, float>, "batched decode needs the native-GEMM FP32 logits");
     cuda_check(cudaMemcpy(logits.p + size_t(row) * s.vocabulary, base.logits.p, size_t(s.vocabulary) * sizeof(float),
                           cudaMemcpyDeviceToDevice));
+    // the prefill's last final-normed hidden state: what a speech frame sampled first reads (HF: hidden[:, -1])
+    cuda_check(cudaMemcpy(normalized.p + size_t(row) * s.hidden, base.normalized.p + size_t(base.cursor - 1) * s.hidden,
+                          size_t(s.hidden) * sizeof(bf16), cudaMemcpyDeviceToDevice));
     cursor[row] = base.cursor;
     active[row] = 1;
   }
@@ -460,8 +481,13 @@ class BatchDecoder {
     return out;
   }
 
+  // Row r's final-normed hidden state after the last step (or the load): the depth decoder's input for a frame.
+  const bf16* hidden_state(int r) const { return normalized.p + size_t(r) * s.hidden; }
+
   // One decode step: token[r] enters row r at its cursor (inactive rows: ignored); logits for every active row.
-  void step(const std::vector<int>& token) {
+  // frames (optional, rows x 12): a row whose first code is >= 0 enters as that speech frame's embedding (A3)
+  // instead of its token's.
+  void step(const std::vector<int>& token, const std::vector<int>* frames = nullptr) {
     std::vector<int> ids(rows, 0);
     for (int r = 0; r < rows; ++r) {
       if (!active[r]) continue;
@@ -481,6 +507,17 @@ class BatchDecoder {
     for (int r = 0; r < rows; ++r) if (active[r]) longest = std::max(longest, cursor[r] + 1);
     const int full_splits = std::max(1, (longest + kSplit - 1) / kSplit);
     embed<<<grid(size_t(R) * H), 256>>>(w("embed_tokens.weight"), tokens.p, hidden.p, R, H);
+    if (frames) {
+      if (frames->size() != size_t(R) * 12) throw std::invalid_argument("step: frames must be rows x 12");
+      cuda_check(cudaMemcpy(frame_codes.p, frames->data(), size_t(R) * 12 * sizeof(int), cudaMemcpyHostToDevice));
+      frame_embed<<<grid(size_t(R) * H), 256>>>(base.weights->at("model.codebook_embedding.weight").device_data,
+                                                frame_codes.p, hidden.p, R, H, 12, 2017);
+    }
+    if (embed_dump) {  // diagnostics: row 0's input embedding
+      std::vector<uint16_t> bits(H);
+      cuda_check(cudaMemcpy(bits.data(), hidden.p, size_t(H) * 2, cudaMemcpyDeviceToHost));
+      embed_dump->push_back(std::move(bits));
+    }
     for (int layer = 0; layer < s.layers; ++layer) {
       const std::string p = "layers." + std::to_string(layer) + ".";
       const auto spec = base.config.layer_specs[layer];

@@ -33,7 +33,10 @@ _ASCII = str.maketrans({"\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '
 
 
 def ascii_punctuation(text):
-    return text.translate(_ASCII)
+    """Typographic punctuation to ASCII, then hyphens inside words removed (on both sides): the model writes
+    "meta-cognition" (U+2011) where Whisper writes "metacognition", and the normalizer would split the first into two
+    words (found in #2 step 4's first native run)."""
+    return re.sub(r"(?<=\w)-(?=\w)", "", text.translate(_ASCII))
 
 
 def fold_ordinals(words):

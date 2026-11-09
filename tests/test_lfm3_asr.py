@@ -21,10 +21,16 @@ def test_intended_text():
 
 
 def test_ascii_punctuation():
-    assert asr.ascii_punctuation("they’ve self‑reflection “yes”") == "they've self-reflection \"yes\""
+    # intra-word hyphens are removed too (both sides), so "self‑reflection" and "selfreflection" match
+    assert asr.ascii_punctuation("they’ve self‑reflection “yes”") == "they've selfreflection \"yes\""
     assert asr.ascii_punctuation("plain ascii") == "plain ascii"
 
 
 def test_fold_ordinals():
     assert asr.fold_ordinals(["march", "3rd", "21st", "2024", "4th", "north", "3"]) == \
         ["march", "3", "21", "2024", "4", "north", "3"]
+
+
+def test_intra_word_hyphens_are_removed_on_both_sides():
+    assert asr.ascii_punctuation("a kind of meta\u2011cognition") == "a kind of metacognition"
+    assert asr.ascii_punctuation("self-modeling - and more") == "selfmodeling - and more"

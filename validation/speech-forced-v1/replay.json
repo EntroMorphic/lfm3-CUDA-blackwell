@@ -1,0 +1,147 @@
+{
+ "ref-interleaved": {
+  "a3_frames_bitwise": true,
+  "a3_frame_rows": 373,
+  "text_embeddings_bitwise": true,
+  "embedding_rows_checked": 473,
+  "sdpa_only_bar": 0.011309961788356304,
+  "sdpa_only_pass": false,
+  "frames": 373,
+  "median_rel_l2_vs_fp32": {
+   "native": 0.011359848082065582,
+   "hf_decode": 0.011309961788356304,
+   "hf_replay": 0.011184829287230968,
+   "hf_eager_replay": 0.01216503418982029
+  },
+  "p99_vs_fp32": {
+   "native": 0.021987473592162132,
+   "hf_decode": 0.020087117329239845,
+   "hf_replay": 0.02139948680996895,
+   "hf_eager_replay": 0.022885628044605255
+  },
+  "native_vs_hf_decode_median": 0.013019567355513573,
+  "bar": 0.01216503418982029,
+  "pass_": true
+ },
+ "interleaved-study": {
+  "a3_frames_bitwise": true,
+  "a3_frame_rows": 265,
+  "text_embeddings_bitwise": true,
+  "embedding_rows_checked": 340,
+  "sdpa_only_bar": 0.011106985621154308,
+  "sdpa_only_pass": true,
+  "frames": 265,
+  "median_rel_l2_vs_fp32": {
+   "native": 0.011020530946552753,
+   "hf_decode": 0.010984940454363823,
+   "hf_replay": 0.011106985621154308,
+   "hf_eager_replay": 0.011832616291940212
+  },
+  "p99_vs_fp32": {
+   "native": 0.023013371974229813,
+   "hf_decode": 0.022361664101481438,
+   "hf_replay": 0.022897664457559586,
+   "hf_eager_replay": 0.024268874898552895
+  },
+  "native_vs_hf_decode_median": 0.012802759185433388,
+  "bar": 0.011832616291940212,
+  "pass_": true
+ },
+ "tts-fox-female": {
+  "a3_frames_bitwise": true,
+  "a3_frame_rows": 41,
+  "text_embeddings_bitwise": true,
+  "embedding_rows_checked": 41,
+  "sdpa_only_bar": 0.010876848362386227,
+  "sdpa_only_pass": true,
+  "frames": 41,
+  "median_rel_l2_vs_fp32": {
+   "native": 0.010838201269507408,
+   "hf_decode": 0.01029939390718937,
+   "hf_replay": 0.010876848362386227,
+   "hf_eager_replay": 0.011468072421848774
+  },
+  "p99_vs_fp32": {
+   "native": 0.01298477966338396,
+   "hf_decode": 0.015163908712565899,
+   "hf_replay": 0.013168096542358398,
+   "hf_eager_replay": 0.01483685802668333
+  },
+  "native_vs_hf_decode_median": 0.012767119333148003,
+  "bar": 0.011468072421848774,
+  "pass_": true
+ },
+ "tts-fox-male": {
+  "a3_frames_bitwise": true,
+  "a3_frame_rows": 46,
+  "text_embeddings_bitwise": true,
+  "embedding_rows_checked": 46,
+  "sdpa_only_bar": 0.010771388188004494,
+  "sdpa_only_pass": true,
+  "frames": 46,
+  "median_rel_l2_vs_fp32": {
+   "native": 0.010678115300834179,
+   "hf_decode": 0.010771388188004494,
+   "hf_replay": 0.010600320063531399,
+   "hf_eager_replay": 0.01182417944073677
+  },
+  "p99_vs_fp32": {
+   "native": 0.013880807906389236,
+   "hf_decode": 0.013974811881780624,
+   "hf_replay": 0.012799608521163464,
+   "hf_eager_replay": 0.014352185651659966
+  },
+  "native_vs_hf_decode_median": 0.012405186891555786,
+  "bar": 0.01182417944073677,
+  "pass_": true
+ },
+ "tts-museum-female": {
+  "a3_frames_bitwise": true,
+  "a3_frame_rows": 143,
+  "text_embeddings_bitwise": true,
+  "embedding_rows_checked": 143,
+  "sdpa_only_bar": 0.010708442889153957,
+  "sdpa_only_pass": false,
+  "frames": 143,
+  "median_rel_l2_vs_fp32": {
+   "native": 0.010720252059400082,
+   "hf_decode": 0.010708442889153957,
+   "hf_replay": 0.010651797987520695,
+   "hf_eager_replay": 0.011696954257786274
+  },
+  "p99_vs_fp32": {
+   "native": 0.016996193677186966,
+   "hf_decode": 0.024813488125801086,
+   "hf_replay": 0.016798702999949455,
+   "hf_eager_replay": 0.02253739722073078
+  },
+  "native_vs_hf_decode_median": 0.013150754384696484,
+  "bar": 0.011696954257786274,
+  "pass_": true
+ },
+ "tts-museum-male": {
+  "a3_frames_bitwise": true,
+  "a3_frame_rows": 153,
+  "text_embeddings_bitwise": true,
+  "embedding_rows_checked": 153,
+  "sdpa_only_bar": 0.010862437076866627,
+  "sdpa_only_pass": true,
+  "frames": 153,
+  "median_rel_l2_vs_fp32": {
+   "native": 0.010655014775693417,
+   "hf_decode": 0.010761981830000877,
+   "hf_replay": 0.010862437076866627,
+   "hf_eager_replay": 0.011633379384875298
+  },
+  "p99_vs_fp32": {
+   "native": 0.018310749903321266,
+   "hf_decode": 0.016235418617725372,
+   "hf_replay": 0.016177291050553322,
+   "hf_eager_replay": 0.018063213676214218
+  },
+  "native_vs_hf_decode_median": 0.012793738394975662,
+  "bar": 0.011633379384875298,
+  "pass_": true
+ },
+ "pass": true
+}

@@ -2,7 +2,7 @@
 //   dist CODEBOOK [T K]     stdin: 2017 logits, H, then H history codes -> "code probability" lines (exact)
 //   codes N SEED CODEBOOK [T K]   same stdin -> 2017 counts of N draws
 //   (T K: temperature, 0 for greedy, and top_k; default 0.4 0)
-//   pair N SEED CODEBOOK    same stdin -> N lines: a FrameSampler draw, then a same-seed TextSampler draw
+//   pair N SEED CODEBOOK [T K]   same stdin -> N lines: a FrameSampler draw, then a same-seed TextSampler draw
 //   order N SEED        -> 144 counts [position][codebook], then 66 counts of codebook pairs sharing a pass
 //   frame N SEED        stdin: H, H frames of 12 history codes, then 12 x 2017 logits (codebook c's own) -> checks
 //                       the pass protocol and that each pass sees the codes sampled before it; prints 12 x 2017
@@ -52,15 +52,16 @@ int main(int argc, char** argv) try {
     std::vector<long> counts(kCodes);
     for (long n = std::atol(argv[2]); n--;) ++counts[size_t(sampler.sample_code(c, logits.data()))];
     for (long v : counts) std::cout << v << "\n";
-  } else if (mode == "pair" && argc == 5) {
+  } else if (mode == "pair" && (argc == 5 || argc == 7)) {
     // the same seed: FrameSampler's code draws next to a TextSampler's with the same options
     const std::uint64_t seed = std::strtoull(argv[3], nullptr, 10);
-    FrameSampler sampler({0.4, 1.2, 64, seed});
+    const FrameSamplingOptions o = options(argc, argv, 5, seed);
+    FrameSampler sampler(o);
     std::vector<float> logits;
     const int c = std::atoi(argv[4]);
     read_case(logits, sampler, c);
     lfm::TextSamplingOptions t;
-    t.do_sample = true, t.temperature = 0.4, t.repetition_penalty = 1.2, t.seed = seed;
+    t.do_sample = true, t.temperature = o.temperature, t.top_k = o.top_k, t.repetition_penalty = 1.2, t.seed = seed;
     lfm::TextSampler text(t);
     const auto history = sampler.history_codes(c);
     for (long n = std::atol(argv[2]); n--;)
