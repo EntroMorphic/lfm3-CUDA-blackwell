@@ -63,6 +63,10 @@ HAND = [
     "x.y.z is not split. Neither is 3.14 or e.g. this, because no space follows those dots at all.",
     "Line one ends here.\nLine two starts here and keeps going for a while.\r\nLine three.",
     "A. B is separated by a line separator and has many words after it to count.",
+    # punctuation and whitespace at the very start (the scan's first possible cut is after the first character)
+    "!\n\nOne two three four five six seven.", "? Then a long sentence follows here with words. And another one here too.",
+    # CJK full stop followed by a space: not a break in the rule (adding it would change chunks)
+    "This sentence has more than six words before its full stop。 Then another long sentence follows it here.",
 ]
 
 
@@ -130,10 +134,28 @@ def test_every_validation_prompt_matches_hf_ids(tool, tmp_path):
     assert len(rows) >= 10 and split_any >= 3
 
 
+def test_each_sentence_is_rendered_as_its_own_single_request(tool, tmp_path):
+    # without HF: every chunk's ids equal the chat mode's ids for [system, that sentence] (the system prompt kept)
+    system = "Perform TTS in American English using a female voice."
+    text = HAND[5] + " " + HAND[8]
+    got = run(tool, tmp_path, "speech", [dict(messages=[{"role": "system", "content": system}, {"role": "user", "content": text}],
+                                              capacity=4096, max_new_tokens=16)])[0]
+    assert got["texts"] == chunked.sentences(text) and len(got["texts"]) >= 3
+    single = run(tool, tmp_path, "chat", [dict(messages=[{"role": "system", "content": system}, {"role": "user", "content": t}],
+                                               capacity=4096, max_new_tokens=16) for t in got["texts"]])
+    assert got["ids"] == [r["ids"] for r in single]
+    bare = run(tool, tmp_path, "speech", [dict(messages=[{"role": "user", "content": text}], capacity=4096, max_new_tokens=16)])[0]
+    assert bare["ids"] != got["ids"] and bare["texts"] == got["texts"]
+
+
 @pytest.mark.parametrize("messages, why", [
     ([{"role": "user", "content": "Hi."}, {"role": "assistant", "content": "Hello."}, {"role": "user", "content": "x"}],
      "must be [system, user] or [user]"),
     ([{"role": "system", "content": "s"}], "must be [system, user] or [user]"),
+    ([{"role": "assistant", "content": "Hello."}, {"role": "user", "content": "Read this sentence aloud please now."}],
+     "must be [system, user] or [user]"),
+    ([{"role": "user", "content": "First."}, {"role": "user", "content": "Read this sentence aloud please now."}],
+     "must be [system, user] or [user]"),
     ([{"role": "user", "content": [{"type": "text", "text": "Hello there."}]}], "user content must be a string"),
     ([{"role": "user", "content": " \n "}], "user text is empty"),
 ])
