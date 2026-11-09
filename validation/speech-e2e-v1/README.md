@@ -29,7 +29,12 @@ il-reflective and il-study 0.000 WER against the text each engine wrote, il-frid
 Audio seconds per generation second: native 3.24, HF 1.91 (`rounds/e2e`); native split long-form 3.42 including
 every chunk's prefill.
 
-## C3 (listening)
-- Long-form split (`outputs/listening-split-v1`): **PASS** (Tripp, 2026-11-08); see `../speech-long-form-v1`.
-- `outputs/listening-c3-v1` (seed 1 of every case, blind A/B, key separate): **pending Tripp's ear.** Its
-  tts-long-male pair is the unsplit native run (the fixed rule, built before the fix).
+## C3 (listening): PASS
+Blind A/B, seed 1 of every case (`outputs/listening-c3-v1`, not in the repo; key in `listening-c3-v1.key.json`), Tripp,
+2026-11-08 and 2026-11-09, unblinded only after every call was in:
+- fox (female, male), museum (female, male), il-study, il-reflective, il-fridge: both clips good. Tripp heard B as
+  slightly more expressive, but B was native in 3 of these 7 pairs and HF in 4, so this does not favour an engine.
+- tts-numbers (female, male): both engines stutter on the numbers. Whisper hears "389" wrong in all four clips
+  (HF $289.50 and $809.50 plus "gate 20"; native $409.50 and $890.50). This is the model's limit with digits.
+- tts-long-male, rebuilt after the fix, with native split against HF BF16 unsplit: HF murmurs, native solid. Whisper finds
+  HF's last sentence looping ("visitors climb them tadvitas climb them tuluncu..."). See `../speech-long-form-v1`.

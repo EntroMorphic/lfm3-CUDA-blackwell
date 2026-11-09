@@ -49,7 +49,8 @@ makes each sentence its own request, exactly as a single TTS request is built; n
 - **Listening (C3): PASS, Tripp, 2026-11-08** (`outputs/listening-split-v1`, not in the repo). Seeds 1-3, blind A/B,
   native split against HF BF16 unsplit; bread paragraph seeds 1-3, native split alone. Verdict: native split good
   on every seed and both paragraphs, no seams heard; HF unsplit murmurs on "another" and a couple of other words
-  in seeds 2 and 3. The ASR agrees: HF seed 2 "its own pattern from lutter" (word 41), seed 3 "tell when from
+  in seeds 2 and 3. On a re-listen of seed 1 in the C3 set (2026-11-09) Tripp also heard HF murmur, where Whisper
+  finds a loop in the last sentence ("visitors climb them tadvitas climb them..."). The ASR agrees: HF seed 2 "its own pattern from lutter" (word 41), seed 3 "tell when from
   whenever" (words 46-48), at the crossing; native split 0.000.
   Blinding caveat: the order was drawn with one fixed seed per single-case set, so A was native in all three
   pairs. Fixed in tools/lfm3_listening_set.py (the draw now depends on the seed); the verdict was per pair.
