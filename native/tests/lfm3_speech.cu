@@ -10,7 +10,14 @@
 // "chunks" (long-form TTS by sentences): each entry is one sentence's whole prompt, generated as its own request
 // with seed SEED * 1000 + k; the codec stream runs on across them, so OUT_STEM.wav is one stream. The outputs
 // concatenate the chunks (prompt: the first chunk's), and the json adds "chunks": [{frames, slots, ended_by_eos}].
-// OUT_STEM.json: prompt (with the mode marker), slots, text tokens, frame counts, timings;
+// A chunk "ended_by_eos" as tools/lfm3_speech_chunked_hf.py decides it: its last sampled frame is the EOS frame and
+// its last slot is <|im_end|>. "slots" follow HF's default return_audio_eos=False (an EOS frame emits no slot); the
+// chunked HF tool passes True, so its summary counts one more slot per EOS frame.
+// Refused before the model loads or anything is generated: an unknown mode, an empty prompt or chunk, and a prompt
+// that cannot fit max_new_tokens in the capacity. Earlier outputs of OUT_STEM are removed first, so a failed run
+// leaves none of them behind looking current; the exit status is nonzero on any failure, including a failed write.
+// OUT_STEM.json: prompt (with the mode marker), slots, text tokens, frame counts, timings (real_time_factor: audio
+// over generate_seconds, the decode loop; real_time_factor_end_to_end adds the prefills);
 // OUT_STEM.frames.i32 (emitted frames, [frame][12]); OUT_STEM.raw.i32 (sampled frames, EOS frame included);
 // OUT_STEM.wav (24 kHz 16-bit PCM, for listening) and OUT_STEM.f32 (the exact FP32 waveform);
 // OUT_STEM.hidden.bf16 when record_hidden ([frame step][2048], the state the depth decoder read), and
@@ -50,12 +57,16 @@ int main(int argc, char** argv) try {
   if (argc != 4) throw std::runtime_error("usage: lfm3-speech MODEL_DIR REQUEST.json OUT_STEM");
   const auto req = read_json(argv[2]);
   const std::string stem = argv[3];
+  const std::string mode = req.has("mode") ? req.at("mode").string() : "audio";
+  if (mode != "audio" && mode != "interleaved" && mode != "text" && mode != "none")
+    throw std::runtime_error("mode must be audio, interleaved, text or none");
+  for (const char* ext : {".wav", ".f32", ".frames.i32", ".raw.i32", ".hidden.bf16", ".embeds.bf16", ".json"})
+    std::filesystem::remove(stem + ext);
   const int capacity = req.has("capacity") ? req.at("capacity").integer() : 4096;
   auto cfg = lfm::ModelConfig::load(std::string(argv[1]) + "/config.json", capacity);
   Runner runner(argv[1], cfg);
   lfm3_speech::Session session(runner, argv[1]);
   lfm3_speech::Options o;
-  const std::string mode = req.has("mode") ? req.at("mode").string() : "audio";
   using lfm::audio::Requested;
   o.mode = mode == "audio" ? Requested::Audio : mode == "interleaved" ? Requested::Interleaved
          : mode == "text" ? Requested::Text : Requested::None;
@@ -99,6 +110,12 @@ int main(int argc, char** argv) try {
     prompts.emplace_back();
     for (auto& x : req.at("prompt_ids").array()) prompts.back().push_back(x.integer());
   }
+  for (const auto& p : prompts) {  // (the messages path has checked this already, in encode_messages)
+    if (p.empty()) throw std::runtime_error("empty prompt");
+    if (o.max_new_tokens < 1 || p.size() + size_t(o.max_new_tokens) > size_t(capacity))
+      throw std::runtime_error("prompt (" + std::to_string(p.size()) + ") + max_new_tokens exceeds capacity (" +
+                               std::to_string(capacity) + ")");
+  }
   lfm3_speech::Result r;
   struct ChunkInfo { size_t frames, slots; bool eos; };
   std::vector<ChunkInfo> chunk_info;
@@ -107,7 +124,11 @@ int main(int argc, char** argv) try {
     if (chunked) o.seed = seed * 1000 + k;
     o.codec_continue = k > 0, o.codec_finalize = k + 1 == prompts.size();
     auto c = session.generate(prompts[k], o);
-    chunk_info.push_back({c.frames.size(), c.slots.size(), c.raw_frames.size() > c.frames.size()});
+    const auto& eos_frame = c.raw_frames.empty() ? lfm::audio::Frame{} : c.raw_frames.back();
+    const bool ended = !c.raw_frames.empty() &&
+                       std::find(eos_frame.begin(), eos_frame.end(), lfm::audio::kEosCode) != eos_frame.end() &&
+                       !c.slots.empty() && c.slots.back() == lfm::audio::ModeTokens{}.eos[0];
+    chunk_info.push_back({c.frames.size(), c.slots.size(), ended});
     if (k == 0) {
       r = std::move(c);
       continue;
@@ -136,7 +157,7 @@ int main(int argc, char** argv) try {
     write_raw(stem + ".embeds.bf16", e.data(), e.size());
   }
   std::ofstream f(stem + ".json");
-  f << "{\"mode\":\"" << mode << "\",\"prompt\":";
+  f << "{\"mode\":" << lfm::lfm3_text::json_string(mode) << ",\"prompt\":";
   print_ids(f, r.prompt);
   f << ",\"slots\":"; print_ids(f, r.slots);
   f << ",\"text_tokens\":"; print_ids(f, r.text_tokens);
@@ -162,7 +183,11 @@ int main(int argc, char** argv) try {
     << ",\"lm_step_seconds\":" << r.lm_step_seconds << ",\"text_pick_seconds\":" << r.text_pick_seconds
     << ",\"depth_seconds\":" << r.depth_seconds << ",\"sample_host_seconds\":" << r.sample_host_seconds
     << ",\"codec_seconds\":" << r.codec_seconds
-    << ",\"real_time_factor\":" << (r.wav.empty() ? 0.0 : (r.wav.size() / 24000.0) / r.generate_seconds) << "}\n";
+    << ",\"real_time_factor\":" << (r.wav.empty() ? 0.0 : (r.wav.size() / 24000.0) / r.generate_seconds)
+    << ",\"real_time_factor_end_to_end\":"
+    << (r.wav.empty() ? 0.0 : (r.wav.size() / 24000.0) / (r.prefill_seconds + r.generate_seconds)) << "}\n";
+  f.close();
+  if (!f) throw std::runtime_error("cannot write " + stem + ".json");
   std::cout << "{\"frames\":" << r.frames.size() << ",\"audio_seconds\":" << r.wav.size() / 24000.0
             << ",\"generate_seconds\":" << r.generate_seconds << ",\"slots\":" << r.slots.size() << "}\n";
   return 0;

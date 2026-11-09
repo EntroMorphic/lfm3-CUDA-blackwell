@@ -60,6 +60,15 @@ class Session {
 
   Result generate(std::vector<int> prompt, const Options& o) {
     using namespace lfm::audio;
+    // refused before any state changes: an empty prompt; a modality placeholder anywhere (this engine takes no
+    // audio, image or video input and no replayed frames, so HF would refuse or need features it does not have);
+    // continuing a codec stream that the previous call did not leave open (it finalized, or threw midway)
+    if (prompt.empty()) throw std::runtime_error("speech: empty prompt");
+    for (int id : prompt)
+      for (int p : ModeTokens{}.placeholders)
+        if (id == p) throw std::runtime_error("speech: modality placeholder in the prompt (no audio, image or video input)");
+    if (o.codec_continue && !stream_open_) throw std::runtime_error("speech: no open codec stream to continue");
+    stream_open_ = false;
     Result res;
     lfm::audio::ModeOptions mo;
     mo.mode = o.mode, mo.max_new_tokens = o.max_new_tokens, mo.return_audio_eos = o.return_audio_eos;
@@ -162,8 +171,12 @@ class Session {
       }
     }
     dec_.embed_dump = nullptr;
+    if ((!o.forced_tokens.empty() || !o.forced_frames.empty()) &&
+        (forced_token != o.forced_tokens.size() || forced_frame != o.forced_frames.size()))
+      throw std::runtime_error("speech: forced replay ended with tokens or frames unused");
     codec_.decode(pending.empty() ? nullptr : pending.data(), int(pending.size() / 12), o.codec_finalize, res.wav);
     cuda_check(cudaDeviceSynchronize());
+    stream_open_ = !o.codec_finalize;
     const auto t2 = std::chrono::steady_clock::now();
     res.prefill_seconds = std::chrono::duration<double>(t1 - t0).count();
     res.generate_seconds = std::chrono::duration<double>(t2 - t1).count();
@@ -180,6 +193,7 @@ class Session {
   lfm::codec::Decoder codec_;
   lfm::fp32::DeviceArray<float> logits_dev_;
   Buffer<unsigned char> suppress_dev_;
+  bool stream_open_ = false;  // the last call returned normally with codec_finalize = false
 };
 
 }  // namespace lfm3_speech
