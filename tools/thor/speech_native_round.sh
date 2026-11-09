@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # #2 step 4: a native-only round over a prompt file (no HF generation): requests, lfm3-speech, the case layout, ASR.
 # Usage: [CHUNKED=1] speech_native_round.sh TAG TOOLS_TAG PROMPTS(file in validation/speech-e2e-v1)
-#   CHUNKED=1: long-form TTS by sentences (tools/lfm3_speech_chunked_hf.py requests)
+#   CHUNKED=1: long-form TTS by sentences (tools/lfm3_speech_chunked_hf.py requests; LFM3_SPLIT_RULE/CAP pass through)
 set -uo pipefail
 tag=$1; tools=$2; prompts=$3
 W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
 O=$B/$tag; test ! -e $O || { echo "exists $tag"; exit 1; }; mkdir -p $O/native
 EXN="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
-PY="docker exec lfm3-omni-dev /opt/venv/bin/python3"
+PY="docker exec -e LFM3_SPLIT_RULE -e LFM3_SPLIT_CAP lfm3-omni-dev /opt/venv/bin/python3"  # split rule (chunked tool)
 T=/workspace/liquid-CUDA/tools; M=/workspace/models/LFM3-Omni-2B; P=/workspace/liquid-CUDA/validation/speech-e2e-v1/$prompts
 fail(){ echo "FAIL: $1"; exit 1; }
 bash $R/tools/thor/power_state.sh $O/power-start.json || fail "power state"

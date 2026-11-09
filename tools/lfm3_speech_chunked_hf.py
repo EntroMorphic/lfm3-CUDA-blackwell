@@ -27,6 +27,88 @@ from pathlib import Path
 
 MIN_WORDS = 6
 
+# Candidate rules for the splitter's open gap (no length cap), prototyped here for the split experiment (validation/
+# speech-split-v1) before the native splitter changes. LFM3_SPLIT_RULE selects one; the default is sentences(), the
+# validated rule. LFM3_SPLIT_CAP is the cap in words.
+#   cap-comma: sentences(), then a chunk over CAP words is cut at its last clause mark (, ; : or a dash) at or before
+#              word CAP that leaves both sides MIN_WORDS long; with none, at the even cut below; repeated.
+#   cap-hard:  sentences(), then a chunk over CAP words is cut into the fewest equal pieces of at most CAP words.
+#   full:      paragraphs (blank lines) first; sentence ends also after a closing quote or bracket; titles (Mr. Dr. ...)
+#              never end a sentence, other abbreviations (a.m. U.S. Jan. ...) only before a capital; then cap-comma.
+TITLES = {"mr.", "mrs.", "ms.", "dr.", "prof.", "st.", "jr.", "sr.", "mt.", "no."}
+ABBREVIATIONS = {"a.m.", "p.m.", "u.s.", "u.k.", "e.g.", "i.e.", "etc.", "vs.", "jan.", "feb.", "mar.", "apr.", "jun.",
+                 "jul.", "aug.", "sep.", "sept.", "oct.", "nov.", "dec."}
+
+
+def even_cut(n, cap):
+    pieces = -(-n // cap)
+    return -(-n // pieces)
+
+
+def cap_comma(chunk, cap):
+    words = chunk.split()
+    if len(words) <= cap:
+        return [chunk]
+    marks = [i + 1 for i in range(len(words) - 1)
+             if (words[i][-1] in ",;:\u2014\u2013" or words[i + 1] in ("-", "\u2014", "\u2013"))
+             and MIN_WORDS <= i + 1 <= cap and len(words) - (i + 1) >= MIN_WORDS]
+    cut = max(marks) if marks else even_cut(len(words), cap)
+    return [" ".join(words[:cut])] + cap_comma(" ".join(words[cut:]), cap)
+
+
+def cap_hard(chunk, cap):
+    words = chunk.split()
+    if len(words) <= cap:
+        return [chunk]
+    cut = even_cut(len(words), cap)
+    return [" ".join(words[:cut])] + cap_hard(" ".join(words[cut:]), cap)
+
+
+def merge_short(parts):
+    out = []
+    for p in parts:
+        if out and len(out[-1].split()) < MIN_WORDS:
+            out[-1] += " " + p
+        else:
+            out.append(p)
+    if len(out) > 1 and len(out[-1].split()) < MIN_WORDS:
+        last = out.pop()
+        out[-1] += " " + last
+    return out
+
+
+def full_sentences(paragraph):
+    words, parts, cur = paragraph.split(), [], []
+    for k, w in enumerate(words):
+        cur.append(w)
+        bare = w.rstrip("\"'\u201d\u2019)]")
+        if k + 1 < len(words) and bare[-1:] in (".", "!", "?"):
+            low = bare.lower()
+            nxt = words[k + 1].lstrip("\"'\u201c\u2018([")
+            if low in TITLES or (low in ABBREVIATIONS and not nxt[:1].isupper()):
+                continue
+            parts.append(" ".join(cur)); cur = []
+    if cur:
+        parts.append(" ".join(cur))
+    return parts
+
+
+def split_text(text, rule=None, cap=None):
+    import os
+    rule = rule or os.environ.get("LFM3_SPLIT_RULE", "sentences")
+    cap = int(cap or os.environ.get("LFM3_SPLIT_CAP", "0"))
+    if rule == "sentences":
+        return sentences(text)
+    assert cap >= 2 * MIN_WORDS, "LFM3_SPLIT_CAP must be at least 12"
+    if rule in ("cap-comma", "cap-hard"):
+        f = cap_comma if rule == "cap-comma" else cap_hard
+        return [q for c in sentences(text) for q in f(c, cap)]
+    if rule == "full":
+        paragraphs = [p for p in re.split(r"\n\s*\n", text.strip()) if p.strip()]
+        chunks = merge_short([q for p in paragraphs for q in full_sentences(p)])
+        return [q for c in chunks for q in cap_comma(c, cap)]
+    raise SystemExit(f"unknown LFM3_SPLIT_RULE {rule}")
+
 
 def sentences(text):
     parts = [p for p in re.split(r"(?<=[.!?])\s+", text.strip()) if p]
@@ -58,9 +140,9 @@ def main(model_dir, prompts, out_dir, mode, dtype="bfloat16"):
             system = spec["systems"][c["system"]]
             chunks = [processor.apply_chat_template([{"role": "system", "content": system}, {"role": "user", "content": t}],
                                                     add_generation_prompt=True, tokenize=True, return_dict=True,
-                                                    return_tensors="pt")["input_ids"][0].tolist() for t in sentences(c["user"])]
+                                                    return_tensors="pt")["input_ids"][0].tolist() for t in split_text(c["user"])]
             for seed in spec["seeds"]:
-                json.dump(dict(prompt_ids=chunks[0], chunks=chunks, mode="audio", max_new_tokens=c["max_new_tokens"],
+                json.dump(dict(prompt_ids=chunks[0], chunks=chunks, chunk_texts=split_text(c["user"]), mode="audio", max_new_tokens=c["max_new_tokens"],
                                seed=seed, conversation=[{"role": "system", "content": system}, {"role": "user", "content": c["user"]}]),
                           open(Path(out_dir) / "requests" / f"{c['case']}-s{seed}.req.json", "w"))
         return
@@ -77,7 +159,7 @@ def main(model_dir, prompts, out_dir, mode, dtype="bfloat16"):
     spec = json.load(open(prompts))
     for c in spec["cases"]:
         system = spec["systems"][c["system"]]
-        chunks = sentences(c["user"])
+        chunks = split_text(c["user"])
         for seed in spec["seeds"]:
             name = f"{c['case']}-s{seed}"
             d = Path(out_dir) / engine / name
