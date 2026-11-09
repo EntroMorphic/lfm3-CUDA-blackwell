@@ -84,10 +84,8 @@ each sentence natively.
   more), never reached by a validation prompt; fixed in both.
 
 ## Open
-- **The split has no length cap.** A chunk ends only at `. ! ?` followed by whitespace, so text without them stays one
-  long request and can fail as before: paragraphs separated only by blank lines, CJK punctuation (`。！？`), dialogue
-  with the period inside the quotes (`"Stop." Then`). Abbreviations (`p.m. on`) can also split mid-sentence (the
-  6-word join hides most). Decision pending (with comma splits for long sentences).
+- ~~The split has no length cap~~ **Resolved by test in speech-v5** (`../speech-split-v1`): a 49-word cap cut at clause
+  marks, and an abbreviation guard.
 - The server: speech is not yet in `liquid-lfm3`.
 - HF BF16's better unsplit odds on this paragraph remain unexplained beyond "different rounding"; with the split, it
   no longer matters.

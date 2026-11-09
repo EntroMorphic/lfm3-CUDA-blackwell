@@ -65,6 +65,15 @@ HAND = [
     "A. B is separated by a line separator and has many words after it to count.",
     # punctuation and whitespace at the very start (the scan's first possible cut is after the first character)
     "!\n\nOne two three four five six seven.", "? Then a long sentence follows here with words. And another one here too.",
+    # titles never end a sentence; abbreviations only before an ASCII capital (case-insensitive, ASCII only)
+    "Dr. Alvarez met Mr. Chen at 9 a.m. on Jan. 5 to discuss the new U.S. trade rules. By 11 a.m. they had a plan ready.",
+    "We met at 9 a.m. Then everyone went home for the rest of the long and quiet day.",
+    "MR. SMITH and DR. JONES arrived. They sat down at the long table in the hall to begin.",
+    "Trade with the U.\u212a. grew last year by a lot. The Kelvin sign is not an ASCII K at all here.",
+    # the cap: a long sentence cut at its last clause mark at or before word 49, or evenly without one
+    " ".join(["word"] * 30) + ", " + " ".join(["more"] * 40) + ".",
+    " ".join(["plain"] * 120) + ".",
+    " ".join(["dash"] * 20) + " \u2014 " + " ".join(["after"] * 40) + "; " + " ".join(["tail"] * 30),
     # CJK full stop followed by a space: not a break in the rule (adding it would change chunks)
     "This sentence has more than six words before its full stop。 Then another long sentence follows it here.",
 ]
@@ -74,6 +83,46 @@ def test_split_matches_python_on_edge_cases(tool, tmp_path):
     got = run(tool, tmp_path, "split", [{"text": t} for t in HAND])
     for t, g in zip(HAND, got):
         assert g["sentences"] == chunked.sentences(t), t
+
+
+def test_the_cap_and_the_guard_as_chosen(tool, tmp_path):
+    # validation/speech-split-v1: the default equals the tested cap-comma 49 chunks, and full 49 on the abbreviations
+    spec = json.loads((ROOT / "validation/speech-e2e-v1/prompts-split-phase-b.json").read_text())
+    cases = {c["case"]: c["user"] for c in spec["cases"]}
+    for case in ("dialogue", "paragraphs", "long-comma", "long-nocomma"):
+        assert chunked.sentences(cases[case]) == chunked.split_text(cases[case], "cap-comma", 49), case
+    assert chunked.sentences(cases["abbrev"]) == chunked.split_text(cases["abbrev"], "full", 49)
+    got = run(tool, tmp_path, "split", [{"text": t} for t in cases.values()])
+    assert [g["sentences"] for g in got] == [chunked.sentences(t) for t in cases.values()]
+    assert all(len(c.split()) <= chunked.CAP_WORDS for g in got for c in g["sentences"])
+    # every validated prompt splits exactly as under the first rule, so its runs are unchanged
+    for f in sorted((ROOT / "validation/speech-e2e-v1").glob("prompts*.json")):
+        if "split-phase" in f.name:
+            continue
+        for c in json.loads(f.read_text())["cases"]:
+            assert chunked.sentences(c["user"]) == chunked.sentences_v1(c["user"]), (f.name, c["case"])
+
+
+def test_cap_boundaries_exhaustively(tool, tmp_path):
+    # every chunk length 40-110 words, one clause mark at every position, each mark form; plus two marks at once
+    forms = [lambda w: w + ",", lambda w: w + ";", lambda w: w + ":", lambda w: w + "\u2014", lambda w: w + "\u2013",
+             lambda w: w + " -", lambda w: w + " \u2014", lambda w: w + " \u2013"]
+    texts = [" ".join(["w"] * n) for n in range(40, 111)]
+    for n in range(40, 111):
+        for pos in range(1, n):
+            for f in forms:
+                words = ["w"] * n
+                words[pos - 1] = f(words[pos - 1])
+                texts.append(" ".join(words))
+    for n in range(44, 100, 5):
+        for a in range(1, n, 3):
+            for b in range(a + 1, n, 7):
+                words = ["w"] * n
+                words[a - 1] += ","; words[b - 1] += ";"
+                texts.append(" ".join(words))
+    got = run(tool, tmp_path, "split", [{"text": t} for t in texts])
+    bad = [t for t, g in zip(texts, got) if g.get("sentences") != chunked.sentences(t)]
+    assert not bad, (len(bad), bad[:2])
 
 
 def test_short_last_sentence_joins_the_one_before(tool, tmp_path):
@@ -89,13 +138,14 @@ def test_short_last_sentence_joins_the_one_before(tool, tmp_path):
 
 def test_split_matches_python_fuzzed(tool, tmp_path):
     rng = random.Random(20261109)
-    words = ["the", "a", "lighthouse", "keeper", "café", "漢字", "3.14", "e.g.", "Mr.", "🙂", "x"]
-    puncts = [".", "!", "?", "...", "?!", ",", ";", ""]
+    words = ["the", "a", "lighthouse", "keeper", "café", "漢字", "3.14", "e.g.", "Mr.", "🙂", "x", "Then", "Über",
+             "dr.", "MRS.", "a.m.", "P.M.", "U.S.", "u.\u212a.", "Jan.", "etc.", "No.", "-", "\u2014", "\u2013", "word\u2014"]
+    puncts = [".", "!", "?", "...", "?!", ",", ";", ":", ""]
     spaces = [" ", "  ", "\t", "\n", " ", "　", " ", "\r\n", "\x1f", "\x85", "​"]
     texts = []
     for _ in range(5000):
         parts = []
-        for _ in range(rng.randrange(0, 40)):
+        for _ in range(rng.randrange(0, 40) if rng.random() < 0.6 else rng.randrange(40, 160)):
             parts.append(rng.choice(words) + (rng.choice(puncts) if rng.random() < 0.3 else ""))
             parts.append(rng.choice(spaces) if rng.random() < 0.9 else "")
         if rng.random() < 0.3:

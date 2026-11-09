@@ -47,3 +47,35 @@ The rules:
 
 Every chunk of every run ended by its own EOS (`chunk-endings.json`). Any cap fixes the failure. On WER the two plain
 caps tie for simplest, so the choice goes to listening (Phase C), since WER cannot hear where a cut falls in a phrase.
+
+## Phase C: listening (Tripp, 2026-11-09; `outputs/listening-split-rules-v1`, key beside it, not in the repo)
+Seed 1, blind A/B, five pairs that each isolate one choice. The order was drawn from OS entropy, and the key was
+opened only after every call was in.
+
+| pair | A | B | Tripp | reading |
+|---|---|---|---|---|
+| long sentence | cap-comma 49 | cap-hard 49 | A good; B has an odd inflection at "eye" | The even cut fell at "as far as \| the eye could see", exactly there; Whisper even capitalized "The". Even cuts are out. |
+| two or four pieces | full 30 (4) | cap-comma 49 (2) | both good, B slightly preferred | Fewer seams: cap 49 over 30 |
+| dialogue | full 49 (line by line) | cap-comma 49 (2 pieces) | both good, B slightly better | Breaking at closing quotes adds seams for nothing |
+| paragraphs | full 49 (each blank line) | cap-comma 49 (2 pieces) | both good, B slightly better | Same for blank lines |
+| abbreviations | full 49 (guarded) | sentences (cuts after Mr. / a.m.) | both struggle with abbreviations and numbers; B slightly worse | The guard helps a little (WER 0.003 against 0.008 agrees) |
+
+## The decision: the default since speech-v5
+Sentence ends at `. ! ?` plus whitespace, except after a title (Mr. Dr. ...) and after an abbreviation (a.m. U.S.
+Jan. ...) when the next word does not start with a capital. Parts under 6 words join, and any chunk over 49 words is cut
+at its last clause mark (`, ; :` or a dash) at or before word 49, or evenly when it has none. There are no breaks at
+quotes or blank lines. Python reference: `sentences()` in `tools/lfm3_speech_chunked_hf.py` (the first rule is kept
+as `sentences_v1`). Native: `native/include/lfm/speech_text.hpp`.
+- **Tests:** native equals Python on edge cases, 5,000 fuzzed texts (now with titles, abbreviations, clause marks,
+  dashes and texts up to 160 words), and every chunk length from 40 to 110 with a clause mark at every position in
+  each of its 8 forms. In mutation testing, all 25 non-equivalent planted bugs in the new code are caught, as are
+  all 24 earlier ones that still apply. 14 of 14 tests pass in lfm3-omni-dev, HF prompt ids included.
+- **Unchanged:** every validated prompt splits exactly as under the first rule (tested). speech-v5's regression check
+  is bit-identical (36 of 36 files), with all 8 refusals clean.
+- **Inherited results:** natively split with speech-v5, all five Phase B inputs (seeds 1-2) are bit-identical to the
+  experiment runs whose chunks they reproduce (cap-comma 49; full 49 for the abbreviations), which scored WER
+  0.000-0.003.
+- **Still open:**
+  - The cap's margin. 49 words is the longest length that read cleanly on 8 of 8 seeds; the first failure was at 59. A
+    15-seed check at 45-60 words would firm it up.
+  - The model's reading of numbers and abbreviations: writing them out as words is a separate decision.

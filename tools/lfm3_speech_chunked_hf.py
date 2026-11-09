@@ -26,10 +26,11 @@ from pathlib import Path
 
 
 MIN_WORDS = 6
+CAP_WORDS = 49  # validation/speech-split-v1: phase A's longest safe single chunk; phase C (Tripp): comma cuts, few seams
 
 # Candidate rules for the splitter's open gap (no length cap), prototyped here for the split experiment (validation/
-# speech-split-v1) before the native splitter changes. LFM3_SPLIT_RULE selects one; the default is sentences(), the
-# validated rule. LFM3_SPLIT_CAP is the cap in words.
+# speech-split-v1). LFM3_SPLIT_RULE selects one: "sentences" (the default, the rule the experiment chose), or
+# "sentences-v1" (the first rule) and the candidates below, built on sentences_v1. LFM3_SPLIT_CAP is their cap in words.
 #   cap-comma: sentences(), then a chunk over CAP words is cut at its last clause mark (, ; : or a dash) at or before
 #              word CAP that leaves both sides MIN_WORDS long; with none, at the even cut below; repeated.
 #   cap-hard:  sentences(), then a chunk over CAP words is cut into the fewest equal pieces of at most CAP words.
@@ -99,10 +100,12 @@ def split_text(text, rule=None, cap=None):
     cap = int(cap or os.environ.get("LFM3_SPLIT_CAP", "0"))
     if rule == "sentences":
         return sentences(text)
+    if rule == "sentences-v1":
+        return sentences_v1(text)
     assert cap >= 2 * MIN_WORDS, "LFM3_SPLIT_CAP must be at least 12"
     if rule in ("cap-comma", "cap-hard"):
         f = cap_comma if rule == "cap-comma" else cap_hard
-        return [q for c in sentences(text) for q in f(c, cap)]
+        return [q for c in sentences_v1(text) for q in f(c, cap)]
     if rule == "full":
         paragraphs = [p for p in re.split(r"\n\s*\n", text.strip()) if p.strip()]
         chunks = merge_short([q for p in paragraphs for q in full_sentences(p)])
@@ -110,18 +113,41 @@ def split_text(text, rule=None, cap=None):
     raise SystemExit(f"unknown LFM3_SPLIT_RULE {rule}")
 
 
-def sentences(text):
+def sentences_v1(text):
+    """The first rule (validated 2026-11-08, speech-long-form-v1): no abbreviation guard, no length cap."""
     parts = [p for p in re.split(r"(?<=[.!?])\s+", text.strip()) if p]
-    out = []
-    for p in parts:
-        if out and len(out[-1].split()) < MIN_WORDS:
-            out[-1] += " " + p
-        else:
-            out.append(p)
-    if len(out) > 1 and len(out[-1].split()) < MIN_WORDS:
-        last = out.pop()  # (out[-2] += out.pop() would read one item and write another)
-        out[-1] += " " + last
-    return out
+    return merge_short(parts)
+
+
+def ascii_lower(s):
+    return "".join(chr(ord(c) + 32) if "A" <= c <= "Z" else c for c in s)
+
+
+def sentence_parts(text):
+    """Cut at each whitespace run that follows . ! or ?, except after a title (never a sentence end) or after an
+    abbreviation when the next word does not start with an ASCII capital. Both lists compare ASCII-lowercased."""
+    t = text.strip()
+    parts, start, prev_end = [], 0, 0
+    for m in re.finditer(r"\s+", t):
+        i, j = m.start(), m.end()
+        before, prev_end = t[prev_end:i], j
+        if before[-1] not in ".!?":
+            continue
+        low = ascii_lower(before)
+        nxt = t[j]
+        if low in TITLES or (low in ABBREVIATIONS and not "A" <= nxt <= "Z"):
+            continue
+        parts.append(t[start:i])
+        start = j
+    if t:
+        parts.append(t[start:])
+    return parts
+
+
+def sentences(text):
+    """The default rule (validation/speech-split-v1): sentence_parts, parts under MIN_WORDS joined, then any chunk over
+    CAP_WORDS cut at its last clause mark at or before word CAP_WORDS (cap_comma)."""
+    return [q for c in merge_short(sentence_parts(text)) for q in cap_comma(c, CAP_WORDS)]
 
 
 def main(model_dir, prompts, out_dir, mode, dtype="bfloat16"):

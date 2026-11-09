@@ -11,3 +11,4 @@ f0198ebff0ca7e58716f8148606f7f54d1a37758ec5af5c24de7ee95a6a7ccf9  native/include
 645f1f54d0525b05db63873ef341f430d143d2c1b25aa638c916bd5a1069cdc4  speech-v3/lfm3-speech (native split)
 426dcde18451ec33ae26908d48b98fef9a1d85cf43418865c25531148e9827c2  speech-v3/lfm3-text-tool
 2c4a1be84cb9cfdadb1f5a534c0342b9682fa588404f460b4bb69cd84c2c96dd  speech-v4/lfm3-speech (red-team fixes; tools/thor/speech_regression_check.sh: 36 of 36 identical, 9 of 9 refusals clean)
+e6264cc6f225bded70b83fa43d12ed4dca4275a240aba88c394b491b62074b16  speech-v5/lfm3-speech (the chosen split rule; regression 36 of 36 identical; Phase B native default bit-identical to the experiment runs)
