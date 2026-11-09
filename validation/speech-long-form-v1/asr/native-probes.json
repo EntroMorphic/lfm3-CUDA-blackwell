@@ -11,7 +11,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s10",
@@ -23,7 +26,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s11",
@@ -35,7 +41,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s12",
@@ -47,7 +56,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s13",
@@ -59,7 +71,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s14",
@@ -71,7 +86,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s15",
@@ -83,7 +101,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s2",
@@ -95,7 +116,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s3",
@@ -107,7 +131,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s4",
@@ -119,7 +146,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s5",
@@ -131,7 +161,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s6",
@@ -143,7 +176,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s7",
@@ -155,7 +191,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s8",
@@ -167,7 +206,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-first-three-s9",
@@ -179,7 +221,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 50,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 50
   },
   {
    "case": "probe-hazard-alone-s1",
@@ -191,7 +236,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s10",
@@ -203,7 +251,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s11",
@@ -215,7 +266,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s12",
@@ -227,7 +281,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s13",
@@ -239,7 +296,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s14",
@@ -251,7 +311,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s15",
@@ -263,7 +326,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s2",
@@ -275,7 +341,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s3",
@@ -287,7 +356,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s4",
@@ -299,7 +371,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s5",
@@ -311,7 +386,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s6",
@@ -323,7 +401,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s7",
@@ -335,7 +416,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s8",
@@ -347,7 +431,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-alone-s9",
@@ -359,7 +446,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another",
    "reference_words": 15,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 15
   },
   {
    "case": "probe-hazard-first-s1",
@@ -371,7 +461,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are mata kair is still stand and visitors climb them to look out over the same waters the keepers once watched sad watched lighthouses were once the most ornany steady beam of light as ships captained rulandsalladishen underk",
    "reference_words": 97,
    "word_errors": 32,
-   "wer": 0.32989690721649484
+   "wer": 0.32989690721649484,
+   "word_errors_before": 32,
+   "wer_before": 0.32989690721649484,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s10",
@@ -383,7 +476,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are monobatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched on any coast were once the most or most important systems on any coast at radio and a steady beam of light to judge distance and direction in the dark",
    "reference_words": 97,
    "word_errors": 16,
-   "wer": 0.16494845360824742
+   "wer": 0.16494845360824742,
+   "word_errors_before": 16,
+   "wer_before": 0.16494845360824742,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s11",
@@ -395,7 +491,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are modemaked but many towers still stand and visitors climb them to look out over the same waters that keepers once watched most watched once portent safety sims on any coast before radio and a satellite and ship is captain relied on a steady beam of light",
    "reference_words": 97,
    "word_errors": 19,
-   "wer": 0.1958762886597938
+   "wer": 0.1958762886597938,
+   "word_errors_before": 19,
+   "wer_before": 0.1958762886597938,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s12",
@@ -407,7 +506,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are monitored but many towers still stand and visitors climb them to look out over the same waters the keepers once watched land has were once the most most on any coast for once the most most most savings and on any coast and ships captain relines the most watched on any coast",
    "reference_words": 97,
    "word_errors": 29,
-   "wer": 0.29896907216494845
+   "wer": 0.29896907216494845,
+   "word_errors_before": 29,
+   "wer_before": 0.29896907216494845,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s13",
@@ -419,7 +521,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are modicate but many towers still stand and visitors climb them to look out over the same waters the keepers once watched lighthouses were once the most ornate of gege stints and ships capped relied on a steady beam of light",
    "reference_words": 97,
    "word_errors": 23,
-   "wer": 0.23711340206185566
+   "wer": 0.23711340206185566,
+   "word_errors_before": 23,
+   "wer_before": 0.23711340206185566,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s14",
@@ -431,7 +536,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are monotonic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched lighthouses were once the most omitted a ship is captain relied on a steady beam of light as ships captained relance the most in black to judge distance and direction in the dark",
    "reference_words": 97,
    "word_errors": 20,
-   "wer": 0.20618556701030927
+   "wer": 0.20618556701030927,
+   "word_errors_before": 20,
+   "wer_before": 0.20618556701030927,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s15",
@@ -443,7 +551,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are matakud but many towers still stand and visitors climb them to look out over the same waters that keepers once watched land any coast the once the most most most watched of judge distance and directions and direction whilst the keepers once watched a landy coast a buffer radio on a steady beam of light a ship is captain relied on a steady beam of light and ship is captain relied the most most almost more to touch in the dark",
    "reference_words": 97,
    "word_errors": 43,
-   "wer": 0.44329896907216493
+   "wer": 0.44329896907216493,
+   "word_errors_before": 43,
+   "wer_before": 0.44329896907216493,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s2",
@@ -455,7 +566,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are modipack but many towers still stand and visitors climb them to look out over the same waters the keepers once watched lighthouses were once the most immortant sadi systems on any coast before radio and satellite donation a ship is captain relied on a steady beam of light to judge distance and direction in the dark",
    "reference_words": 97,
    "word_errors": 4,
-   "wer": 0.041237113402061855
+   "wer": 0.041237113402061855,
+   "word_errors_before": 4,
+   "wer_before": 0.041237113402061855,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s3",
@@ -467,7 +581,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are modicate but many towers still stand and visitors climb them to look out over the same waters the keepers once watched on any coast loats the most or once the most portent safest on any coast before radio in a steady beam of light as ship is captain relied on a steady beam of light of ship is distance and rest in direct distance and direction as ship is captain relaunts the most most most watched than ship is captain relied on a steady beam of light",
    "reference_words": 97,
    "word_errors": 46,
-   "wer": 0.4742268041237113
+   "wer": 0.4742268041237113,
+   "word_errors_before": 46,
+   "wer_before": 0.4742268041237113,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s4",
@@ -479,7 +596,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are a modicad but many towers still stand and visitors climb them to look out over the same waters the keepers once watched lighthouses were once the most watched salt before radio and a steady beam of light to just distance and direction in the dark",
    "reference_words": 97,
    "word_errors": 17,
-   "wer": 0.17525773195876287
+   "wer": 0.17525773195876287,
+   "word_errors_before": 17,
+   "wer_before": 0.17525773195876287,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s5",
@@ -491,7 +611,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are modicated but limney towers stillen and visitors climb them to look out over the same waters the keepers once watched on any coast lighthouses were once the most aborted nadigan a ship is capon relied on a steady beam of light",
    "reference_words": 97,
    "word_errors": 27,
-   "wer": 0.27835051546391754
+   "wer": 0.27835051546391754,
+   "word_errors_before": 27,
+   "wer_before": 0.27835051546391754,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s6",
@@ -503,7 +626,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are on a matakit but many towers still stand and visitors climb them to look out over the same waters the keepers once watched lighthouses were once the most most important safety systems on any coast before radio and solid navigation a ship is cabin relied on a steady beam of light",
    "reference_words": 97,
    "word_errors": 14,
-   "wer": 0.14432989690721648
+   "wer": 0.14432989690721648,
+   "word_errors_before": 14,
+   "wer_before": 0.14432989690721648,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s7",
@@ -515,7 +641,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are at modocat but many towers still in and visitors climb them to look out over the same waters the keepers once watched on any coast while it was the most watched and molted and ships captained relied on a steady beam of light",
    "reference_words": 97,
    "word_errors": 30,
-   "wer": 0.30927835051546393
+   "wer": 0.30927835051546393,
+   "word_errors_before": 30,
+   "wer_before": 0.30927835051546393,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s8",
@@ -527,7 +656,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are on in modocat but many towers stillned and visitors climbed them to look out over the same waters the keepers once most washed those on the coast were once the most orchard safety ships on the coast coast before radio and a satellite a ship is captain relied on a steady beam of light",
    "reference_words": 97,
    "word_errors": 26,
-   "wer": 0.26804123711340205
+   "wer": 0.26804123711340205,
+   "word_errors_before": 26,
+   "wer_before": 0.26804123711340205,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-hazard-first-s9",
@@ -539,7 +671,10 @@
    "normalized_transcript": "each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are modicat but many towers still stand and visitors climb them to look out of the same waters the keepers once watched lighthouses were once the most and most important safesims on any coast before radio and a satellite netigation upon they since were once the most blot to judge distance and direction in the dark",
    "reference_words": 97,
    "word_errors": 18,
-   "wer": 0.18556701030927836
+   "wer": 0.18556701030927836,
+   "word_errors_before": 18,
+   "wer_before": 0.18556701030927836,
+   "reference_words_folded": 97
   },
   {
    "case": "probe-other-long-s1",
@@ -551,7 +686,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s10",
@@ -563,7 +701,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and lascic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 1,
-   "wer": 0.011627906976744186
+   "wer": 0.011627906976744186,
+   "word_errors_before": 1,
+   "wer_before": 0.011627906976744186,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s11",
@@ -575,7 +716,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a bringsthehormfamilias smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 2,
-   "wer": 0.023255813953488372
+   "wer": 0.023255813953488372,
+   "word_errors_before": 2,
+   "wer_before": 0.023255813953488372,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s12",
@@ -587,7 +731,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth to yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 7,
-   "wer": 0.08139534883720931
+   "wer": 0.08139534883720931,
+   "word_errors_before": 7,
+   "wer_before": 0.08139534883720931,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s13",
@@ -599,7 +746,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s14",
@@ -611,7 +761,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with mighty bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 1,
-   "wer": 0.011627906976744186
+   "wer": 0.011627906976744186,
+   "word_errors_before": 1,
+   "wer_before": 0.011627906976744186,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s15",
@@ -623,7 +776,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes slow and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turn golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 2,
-   "wer": 0.023255813953488372
+   "wer": 0.023255813953488372,
+   "word_errors_before": 2,
+   "wer_before": 0.023255813953488372,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s2",
@@ -635,7 +791,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic dreyitz fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 6,
-   "wer": 0.06976744186046512
+   "wer": 0.06976744186046512,
+   "word_errors_before": 6,
+   "wer_before": 0.06976744186046512,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s3",
@@ -647,7 +806,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whorm familiar smell that brings the holf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table so brings the holf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the holf goes into a hot oven familiar smolf that the warm familiar smell that brings the whole goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 104,
-   "wer": 1.2093023255813953
+   "wer": 1.2093023255813953,
+   "word_errors_before": 104,
+   "wer_before": 1.2093023255813953,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s4",
@@ -659,7 +821,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 6,
-   "wer": 0.06976744186046512
+   "wer": 0.06976744186046512,
+   "word_errors_before": 6,
+   "wer_before": 0.06976744186046512,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s5",
@@ -671,7 +836,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and lascic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm femoral smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 2,
-   "wer": 0.023255813953488372
+   "wer": 0.023255813953488372,
+   "word_errors_before": 2,
+   "wer_before": 0.023255813953488372,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s6",
@@ -683,7 +851,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes slow rise then yeast fills it with tiny bubbles but jeats fills it with hot oven where the crust turns golden where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 18,
-   "wer": 0.20930232558139536
+   "wer": 0.20930232558139536,
+   "word_errors_before": 18,
+   "wer_before": 0.20930232558139536,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s7",
@@ -695,7 +866,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and lassock during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a brings the whore familiar smell that brings the whole family to the brings the whore family to the whore family",
    "reference_words": 86,
    "word_errors": 12,
-   "wer": 0.13953488372093023
+   "wer": 0.13953488372093023,
+   "word_errors_before": 12,
+   "wer_before": 0.13953488372093023,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s8",
@@ -707,7 +881,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during to slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 1,
-   "wer": 0.011627906976744186
+   "wer": 0.011627906976744186,
+   "word_errors_before": 1,
+   "wer_before": 0.011627906976744186,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s9",
@@ -719,7 +896,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a bringsthehome familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 1,
-   "wer": 0.011627906976744186
+   "wer": 0.011627906976744186,
+   "word_errors_before": 1,
+   "wer_before": 0.011627906976744186,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-weather-alone-s1",
@@ -731,7 +911,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s10",
@@ -743,7 +926,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s11",
@@ -755,7 +941,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s12",
@@ -767,7 +956,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s13",
@@ -779,7 +971,10 @@
    "normalized_transcript": "keepers trim the wicks polish the great lenses and climb the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 3,
-   "wer": 0.13636363636363635
+   "wer": 0.13636363636363635,
+   "word_errors_before": 3,
+   "wer_before": 0.13636363636363635,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s14",
@@ -791,7 +986,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s15",
@@ -803,7 +1001,10 @@
    "normalized_transcript": "keepers trim the wicks polish the great lenses and climb the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 3,
-   "wer": 0.13636363636363635
+   "wer": 0.13636363636363635,
+   "word_errors_before": 3,
+   "wer_before": 0.13636363636363635,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s2",
@@ -815,7 +1016,10 @@
    "normalized_transcript": "keepers trim the wicks polish the great lenses and climb the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 3,
-   "wer": 0.13636363636363635
+   "wer": 0.13636363636363635,
+   "word_errors_before": 3,
+   "wer_before": 0.13636363636363635,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s3",
@@ -827,7 +1031,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s4",
@@ -839,7 +1046,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s5",
@@ -851,7 +1061,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s6",
@@ -863,7 +1076,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s7",
@@ -875,7 +1091,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s8",
@@ -887,7 +1106,10 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   },
   {
    "case": "probe-weather-alone-s9",
@@ -899,7 +1121,11 @@
    "normalized_transcript": "keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather",
    "reference_words": 22,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 22
   }
- ]
+ ],
+ "scoring": "fold_compounds"
 }

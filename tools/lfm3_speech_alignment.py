@@ -10,6 +10,9 @@ centroid rises most monotonically with the frame index (Spearman). Writes OUT_DI
 word, per layer and head) and OUT_DIR/alignment.json (head ranking, and per case the alignment heads' centroid
 track, downsampled).
 Usage (lfm3-omni-dev): lfm3_speech_alignment.py MODEL_DIR OUT_DIR N_CLEAN NATIVE_JSON...  (clean runs first)
+       lfm3_speech_alignment.py summary OUT_DIR   OUT_DIR/mass_by_layer_type.json from the npz files: per case, the
+       attention mass on the text averaged over the heads of the sliding-window layers and of the full-attention layers,
+       in 25-frame bins, and the frame at which the window's trailing edge passes the text's first and last token
 """
 import json
 import sys
@@ -103,7 +106,30 @@ def main(model_dir, out_dir, n_clean, *cases):
     print("top heads (spearman on clean, layer, head):", rank[:8])
 
 
+def summary(out_dir):
+    out = Path(out_dir)
+    rep = json.loads((out / "alignment.json").read_text())
+    sliding = [k for k, t in enumerate(rep["layer_types"]) if t == "sliding_attention"]
+    full = [k for k, t in enumerate(rep["layer_types"]) if t == "full_attention"]
+    res = dict(bin_frames=25, sliding_layers=[rep["attention_layers"][k] for k in sliding],
+               full_layers=[rep["attention_layers"][k] for k in full], cases={})
+    for f in sorted(out.glob("*.npz")):
+        z = np.load(f)
+        mass, edge = z["mass"], z["edge_frame"]  # layers, heads, frames
+        bins = lambda m: [round(float(m[:, :, i:i + 25].mean()), 4) for i in range(0, m.shape[2], 25)]
+        res["cases"][f.stem] = dict(frames=int(mass.shape[2]), clean=rep["cases"][f.stem]["clean"],
+                                    edge_passes_first_token=int(edge.min()), edge_passes_last_token=int(edge.max()),
+                                    sliding_mass=bins(mass[sliding]), full_mass=bins(mass[full]))
+    (out / "mass_by_layer_type.json").write_text(json.dumps(res, indent=1) + "\n")
+    for c, v in res["cases"].items():
+        print(c, "edge passes text at frames", v["edge_passes_first_token"], "-", v["edge_passes_last_token"],
+              "| sliding mass by 25-frame bin:", v["sliding_mass"][:14], "| full:", v["full_mass"][:14])
+
+
 if __name__ == "__main__":
-    if len(sys.argv) < 5:
+    if len(sys.argv) == 3 and sys.argv[1] == "summary":
+        summary(sys.argv[2])
+    elif len(sys.argv) >= 5:
+        main(*sys.argv[1:])
+    else:
         sys.exit(__doc__)
-    main(*sys.argv[1:])

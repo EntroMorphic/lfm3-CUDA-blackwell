@@ -10,8 +10,11 @@
    "normalized_intended": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room next the liquid passes through an evaporator coil inside the fridge giving up its heat to the surrounding air finally the nowhighpressure refrigerant enters the compressor gets compressed again and the cycle starts over",
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room next the liquid passes through an evaporator coil inside the fridge giving up its heat to the surrounding air finally the now highpressure refrigerant enters the compressor gets compressed again and the cycle starts over",
    "reference_words": 69,
-   "word_errors": 2,
-   "wer": 0.028985507246376812
+   "word_errors": 0,
+   "wer": 0.0,
+   "word_errors_before": 2,
+   "wer_before": 0.028985507246376812,
+   "reference_words_folded": 69
   },
   {
    "case": "il-fridge-s11",
@@ -22,8 +25,11 @@
    "normalized_intended": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room next the liquid passes through an evaporator coil inside the fridge where it picks up heat from the food and turns back into a gas finally the nowhighpressure refrigerant goes back to the compressor to start the cycle again",
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room next the liquid passes through an evaporator coil inside the fridge where it picks up heat from the food and turns back into a gas finally the now highpressure refrigerant goes back to the compressor to start the cycle again",
    "reference_words": 74,
-   "word_errors": 2,
-   "wer": 0.02702702702702703
+   "word_errors": 0,
+   "wer": 0.0,
+   "word_errors_before": 2,
+   "wer_before": 0.02702702702702703,
+   "reference_words_folded": 74
   },
   {
    "case": "il-fridge-s12",
@@ -35,7 +41,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room next the liquid passes through an expansion valve which lowers its pressure and lets it heat up again inside the fridge finally the cold liquid absorbs heat from the food keeping it chilled next",
    "reference_words": 68,
    "word_errors": 1,
-   "wer": 0.014705882352941176
+   "wer": 0.014705882352941176,
+   "word_errors_before": 1,
+   "wer_before": 0.014705882352941176,
+   "reference_words_folded": 68
   },
   {
    "case": "il-fridge-s13",
@@ -47,7 +56,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room after that the liquid passes through an evaporator coil inside the fridge where it picks up heat from the food and turns back into a gas finally the compressed gas goes back to the compressor to start the cycle again",
    "reference_words": 75,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 75
   },
   {
    "case": "il-fridge-s14",
@@ -59,7 +71,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant gas which makes it colder then the condenser coils release the heat into the air outside the evaporator inside absorbs that cold heat turning the refrigerant back into a gas and a thermostat watches the temperature and switches the compressor on and off to keep the interior steady",
    "reference_words": 56,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 56
   },
   {
    "case": "il-fridge-s15",
@@ -70,8 +85,11 @@
    "normalized_intended": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room next the liquid passes through an evaporator coil inside the fridge where it picks up heat from the food and turns back into a gas finally the nowhighpressure refrigerant goes back to the compressor to start the cycle again",
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a low pressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room next the liquid passes through an evaporator coil inside the fridge where it picks up heat from the food and turns back into a gas finally the now high pressure refrigerant goes back to the compressor to start the cycle again",
    "reference_words": 74,
-   "word_errors": 5,
-   "wer": 0.06756756756756757
+   "word_errors": 0,
+   "wer": 0.0,
+   "word_errors_before": 5,
+   "wer_before": 0.06756756756756757,
+   "reference_words_folded": 74
   },
   {
    "case": "il-fridge-s4",
@@ -83,7 +101,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a cold highpressure gas then the condenser coils release that gas into the outside air cooling the interior next the liquid refrigerant evaporates inside the evaporator coils pulling heat out of the food compartment finally the system is controls keep the compressor and fans running just enough to maintain a steady low temperature",
    "reference_words": 64,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 64
   },
   {
    "case": "il-fridge-s5",
@@ -95,7 +116,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser coils where it releases heat to the surrounding air cooling the interior after that the cold gas passes through an expansion valve that lowers its pressure turning it back into a highpressure liquid finally the liquid circulates through the fridge compartments absorbing warmth from the food and keeping it cold",
    "reference_words": 72,
    "word_errors": 1,
-   "wer": 0.013888888888888888
+   "wer": 0.013888888888888888,
+   "word_errors_before": 1,
+   "wer_before": 0.013888888888888888,
+   "reference_words_folded": 72
   },
   {
    "case": "il-fridge-s6",
@@ -107,7 +131,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room after that the liquid passes through an evaporator coils inside the fridge dumping the extra heat into the surrounding air finally the compressed liquid returns to the compressor to start the cycle again",
    "reference_words": 68,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 68
   },
   {
    "case": "il-fridge-s7",
@@ -119,7 +146,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser coils where it releases heat to the surrounding air cooling the interior next the hot refrigerant vapor condenses back into a highpressure liquid the pressure is increased by the expansion valve and the cycle starts again keeping the food cold",
    "reference_words": 61,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 61
   },
   {
    "case": "il-fridge-s8",
@@ -131,7 +161,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant gas which makes it colder then the condenser coils release the cold gas into the surrounding air and the evaporator inside the fridge absorbs heat from the food cooling it finally a thermostat watches the temperature and automatically switches the compressor on and off to keep everything at the right level",
    "reference_words": 59,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 59
   },
   {
    "case": "il-fridge-s9",
@@ -143,7 +176,11 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant gas turning it into a highpressure lowtemperature gas then the condenser coils inside the fridge pull that hot gas out and release the heat into the surrounding air next the refrigerant expands through a valve becoming a lowpressure lowdensity gas that moves into the evaporator coils finally the evaporator absorbs heat from the food the refrigerant condenses back into a liquid and the whole cycle repeats keeping the interior cold",
    "reference_words": 78,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 78
   }
- ]
+ ],
+ "scoring": "fold_compounds"
 }

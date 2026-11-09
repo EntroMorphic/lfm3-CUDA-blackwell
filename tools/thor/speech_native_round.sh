@@ -11,11 +11,13 @@ PY="docker exec lfm3-omni-dev /opt/venv/bin/python3"
 T=/workspace/liquid-CUDA/tools; M=/workspace/models/LFM3-Omni-2B; P=/workspace/liquid-CUDA/validation/speech-e2e-v1/$prompts
 fail(){ echo "FAIL: $1"; exit 1; }
 if [ "${CHUNKED:-0}" = 1 ]; then REQ="$T/lfm3_speech_chunked_hf.py $M $P $C/$tag requests"; else REQ="$T/lfm3_speech_hf.py $M $P $C/$tag requests"; fi
-$PY $REQ 2>&1 | grep -v -i warn || fail requests
+$PY $REQ > $O/requests.log 2>&1 || fail requests
 names=$(ls $O/requests | sed 's/\.req\.json$//')
 echo "== native $(date +%T)"
 for n in $names; do $EXN $C/$tools/lfm3-speech $M $C/$tag/requests/$n.req.json $C/$tag/native/$n > /dev/null || fail "native $n"; done
-$PY $T/lfm3_speech_cases.py $M $C/$tag/requests $C/$tag/native $C/$tag/native-cases $names 2>&1 | grep -v -i warn > $O/native.log
+$PY $T/lfm3_speech_cases.py $M $C/$tag/requests $C/$tag/native $C/$tag/native-cases $names > $O/native.log 2>&1 || fail cases
+[ "$(ls $O/native-cases | wc -l)" = "$(echo $names | wc -w)" ] || fail "native-cases incomplete"
 echo "== ASR $(date +%T)"
-docker exec lfm3-omni-dev bash -c "/opt/venv/bin/python3 $T/lfm3_asr.py /workspace/models/whisper-large-v3 $C/$tag/asr.json $C/$tag/native-cases/*" 2>&1 | grep WER > $O/asr.log || fail asr
+docker exec lfm3-omni-dev bash -c "/opt/venv/bin/python3 $T/lfm3_asr.py /workspace/models/whisper-large-v3 $C/$tag/asr.json $C/$tag/native-cases/*" > $O/asr-full.log 2>&1 || fail asr
+grep WER $O/asr-full.log > $O/asr.log
 echo "ALL DONE $(date +%T)"

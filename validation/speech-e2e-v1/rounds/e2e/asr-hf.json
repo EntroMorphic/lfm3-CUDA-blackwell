@@ -10,8 +10,11 @@
    "normalized_intended": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room next the liquid passes through an evaporator coil inside the fridge where it picks up heat from the food and turns back into a gas finally the nowhighpressure refrigerant goes back to the compressor to start the cycle again",
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it cools and turns back into a liquid releasing heat into the room next the liquid passes through an evaporator coil inside the fridge where it picks up heat from the food and turns back into a gas finally the now highpressure refrigerant goes back to the compressor to start the cycle again",
    "reference_words": 74,
-   "word_errors": 2,
-   "wer": 0.02702702702702703
+   "word_errors": 0,
+   "wer": 0.0,
+   "word_errors_before": 2,
+   "wer_before": 0.02702702702702703,
+   "reference_words_folded": 74
   },
   {
    "case": "il-fridge-s2",
@@ -23,7 +26,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant turning it into a lowpressure gas then the gas flows through a condenser where it releases heat to the surrounding air causing it to turn back into a liquid next the liquid passes through an evaporator inside the fridge picking up heat from the food and turning back into gas finally the gas goes back through the condenser and the compressor repeats the cycle continuously keeping the interior cold",
    "reference_words": 77,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 77
   },
   {
    "case": "il-fridge-s3",
@@ -35,7 +41,10 @@
    "normalized_transcript": "1 the compressor runs and squeezes the refrigerant gas which cools the interior then the condenser releases heat to the surroundings and the evaporator absorbs heat and turns the refrigerant back into a liquid completing the cycle this continuous loop keeps the food inside at a low temperature",
    "reference_words": 48,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 48
   },
   {
    "case": "il-reflective-s1",
@@ -47,7 +56,10 @@
    "normalized_transcript": "that is an interesting idea reflective recursion is a concept from computer science where a function calls itself and uses the results of those calls to shape its own behavior in cognition we see similar selfreferential processes in language planning and theory of mind where the mind forms a model of itself and adjusts its behavior based on that model so while it is not a formal cognitive function the underlying mechanisms of metacognition and selfmodeling can be thought of as reflecting recursive processes",
    "reference_words": 84,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 84
   },
   {
    "case": "il-reflective-s2",
@@ -59,7 +71,10 @@
    "normalized_transcript": "that is an interesting idea reflective recursion is a wellknown concept in cognitive science where a system monitors its own processes and uses that feedback to adjust its behavior so in a broad sense it does function as a component of cognition especially in areas like metacognition and selfregulation are you thinking about how it might apply to a specific type of thinking or a particular theory",
    "reference_words": 67,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 67
   },
   {
    "case": "il-reflective-s3",
@@ -71,7 +86,10 @@
    "normalized_transcript": "that is an interesting idea reflective recursion is a cognitive mechanism that lets a system examine its own processes and adjust behavior accordingly which lines up with how humans learn from feedback so in theory a system could exhibit a form of reflective recursion though implementing it reliably would be quite challenging",
    "reference_words": 52,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 52
   },
   {
    "case": "il-study-s1",
@@ -83,7 +101,10 @@
    "normalized_transcript": "sure here are 3 quick tips 1 set up a dedicated study space that is free of distractions so you can stay in the zone 2 break your work into short focused sessions with regular breaks to keep your mind fresh and 3 turn off notifications and put your phone out of sight maybe use an app blocker so you are not tempted to check social media during study time",
    "reference_words": 70,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 70
   },
   {
    "case": "il-study-s2",
@@ -95,7 +116,10 @@
    "normalized_transcript": "sure here are 3 quick tips 1 set up a dedicated study space that is free of distractions 2 stick to a consistent schedule and break your work into short focused sessions with breaks and 3 use active learning methods like summarizing what you read or teaching the material to someone else those habits can really help you stay on track",
    "reference_words": 61,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 61
   },
   {
    "case": "il-study-s3",
@@ -107,7 +131,10 @@
    "normalized_transcript": "sure here are 3 quick tips 1 set up a dedicated study space that is free of distractions so you can stay in the zone 2 break your work into short focused sessions with regular breaks to keep your mind fresh and 3 turn off notifications and put your phone out of reach during study time those habits can really help you stay focused",
    "reference_words": 64,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 64
   },
   {
    "case": "tts-fox-female-s1",
@@ -119,7 +146,10 @@
    "normalized_transcript": "the quick brown fox jumps over the lazy dog",
    "reference_words": 9,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 9
   },
   {
    "case": "tts-fox-female-s2",
@@ -131,7 +161,10 @@
    "normalized_transcript": "the quick brown fox jumps over the lazy dog",
    "reference_words": 9,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 9
   },
   {
    "case": "tts-fox-female-s3",
@@ -143,7 +176,10 @@
    "normalized_transcript": "the quick brown fox jumps over the lazy dog",
    "reference_words": 9,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 9
   },
   {
    "case": "tts-fox-male-s1",
@@ -155,7 +191,10 @@
    "normalized_transcript": "the quick brown fox jumps over the lazy dog",
    "reference_words": 9,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 9
   },
   {
    "case": "tts-fox-male-s2",
@@ -167,7 +206,10 @@
    "normalized_transcript": "the quick brown fox jumps over the lazy dog",
    "reference_words": 9,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 9
   },
   {
    "case": "tts-fox-male-s3",
@@ -179,7 +221,10 @@
    "normalized_transcript": "the quick brown fox jumps over the lazy dog",
    "reference_words": 9,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 9
   },
   {
    "case": "tts-long-male-s1",
@@ -191,7 +236,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatica but many towers still stand and visitors climb them tadvitas climb them tuluncu washed still stand and visitors climb them to look out over the same waters the keepers once washed",
    "reference_words": 97,
    "word_errors": 13,
-   "wer": 0.13402061855670103
+   "wer": 0.13402061855670103,
+   "word_errors_before": 13,
+   "wer_before": 0.13402061855670103,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s2",
@@ -203,7 +251,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern from lutter keepers trimmed the wicks polished the great licks polished the great lenses and climbed the tower stairs and climbed the tower stairs many towers still stand but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 26,
-   "wer": 0.26804123711340205
+   "wer": 0.26804123711340205,
+   "word_errors_before": 26,
+   "wer_before": 0.26804123711340205,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s3",
@@ -215,7 +266,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flasher so sailors could tell when from whenever keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times and every kind of wetter today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 7,
-   "wer": 0.07216494845360824
+   "wer": 0.07216494845360824,
+   "word_errors_before": 7,
+   "wer_before": 0.07216494845360824,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-museum-female-s1",
@@ -227,7 +281,10 @@
    "normalized_transcript": "on march 3 2024 the museum reopened after a twoyear renovation visitors could finally see the restored murals which date back nearly 400 years",
    "reference_words": 24,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 24
   },
   {
    "case": "tts-museum-female-s2",
@@ -239,7 +296,10 @@
    "normalized_transcript": "on march 3 224 the museum reopened after a twoyear renovation visitors could finally see the restored murals which date back nearly 400 years",
    "reference_words": 24,
    "word_errors": 1,
-   "wer": 0.041666666666666664
+   "wer": 0.041666666666666664,
+   "word_errors_before": 1,
+   "wer_before": 0.041666666666666664,
+   "reference_words_folded": 24
   },
   {
    "case": "tts-museum-female-s3",
@@ -251,7 +311,10 @@
    "normalized_transcript": "on march 3 224 the museum reopened after a twoyear renovation visitors could finally see the restored murals which date back nearly 400 years",
    "reference_words": 24,
    "word_errors": 1,
-   "wer": 0.041666666666666664
+   "wer": 0.041666666666666664,
+   "word_errors_before": 1,
+   "wer_before": 0.041666666666666664,
+   "reference_words_folded": 24
   },
   {
    "case": "tts-museum-male-s1",
@@ -263,7 +326,10 @@
    "normalized_transcript": "on march 3 2244 the museum reopened after a twoyear renovation visitors could finally see the restored murals which date back nearly 400 years",
    "reference_words": 24,
    "word_errors": 1,
-   "wer": 0.041666666666666664
+   "wer": 0.041666666666666664,
+   "word_errors_before": 1,
+   "wer_before": 0.041666666666666664,
+   "reference_words_folded": 24
   },
   {
    "case": "tts-museum-male-s2",
@@ -275,7 +341,10 @@
    "normalized_transcript": "on march 3 2024 the museum reopened after a twoyear renovation visitors could finally see the restored murals which date back nearly 400 years",
    "reference_words": 24,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 24
   },
   {
    "case": "tts-museum-male-s3",
@@ -287,7 +356,10 @@
    "normalized_transcript": "on march 3 1924 the museum reopened after a twoyear renovation visitors could finally see the restored murals which date back nearly 400 years",
    "reference_words": 24,
    "word_errors": 1,
-   "wer": 0.041666666666666664
+   "wer": 0.041666666666666664,
+   "word_errors_before": 1,
+   "wer_before": 0.041666666666666664,
+   "reference_words_folded": 24
   },
   {
    "case": "tts-numbers-female-s1",
@@ -299,7 +371,10 @@
    "normalized_transcript": "your flight leaves at 7.45 in the morning from gate 22 and the total fare comes to $289.50",
    "reference_words": 19,
    "word_errors": 3,
-   "wer": 0.15789473684210525
+   "wer": 0.15789473684210525,
+   "word_errors_before": 3,
+   "wer_before": 0.15789473684210525,
+   "reference_words_folded": 19
   },
   {
    "case": "tts-numbers-female-s2",
@@ -311,7 +386,10 @@
    "normalized_transcript": "your flight leaves at 7.45 in the morning from gate 22 and the total fare comes to $280.50",
    "reference_words": 19,
    "word_errors": 3,
-   "wer": 0.15789473684210525
+   "wer": 0.15789473684210525,
+   "word_errors_before": 3,
+   "wer_before": 0.15789473684210525,
+   "reference_words_folded": 19
   },
   {
    "case": "tts-numbers-female-s3",
@@ -323,7 +401,10 @@
    "normalized_transcript": "your flight leaves at 7.40 in the morning from gate 22 and the total fare comes to $809.50",
    "reference_words": 19,
    "word_errors": 3,
-   "wer": 0.15789473684210525
+   "wer": 0.15789473684210525,
+   "word_errors_before": 3,
+   "wer_before": 0.15789473684210525,
+   "reference_words_folded": 19
   },
   {
    "case": "tts-numbers-male-s1",
@@ -335,7 +416,10 @@
    "normalized_transcript": "your flight leaves at 7.45 in the morning from gate 20 and the total fare comes to $809.50",
    "reference_words": 19,
    "word_errors": 4,
-   "wer": 0.21052631578947367
+   "wer": 0.21052631578947367,
+   "word_errors_before": 4,
+   "wer_before": 0.21052631578947367,
+   "reference_words_folded": 19
   },
   {
    "case": "tts-numbers-male-s2",
@@ -347,7 +431,10 @@
    "normalized_transcript": "your flight leaves at 7.45 in the morning from gate 22 and the total fare comes to $1500.50",
    "reference_words": 19,
    "word_errors": 3,
-   "wer": 0.15789473684210525
+   "wer": 0.15789473684210525,
+   "word_errors_before": 3,
+   "wer_before": 0.15789473684210525,
+   "reference_words_folded": 19
   },
   {
    "case": "tts-numbers-male-s3",
@@ -359,7 +446,11 @@
    "normalized_transcript": "your flight leaves at 7.45 in the morning from gate 22 and the total fare comes to $809.50",
    "reference_words": 19,
    "word_errors": 3,
-   "wer": 0.15789473684210525
+   "wer": 0.15789473684210525,
+   "word_errors_before": 3,
+   "wer_before": 0.15789473684210525,
+   "reference_words_folded": 19
   }
- ]
+ ],
+ "scoring": "fold_compounds"
 }

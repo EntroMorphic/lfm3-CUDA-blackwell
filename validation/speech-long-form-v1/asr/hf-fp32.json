@@ -11,7 +11,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern from another so sailors could tell once the great lenses and climbed the tower lenses and climbed the tower stairs many times every tower still stand but many towers still stand and visitors climb them to look out over the same waters the keepers once lights are stand and visitors climb them to look out over the same waters the keepers once watched still stand and visitors climb them to look out over the same waters still keepers wind them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 60,
-   "wer": 0.6185567010309279
+   "wer": 0.6185567010309279,
+   "word_errors_before": 60,
+   "wer_before": 0.6185567010309279,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s10",
@@ -23,7 +26,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could gricks polished the great lens polished the great lenses and climbed the tower stairs many times every night in every kind of wetter today most lights are in matakuk but many towers still stand and many as climb them to look out over the same waters the keepers once watched stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 28,
-   "wer": 0.28865979381443296
+   "wer": 0.28865979381443296,
+   "word_errors_before": 28,
+   "wer_before": 0.28865979381443296,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s11",
@@ -35,7 +41,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed tower stairs many times and visitors climb them still and many towers still stand and visitors climb them to look out over the same waters the keepers once watched watched watched watched watched watched",
    "reference_words": 97,
    "word_errors": 19,
-   "wer": 0.1958762886597938
+   "wer": 0.1958762886597938,
+   "word_errors_before": 19,
+   "wer_before": 0.1958762886597938,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s12",
@@ -47,7 +56,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed to tower stairs and climbed to tower still stand and visitors climbed them to look out over the same waters the keepers once watched the keepers once watched",
    "reference_words": 97,
    "word_errors": 23,
-   "wer": 0.23711340206185566
+   "wer": 0.23711340206185566,
+   "word_errors_before": 23,
+   "wer_before": 0.23711340206185566,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s13",
@@ -59,7 +71,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its onapath flashes so sailors could tell whence the watch the great lenses and climbed the tower stairs and climbed the tower stairs many times and climbed the tower still stand and many towers still stand and visitors climb them to look out over the same waters the keepers watched watched watched watched watched watched and visitors climb them to look out over the same waters the keepers watched watched watched watched",
    "reference_words": 97,
    "word_errors": 46,
-   "wer": 0.4742268041237113
+   "wer": 0.4742268041237113,
+   "word_errors_before": 46,
+   "wer_before": 0.4742268041237113,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s14",
@@ -71,7 +86,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell wind from another keepers trimmed wicks polished the great lenses and climbed tower stairs many kind of wetter today most lights are automatiket but many towers still stand and visitors climb them to look out over the same waters the keepers once watched and visitors climb them to look out over the same waters today most lights are a modicate but many towers still stand and visitors climb them to look out over the same waters the keepers once watched and visitors climbed them to look out over the same waters the keepers once watched and visitors climbed them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 74,
-   "wer": 0.7628865979381443
+   "wer": 0.7628865979381443,
+   "word_errors_before": 74,
+   "wer_before": 0.7628865979381443,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s15",
@@ -83,7 +101,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own passions so sailors could tell one from another keepers trimmed wicks polished the great lenses and climbed the tower stairs many towers still stand and many towers still stand but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 17,
-   "wer": 0.17525773195876287
+   "wer": 0.17525773195876287,
+   "word_errors_before": 17,
+   "wer_before": 0.17525773195876287,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s2",
@@ -95,7 +116,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell whenks bicks polish the great lenses and climb the tower stairs many times every night in every kind of weather today most lights are modicate but many towers still stand but many towers still stand and visitors climb them to look out splashed",
    "reference_words": 97,
    "word_errors": 23,
-   "wer": 0.23711340206185566
+   "wer": 0.23711340206185566,
+   "word_errors_before": 23,
+   "wer_before": 0.23711340206185566,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s3",
@@ -107,7 +131,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one is the great lenses and climbed a tower stairs many times every night in every kind of weather today most lights are a bottleneck but many towers still stand but many towers still stand and visitors climb them to look out over the same waters the keepers once watched and visitors climb them to look out over the same waters the keepers once watched watched",
    "reference_words": 97,
    "word_errors": 31,
-   "wer": 0.31958762886597936
+   "wer": 0.31958762886597936,
+   "word_errors_before": 31,
+   "wer_before": 0.31958762886597936,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s4",
@@ -119,7 +146,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell when from under her keepers trimmed the wicks polished the great lenses and climbed the tower stairs and climbed the tower still stand and visitors climbed them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 21,
-   "wer": 0.21649484536082475
+   "wer": 0.21649484536082475,
+   "word_errors_before": 21,
+   "wer_before": 0.21649484536082475,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s5",
@@ -131,7 +161,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern from another keepers trimmed the wicks polished the rakes polished the great lenses and climbed the tower stairs many times and climbed the tower still stand but many towers still stand but many towers still stand but many towers still stand and visitors climb them but many towers still stand and visitors climb them to many towers still stand and visitors climb them and visitors climb them but many towers still stand and visitors climb them but many towers still stand and visitors climb them but many towers still stand and climb the tower still stand and visitors climb them to look out over the same waters the visitors climb them but many towers still stand and visitors climb them but many towers still stand and visitors climb them to look out over the same waters the visitors climb them to look out over the same waters the visitors climb them to look out over the same waters the keepers once watched and visitors climb them to look out over the same waters the keepers once watched splat held in le till many towers still stand and visitors climb them to look out over the same waters the keepers once watched and visitors climb them till its many towers have stemmed and visitors climb them for kind of viders smike and thread to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 203,
-   "wer": 2.0927835051546393
+   "wer": 2.0927835051546393,
+   "word_errors_before": 203,
+   "wer_before": 2.0927835051546393,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s6",
@@ -143,7 +176,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell whence for an under keepers trimmed the wicks polished the great lenses and climbed the tower stairs many towers still stand and visitors climb them to look at but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 17,
-   "wer": 0.17525773195876287
+   "wer": 0.17525773195876287,
+   "word_errors_before": 17,
+   "wer_before": 0.17525773195876287,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s7",
@@ -155,7 +191,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own amount from another keepers trimmed the wicks polished the grates polished the great lenses and climbed dour stairs many times and climbed the tower stills many times ever night in every kind of wetter but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 25,
-   "wer": 0.25773195876288657
+   "wer": 0.25773195876288657,
+   "word_errors_before": 25,
+   "wer_before": 0.25773195876288657,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s8",
@@ -167,7 +206,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many towers still stand but many towers still stand but many towers still stand but visitors climb them to look out over the same waters the keepers once watched many towers still stand and visitors climb them to look out over the same waters the keepers once watched then lookouts the keepers once watched",
    "reference_words": 97,
    "word_errors": 33,
-   "wer": 0.3402061855670103
+   "wer": 0.3402061855670103,
+   "word_errors_before": 33,
+   "wer_before": 0.3402061855670103,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s9",
@@ -179,7 +221,11 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times in every kind of weather to denny tower still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 10,
-   "wer": 0.10309278350515463
+   "wer": 0.10309278350515463,
+   "word_errors_before": 10,
+   "wer_before": 0.10309278350515463,
+   "reference_words_folded": 97
   }
- ]
+ ],
+ "scoring": "fold_compounds"
 }

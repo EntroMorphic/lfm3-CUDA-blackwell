@@ -34,3 +34,25 @@ def test_fold_ordinals():
 def test_intra_word_hyphens_are_removed_on_both_sides():
     assert asr.ascii_punctuation("a kind of meta\u2011cognition") == "a kind of metacognition"
     assert asr.ascii_punctuation("self-modeling - and more") == "selfmodeling - and more"
+
+
+def test_compounds_count_as_one_word_either_way():
+    ref = asr.ascii_punctuation("the now\u2011high\u2011pressure refrigerant").split()
+    for spoken in ("the now high pressure refrigerant", "the now high-pressure refrigerant", "the nowhighpressure refrigerant"):
+        assert asr.score(ref, asr.ascii_punctuation(spoken).split()) == (0, 3), spoken
+    # the text's two words, Whisper's one: also no error
+    assert asr.score("a kind of meta cognition".split(), "a kind of metacognition".split()) == (0, 4)
+    # real errors still count: a missing word, a wrong word, a compound only partly spoken
+    assert asr.score("the nowhighpressure refrigerant".split(), "the refrigerant".split())[0] == 1
+    assert asr.score("the nowhighpressure refrigerant".split(), "the now pressure refrigerant".split())[0] >= 1
+    assert asr.score("the quick brown fox".split(), "the quick brown box".split()) == (1, 4)
+
+
+def test_rescore_keeps_the_earlier_values(tmp_path):
+    import json
+    f = tmp_path / "asr.json"
+    f.write_text(json.dumps(dict(results=[dict(case="c-s1", normalized_intended="the nowhighpressure gas",
+                                              normalized_transcript="the now high pressure gas", word_errors=3, wer=1.0)])))
+    asr.rescore([f]); asr.rescore([f])  # idempotent: the first values stay the "before"
+    r = json.loads(f.read_text())["results"][0]
+    assert (r["word_errors"], r["wer"], r["word_errors_before"], r["wer_before"]) == (0, 0.0, 3, 1.0)

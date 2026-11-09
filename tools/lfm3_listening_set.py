@@ -2,7 +2,8 @@
 """C3 (journal/lfm3-tts-quality-bar.md): Tripp's blind listening set, native against HF.
 
 The fixed rule, no selection: seed 1 of every case in PROMPTS.json, both engines. Each case's two clips are named
-A.wav and B.wav in an order drawn from a fixed seed and SEED; the key is written separately (KEY_JSON) and is not in the set.
+A.wav and B.wav in an order drawn from the operating system's entropy (not reproducible from the code or the seed:
+the step-4 red-team found the earlier seeded draws predictable); the key is written separately (KEY_JSON), the only record.
 OUT_DIR/index.md lists each case's prompt, mode and the text each clip's model wrote (labelled A/B), so interleaved
 speech can be checked against its text by ear.
 Usage: lfm3_listening_set.py PROMPTS.json NATIVE_CASES HF_CASES OUT_DIR KEY_JSON [SEED (default 1)]
@@ -17,9 +18,7 @@ from pathlib import Path
 def main(prompts, native_dir, hf_dir, out_dir, key_json, seed="1"):
     spec = json.load(open(prompts))
     out = Path(out_dir); out.mkdir(parents=True, exist_ok=True)
-    # the order depends on the seed too: one fixed draw would give every single-case set the same order (the
-    # split sets 2026-11-08 were all A = native)
-    rng = random.Random(f"20261108-{seed}")
+    rng = random.SystemRandom()  # unpredictable; a seeded draw could be recomputed from this file
     key, lines = {}, ["# C3 listening set (blind)", "", f"Seed {seed} of every case. Each case has A.wav and B.wav: one is the "
                       "native engine, one is HF. The key is kept separately; please listen before opening it.", ""]
     for c in spec["cases"]:

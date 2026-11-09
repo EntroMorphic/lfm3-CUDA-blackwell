@@ -12,15 +12,18 @@ mem(){ awk -v t="$1" '/MemTotal/{T=$2}/MemFree/{F=$2}/MemAvailable/{A=$2}/^Cache
 fail(){ echo "FAIL: $1"; exit 1; }
 echo "== sources"; (cd $R && sha256sum tools/lfm3_speech_hf.py tools/lfm3_speech_cases.py tools/lfm3_speech_report.py tools/lfm3_asr.py tools/thor/speech_e2e_round.sh validation/speech-e2e-v1/prompts.json) | sed 's/^/  /'
 sha256sum $B/$tools/lfm3-speech | sed 's/^/  /'; grep EnableSystemMemoryPools /proc/driver/nvidia/params | sed 's/^/  /'; mem start
-echo "== HF $(date +%T)"; $PY $T/lfm3_speech_hf.py $M $P $C/$tag 2>&1 | grep -v -iE "warn|Loading weights" | tee $O/hf.log || fail hf
+echo "== HF $(date +%T)"; $PY $T/lfm3_speech_hf.py $M $P $C/$tag > $O/hf-full.log 2>&1 || fail hf
+grep -v -iE "warn|Loading weights" $O/hf-full.log > $O/hf.log
 mem "after HF"
 echo "== native $(date +%T)"
 names=$(ls $O/requests | sed 's/\.req\.json$//')
 for n in $names; do $EXN $C/$tools/lfm3-speech $M $C/$tag/requests/$n.req.json $C/$tag/native/$n > /dev/null || fail "native $n"; done
 mem "after native"
-$PY $T/lfm3_speech_cases.py $M $C/$tag/requests $C/$tag/native $C/$tag/native-cases $names 2>&1 | grep -v -i warn | tee $O/native.log
+$PY $T/lfm3_speech_cases.py $M $C/$tag/requests $C/$tag/native $C/$tag/native-cases $names > $O/native.log 2>&1 || fail cases
+[ "$(ls $O/native-cases | wc -l)" = "$(echo $names | wc -w)" ] && [ "$(ls $O/hf | wc -l)" = "$(echo $names | wc -w)" ] || fail "cases incomplete"
 echo "== ASR $(date +%T)"
-for e in hf native-cases; do docker exec lfm3-omni-dev bash -c "/opt/venv/bin/python3 $T/lfm3_asr.py /workspace/models/whisper-large-v3 $C/$tag/asr-$e.json $C/$tag/$e/*" 2>&1 | grep WER > $O/asr-$e.log || fail "asr $e"; done
+for e in hf native-cases; do docker exec lfm3-omni-dev bash -c "/opt/venv/bin/python3 $T/lfm3_asr.py /workspace/models/whisper-large-v3 $C/$tag/asr-$e.json $C/$tag/$e/*" > $O/asr-$e-full.log 2>&1 || fail "asr $e"; grep WER $O/asr-$e-full.log > $O/asr-$e.log; done
 echo "== report"
-$PY $T/lfm3_speech_report.py $P $C/$tag/asr-native-cases.json $C/$tag/asr-hf.json $C/$tag/native-cases $C/$tag/hf $C/$tag/report.json | tee $O/report.md
+$PY $T/lfm3_speech_report.py $P $C/$tag/asr-native-cases.json $C/$tag/asr-hf.json $C/$tag/native-cases $C/$tag/hf $C/$tag/report.json > $O/report.md 2>&1 || fail report
+cat $O/report.md
 mem end; echo "ALL DONE $(date +%T)"

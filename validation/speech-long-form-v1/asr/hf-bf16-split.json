@@ -11,7 +11,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s10",
@@ -23,7 +26,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s11",
@@ -35,7 +41,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s12",
@@ -47,7 +56,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s13",
@@ -59,7 +71,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s14",
@@ -71,7 +86,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s15",
@@ -83,7 +101,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s2",
@@ -95,7 +116,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s3",
@@ -107,7 +131,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s4",
@@ -119,7 +146,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s5",
@@ -131,7 +161,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s6",
@@ -143,7 +176,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s7",
@@ -155,7 +191,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s8",
@@ -167,7 +206,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "probe-other-long-s9",
@@ -179,7 +221,10 @@
    "normalized_transcript": "bread begins with only 4 ingredients flour water salt and yeast the baker mixes them into a rough dough and lets it rest so the flour can absorb the water then the dough is folded and stretched until it becomes smooth and elastic during a slow rise the yeast fills it with tiny bubbles of gas finally the loaf goes into a hot oven where the crust turns golden and the kitchen fills with a warm familiar smell that brings the whole family to the table",
    "reference_words": 86,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 86
   },
   {
    "case": "tts-long-male-s1",
@@ -191,7 +236,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s10",
@@ -203,7 +251,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s11",
@@ -215,7 +266,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s12",
@@ -227,7 +281,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s13",
@@ -239,7 +296,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s14",
@@ -251,7 +311,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s15",
@@ -263,7 +326,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s2",
@@ -275,7 +341,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s3",
@@ -287,7 +356,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s4",
@@ -299,7 +371,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s5",
@@ -311,7 +386,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s6",
@@ -323,7 +401,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s7",
@@ -335,7 +416,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s8",
@@ -347,7 +431,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s9",
@@ -359,7 +446,11 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   }
- ]
+ ],
+ "scoring": "fold_compounds"
 }

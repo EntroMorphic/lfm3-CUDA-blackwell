@@ -11,7 +11,10 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast lighthouses were once the most important safety systems on any coast both the radio and steady one light those were once the most end one free news runs it both when this lightroom the keepers keepers say tape each read lightroom is good",
    "reference_words": 97,
    "word_errors": 81,
-   "wer": 0.8350515463917526
+   "wer": 0.8350515463917526,
+   "word_errors_before": 81,
+   "wer_before": 0.8350515463917526,
+   "reference_words_folded": 97
   },
   {
    "case": "tts-long-male-s1",
@@ -23,7 +26,11 @@
    "normalized_transcript": "lighthouses were once the most important safety systems on any coast before radio and satellite navigation a ship is captain relied on a steady beam of light to judge distance and direction in the dark each lighthouse had its own pattern of flashes so sailors could tell one from another keepers trimmed the wicks polished the great lenses and climbed the tower stairs many times every night in every kind of weather today most lights are automatic but many towers still stand and visitors climb them to look out over the same waters the keepers once watched",
    "reference_words": 97,
    "word_errors": 0,
-   "wer": 0.0
+   "wer": 0.0,
+   "word_errors_before": 0,
+   "wer_before": 0.0,
+   "reference_words_folded": 97
   }
- ]
+ ],
+ "scoring": "fold_compounds"
 }
