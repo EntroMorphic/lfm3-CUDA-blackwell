@@ -30,5 +30,6 @@ Audio seconds per generation second: native 3.24, HF 1.91 (`rounds/e2e`); native
 every chunk's prefill.
 
 ## C3 (listening)
-`outputs/listening-c3-v1` (seed 1 of every case, blind A/B, key separate) and `outputs/listening-split-v1`:
-**pending Tripp's ear.**
+- Long-form split (`outputs/listening-split-v1`): **PASS** (Tripp, 2026-11-08); see `../speech-long-form-v1`.
+- `outputs/listening-c3-v1` (seed 1 of every case, blind A/B, key separate): **pending Tripp's ear.** Its
+  tts-long-male pair is the unsplit native run (the fixed rule, built before the fix).
