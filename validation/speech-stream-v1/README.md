@@ -159,3 +159,16 @@ server-stream-v3 (sources identical to this commit, `build-v3/`):
   encoder); the audio-input server cases and the full text gate pass.
 - **Host tests:** 786 passed, 2 skipped: the earlier 727, the 12 new stream tests, the encoder test and the 46 cases
   that compile again. The one failure is the known transformers-version test.
+
+## Third red-team (a fresh reviewer, the second round's fixes only)
+No serious defect. The reviewer mutation-tested the new tests: making half-close count as gone fails the half-close
+test, and a 30 s socket timeout fails the stalled-reader test. Its findings and what was done:
+1. **No test reached the reset branch:** with resets mapped to the half-close state, every test still passed.
+   **Added** a test: a client half-closes (the reply is committed), then resets during a 2 s gap with no events. It
+   must be cancelled at once, not at the next send. With the same mutation the new test fails; without it, it passes.
+2. **Cap before validation:** the stream cap was checked before validation, so at the cap a malformed request got a
+   retryable 429. **Fixed:** it is checked after validation (test added).
+3. **Player failure:** the bundled client reported success when its player died. **Fixed:** it exits nonzero.
+
+These changes are host-side only (the HTTP layer's order of checks, tests, the client): 181 stream and speech HTTP
+tests pass on the plain, ASan+UBSan and TSan builds. The next server build (concurrent speech) reruns every GPU check.

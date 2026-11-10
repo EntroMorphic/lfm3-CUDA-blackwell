@@ -309,3 +309,33 @@ def test_one_client_leaving_leaves_another_stream_alone(harness_binary):
         status, events, _ = result["r"]
         assert status == 200 and events[-1]["event"] == "done" and events[-1]["cancelled"] is False
         assert pcm(events) == b"".join(bytes([k, 9, 255, 127]) for k in range(3))
+
+
+def test_a_reset_after_the_reply_began_cancels_without_waiting_for_a_send(harness_binary):
+    # a client half-closes (the reply is committed), then resets the connection during a long gap with no events: the
+    # socket's reset state cancels it within the poll, not at the next event's send (2 s later here)
+    import struct
+    with running(harness_binary, "--token-delay-ms", "2000") as h:
+        s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
+        s.sendall(request_bytes(tts(LONG, stream=True)))  # 3 chunks, 6 s in full
+        s.shutdown(socket.SHUT_WR)
+        assert s.recv(65536).startswith(b"HTTP/1.0 200 OK")  # committed on the half-close
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
+        s.close()  # a reset
+        t0 = time.monotonic()
+        status, body = h.call("POST", "/speech", tts("Short sentence here."))  # 1 chunk, 2 s
+        assert status == 200 and body["cancelled"] is False
+        # cancelled at once: the fake notices at its first chunk boundary (~1.7 s from here), then this one runs 2 s;
+        # found only at the next send, it would be cancelled at the second boundary (~3.7 s) and finish at ~5.7 s
+        assert time.monotonic() - t0 < 4.7, time.monotonic() - t0
+
+
+def test_a_malformed_request_at_the_stream_cap_is_a_400(harness_binary):
+    with running(harness_binary, "--token-delay-ms", "400", "--handlers", "2") as h:
+        result = {}
+        t = threading.Thread(target=lambda: result.update(r=stream(h, tts(LONG, stream=True))))
+        t.start()
+        time.sleep(0.2)
+        status, body, events = stream(h, dict(tts(LONG, stream=True), mode="bogus"))
+        assert events is None and status == 400 and body == {"error": "invalid_request"}
+        t.join(30)

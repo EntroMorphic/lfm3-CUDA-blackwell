@@ -927,6 +927,12 @@ class Service {
   };
   void speech_stream(std::shared_ptr<const Json> body, const StreamSink& sink) {
     if (!policy_.speech || settings_.engine_timeout < kSpeechMinEngineTimeout) throw ApiError(501, "speech_unsupported");
+    const auto& send = sink.send;
+    const auto deadline = Clock::now() + seconds(settings_.request_timeout);
+    auto request = std::make_shared<Speech>(validate_speech(*body));
+    if (!request->stream) throw std::logic_error("speech_stream without stream");
+    if (request->audio_input && !policy_.audio_input) throw ApiError(501, "audio_input_unsupported");
+    // the cap after validation: a malformed request is a 400 whatever the load, never a retryable 429
     if (streams_.fetch_add(1) >= std::max(1, settings_.handlers / 2)) {
       --streams_;
       throw ApiError(429, "stream_limit");
@@ -935,11 +941,6 @@ class Service {
       std::atomic<int>& n;
       ~Release() { --n; }
     } release{streams_};
-    const auto& send = sink.send;
-    const auto deadline = Clock::now() + seconds(settings_.request_timeout);
-    auto request = std::make_shared<Speech>(validate_speech(*body));
-    if (!request->stream) throw std::logic_error("speech_stream without stream");
-    if (request->audio_input && !policy_.audio_input) throw ApiError(501, "audio_input_unsupported");
     request->body = std::move(body);
     frontend_call([&] { encode_speech(*request); }, deadline);
     struct Queue {

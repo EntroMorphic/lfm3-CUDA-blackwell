@@ -53,11 +53,15 @@ def main():
             f"Content-Length: {len(payload)}\r\nAuthorization: Bearer {token}\r\n\r\n").encode()
     player = subprocess.Popen(shlex.split(o.play), stdin=subprocess.PIPE) if o.play else None
     pieces = queue.Queue()
+    player_error = []
 
-    def feed():  # the player, at its own pace
-        while (pcm := pieces.get()) is not None:
-            player.stdin.write(pcm)
-            player.stdin.flush()
+    def feed():  # the player, at its own pace; a player that dies is a failure, reported at the end
+        try:
+            while (pcm := pieces.get()) is not None:
+                player.stdin.write(pcm)
+                player.stdin.flush()
+        except Exception as e:  # noqa: BLE001
+            player_error.append(e)
     feeder = threading.Thread(target=feed, daemon=True) if player else None
     if feeder:
         feeder.start()
@@ -102,8 +106,12 @@ def main():
     if player:
         pieces.put(None)
         feeder.join()
-        player.stdin.close()
-        player.wait()
+        try:
+            player.stdin.close()
+        except OSError as e:
+            player_error.append(e)
+        if player.wait() != 0 or player_error:
+            sys.exit(f"the player failed (exit {player.returncode}): {player_error[:1]}")
     print(file=sys.stderr)
     if not done or done["event"] == "error":
         sys.exit(f"stream ended without a reply: {done}")
