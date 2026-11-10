@@ -98,8 +98,25 @@ Interleaved speech already reads its own digits well, and the instruction is onl
 speech clearer: nothing is added for interleaved replies.
 
 ## After the decision: the rules, native and in the server
-Tripp: "Do it." His blind listening (none against rules, seed 1 of every held-out sentence; the key kept on Thor) is
-pending.
+Tripp: "Do it." His blind listening (none against rules, seed 1 of every held-out sentence; the key kept on Thor):
+
+| case | Tripp's note (verbatim where given) | side he faulted | arm |
+|---|---|---|---|
+| h01 | no fault noted | – | – |
+| h02 | "B muddles 2023" | B | none |
+| h03 | "A got 2022 as `twenty two two`" | A | none |
+| h04 | "A muddle[s] the dollar values" | A | none |
+| h05 | "A muddle[s] the dollar values" | A | none |
+| h06 | "B muddles the dollar values" | B | none |
+| h07 | "A ... muddle[s] the percentage" | A | none |
+| h08 | "B muddle[s] the percentage" | B | none |
+| h09 | "A muddles 911, sounds a little like 919" | A | none |
+| h10 | "B muddles the numbers" | B | none |
+| h11 | "A muddles the numbers" | A | none |
+
+Every side he faulted is the unnormalized text: rules 10, none 0, one tie (one-sided sign test p = 2^-10 ≈ 0.001).
+The rules side of these files predates the changes below (h01 read "nine o'clock AM", h09 "nine hundred eleven", h10's
+zip code as a number), and he faulted none of them; the changes stand on their own grounds.
 
 **Changes to the rules after this test** (so the held-out set no longer measures them; it now reads 11 of 11, 20 of 20
 on dev):
