@@ -5,6 +5,11 @@ changes. The style follows the experiment's guide: cardinals without "and"; year
 "point" decimals; "three dollars and fifty cents"; "seven forty-five", "seven oh five", "nine o'clock"; phone numbers
 digit by digit ("oh" for zero); titles and abbreviations in full; "a.m."/"p.m." and acronyms left as written.
 
+Matching is ASCII ((?a): digits, word characters, spaces and word boundaries are ASCII), so the native port (lfm/speech_normalize.hpp) can match it
+byte for byte. Changes after validation/speech-normalize-v1 chose these rules (its held-out misses): "AM"/"PM" in
+capitals count as a.m./p.m. after a time; "911" and a 5-digit number after "zip" or "postal" are read digit by digit;
+a degree sign without C or F no longer takes the space after it ("20° today" read "twenty degreestoday").
+
 The rules, in order (each sees the previous one's output, and the words it writes hold no digits):
   phone numbers; money; numeric dates (M/D/YYYY); times; month abbreviations before a number; month-day dates;
   temperatures; percentages; addresses (house number + capitalized name + street suffix); decades; numbers with units;
@@ -118,9 +123,9 @@ def amount(value_words, one, many, is_one):
 def normalize(text):
     t = text
     # phone numbers: 555-0142, (555) 123-4567, 555-123-4567
-    t = re.sub(r"\(?\b(\d{3})\)?[-. ](\d{3})-(\d{4})\b",
+    t = re.sub(r"(?a)\(?\b(\d{3})\)?[-. ](\d{3})-(\d{4})\b",
                lambda m: ", ".join(digits(g, "oh") for g in m.groups()), t)
-    t = re.sub(r"(?<![\d.,-])\b(\d{3})-(\d{4})\b(?![-\d])", lambda m: ", ".join(digits(g, "oh") for g in m.groups()), t)
+    t = re.sub(r"(?a)(?<![\d.,-])\b(\d{3})-(\d{4})\b(?![-\d])", lambda m: ", ".join(digits(g, "oh") for g in m.groups()), t)
 
     # money: $3.50, $129, $1.2 million, £5, €20.05
     def money(m):
@@ -134,9 +139,9 @@ def normalize(text):
         if cents:
             words += (" and " if words else "") + amount(cardinal(cents), sub_one, sub_many, cents == 1)
         return words
-    t = re.sub(r"([$£€])(\d[\d,]*(?:\.\d+)?)(\s+(million|billion|trillion|thousand)\b)?", money, t)
+    t = re.sub(r"(?a)([$£€])(\d[\d,]*(?:\.\d+)?)(\s+(million|billion|trillion|thousand)\b)?", money, t)
     # numeric dates (US month/day/year)
-    t = re.sub(r"\b(1[0-2]|0?[1-9])/(3[01]|[12]\d|0?[1-9])/(\d{4})\b",
+    t = re.sub(r"(?a)\b(1[0-2]|0?[1-9])/(3[01]|[12]\d|0?[1-9])/(\d{4})\b",
                lambda m: f"{MONTHS[int(m.group(1)) - 1]} {ordinal(int(m.group(2)))}, {pairs(int(m.group(3)))}", t)
 
     # times: 7:45, 9:00, 10:30 (o'clock only when no a.m./p.m. follows)
@@ -145,34 +150,34 @@ def normalize(text):
         if mm == 0:
             return cardinal(h) + ("" if m.group(3) else " o'clock")
         return cardinal(h) + " " + (cardinal(mm) if mm >= 10 else "oh " + ONES[mm])
-    t = re.sub(r"\b([01]?\d|2[0-3]):([0-5]\d)\b(?=(\s*[ap]\.?m\.?)?)", clock, t)
+    t = re.sub(r"(?a)\b([01]?\d|2[0-3]):([0-5]\d)\b(?=(\s*[aApP]\.?[mM]\b\.?)?)", clock, t)
     # month abbreviations before a number; month-day dates
-    t = re.sub(r"\b(" + "|".join(MONTH_ABBR) + r")\.(?=\s+\d)", lambda m: MONTH_ABBR[m.group(1)], t)
-    t = re.sub(r"\b(" + "|".join(MONTHS) + r")\s+(3[01]|[12]\d|0?[1-9])(st|nd|rd|th)?\b(?![\d:])",
+    t = re.sub(r"(?a)\b(" + "|".join(MONTH_ABBR) + r")\.(?=\s+\d)", lambda m: MONTH_ABBR[m.group(1)], t)
+    t = re.sub(r"(?a)\b(" + "|".join(MONTHS) + r")\s+(3[01]|[12]\d|0?[1-9])(st|nd|rd|th)?\b(?![\d:])",
                lambda m: f"{m.group(1)} {ordinal(int(m.group(2)))}", t)
     # temperatures: -5°C, 41°F, 20°
-    t = re.sub(r"(?<![\w.])([-−])?(\d+(?:\.\d+)?)\s*°\s*([CF])?\b",
+    t = re.sub(r"(?a)(?<![\w.])([-−])?(\d+(?:\.\d+)?)\s*°(?:\s*([CF])\b)?",
                lambda m: ("minus " if m.group(1) else "") + number(m.group(2)) + " degree" +
                ("" if m.group(2) == "1" else "s") + {"C": " Celsius", "F": " Fahrenheit", None: ""}[m.group(3)], t)
     # percentages
-    t = re.sub(r"(?<![\w.])([-−])?(\d[\d,]*(?:\.\d+)?)\s*%",
+    t = re.sub(r"(?a)(?<![\w.])([-−])?(\d[\d,]*(?:\.\d+)?)\s*%",
                lambda m: ("minus " if m.group(1) else "") + number(m.group(2)) + " percent", t)
     # addresses: 1600 Main St., 221 Baker Street
-    t = re.sub(r"\b(\d{1,5}) ((?:[A-Z][a-z]+ )+)(" + "|".join(STREET) + r")\b(\.)?",
+    t = re.sub(r"(?a)\b(\d{1,5}) ((?:[A-Z][a-z]+ )+)(" + "|".join(STREET) + r")\b(\.)?",
                lambda m: f"{pairs(int(m.group(1)))} {m.group(2)}{STREET[m.group(3)]}" +
-               ("." if m.group(4) and re.match(r"\s*$|\s+[A-Z]", t[m.end():]) else ""), t)
+               ("." if m.group(4) and re.match(r"(?a)\s*$|\s+[A-Z]", t[m.end():]) else ""), t)
     # decades: 1990s, '90s handled as written
-    t = re.sub(r"\b(1\d|20)(\d0)s\b", lambda m: plural_pairs(pairs(int(m.group(1) + m.group(2)))), t)
+    t = re.sub(r"(?a)\b(1\d|20)(\d0)s\b", lambda m: plural_pairs(pairs(int(m.group(1) + m.group(2)))), t)
 
     # numbers with units: 12 km, 2,800 ft, 0.5 mg
     def unit(m):  # a unit's own period goes, unless it also ends the sentence
         one, many = UNITS[m.group(2)]
-        end = "." if m.group(3) and re.match(r"\s*$|\s+[A-Z\"'“(]", t[m.end():]) else ""
+        end = "." if m.group(3) and re.match(r"(?a)\s*$|\s+[A-Z\"'“(]", t[m.end():]) else ""
         return number(m.group(1)) + " " + (one if m.group(1) == "1" else many) + end
-    t = re.sub(r"(?<![\w.])(\d[\d,]*(?:\.\d+)?)\s?(" + "|".join(sorted(UNITS, key=len, reverse=True)) + r")\b(\.)?",
+    t = re.sub(r"(?a)(?<![\w.])(\d[\d,]*(?:\.\d+)?)\s?(" + "|".join(sorted(UNITS, key=len, reverse=True)) + r")\b(\.)?",
                unit, t)
     # ordinals: 1st, 22nd, 3rd
-    t = re.sub(r"\b(\d+)(st|nd|rd|th)\b", lambda m: ordinal(int(m.group(1))), t)
+    t = re.sub(r"(?a)\b(\d+)(st|nd|rd|th)\b", lambda m: ordinal(int(m.group(1))), t)
 
     # fractions: 1/2, 3/4, 2/3
     def fraction(m):
@@ -182,26 +187,26 @@ def normalize(text):
         if d == 4:
             return cardinal(n) + (" quarter" if n == 1 else " quarters")
         return cardinal(n) + " " + ordinal(d) + ("" if n == 1 else "s")
-    t = re.sub(r"(?<![\w/.])(\d+)/(\d+)\b(?!/)", fraction, t)
+    t = re.sub(r"(?a)(?<![\w/.])(\d+)/(\d+)\b(?!/)", fraction, t)
 
     # ranges: 25-30, 1990-1995
     def span(m):
         a, b = int(m.group(1)), int(m.group(2))
         both_years = all(1000 <= v <= 2099 for v in (a, b))
         return (pairs(a) if both_years else cardinal(a)) + " to " + (pairs(b) if both_years else cardinal(b))
-    t = re.sub(r"(?<![\w.,-])(\d+)\s?[-–]\s?(\d+)\b(?![-\d])", span, t)
+    t = re.sub(r"(?a)(?<![\w.,-])(\d+)\s?[-–]\s?(\d+)\b(?![-\d])", span, t)
     # "#12", "No. 14"
-    t = re.sub(r"#\s?(\d+)\b", lambda m: "number " + cardinal(int(m.group(1))), t)
-    t = re.sub(r"\bNo\.\s?(\d+)\b", lambda m: "number " + cardinal(int(m.group(1))), t)
+    t = re.sub(r"(?a)#\s?(\d+)\b", lambda m: "number " + cardinal(int(m.group(1))), t)
+    t = re.sub(r"(?a)\bNo\.\s?(\d+)\b", lambda m: "number " + cardinal(int(m.group(1))), t)
     # math symbols with spaces around them; & anywhere between words
-    t = re.sub(r"(?<=\s)=(?=\s)", "equals", t)
-    t = re.sub(r"(?<=\s)\+(?=\s)", "plus", t)
-    t = re.sub(r"(?<=\s)×(?=\s)", "times", t)
-    t = re.sub(r"(?<=\s)&(?=\s)", "and", t)
+    t = re.sub(r"(?a)(?<=\s)=(?=\s)", "equals", t)
+    t = re.sub(r"(?a)(?<=\s)\+(?=\s)", "plus", t)
+    t = re.sub(r"(?a)(?<=\s)×(?=\s)", "times", t)
+    t = re.sub(r"(?a)(?<=\s)&(?=\s)", "and", t)
     # negative numbers
-    t = re.sub(r"(?<![\w.])[-−](?=\d)", "minus ", t)
+    t = re.sub(r"(?a)(?<![\w.])[-−](?=\d)", "minus ", t)
     # decimals
-    t = re.sub(r"(?<![\w.])(\d+)\.(\d+)\b", lambda m: number(m.group(0)), t)
+    t = re.sub(r"(?a)(?<![\w.])(\d+)\.(\d+)\b", lambda m: number(m.group(0)), t)
 
     # integers: years by context, digit strings, cardinals
     def integer(m):
@@ -211,34 +216,37 @@ def normalize(text):
         if len(s) > 1 and s[0] == "0" or len(s) >= 7:
             return digits(s)
         n = int(s)
+        before_words = re.findall(r"(?a)[A-Za-z]+", t[:m.start()][-30:])
+        if s == "911" or len(s) == 5 and any(w.lower() in ("zip", "postal") for w in before_words[-3:]):
+            return digits(s)  # an emergency number; a ZIP code ("zip code is 12345")
         if len(s) == 4 and 1000 <= n <= 2099:
             before = t[:m.start()].rstrip()
-            prev = re.findall(r"[A-Za-z]+", before[-20:])
+            prev = re.findall(r"(?a)[A-Za-z]+", before[-20:])
             after = t[m.end():m.end() + 2]
-            if (prev and prev[-1].lower() in YEAR_CUES) or re.search(r"(" + "|".join(MONTHS) + r") \w+,?$", before) \
-                    or re.match(r"\s*[.,;:!?]|\s*$", after) and not re.search(r"\d", before[-3:]):
+            if (prev and prev[-1].lower() in YEAR_CUES) or re.search(r"(?a)(" + "|".join(MONTHS) + r") \w+,?$", before) \
+                    or re.match(r"(?a)\s*[.,;:!?]|\s*$", after) and not re.search(r"(?a)\d", before[-3:]):
                 return pairs(n)
         return cardinal(n)
-    t = re.sub(r"(?<![\w.])\d{1,3}(?:,\d{3})+(?![\d,]*\d)|(?<![\w.,])\d+(?![\d,]*\d)", integer, t)
+    t = re.sub(r"(?a)(?<![\w.])\d{1,3}(?:,\d{3})+(?![\d,]*\d)|(?<![\w.,])\d+(?![\d,]*\d)", integer, t)
 
     # titles and abbreviations
     def abbreviation(m):
         word = m.group(1)
         follow = t[m.end():]
         if word == "St":  # Saint before a name, Street otherwise
-            return "Saint" if re.match(r"\s+[A-Z]", follow) else "Street" + period(follow)
-        if word == "Dr" and not re.match(r"\s+[A-Z]", follow):  # a name follows Doctor; a street name precedes Drive
+            return "Saint" if re.match(r"(?a)\s+[A-Z]", follow) else "Street" + period(follow)
+        if word == "Dr" and not re.match(r"(?a)\s+[A-Z]", follow):  # a name follows Doctor; a street name precedes Drive
             return "Drive" + period(follow)
         if word in TITLES:
             return TITLES[word]
         return ABBREVIATIONS[word] + period(follow)
 
     def period(follow):
-        return "." if re.match(r"\s*$|\s+[A-Z\"'“(]", follow) else ""
+        return "." if re.match(r"(?a)\s*$|\s+[A-Z\"'“(]", follow) else ""
     keys = sorted(set(TITLES) | set(ABBREVIATIONS) | {"St"}, key=len, reverse=True)
-    t = re.sub(r"(?<![\w.])(" + "|".join(re.escape(k) for k in keys) + r")\.(?=[\s,;:!?)]|$)", abbreviation, t)
-    t = re.sub(r"(?<![\w.])vs(?=\s)", "versus", t)
-    return re.sub(r"[ \t]{2,}", " ", t)
+    t = re.sub(r"(?a)(?<![\w.])(" + "|".join(re.escape(k) for k in keys) + r")\.(?=[\s,;:!?)]|$)", abbreviation, t)
+    t = re.sub(r"(?a)(?<![\w.])vs(?=\s)", "versus", t)
+    return re.sub(r"(?a)[ \t]{2,}", " ", t)
 
 
 if __name__ == "__main__":

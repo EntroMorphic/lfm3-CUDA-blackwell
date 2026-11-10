@@ -2,7 +2,8 @@
 """GPU check for POST /speech on liquid-lfm3-server (#2; Thor, lfm3-profile-v1). Black box: the server is started like a
 deployment (token file, --port 0) and driven only over HTTP.
 
-  1. the WAV bytes /speech returns equal lfm3-speech's for the same request, on validated runs: long-form TTS split by
+  1. the WAV bytes /speech returns equal lfm3-speech's for the same request, on validated runs (sent with
+     "normalize": false, as they were made; normalization is checked by check_lfm3_audio_in_server.py): long-form TTS split by
      sentences (lighthouse and bread, seed 1), one-sentence TTS unsplit (fox, seed 1), interleaved (il-study, seed 1;
      its text also equal to the validated native text), and the Phase B abbreviations under the default rule;
   2. the same request twice gives the same bytes;
@@ -58,17 +59,17 @@ def main(binary, model, build, out_json):
 
     cases = [  # name, request body, reference WAV, reference text (interleaved)
         ("lighthouse-split-s1", dict(messages=req("speech-chunk-native-v1/requests/tts-long-male-s1.req.json")["conversation"],
-                                     mode="audio", max_new_tokens=1536, seed=1), "speech-chunk-native-v1/native/tts-long-male-s1.wav", None),
+                                     mode="audio", normalize=False, max_new_tokens=1536, seed=1), "speech-chunk-native-v1/native/tts-long-male-s1.wav", None),
         ("bread-split-s1", dict(messages=req("speech-chunk-native-v1/requests/probe-other-long-s1.req.json")["conversation"],
-                                mode="audio", max_new_tokens=1536, seed=1), "speech-chunk-native-v1/native/probe-other-long-s1.wav", None),
+                                mode="audio", normalize=False, max_new_tokens=1536, seed=1), "speech-chunk-native-v1/native/probe-other-long-s1.wav", None),
         ("fox-female-unsplit-s1", dict(messages=req("speech-e2e-v1/requests/tts-fox-female-s1.req.json")["conversation"],
-                                       mode="audio", max_new_tokens=req("speech-e2e-v1/requests/tts-fox-female-s1.req.json")["max_new_tokens"],
+                                       mode="audio", normalize=False, max_new_tokens=req("speech-e2e-v1/requests/tts-fox-female-s1.req.json")["max_new_tokens"],
                                        seed=1, split=False), "speech-e2e-v1/native/tts-fox-female-s1.wav", None),
         ("il-study-s1", dict(messages=req("speech-e2e-v1/requests/il-study-s1.req.json")["conversation"], mode="interleaved",
                              max_new_tokens=req("speech-e2e-v1/requests/il-study-s1.req.json")["max_new_tokens"], seed=1),
          "speech-e2e-v1/native/il-study-s1.wav", json.load(open(b / "speech-e2e-v1/native-cases/il-study-s1/summary.json"))["text"]),
         ("abbrev-default-s1", dict(messages=req("speech-split-b-full-49/requests/abbrev-s1.req.json")["conversation"],
-                                   mode="audio", max_new_tokens=1536, seed=1), "speech-split-b-full-49/native/abbrev-s1.wav", None),
+                                   mode="audio", normalize=False, max_new_tokens=1536, seed=1), "speech-split-b-full-49/native/abbrev-s1.wav", None),
     ]
     first = None
     for name, body, wav, text in cases:
@@ -95,10 +96,10 @@ def main(binary, model, build, out_json):
     system = "Perform TTS in American English using a male voice. " + " ".join(["lighthouse keeper"] * 70)
     sentence = "The small boat drifted slowly past the quiet harbor wall."
     for name, body in (("budget", dict(messages=[{"role": "system", "content": system}, {"role": "user", "content": " ".join([sentence] * 512)}],
-                                         mode="audio", max_new_tokens=12, seed=1)),
+                                         mode="audio", normalize=False, max_new_tokens=12, seed=1)),
                        ("large-cap", dict(messages=[{"role": "system", "content": "Perform TTS in American English using a male voice."},
                                                     {"role": "user", "content": " ".join([sentence] * 512)}],
-                                          mode="audio", max_new_tokens=4000, seed=1))):
+                                          mode="audio", normalize=False, max_new_tokens=4000, seed=1))):
         t0 = time.time()
         status, r = post("/speech", body, timeout=900)
         wall = time.time() - t0

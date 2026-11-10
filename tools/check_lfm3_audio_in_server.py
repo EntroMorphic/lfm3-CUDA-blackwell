@@ -7,8 +7,9 @@ and to lfm3-speech, each clip as the file's path (rendered and expanded by the s
 must equal lfm3-speech's output: the text byte for byte, and the WAV byte for byte (in text mode both are the empty
 WAV). Cases: speech recognition of three LibriSpeech test-clean utterances (text, greedy); a spoken clip with a
 question about it (text); a spoken question answered in interleaved text and speech, and in speech alone (seed 1);
-two clips in one turn; and a 90-second recording (several utterances joined) transcribed, which must also finish
-within 240 s (80% of the default engine timeout). Then: the same request twice gives the same reply; a pinned greedy
+two clips in one turn; a 90-second recording (several utterances joined) transcribed, which must also finish
+within 240 s (80% of the default engine timeout); and text with numbers read as speech with the server's defaults
+(split, normalize), against lfm3-speech asked for both, the chunk texts (normalized sentences) equal too. Then: the same request twice gives the same reply; a pinned greedy
 /generate before and after gives the same ids; the server exits cleanly. Writes OUT_JSON; exits 1 on any failure.
 Usage: check_lfm3_audio_in_server.py SERVER_BINARY SPEECH_BINARY MODEL_DIR WAV_DIR WORK_DIR OUT_JSON
 """
@@ -25,6 +26,8 @@ import wave
 from pathlib import Path
 
 ASR = "Perform ASR in English."
+NUMBERS = ("The meeting starts at 7:45 and ends by 9:00. Order number 389 cost $3.50, about 2.75% more than in 1984. "
+           "Dr. Patel met Mr. Lee at St. Mary's on Nov. 9, 2026.")
 
 
 def join_wavs(paths, out, seconds):
@@ -64,6 +67,9 @@ def main(server, speech, model, wav_dir, work, out_json):
          "interleaved", 1024, 1),
         ("spoken-audio-s1", conv([W("4446-2275-0004")], "Respond with audio."), "audio", 1024, 1),
         ("asr-joined-90s", conv([str(long_wav)], ASR), "text", 2048, 0),
+        # text in, speech out with the server's defaults (split and normalize on), against lfm3-speech asked for both
+        ("tts-numbers-normalized-s1", [{"role": "system", "content": "Perform TTS in American English using a female voice."},
+                                       {"role": "user", "content": NUMBERS}], "audio", 512, 1),
     ]
     token = secrets.token_urlsafe(32)
     token_path = Path(out_json).with_suffix(".token")
@@ -96,7 +102,10 @@ def main(server, speech, model, wav_dir, work, out_json):
     for name, messages, mode, count, seed in cases:
         # the reference: lfm3-speech with the clips as paths
         req_path, stem = work / f"{name}.req.json", work / name
-        req_path.write_text(json.dumps(dict(messages=messages, mode=mode, max_new_tokens=count, seed=seed)))
+        driver = dict(messages=messages, mode=mode, max_new_tokens=count, seed=seed)
+        if mode == "audio" and all(isinstance(m["content"], str) for m in messages):
+            driver.update(split=True, normalize=True)  # the server's defaults for text in, speech out
+        req_path.write_text(json.dumps(driver))
         r = subprocess.run([speech, model, str(req_path), str(stem)], capture_output=True, text=True)
         ref = json.loads((work / f"{name}.json").read_text()) if r.returncode == 0 else {}
         ref_wav = (work / f"{name}.wav").read_bytes() if r.returncode == 0 else b""
@@ -115,7 +124,11 @@ def main(server, speech, model, wav_dir, work, out_json):
                    audio_seconds=reply.get("audio_seconds"), prefill_seconds=reply.get("prefill_seconds"),
                    generate_seconds=reply.get("generate_seconds"), wall_seconds=round(wall, 2),
                    reference_encode_seconds=ref.get("encode_seconds"), prompt_tokens=len(ref.get("prompt", [])))
+        if name.startswith("tts-"):  # the chunks the server split are the normalized sentences
+            res["chunk_texts"] = [c.get("text") for c in reply.get("chunks", [])]
+            res["chunks_identical"] = res["chunk_texts"] == [c.get("text") for c in ref.get("chunks", [])]
         res["pass"] = status == 200 and r.returncode == 0 and res["text_identical"] and res["wav_identical"] and \
+            res.get("chunks_identical", True) and \
             bool(reply.get("text") or mode == "audio") and (name != "asr-joined-90s" or wall < 240)
         ok &= res["pass"]
         report["cases"][name] = res

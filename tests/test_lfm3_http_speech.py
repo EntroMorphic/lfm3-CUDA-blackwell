@@ -27,7 +27,7 @@ LONG = ("Lighthouses were once the most important safety systems on any coast. B
         "ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had "
         "its own pattern of flashes, so sailors could tell one from another.")
 FAKE_WAV = "UklGRiwAAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0YQgAAAAAAAEA//8AgA=="
-KEYS = ["mode", "text", "audio_wav_base64", "sample_rate", "audio_seconds", "frames", "chunks", "seed", "split",
+KEYS = ["mode", "text", "audio_wav_base64", "sample_rate", "audio_seconds", "frames", "chunks", "seed", "split", "normalize",
         "cancelled", "truncated", "prefill_seconds", "generate_seconds"]
 
 
@@ -94,6 +94,8 @@ def test_interleaved_returns_the_decoded_text(harness_binary):
     dict(tts(LONG), extra=1), dict(tts(LONG), mode="transcribe"), dict(tts(LONG), mode=None),
     dict(tts(LONG), max_new_tokens=0), dict(tts(LONG), max_new_tokens=4096), dict(tts(LONG), max_new_tokens=1.5),
     dict(tts(LONG), seed=-1), dict(tts(LONG), seed=2147483648), dict(tts(LONG), seed=True), dict(tts(LONG), split="yes"),
+    dict(tts(LONG), normalize="yes"), dict(tts(LONG), normalize=1), dict(tts(LONG), mode="interleaved", normalize=True),
+    dict(tts(LONG), mode="text", normalize=True),
     dict(tts(LONG), messages="hi"), dict(tts(LONG), messages=[]),
     dict(tts(LONG), messages=[{"role": "user", "content": "Hi."}, {"role": "assistant", "content": "Hello."},
                               {"role": "user", "content": "Read this aloud for me please now."}]),
@@ -137,7 +139,7 @@ def test_shutdown_cancels_a_running_speech(harness_binary):
         h.stop()
         t.join(30)
         status, body = result["r"]
-        assert status == 200 and body == {"mode": "audio", "cancelled": True, "seed": 0, "split": True}
+        assert status == 200 and body == {"mode": "audio", "cancelled": True, "seed": 0, "split": True, "normalize": True}
 
 
 def test_floats_are_written_as_python_does(tmp_path):
@@ -213,3 +215,25 @@ def test_speech_needs_the_engine_timeout_its_budget_was_sized_for(harness_binary
         assert status == 501 and body == {"error": "speech_unsupported"}
     with running(harness_binary, "--engine-timeout", "300") as h:
         assert h.call("POST", "/speech", tts(LONG))[0] == 200
+
+
+NUMBERS = ("The meeting starts at 7:45 and ends by 9:00. Order number 389 cost $3.50, about 2.75% more than in 1984. "
+           "Dr. Patel met Mr. Lee at St. Mary's on Nov. 9, 2026.")
+
+
+def test_numbers_are_read_as_words_by_default(harness_binary, text_tool, tmp_path):
+    """Audio mode normalizes the user's text before the split (lfm/speech_normalize.hpp); the prompts sent are the
+    splitter's sentences of the normalized text, each rendered alone; normalize false sends the text as written."""
+    spec = importlib.util.spec_from_file_location("speech_normalize", ROOT / "tools/speech_normalize.py")
+    reference = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(reference)
+    for normalize, text in ((True, reference.normalize(NUMBERS)), (False, NUMBERS)):
+        messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": text}]
+        want = tool_rows(text_tool, tmp_path, "speech", [dict(messages=messages, capacity=4096, max_new_tokens=512)])[0]
+        with running(harness_binary) as h:
+            body = tts(NUMBERS) if normalize else tts(NUMBERS, normalize=False)
+            status, reply = h.call("POST", "/speech", body)
+            assert status == 200 and reply["normalize"] is normalize, reply
+            assert [c["text"] for c in reply["chunks"]] == want["texts"]
+            assert [c["frames"] for c in reply["chunks"]] == [len(ids) for ids in want["ids"]]
+    assert "seven forty-five" in reference.normalize(NUMBERS) and "Doctor Patel" in reference.normalize(NUMBERS)

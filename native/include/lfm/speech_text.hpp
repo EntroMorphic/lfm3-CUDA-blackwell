@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "lfm/lfm3_text.hpp"
+#include "lfm/speech_normalize.hpp"
 
 namespace lfm::speech_text {
 
@@ -196,6 +197,21 @@ inline std::vector<std::vector<lfm3_text::Message>> sentence_requests(const std:
     out.back().back().content = s;
   }
   return out;
+}
+
+// Numbers, symbols and abbreviations in words (lfm/speech_normalize.hpp, chosen by validation/speech-normalize-v1) in
+// every user message's text, before the split: for speech output read from text (TTS). Each normalized text is held to
+// the text byte limit (expansion is bounded: about six bytes per input byte at most).
+inline void normalize_user_text(std::vector<lfm3_text::Message>& messages) {
+  auto fix = [](std::string& s) {
+    s = speech_normalize::normalize(s);
+    if (s.size() > lfm3_text::kMaxTextBytes) throw std::runtime_error("speech normalize: text byte limit exceeded");
+  };
+  for (auto& m : messages) {
+    if (m.role != "user") continue;
+    if (!m.content_is_list) fix(m.content);
+    else for (auto& p : m.parts) if (!p.audio) fix(p.text);
+  }
 }
 
 }  // namespace lfm::speech_text

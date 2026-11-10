@@ -97,7 +97,44 @@ on the dev set, which the rules were tuned on.
 Interleaved speech already reads its own digits well, and the instruction is only partly obeyed without making the
 speech clearer: nothing is added for interleaved replies.
 
-### Next
-Tripp's blind listening (none against rules, seed 1 of every held-out sentence, the key kept on Thor). Then the
-rules go native (C++, checked against this Python reference) ahead of the sentence split in lfm3-speech and
-/speech; the three held-out misses are fixed there and recorded as changes made after this test.
+## After the decision: the rules, native and in the server
+Tripp: "Do it." His blind listening (none against rules, seed 1 of every held-out sentence; the key kept on Thor) is
+pending.
+
+**Changes to the rules after this test** (so the held-out set no longer measures them; it now reads 11 of 11, 20 of 20
+on dev):
+- "AM"/"PM" in capitals count as a.m./p.m. after a time ("nine AM", not "nine o'clock AM");
+- "911", and a 5-digit number within three words after "zip" or "postal", are read digit by digit;
+- a degree sign without C or F no longer takes the space after it (found while porting: "20° today" read as
+  "twenty degreestoday");
+- matching is ASCII (`(?a)`) so the native port can match it byte for byte (no change on any test sentence).
+
+**Native port** (`native/include/lfm/speech_normalize.hpp`): one hand-written scanner per rule, in the reference's
+order, finding the reference's matches. It has no std::regex, and every pass is linear (4 MiB of number-dense text: 2-3 s on the
+workstation).
+- **Equal to the reference byte for byte** (`tests/test_speech_normalize.py`, plain and ASan+UBSan): the 31 sentences,
+  40,000 lines of wikitext-2 and PG-19 holding digits, symbols or abbreviations (20,490 of them rewritten), and
+  30,000 generated strings mixing every rule's ingredients (27,941 rewritten).
+- **Mutation test** (`tools/mutate_speech_normalize.py`): 18 bugs planted, one per rule or helper; all 18 caught.
+  The first run caught 14; the 4 misses (one cent, a time at :10, a 6-digit house number, a range from 1000-1099)
+  were gaps in the inputs, now added.
+
+**Wiring:** normalization runs on the user's text before the sentence split, in audio mode (text in, speech out).
+- **The server:** `POST /speech` takes `"normalize"`, default true in audio mode; it is refused in other modes and
+  echoed in the reply. A normalized text over the 4 MiB text limit gets a 400.
+- **lfm3-speech:** `"normalize": true` with messages, default off, so the validated requests run as they did.
+- Interleaved and text modes are untouched; phase 2 found interleaved replies need nothing.
+
+**Checks on the final builds** (lfm3-speech audioin-v6; server-audioin-v3; `final-build/`, sources identical to this
+commit):
+- **Text with numbers, through the server's defaults** (split and normalize on), equals lfm3-speech asked for both:
+  the WAV byte for byte and the three normalized sentences ("The meeting starts at seven forty-five and ends by nine
+  o'clock.", "Order number three hundred eighty-nine cost three dollars and fifty cents, about two point seven five
+  percent more than in nineteen eighty-four.", "Doctor Patel met Mister Lee at Saint Mary's on November ninth, twenty
+  twenty-six."): `server-audio-in.json`.
+- **Nothing else moved:** lfm3-speech's regression check, 36 of 36 outputs bit-identical with every refusal clean;
+  the server's TTS WAVs identical on the validated cases (sent with normalize false); the audio-input server
+  cases, edge round, refusals and rendering pass; the full text gate passes.
+- **Host tests:** 661 passed, 2 skipped (as before). The one known failure is
+  `test_speech_text.py::test_every_validation_prompt_matches_hf_ids`, which needs a newer transformers than this
+  workstation's and fails the same way without these changes.

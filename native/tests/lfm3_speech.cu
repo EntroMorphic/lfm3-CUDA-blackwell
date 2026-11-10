@@ -6,7 +6,8 @@
 //           "capacity": C (default 4096), "forced_tokens": [...], "forced_frames": [[12 codes]...],
 //           "record_hidden": false, "chunks": [[ids...], ...]}
 //      or, rendered natively: {"messages": [...], "split": false, ...}: the chat (lfm/lfm3_text.hpp, the text
-//      binary's "messages" contract) instead of prompt_ids; with "split": true, [system, user] or [user] is read
+//      binary's "messages" contract) instead of prompt_ids; "normalize": true (audio mode) reads numbers and
+//      abbreviations in the user's text as words first (lfm/speech_normalize.hpp); with "split": true, [system, user] or [user] is read
 //      sentence by sentence (lfm/speech_text.hpp), each sentence one chunk as below, and the chunk json adds "text".
 // "chunks" (long-form TTS by sentences): each entry is one sentence's whole prompt, generated as its own request
 // with seed SEED * 1000 + k; the codec stream runs on across them, so OUT_STEM.wav is one stream. The outputs
@@ -143,6 +144,11 @@ void run(const char* model_dir, const char* request_path, const std::string& ste
                                                                      // decodes it (slots without <|audio_out|>, special
                                                                      // tokens skipped)
   const bool split = req.has("split") && req.at("split").boolean();
+  // numbers and abbreviations in words before the split (lfm/speech_normalize.hpp); default off here, so the validated
+  // requests run as they did (the server defaults it on in audio mode)
+  const bool normalize = req.has("normalize") && req.at("normalize").boolean();
+  if (normalize && (mode != "audio" || !req.has("messages")))
+    throw std::runtime_error("normalize is for audio mode with messages");
   const bool chunked = req.has("chunks") || split;
   if (chunked && (!o.forced_tokens.empty() || !o.forced_frames.empty())) throw std::runtime_error("chunks cannot be forced");
   if (req.has("messages")) {
@@ -151,7 +157,8 @@ void run(const char* model_dir, const char* request_path, const std::string& ste
     const std::shared_ptr<const lfm::lfm3_text::Tokenizer> tok =
         lfm::lfm3_text::load_checked(path, lfm::tokenizer_token_count(path, cfg.shape.vocabulary));
     text_tokenizer = tok;
-    const auto messages = lfm::lfm3_text::parse_messages(req.at("messages"), /*allow_audio=*/!split);
+    auto messages = lfm::lfm3_text::parse_messages(req.at("messages"), /*allow_audio=*/!split);
+    if (normalize) lfm::speech_text::normalize_user_text(messages);
     std::vector<std::string> paths;  // audio parts: WAV paths
     for (const auto& m : messages)
       for (const auto& part : m.parts)

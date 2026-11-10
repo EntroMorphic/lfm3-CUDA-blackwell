@@ -688,10 +688,11 @@ class Service {
     std::string chunks_json;         // the prompts as the engine request carries them
     std::string audio_json;          // audio input (#3): the clips (base64 WAV) as the engine request carries them
     bool audio_input = false;        // the messages hold audio parts
+    bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
   };
   Speech validate_speech(const Json& item) const {
     const auto& o = object_of(item);
-    static const std::set<std::string> allowed = {"messages", "mode", "max_new_tokens", "seed", "split"};
+    static const std::set<std::string> allowed = {"messages", "mode", "max_new_tokens", "seed", "split", "normalize"};
     for (const auto& [key, value] : o)
       if (!allowed.count(key)) throw std::invalid_argument("invalid speech fields");
     for (const char* key : {"messages", "mode", "max_new_tokens"})
@@ -720,13 +721,22 @@ class Service {
     }
     if (s.split && s.mode != "audio") throw std::invalid_argument("split is for audio mode");
     if (s.split && audio_input) throw std::invalid_argument("split is for text input; audio input is not split");
+    if (o.count("normalize")) {
+      const auto* b = std::get_if<bool>(&o.at("normalize").value);
+      if (!b) throw std::invalid_argument("normalize must be a boolean");
+      s.normalize = *b;
+    } else {
+      s.normalize = s.mode == "audio";
+    }
+    if (s.normalize && s.mode != "audio") throw std::invalid_argument("normalize is for audio mode");
     return s;
   }
   // Render and tokenize each chunk as a single request (lfm3_text::encode_messages), split by sentences when asked.
   // Audio input (#3): each user audio part (base64 16 kHz mono WAV) renders as the template's single <|audio|>, then
   // expands to its clip's encoder token count (lfm3_text::expand_audio); the clips go to the engine as given.
   void encode_speech(Speech& s) const {
-    const auto messages = lfm3_text::parse_messages(*s.messages, /*allow_audio=*/!s.split);
+    auto messages = lfm3_text::parse_messages(*s.messages, /*allow_audio=*/!s.split);
+    if (s.normalize) speech_text::normalize_user_text(messages);
     std::vector<size_t> clip_tokens;
     s.audio_json = "[";
     for (const auto& m : messages)
@@ -771,7 +781,8 @@ class Service {
   std::string speech_response(const Speech& s, const Json& r) const {
     if (!r.has("cancelled") || !std::holds_alternative<bool>(r.at("cancelled").value)) throw WorkerFailure("invalid speech reply");
     if (std::get<bool>(r.at("cancelled").value))
-      return Obj().str("mode", s.mode).boolean("cancelled", true).num("seed", s.seed).boolean("split", s.split).done();
+      return Obj().str("mode", s.mode).boolean("cancelled", true).num("seed", s.seed).boolean("split", s.split)
+          .boolean("normalize", s.normalize).done();
     std::vector<int> slots;
     for (const auto& v : r.at("slots").array()) {
       const int id = v.integer();
@@ -793,6 +804,7 @@ class Service {
         .str("audio_wav_base64", r.at("wav_base64").string()).num("sample_rate", 24000)
         .raw("audio_seconds", py_float(std::get<double>(r.at("audio_seconds").value)))
         .num("frames", r.at("frames").integer()).raw("chunks", list).num("seed", s.seed).boolean("split", s.split)
+        .boolean("normalize", s.normalize)
         .boolean("cancelled", false).boolean("truncated", truncated).raw("prefill_seconds", py_float(std::get<double>(r.at("prefill_seconds").value)))
         .raw("generate_seconds", py_float(std::get<double>(r.at("generate_seconds").value))).done();
     if (out.size() > kMaxSpeechResponse) throw WorkerFailure("response exceeds limit");
@@ -834,13 +846,15 @@ class Service {
   // 16 kHz mono 16-bit PCM or 32-bit float WAV file}, at most 64 clips; the 4 MiB body holds about 90 s of 16-bit
   // audio; a 501 audio_input_unsupported when the engine has no audio encoder for the checkpoint), "mode":
   // "audio" | "interleaved" | "text", "max_new_tokens": 1..4095 (per chunk), "seed": 0..2^31-1 (default 0), "split":
-  // bool (audio mode with text input only; default true there: long-form TTS by sentences, lfm/speech_text.hpp)}.
+  // bool (audio mode with text input only; default true there: long-form TTS by sentences, lfm/speech_text.hpp),
+  // "normalize": bool (audio mode only; default true there: numbers, symbols and abbreviations in the user's text read
+  // out as words first, lfm/speech_normalize.hpp, validation/speech-normalize-v1)}.
   // Spoken replies to audio input: use "interleaved", as the model card's voice chat does; in "audio" mode the model
   // answers speech with unusable speech, in HF as here (validation/audio-in-v1).
   // Reply: {"mode", "text" (the emitted text; "" in audio mode), "audio_wav_base64" (24 kHz 16-bit mono WAV; in text
   // mode a WAV with no samples, its 44-byte header),
   // "sample_rate", "audio_seconds", "frames", "chunks": [{"text" (split only), "frames", "ended_by_eos"}], "seed",
-  // "split", "cancelled", "truncated" (the step budget stopped it short of its text: chunks skipped, or the last one
+  // "split", "normalize", "cancelled", "truncated" (the step budget stopped it short of its text: chunks skipped, or the last one
   // cut), "prefill_seconds", "generate_seconds"}. The WAV is byte for byte lfm3-speech's for the same request.
   std::string speech(std::shared_ptr<const Json> body) {
     // the step budget's worst case (~227 s) is sized for the default engine timeout; a shorter one could let an
