@@ -10,8 +10,8 @@ last 480). So audio exists every 12 frames, about 0.96 s of speech, inside a sen
 at that granularity serves split TTS and unsplit replies alike, including interleaved spoken answers to spoken questions.
 
 **Engine.** `lfm3_speech::Options` gains observers that the generation loop calls: `on_audio(samples, n)` after each
-codec call with the samples it made final, and `on_text(slot)` for each emitted text slot (the speech-output slot
-`<|audio_out|>` is not text). `run_chunks` calls `on_chunk(k, info)` as each chunk ends. Observers only read: the samples, slots and
+codec call with the samples it made final, and `on_slot(slot)` for each emitted slot (the worker forwards all but the
+speech-output slot `<|audio_out|>`, which is not text; named `on_text` here at first, corrected after the red-team). `run_chunks` calls `on_chunk(k, info)` as each chunk ends. Observers only read: the samples, slots and
 frames are the ones the non-streamed reply concatenates, in the same order.
 
 **Worker op.** `"stream": true` on op `"speech"` makes `WorkerCore` write progress lines through an in-process hook
@@ -38,7 +38,7 @@ engine thread and the connection's handler thread; the engine never waits on a c
 ## Rules (set before any streamed run)
 Run on Thor (MAXN, clocks locked, power recorded), one warm server, each request sent streamed and non-streamed.
 Cases: every request of `build/speech-e2e-v1/requests` (TTS fox, museum, numbers and long, interleaved fridge,
-reflective and study; seeds 1-3; 27 requests), the two long-form split cases of check_lfm3_speech_server.py
+reflective and study; seeds 1-3; 30 requests, miscounted as 27 when this was written), the two long-form split cases of check_lfm3_speech_server.py
 (lighthouse, bread), the normalized numbers paragraph of check_lfm3_audio_in_server.py, the five spoken questions of
 the audio-input listening set answered interleaved (`q0`-`q4`) and three LibriSpeech clips in text mode (ASR).
 1. **Exact.** For every case: the streamed PCM equals the non-streamed WAV's data byte for byte; the done event equals
@@ -57,3 +57,11 @@ the audio-input listening set answered interleaved (`q0`-`q4`) and three LibriSp
 
 Host tests (fake engine, plain, ASan+UBSan and TSan) cover the protocol: framing, ordering, errors before and after the
 start, disconnect, shutdown mid-stream, and the refusals.
+
+## Rule 6 re-measurement (written before running it)
+On server-stream-v2 (after the red-team's fixes), rule 6 failed: streamed median 11.24 s against 10.77 s, ratio 1.044,
+while the unstreamed runs alone spread from 10.43 to 12.09 s (on server-stream-v1 they spread 10.41-10.43 s and the
+ratio was 1.005). Clocks were locked at MAXN before and after. The failure stands as recorded. To tell noise from cost,
+one more measurement, set now: the same lighthouse request on server-stream-v2, 15 pairs, each pair one unstreamed and
+one streamed run with the order alternating pair by pair; the cost is the median over pairs of streamed / unstreamed
+`generate_seconds`. Streaming costs at most 3% if that median is at most 1.03.
