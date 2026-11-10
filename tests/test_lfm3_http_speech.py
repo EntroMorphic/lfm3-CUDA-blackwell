@@ -91,7 +91,7 @@ def test_interleaved_returns_the_decoded_text(harness_binary):
 
 @pytest.mark.parametrize("bad", [
     {"messages": [{"role": "user", "content": "Read this aloud for me please now."}], "mode": "audio"},  # no max_new_tokens
-    dict(tts(LONG), extra=1), dict(tts(LONG), mode="text"), dict(tts(LONG), mode=None),
+    dict(tts(LONG), extra=1), dict(tts(LONG), mode="transcribe"), dict(tts(LONG), mode=None),
     dict(tts(LONG), max_new_tokens=0), dict(tts(LONG), max_new_tokens=4096), dict(tts(LONG), max_new_tokens=1.5),
     dict(tts(LONG), seed=-1), dict(tts(LONG), seed=2147483648), dict(tts(LONG), seed=True), dict(tts(LONG), split="yes"),
     dict(tts(LONG), messages="hi"), dict(tts(LONG), messages=[]),

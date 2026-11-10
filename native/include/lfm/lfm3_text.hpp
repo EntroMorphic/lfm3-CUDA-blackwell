@@ -554,7 +554,10 @@ inline std::string python_strip(std::string_view s) {
   return std::string(s.substr(t.offset[a], t.offset[b] - t.offset[a]));
 }
 
-struct ContentPart { std::string text; };
+// A text part, or (audio input, parse_messages with allow_audio) an audio clip: `data` holds the part's "audio"
+// string (the caller's reference to the clip: a path, or base64 WAV bytes) and the part renders as the template's
+// <|vision_start|><|audio|><|vision_end|>.
+struct ContentPart { std::string text; bool audio = false; std::string data; };
 struct Message {
   std::string role;
   bool content_is_list = false;
@@ -581,7 +584,8 @@ inline bool has_reserved(std::string_view s) {
 }
 
 // Validation of tools/lfm3_text_frontend.py validate_messages, on the JSON form of the messages.
-inline std::vector<Message> parse_messages(const Json& j) {
+// allow_audio (speech input, #3): a user message's content list may also hold {type: "audio", audio: string} parts.
+inline std::vector<Message> parse_messages(const Json& j, bool allow_audio = false) {
   const auto bad = [](const std::string& why) { throw std::runtime_error("lfm3 chat: " + why); };
   const auto* list = std::get_if<Json::Array>(&j.value);
   if (!list || list->empty() || list->size() > kMaxMessages) bad("messages must contain 1..4096 messages");
@@ -623,10 +627,22 @@ inline std::vector<Message> parse_messages(const Json& j) {
       for (const Json& part : *parts) {
         const auto* po = std::get_if<Json::Object>(&part.value);
         const auto type = po ? po->find("type") : Json::Object::const_iterator();
+        if (allow_audio && po && po->size() == 2 && type != po->end() && po->count("audio") &&
+            std::holds_alternative<std::string>(type->second.value) && type->second.string() == "audio") {
+          if (m.role != "user") bad("audio parts are supported in user messages only");
+          const auto* data = std::get_if<std::string>(&po->at("audio").value);
+          if (!data || data->empty()) bad("an audio part's audio must be a nonempty string");
+          m.parts.push_back({std::string(), true, *data});
+          // the text on either side of an audio part is not adjacent in the prompt (the part renders as its span
+          // tokens between them), so each run of text parts is checked as joined text on its own
+          text(Json{joined}, "joined content");
+          joined.clear();
+          continue;
+        }
         if (!po || po->size() != 2 || type == po->end() || !po->count("text") ||
             !std::holds_alternative<std::string>(type->second.value) || type->second.string() != "text")
           bad("content parts must be text-only {type: text, text: string}");
-        m.parts.push_back({text(po->at("text"), "content part")});
+        m.parts.push_back({text(po->at("text"), "content part"), false, std::string()});
         total += m.parts.back().text.size();
         joined += m.parts.back().text;
       }
@@ -663,7 +679,7 @@ inline std::string render_chat(const std::vector<Message>& all) {
   const auto parse_content = [](const Message& m) {
     if (!m.content_is_list) return m.content;
     std::string s;
-    for (const auto& p : m.parts) s += p.text;
+    for (const auto& p : m.parts) s += p.audio ? std::string("<|vision_start|><|audio|><|vision_end|>") : p.text;
     return s;
   };
   std::string out = "<|startoftext|>";
@@ -753,6 +769,29 @@ inline std::vector<int> encode_messages(const Tokenizer& tokenizer, const std::v
     throw std::runtime_error("lfm3 chat: prompt (" + std::to_string(ids.size()) + ") + output (" +
                              std::to_string(max_new_tokens) + ") exceeds capacity (" + std::to_string(capacity) + ")");
   return ids;
+}
+
+// Audio input: the processor's expansion of each clip's single <|audio|> (as the template renders it) into its
+// encoder token count, clip by clip in order (lfm::audio_features::tokens); then the capacity check of encode_messages.
+inline constexpr int kAudioToken = 125031;  // <|audio|>
+inline std::vector<int> expand_audio(const std::vector<int>& ids, const std::vector<size_t>& clip_tokens, int capacity,
+                                     int max_new_tokens, int audio_token = kAudioToken) {
+  std::vector<int> out;
+  size_t clip = 0;
+  for (int id : ids) {
+    if (id != audio_token) { out.push_back(id); continue; }
+    if (clip >= clip_tokens.size()) throw std::runtime_error("lfm3 chat: more <|audio|> placeholders than clips");
+    if (clip_tokens[clip] == 0) throw std::runtime_error("lfm3 chat: an audio clip without tokens");
+    if (clip_tokens[clip] > size_t(capacity)) throw std::runtime_error("lfm3 chat: audio clip exceeds capacity");
+    out.insert(out.end(), clip_tokens[clip++], audio_token);
+    if (out.size() > size_t(capacity)) break;  // refused below
+  }
+  if (out.size() <= size_t(capacity) && clip != clip_tokens.size())
+    throw std::runtime_error("lfm3 chat: fewer <|audio|> placeholders than clips");
+  if (out.size() + static_cast<size_t>(max_new_tokens) > static_cast<size_t>(capacity))
+    throw std::runtime_error("lfm3 chat: prompt (" + std::to_string(out.size()) + "+) + output (" +
+                             std::to_string(max_new_tokens) + ") exceeds capacity (" + std::to_string(capacity) + ")");
+  return out;
 }
 
 }  // namespace lfm::lfm3_text

@@ -13,6 +13,7 @@
 // - emitted frames stream into the codec (lfm/codec.cuh, A2) 12 at a time; the waveform is 24 kHz FP32.
 // Forced mode replays given tokens and frames instead of picking and sampling, and records the hidden state every
 // frame step reads: the deterministic check of the whole loop.
+#include <lfm/audio_encoder.cuh>
 #include <lfm/audio_modes.hpp>
 #include <lfm/speech_run.hpp>
 #include <lfm/audio_sampling.hpp>
@@ -29,19 +30,33 @@ namespace lfm3_speech {
 class Session {
  public:
   Session(Runner& runner, const std::string& model_dir)
-      : runner_(runner), dec_(runner, 1), depth_(runner.weights), codec_(model_dir + "/audio_tokenizer", 12),
+      : model_dir_(model_dir), runner_(runner), dec_(runner, 1), depth_(runner.weights), codec_(model_dir + "/audio_tokenizer", 12),
         logits_dev_(size_t(lfm::depth::kCodebooks) * lfm::depth::kCodes), suppress_dev_(runner.s.vocabulary) {}
 
   Result generate(std::vector<int> prompt, const Options& o) {
     using namespace lfm::audio;
-    // refused before any state changes: an empty prompt; a modality placeholder anywhere (this engine takes no
-    // audio, image or video input and no replayed frames, so HF would refuse or need features it does not have);
-    // continuing a codec stream that the previous call did not leave open (it finalized, or threw midway)
+    // refused before any state changes: an empty prompt; an image, video or speech-output placeholder anywhere (this
+    // engine takes no image or video input and no replayed frames, so HF would refuse or need features it does not
+    // have); <|audio|> placeholders that are not exactly the given clips' spans (each clip's span is
+    // <|vision_start|>, tokens(clip) placeholders, <|vision_end|>, in order, as the processor expands them); continuing
+    // a codec stream that the previous call did not leave open (it finalized, or threw midway)
     if (prompt.empty()) throw std::runtime_error("speech: empty prompt");
+    const int audio_token = ModeTokens{}.placeholders[0];
     for (int id : prompt)
       for (int p : ModeTokens{}.placeholders)
-        if (id == p) throw std::runtime_error("speech: modality placeholder in the prompt (no audio, image or video input)");
+        if (id == p && p != audio_token)
+          throw std::runtime_error("speech: image, video or speech-output placeholder in the prompt (not supported as input)");
+    {
+      std::vector<size_t> clip_tokens;
+      for (const auto& clip : o.audio) {
+        if (clip.empty()) throw std::runtime_error("speech: empty audio clip");
+        clip_tokens.push_back(lfm::audio_features::tokens(clip.size()));
+      }
+      check_audio_spans(prompt, clip_tokens);
+    }
     if (o.codec_continue && !stream_open_) throw std::runtime_error("speech: no open codec stream to continue");
+    // the encoder (and its checkpoint contract) before any state changes
+    if (!o.audio.empty() && !encoder_) encoder_ = std::make_unique<lfm3_audio_in::Encoder>(runner_.weights, model_dir_);
     stream_open_ = false;
     Result res;
     lfm::audio::ModeOptions mo;
@@ -52,7 +67,26 @@ class Session {
     res.prompt = prompt;
     const auto t0 = std::chrono::steady_clock::now();
     runner_.reset();
-    runner_.forward(prompt);
+    if (o.audio.empty()) {
+      runner_.forward(prompt);
+    } else {
+      const auto e0 = std::chrono::steady_clock::now();
+      size_t total = 0;
+      for (const auto& clip : o.audio) total += lfm::audio_features::tokens(clip.size());
+      if (audio_capacity_ < total)
+        audio_rows_ = std::make_unique<Buffer<bf16>>(total * size_t(runner_.s.hidden)), audio_capacity_ = total;
+      size_t at = 0;
+      for (const auto& clip : o.audio) {
+        lfm::audio_features::Dump dump;
+        const auto mel = lfm::audio_features::log_mel(clip);
+        at += size_t(encoder_->encode(mel, audio_rows_->p + at * runner_.s.hidden, o.record_audio ? &dump : nullptr));
+        if (o.record_audio) res.audio_dumps.push_back(std::move(dump));
+      }
+      if (at != total) throw std::runtime_error("speech: encoded audio rows differ from the placeholders");  // unreachable
+      cuda_check(cudaDeviceSynchronize());
+      res.encode_seconds = secs(e0);
+      runner_.forward(prompt, audio_rows_->p, audio_token);
+    }
     dec_.load(0);
     if (!o.codec_continue) codec_.reset();
     cuda_check(cudaDeviceSynchronize());
@@ -162,6 +196,10 @@ class Session {
   static double secs(std::chrono::steady_clock::time_point a) {
     return std::chrono::duration<double>(std::chrono::steady_clock::now() - a).count();
   }
+  std::string model_dir_;
+  std::unique_ptr<lfm3_audio_in::Encoder> encoder_;
+  std::unique_ptr<Buffer<bf16>> audio_rows_;
+  size_t audio_capacity_ = 0;
   Runner& runner_;
   lfm3_batch::BatchDecoder dec_;
   lfm::depth::Decoder depth_;

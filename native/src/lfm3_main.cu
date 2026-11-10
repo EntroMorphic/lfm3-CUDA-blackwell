@@ -53,6 +53,11 @@ __global__ void embed(const bf16* weights, const int* ids, bf16* out, int rows, 
 }
 // Vector-4 schedule from ATen Reduce.cuh; retained PyTorch license applies.
 // Match the reduction's row-count-dependent block width, not just its formula.
+// Audio input (#3): row rows[j] of `hidden` becomes row j of `source` (an encoded clip's projected features).
+__global__ void inject_rows(const bf16* source, const int* rows, bf16* hidden, int count, int width) {
+  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (i < size_t(count) * width) hidden[size_t(rows[i / width]) * width + i % width] = source[i];
+}
 __global__ void norm(const bf16* x, const bf16* w, bf16* y, int width, float eps,
                      const bf16* residual = nullptr) {
   const size_t base = size_t(blockIdx.x) * width;
@@ -331,6 +336,8 @@ class Runner {
   Buffer<bf16*> pointer_c;
   std::vector<std::unique_ptr<Buffer<bf16>>> keys, values, states;
   std::vector<std::unique_ptr<Buffer<float>>> frequencies;
+  std::unique_ptr<Buffer<int>> injected_rows;
+  size_t injected_capacity = 0;
   std::string trace;
   bool trace_logits_only = false;
   int step = 0, cursor = 0;
@@ -528,7 +535,9 @@ class Runner {
     for(int first=0;first<rows;first+=tile)
       attention_tile(layer,std::min(tile,rows-first),window,first,rows);
   }
-  std::vector<float> forward(const std::vector<int>& input) {
+  // `injected` (device, [count][hidden]): the input embeddings of the rows holding `placeholder`, in order, in place of
+  // the placeholder's own embedding row (audio input; HF's masked_scatter of the audio features). Prefill only.
+  std::vector<float> forward(const std::vector<int>& input, const bf16* injected = nullptr, int placeholder = -1) {
     const int rows = input.size();
     if (rows < 1 || rows > s.context-cursor || (cursor && rows != 1))
       throw std::runtime_error("only empty-cache prefill or single-token decode within capacity is supported");
@@ -538,6 +547,16 @@ class Runner {
     cuda_check(cudaMemcpy(tokens.p,input.data(),rows*sizeof(int),cudaMemcpyHostToDevice));
     cuda_check(cudaMemcpy(positions.p,pos.data(),rows*sizeof(int),cudaMemcpyHostToDevice));
     embed<<<grid(size_t(rows)*s.hidden),256>>>(w("embed_tokens.weight"),tokens.p,hidden.p,rows,s.hidden);
+    if(injected) {
+      if(cursor) throw std::runtime_error("injected input embeddings are a prefill-only input");
+      std::vector<int> at;
+      for(int t=0;t<rows;++t) if(input[t]==placeholder) at.push_back(t);
+      if(at.empty()) throw std::runtime_error("injected input embeddings without placeholders");
+      if(!injected_rows || injected_capacity<at.size())
+        injected_rows=std::make_unique<Buffer<int>>(at.size()), injected_capacity=at.size();
+      cuda_check(cudaMemcpy(injected_rows->p,at.data(),at.size()*sizeof(int),cudaMemcpyHostToDevice));
+      inject_rows<<<grid(at.size()*s.hidden),256>>>(injected,injected_rows->p,hidden.p,int(at.size()),s.hidden);
+    }
     dump("embed",hidden.p,size_t(rows)*s.hidden);
     for(int layer=0;layer<s.layers;++layer) {
       const std::string p="layers."+std::to_string(layer)+".";

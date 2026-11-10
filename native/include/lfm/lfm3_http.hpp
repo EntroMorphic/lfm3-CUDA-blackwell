@@ -60,6 +60,7 @@
 #include <vector>
 
 #include "lfm/lfm3_text.hpp"
+#include "lfm/speech_run.hpp"
 #include "lfm/speech_text.hpp"
 #include "lfm/model_config.hpp"
 
@@ -82,6 +83,7 @@ inline constexpr size_t kSpeechMaxChunks = 512;
 inline constexpr size_t kSpeechMaxPromptTokens = 131072;
 inline constexpr double kSpeechMinEngineTimeout = 300;  // seconds; /speech is refused below it
 inline constexpr int kAudioOutToken = 125032;
+inline constexpr size_t kSpeechMaxClips = 64;  // audio clips per /speech request (WorkerCore::kSpeechMaxClips)
 
 // An HTTP-visible refusal: status and error code, exactly as lfm3_server.APIError.
 struct ApiError : std::exception {
@@ -362,6 +364,7 @@ struct Policy {
   int vocabulary = 0;
   std::vector<int> suppress, stops;
   bool speech = false;  // the engine can run op "speech" (WorkerCore::speech_supported); /speech is refused otherwise
+  bool audio_input = false;  // op "speech" takes audio (WorkerCore::audio_input_supported); audio parts get 501 otherwise
 };
 
 inline std::chrono::nanoseconds seconds(double s) {
@@ -683,6 +686,8 @@ class Service {
     std::vector<std::vector<int>> prompts;
     std::vector<std::string> texts;  // each chunk's text, when split
     std::string chunks_json;         // the prompts as the engine request carries them
+    std::string audio_json;          // audio input (#3): the clips (base64 WAV) as the engine request carries them
+    bool audio_input = false;        // the messages hold audio parts
   };
   Speech validate_speech(const Json& item) const {
     const auto& o = object_of(item);
@@ -693,26 +698,45 @@ class Service {
       if (!o.count(key)) throw std::invalid_argument("invalid speech fields");
     Speech s;
     const auto* mode = std::get_if<std::string>(&o.at("mode").value);
-    if (!mode || (*mode != "audio" && *mode != "interleaved")) throw std::invalid_argument("mode must be audio or interleaved");
+    if (!mode || (*mode != "audio" && *mode != "interleaved" && *mode != "text"))
+      throw std::invalid_argument("mode must be audio, interleaved or text");
     s.mode = *mode;
     s.count = int(integer(o.at("max_new_tokens"), 1, kSpeechCapacity - 1));
     s.seed = o.count("seed") ? integer(o.at("seed"), 0, 2147483647) : 0;
+    if (!std::holds_alternative<Json::Array>(o.at("messages").value)) throw std::invalid_argument("messages must be a list");
+    s.messages = &o.at("messages");
+    bool audio_input = false;
+    size_t clips = 0;
+    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true))
+      for (const auto& part : m.parts) clips += part.audio;
+    audio_input = s.audio_input = clips > 0;
+    if (clips > kSpeechMaxClips) throw std::invalid_argument("too many audio clips");
     if (o.count("split")) {
       const auto* b = std::get_if<bool>(&o.at("split").value);
       if (!b) throw std::invalid_argument("split must be a boolean");
       s.split = *b;
     } else {
-      s.split = s.mode == "audio";
+      s.split = s.mode == "audio" && !audio_input;
     }
     if (s.split && s.mode != "audio") throw std::invalid_argument("split is for audio mode");
-    if (!std::holds_alternative<Json::Array>(o.at("messages").value)) throw std::invalid_argument("messages must be a list");
-    s.messages = &o.at("messages");
-    (void)lfm3_text::parse_messages(*s.messages);
+    if (s.split && audio_input) throw std::invalid_argument("split is for text input; audio input is not split");
     return s;
   }
   // Render and tokenize each chunk as a single request (lfm3_text::encode_messages), split by sentences when asked.
+  // Audio input (#3): each user audio part (base64 16 kHz mono WAV) renders as the template's single <|audio|>, then
+  // expands to its clip's encoder token count (lfm3_text::expand_audio); the clips go to the engine as given.
   void encode_speech(Speech& s) const {
-    const auto messages = lfm3_text::parse_messages(*s.messages);
+    const auto messages = lfm3_text::parse_messages(*s.messages, /*allow_audio=*/!s.split);
+    std::vector<size_t> clip_tokens;
+    s.audio_json = "[";
+    for (const auto& m : messages)
+      for (const auto& part : m.parts) {
+        if (!part.audio) continue;
+        clip_tokens.push_back(lfm::audio_features::tokens(lfm3_speech::clip_from_base64(part.data).size()));
+        s.audio_json += (clip_tokens.size() > 1 ? ",\"" : "\"") + part.data + "\"";  // checked base64: no escapes
+      }
+    s.audio_json += "]";
+    if (clip_tokens.empty()) s.audio_json.clear();
     const auto chats = s.split ? speech_text::sentence_requests(messages)
                                : std::vector<std::vector<lfm3_text::Message>>{messages};
     if (chats.size() > kSpeechMaxChunks) throw std::invalid_argument("speech request has too many sentences");
@@ -721,9 +745,11 @@ class Service {
       auto ids = lfm3_text::encode_messages(tokenizer_, chat, kSpeechCapacity, s.count);
       for (const int id : ids) {
         if (id < 0 || id >= policy_.vocabulary) throw std::invalid_argument("input_ids out of range");
-        if (std::binary_search(policy_.suppress.begin(), policy_.suppress.end(), id))
+        // the audio placeholder comes only from audio parts (text cannot hold it); expand_audio counts them
+        if (id != lfm3_text::kAudioToken && std::binary_search(policy_.suppress.begin(), policy_.suppress.end(), id))
           throw std::invalid_argument("multimodal placeholder input is unsupported");
       }
+      if (!clip_tokens.empty()) ids = lfm3_text::expand_audio(ids, clip_tokens, kSpeechCapacity, s.count);
       tokens += ids.size();
       if (tokens > kSpeechMaxPromptTokens) throw std::invalid_argument("speech request has too many prompt tokens");
       s.prompts.push_back(std::move(ids));
@@ -737,7 +763,8 @@ class Service {
       s.chunks_json += "]";
     }
     s.chunks_json += "]";
-    if (s.chunks_json.size() + 256 > kMaxBody) throw std::invalid_argument("speech request exceeds the engine frame");
+    if (s.chunks_json.size() + s.audio_json.size() + 256 > kMaxBody)
+      throw std::invalid_argument("speech request exceeds the engine frame");
     s.messages = nullptr;
     s.body.reset();
   }
@@ -801,11 +828,17 @@ class Service {
   }
 
  public:
-  // POST /speech (#2): text in, speech (and, interleaved, text) out. No session: one request at a time on the
-  // engine's speech runner, queued and timed like every engine job. Body: {"messages": [...] (the chat, as for
-  // /generate), "mode": "audio" | "interleaved", "max_new_tokens": 1..4095 (per chunk), "seed": 0..2^31-1 (default
-  // 0), "split": bool (audio only; default true: long-form TTS by sentences, lfm/speech_text.hpp)}. Reply:
-  // {"mode", "text" (the emitted text; "" in audio mode), "audio_wav_base64" (24 kHz 16-bit mono WAV),
+  // POST /speech (#2, #3): text and speech in; speech, interleaved text and speech, or text out. No session: one
+  // request at a time on the engine's speech runner, queued and timed like every engine job. Body: {"messages": [...]
+  // (the chat, as for /generate; a user message's content list may also hold {"type": "audio", "audio": base64 of a
+  // 16 kHz mono 16-bit PCM or 32-bit float WAV file}, at most 64 clips; the 4 MiB body holds about 90 s of 16-bit
+  // audio; a 501 audio_input_unsupported when the engine has no audio encoder for the checkpoint), "mode":
+  // "audio" | "interleaved" | "text", "max_new_tokens": 1..4095 (per chunk), "seed": 0..2^31-1 (default 0), "split":
+  // bool (audio mode with text input only; default true there: long-form TTS by sentences, lfm/speech_text.hpp)}.
+  // Spoken replies to audio input: use "interleaved", as the model card's voice chat does; in "audio" mode the model
+  // answers speech with unusable speech, in HF as here (validation/audio-in-v1).
+  // Reply: {"mode", "text" (the emitted text; "" in audio mode), "audio_wav_base64" (24 kHz 16-bit mono WAV; in text
+  // mode a WAV with no samples, its 44-byte header),
   // "sample_rate", "audio_seconds", "frames", "chunks": [{"text" (split only), "frames", "ended_by_eos"}], "seed",
   // "split", "cancelled", "truncated" (the step budget stopped it short of its text: chunks skipped, or the last one
   // cut), "prefill_seconds", "generate_seconds"}. The WAV is byte for byte lfm3-speech's for the same request.
@@ -815,14 +848,17 @@ class Service {
     if (!policy_.speech || settings_.engine_timeout < kSpeechMinEngineTimeout) throw ApiError(501, "speech_unsupported");
     const auto deadline = Clock::now() + seconds(settings_.request_timeout);
     auto request = std::make_shared<Speech>(validate_speech(*body));
+    if (request->audio_input && !policy_.audio_input) throw ApiError(501, "audio_input_unsupported");
     request->body = std::move(body);  // `messages` points into it until encode_speech drops it
     frontend_call([&] { encode_speech(*request); }, deadline);
     Event event = std::make_shared<std::atomic<bool>>(false);
     auto run = [this, request, event, deadline] {
       if (Clock::now() >= deadline) throw ApiError(504, "queue_deadline");
-      const auto result = rpc(Obj().str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
-                                  .num("max_new_tokens", request->count).num("seed", request->seed)
-                                  .boolean("chunked", request->split),
+      Obj frame;
+      frame.str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
+          .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split);
+      if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
+      const auto result = rpc(std::move(frame),
                               {{"speech", event}}, false, kMaxSpeechResponse);
       return speech_response(*request, result);
     };

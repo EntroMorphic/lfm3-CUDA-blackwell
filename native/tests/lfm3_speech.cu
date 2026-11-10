@@ -1,6 +1,7 @@
 // lfm3-speech: text in -> text and speech out, natively (#2 step 4; src/lfm3_speech.cuh).
 //
 //   lfm3-speech MODEL_DIR REQUEST.json OUT_STEM
+//   lfm3-speech MODEL_DIR --batch LIST   (each line: REQUEST.json OUT_STEM; the model is loaded once per capacity)
 // REQUEST: {"prompt_ids": [...], "mode": "audio" | "interleaved" | "text" | "none", "max_new_tokens": N, "seed": S,
 //           "capacity": C (default 4096), "forced_tokens": [...], "forced_frames": [[12 codes]...],
 //           "record_hidden": false, "chunks": [[ids...], ...]}
@@ -22,11 +23,16 @@
 // OUT_STEM.wav (24 kHz 16-bit PCM, for listening) and OUT_STEM.f32 (the exact FP32 waveform);
 // OUT_STEM.hidden.bf16 when record_hidden ([frame step][2048], the state the depth decoder read), and
 // OUT_STEM.embeds.bf16 ([decoded step][2048], the input embedding fed). steps: [frame, decoded, token, fed codes...].
+// Audio input (#3): "audio": [WAV paths] (16 kHz mono, 16-bit PCM or 32-bit float), one per <|audio|> span of
+// prompt_ids in order (tools/lfm3_audio_in_hf.py writes such requests); or, with messages, user content parts
+// {"type": "audio", "audio": WAV path}, rendered and expanded natively. Not with chunks or split. "record_audio": true
+// also writes OUT_STEM.audioK.{mel,down,encoded,features}.f32, clip K's stages (lfm/audio_encoder.cuh).
 #define LFM3_RUNTIME_ONLY 1
 #include "../src/lfm3_main.cu"
 #include "../src/lfm3_batch.cuh"
 #include "../src/lfm3_speech.cuh"
 #include <lfm/speech_text.hpp>
+#include <lfm/wav.hpp>
 
 #include <cstdio>
 
@@ -45,22 +51,59 @@ void write_raw(const std::string& path, const T* p, size_t n) {
 }
 }  // namespace
 
-int main(int argc, char** argv) try {
-  if (argc != 4) throw std::runtime_error("usage: lfm3-speech MODEL_DIR REQUEST.json OUT_STEM");
+// The model, loaded once per capacity (a batch reuses it across requests of the same capacity).
+struct Loaded {
+  int capacity = -1;
+  std::unique_ptr<lfm3_speech::Session> session;
+  std::unique_ptr<Runner> runner;
+  lfm::ModelConfig cfg;
+};
+
+void run(const char* model_dir, const char* request_path, const std::string& stem, Loaded& m) {
+  char* argv[] = {nullptr, const_cast<char*>(model_dir), const_cast<char*>(request_path)};
   const auto req = read_json(argv[2]);
-  const std::string stem = argv[3];
   const std::string mode = req.has("mode") ? req.at("mode").string() : "audio";
   if (mode != "audio" && mode != "interleaved" && mode != "text" && mode != "none")
     throw std::runtime_error("mode must be audio, interleaved, text or none");
   const auto outputs = {".wav", ".f32", ".frames.i32", ".raw.i32", ".hidden.bf16", ".embeds.bf16", ".json"};
-  for (const char* ext : outputs)  // the request is read already; removing it as an "earlier output" would lose it
-    if (std::filesystem::weakly_canonical(stem + ext) == std::filesystem::weakly_canonical(argv[2]))
-      throw std::runtime_error("the request file is one of OUT_STEM's outputs; use another stem");
+  // inputs the outputs must not be: the request (read already) and its audio clips (read later); removing one as an
+  // "earlier output" would lose it
+  std::vector<std::string> inputs{argv[2]};
+  if (req.has("audio"))
+    for (auto& path : req.at("audio").array()) inputs.push_back(path.string());
+  if (req.has("messages"))
+    if (const auto* list = std::get_if<lfm::Json::Array>(&req.at("messages").value))
+      for (const auto& m : *list)
+        if (const auto* o = std::get_if<lfm::Json::Object>(&m.value); o && o->count("content"))
+          if (const auto* parts = std::get_if<lfm::Json::Array>(&o->at("content").value))
+            for (const auto& part : *parts)
+              if (const auto* po = std::get_if<lfm::Json::Object>(&part.value); po && po->count("audio"))
+                if (const auto* a = std::get_if<std::string>(&po->at("audio").value)) inputs.push_back(*a);
+  for (const char* ext : outputs)
+    for (const auto& in : inputs)
+      if (std::filesystem::weakly_canonical(stem + ext) == std::filesystem::weakly_canonical(in))
+        throw std::runtime_error("an input (" + in + ") is one of OUT_STEM's outputs; use another stem");
   for (const char* ext : outputs) std::filesystem::remove(stem + ext);
+  for (int k = 0; k < 64; ++k)
+    for (const char* part : {"mel", "down", "encoded", "features"}) {
+      const std::string out = stem + ".audio" + std::to_string(k) + "." + part + ".f32";
+      for (const auto& in : inputs)
+        if (std::filesystem::weakly_canonical(out) == std::filesystem::weakly_canonical(in))
+          throw std::runtime_error("an input (" + in + ") is one of OUT_STEM's outputs; use another stem");
+    }
+  for (int k = 0; k < 64; ++k)
+    for (const char* part : {"mel", "down", "encoded", "features"})
+      std::filesystem::remove(stem + ".audio" + std::to_string(k) + "." + part + ".f32");
   const int capacity = req.has("capacity") ? req.at("capacity").integer() : 4096;
-  auto cfg = lfm::ModelConfig::load(std::string(argv[1]) + "/config.json", capacity);
-  Runner runner(argv[1], cfg);
-  lfm3_speech::Session session(runner, argv[1]);
+  if (m.capacity != capacity) {
+    m.session.reset(), m.runner.reset();
+    m.cfg = lfm::ModelConfig::load(std::string(argv[1]) + "/config.json", capacity);
+    m.runner = std::make_unique<Runner>(argv[1], m.cfg);
+    m.session = std::make_unique<lfm3_speech::Session>(*m.runner, argv[1]);
+    m.capacity = capacity;
+  }
+  const auto& cfg = m.cfg;
+  auto& session = *m.session;
   lfm3_speech::Options o;
   using lfm::audio::Requested;
   o.mode = mode == "audio" ? Requested::Audio : mode == "interleaved" ? Requested::Interleaved
@@ -68,6 +111,23 @@ int main(int argc, char** argv) try {
   o.max_new_tokens = req.at("max_new_tokens").integer();
   o.seed = req.has("seed") ? uint64_t(req.at("seed").integer()) : 0;
   o.record_hidden = req.has("record_hidden") && req.at("record_hidden").boolean();
+  o.record_audio = req.has("record_audio") && req.at("record_audio").boolean();
+  auto read_clips = [&](const std::vector<std::string>& paths) {
+    if (paths.size() > 64) throw std::runtime_error("at most 64 audio clips");
+    for (const auto& path : paths) {
+      auto a = lfm::wav::read(path);
+      if (a.rate != lfm::audio_features::kRate)
+        throw std::runtime_error(path + ": expected 16000 Hz audio, got " + std::to_string(a.rate));
+      if (a.samples.empty()) throw std::runtime_error(path + ": no samples");
+      o.audio.push_back(std::move(a.samples));
+    }
+  };
+  if (req.has("audio")) {
+    if (req.has("messages")) throw std::runtime_error("with messages, audio clips are the messages' audio parts");
+    std::vector<std::string> paths;
+    for (auto& path : req.at("audio").array()) paths.push_back(path.string());
+    read_clips(paths);
+  }
   if (req.has("forced_tokens")) for (auto& x : req.at("forced_tokens").array()) o.forced_tokens.push_back(x.integer());
   if (req.has("forced_frames"))
     for (auto& f : req.at("forced_frames").array()) {
@@ -79,18 +139,32 @@ int main(int argc, char** argv) try {
     }
   std::vector<std::vector<int>> prompts;
   std::vector<std::string> chunk_texts;
+  std::shared_ptr<const lfm::lfm3_text::Tokenizer> text_tokenizer;  // with messages: "text" in the json, as the server
+                                                                     // decodes it (slots without <|audio_out|>, special
+                                                                     // tokens skipped)
   const bool split = req.has("split") && req.at("split").boolean();
   const bool chunked = req.has("chunks") || split;
   if (chunked && (!o.forced_tokens.empty() || !o.forced_frames.empty())) throw std::runtime_error("chunks cannot be forced");
   if (req.has("messages")) {
     if (req.has("prompt_ids") || req.has("chunks")) throw std::runtime_error("messages cannot be combined with prompt_ids or chunks");
     const std::string path = std::string(argv[1]) + "/tokenizer.json";
-    const auto tok = lfm::lfm3_text::load_checked(path, lfm::tokenizer_token_count(path, cfg.shape.vocabulary));
-    const auto messages = lfm::lfm3_text::parse_messages(req.at("messages"));
+    const std::shared_ptr<const lfm::lfm3_text::Tokenizer> tok =
+        lfm::lfm3_text::load_checked(path, lfm::tokenizer_token_count(path, cfg.shape.vocabulary));
+    text_tokenizer = tok;
+    const auto messages = lfm::lfm3_text::parse_messages(req.at("messages"), /*allow_audio=*/!split);
+    std::vector<std::string> paths;  // audio parts: WAV paths
+    for (const auto& m : messages)
+      for (const auto& part : m.parts)
+        if (part.audio) paths.push_back(part.data);
+    read_clips(paths);
+    std::vector<size_t> clip_tokens;
+    for (const auto& clip : o.audio) clip_tokens.push_back(lfm::audio_features::tokens(clip.size()));
     const auto chats = split ? lfm::speech_text::sentence_requests(messages)
                              : std::vector<std::vector<lfm::lfm3_text::Message>>{messages};
     for (const auto& c : chats) {
       prompts.push_back(lfm::lfm3_text::encode_messages(*tok, c, capacity, o.max_new_tokens));
+      if (!clip_tokens.empty())
+        prompts.back() = lfm::lfm3_text::expand_audio(prompts.back(), clip_tokens, capacity, o.max_new_tokens);
       if (split) chunk_texts.push_back(c.back().content);
     }
   } else if (split) {
@@ -128,6 +202,14 @@ int main(int argc, char** argv) try {
     for (auto& x : r.embeds) e.insert(e.end(), x.begin(), x.end());
     write_raw(stem + ".embeds.bf16", e.data(), e.size());
   }
+  for (size_t k = 0; k < r.audio_dumps.size(); ++k) {
+    const auto& d = r.audio_dumps[k];
+    const std::string a = stem + ".audio" + std::to_string(k) + ".";
+    write_raw(a + "mel.f32", d.mel.data(), d.mel.size());
+    write_raw(a + "down.f32", d.down.data(), d.down.size());
+    write_raw(a + "encoded.f32", d.encoded.data(), d.encoded.size());
+    write_raw(a + "features.f32", d.features.data(), d.features.size());
+  }
   std::ofstream f(stem + ".json");
   f << "{\"mode\":" << lfm::lfm3_text::json_string(mode) << ",\"prompt\":";
   print_ids(f, r.prompt);
@@ -149,9 +231,15 @@ int main(int argc, char** argv) try {
         << (chunk_texts.empty() ? "" : ",\"text\":" + lfm::lfm3_text::json_string(chunk_texts[k])) << "}";
     f << "]";
   }
+  if (text_tokenizer) {
+    std::vector<int> text_slots;
+    for (int id : r.slots)
+      if (id != lfm::audio::ModeTokens{}.audio_out) text_slots.push_back(id);
+    f << ",\"text\":" << lfm::lfm3_text::json_string(text_tokenizer->decode(text_slots, true));
+  }
   f << ",\"frames\":" << r.frames.size() << ",\"raw_frames\":" << r.raw_frames.size() << ",\"samples\":" << r.wav.size()
     << ",\"audio_seconds\":" << r.wav.size() / 24000.0 << ",\"decode_steps\":" << r.decode_steps
-    << ",\"prefill_seconds\":" << r.prefill_seconds << ",\"generate_seconds\":" << r.generate_seconds
+    << ",\"encode_seconds\":" << r.encode_seconds << ",\"prefill_seconds\":" << r.prefill_seconds << ",\"generate_seconds\":" << r.generate_seconds
     << ",\"lm_step_seconds\":" << r.lm_step_seconds << ",\"text_pick_seconds\":" << r.text_pick_seconds
     << ",\"depth_seconds\":" << r.depth_seconds << ",\"sample_host_seconds\":" << r.sample_host_seconds
     << ",\"codec_seconds\":" << r.codec_seconds
@@ -162,6 +250,31 @@ int main(int argc, char** argv) try {
   if (!f) throw std::runtime_error("cannot write " + stem + ".json");
   std::cout << "{\"frames\":" << r.frames.size() << ",\"audio_seconds\":" << r.wav.size() / 24000.0
             << ",\"generate_seconds\":" << r.generate_seconds << ",\"slots\":" << r.slots.size() << "}\n";
+}
+
+int main(int argc, char** argv) try {
+  Loaded m;
+  if (argc == 4 && std::string(argv[2]) == "--batch") {
+    // each line of LIST: REQUEST.json OUT_STEM; a failed request prints its error and the batch goes on; the exit
+    // status is nonzero if any failed
+    std::ifstream list(argv[3]);
+    if (!list) throw std::runtime_error(std::string("cannot read ") + argv[3]);
+    std::string request, stem;
+    int failed = 0, done = 0;
+    while (list >> request >> stem) {
+      try {
+        run(argv[1], request.c_str(), stem, m);
+        ++done;
+      } catch (const std::exception& e) {
+        std::cerr << "lfm3-speech: " << request << ": " << e.what() << "\n";
+        ++failed;
+      }
+    }
+    std::cerr << "lfm3-speech: batch: " << done << " done, " << failed << " failed\n";
+    return failed ? 1 : 0;
+  }
+  if (argc != 4) throw std::runtime_error("usage: lfm3-speech MODEL_DIR REQUEST.json OUT_STEM | MODEL_DIR --batch LIST");
+  run(argv[1], argv[2], argv[3], m);
   return 0;
 } catch (const std::exception& e) {
   std::cerr << "lfm3-speech: " << e.what() << "\n";

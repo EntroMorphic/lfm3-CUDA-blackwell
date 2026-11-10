@@ -3,6 +3,9 @@
 // session (long-form TTS by sentences, with the server's step budget) and the WAV writer. Host-only, so the chunk
 // loop is tested on any host with a fake session (tests/test_speech_run.py); src/lfm3_speech.cuh holds the CUDA
 // Session and includes this.
+#include <lfm/audio_features.hpp>
+#include <lfm/base64.hpp>
+#include <lfm/wav.hpp>
 #include <lfm/audio_modes.hpp>
 #include <lfm/audio_sampling.hpp>
 
@@ -25,6 +28,10 @@ struct Options {
   std::vector<int> forced_tokens;
   std::vector<lfm::audio::Frame> forced_frames;
   bool record_hidden = false;
+  // audio input (#3): the clips, 16 kHz mono samples, one per <|audio|> span of the prompt in order (each span holds
+  // lfm::audio_features::tokens(samples) placeholders); record_audio keeps every clip's stages in Result::audio_dumps
+  std::vector<std::vector<float>> audio;
+  bool record_audio = false;
   // long-form TTS by sentences (tools/lfm3_speech_chunked_hf.py): each sentence is its own request, and the codec
   // stream runs on across them: codec_continue skips the reset, codec_finalize = false keeps the stream's tail open
   bool codec_continue = false, codec_finalize = true;
@@ -45,11 +52,42 @@ struct Result {
   std::vector<std::vector<uint16_t>> embeds;  // per decoded step (record_hidden), the BF16 input embedding fed
   struct StepRecord { bool frame, decode; int token; lfm::audio::Frame fed; };
   std::vector<StepRecord> steps;
+  std::vector<lfm::audio_features::Dump> audio_dumps;
   int decode_steps = 0;
+  double encode_seconds = 0;  // audio input: features and encoder (part of prefill_seconds)
   double prefill_seconds = 0, generate_seconds = 0;
   // where the generation time goes (host wall time, each phase synchronized at its end)
   double lm_step_seconds = 0, text_pick_seconds = 0, depth_seconds = 0, sample_host_seconds = 0, codec_seconds = 0;
 };
+
+// Audio input (#3): the prompt's <|audio|> placeholders must be exactly the clips' spans, in order: clip k is
+// <|vision_start|>, clip_tokens[k] <|audio|>, <|vision_end|> (the processor's expansion); no other <|audio|>.
+inline void check_audio_spans(const std::vector<int>& prompt, const std::vector<size_t>& clip_tokens) {
+  const int audio_token = lfm::audio::ModeTokens{}.placeholders[0], start = 125009, end = 125010;  // vision_start/end
+  size_t clip = 0;
+  for (size_t i = 0; i < prompt.size();) {
+    if (prompt[i] != audio_token) { ++i; continue; }
+    size_t j = i;
+    while (j < prompt.size() && prompt[j] == audio_token) ++j;
+    if (clip >= clip_tokens.size()) throw std::runtime_error("speech: more <|audio|> spans than audio clips");
+    if (j - i != clip_tokens[clip])
+      throw std::runtime_error("speech: audio clip " + std::to_string(clip) + " needs " + std::to_string(clip_tokens[clip]) +
+                               " placeholders, the prompt has " + std::to_string(j - i));
+    if (i == 0 || prompt[i - 1] != start || j >= prompt.size() || prompt[j] != end)
+      throw std::runtime_error("speech: an <|audio|> span must be wrapped in <|vision_start|> and <|vision_end|>");
+    ++clip, i = j;
+  }
+  if (clip != clip_tokens.size()) throw std::runtime_error("speech: fewer <|audio|> spans than audio clips");
+}
+
+// A clip as the server carries it (base64 WAV) -> its 16 kHz mono samples; refuses anything else.
+inline std::vector<float> clip_from_base64(const std::string& b64) {
+  auto a = lfm::wav::parse(lfm::base64::decode(b64));
+  if (a.rate != lfm::audio_features::kRate)
+    throw std::invalid_argument("audio must be 16000 Hz, got " + std::to_string(a.rate));
+  if (a.samples.empty()) throw std::invalid_argument("audio clip has no samples");
+  return std::move(a.samples);
+}
 
 // One request as one or more chunks (long-form TTS by sentences): chunk k is its own generation, seeded
 // seed * 1000 + k when `chunked` (tools/lfm3_speech_chunked_hf.py), the codec stream running on across the chunks.
@@ -69,6 +107,7 @@ inline Result run_chunks(SessionT& session, const std::vector<std::vector<int>>&
                          std::vector<ChunkInfo>& info, size_t step_budget = 0, bool* truncated = nullptr) {
   if (prompts.empty()) throw std::runtime_error("speech: no prompt");
   if (chunked && (!o.forced_tokens.empty() || !o.forced_frames.empty())) throw std::runtime_error("chunks cannot be forced");
+  if (chunked && !o.audio.empty()) throw std::runtime_error("chunks cannot take audio input");
   Result r;
   info.clear();
   if (truncated) *truncated = false;

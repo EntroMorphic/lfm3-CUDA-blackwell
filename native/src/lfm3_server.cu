@@ -100,6 +100,7 @@ int main(int argc,char** argv) try {
   policy.suppress=backend.core().suppressed_tokens();
   policy.stops=backend.core().stop_tokens();
   policy.speech=backend.core().speech_supported();
+  policy.audio_input=backend.core().audio_input_supported();
   for(auto* ids:{&policy.suppress,&policy.stops}) {
     std::sort(ids->begin(),ids->end());ids->erase(std::unique(ids->begin(),ids->end()),ids->end());
   }

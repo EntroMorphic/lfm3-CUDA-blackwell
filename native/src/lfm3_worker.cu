@@ -106,7 +106,7 @@ void schema(const lfm::Json& request,const std::string& op) {
     if(op=="create" && key=="capacity") continue;
     if(op=="generate" && generate.count(key)) continue;
     if(op=="generate_batch" && (key=="op" || key=="rpc_id" || key=="lanes")) continue;
-    if(op=="speech" && (key=="chunks" || key=="mode" || key=="max_new_tokens" || key=="seed" || key=="chunked")) continue;
+    if(op=="speech" && (key=="chunks" || key=="mode" || key=="max_new_tokens" || key=="seed" || key=="chunked" || key=="audio")) continue;
     throw std::runtime_error("unsupported request field: "+key);
   }
 }
@@ -318,6 +318,20 @@ class WorkerCore {
       speech_ok=model.at("audio_start_token_id").integer()==t.audio_start && model.at("audio_out_token_id").integer()==t.audio_out &&
                 model.at("mixed_start_token_id").integer()==t.mixed_start && model.at("text_end_token_id").integer()==t.text_end &&
                 placeholders==fixed && std::find(cfg.eos.begin(),cfg.eos.end(),t.eos[0])!=cfg.eos.end() && live>t.audio_out;
+      // Audio input (#3) also needs the encoder this build implements: its contract checked against the config and
+      // the safetensors header, so a checkpoint it cannot run is refused up front (an engine refusal would fail the
+      // server closed).
+      if(speech_ok && model.at("audio_token_id").integer()==lfm::audio::ModeTokens{}.placeholders[0]) {
+        try {
+          const auto table=lfm::safetensors_header::read(directory+"/model.safetensors");
+          lfm3_audio_in::Encoder::check_contract(model,[&](const std::string& name) -> std::optional<lfm::safetensors_header::Entry> {
+            const auto it=table.find(name);
+            if(it==table.end()) return std::nullopt;
+            return it->second;
+          });
+          audio_in_ok=true;
+        } catch(const std::exception&) {audio_in_ok=false;}
+      }
     }
 #endif
   }
@@ -335,6 +349,8 @@ class WorkerCore {
   // Whether op "speech" can run (native-GEMM build, an Omni checkpoint with its codec and the expected special ids);
   // the HTTP layer refuses /speech up front otherwise, since any engine refusal fails the server closed.
   bool speech_supported() const {return speech_ok;}
+  // Whether op "speech" takes audio input (speech_supported, and the audio encoder's contract holds).
+  bool audio_input_supported() const {return audio_in_ok;}
 #endif
   // One protocol line (`oversized`: the line exceeded 4 MiB). Writes exactly one reply line to `out`;
   // returns false after a shutdown request.
@@ -510,12 +526,14 @@ class WorkerCore {
   // Decode steps per request, across all its chunks (lfm3_speech::run_chunks): bounds its worst-case time under the
   // default engine timeout (validation/speech-server-v1: ~40 frames/s measured with locked clocks, ~34 assumed).
   static constexpr size_t kSpeechStepBudget=6144;
-  bool speech_ok=false;
+  static constexpr size_t kSpeechMaxClips=64;  // audio clips per request (lfm::http::kSpeechMaxClips, lfm3-speech)
+  bool speech_ok=false,audio_in_ok=false;
 #ifdef LFM3_NATIVE_GEMM
   std::unique_ptr<Runner> speech_runner;
   std::unique_ptr<lfm3_speech::Session> speech_session;
 #endif
-  // {"op":"speech","chunks":[[ids..],..],"mode":"audio"|"interleaved","max_new_tokens":N,"seed":S,"chunked":B}
+  // {"op":"speech","chunks":[[ids..],..],"mode":"audio"|"interleaved"|"text","max_new_tokens":N,"seed":S,"chunked":B,
+  //  "audio":[base64 16 kHz mono WAV, ..] (audio input, #3: one clip per <|audio|> span of the single prompt)}
   // -> {"ok":true,"cancelled":false,"truncated":B,"slots":[..],"chunks":[{"frames","slots","ended_by_eos"}],"frames",
   //     "samples","audio_seconds","prefill_seconds","generate_seconds","wav_base64"}   (cancelled: only "cancelled")
   void speech(const lfm::Json& request,int rpc_id,std::ostream& out) {
@@ -525,7 +543,7 @@ class WorkerCore {
 #else
     if(!speech_ok) throw std::runtime_error("speech is not supported by this checkpoint");
     const auto mode=request.at("mode").string();
-    if(mode!="audio" && mode!="interleaved") throw std::runtime_error("speech mode must be audio or interleaved");
+    if(mode!="audio" && mode!="interleaved" && mode!="text") throw std::runtime_error("speech mode must be audio, interleaved or text");
     const int count=request.at("max_new_tokens").integer();
     if(count<1 || count>=kSpeechCapacity) throw std::runtime_error("speech max_new_tokens out of range");
     const long long seed=request.has("seed")?request.at("seed").integer():0;
@@ -543,6 +561,20 @@ class WorkerCore {
         throw std::runtime_error("speech prompt empty or over capacity");
     }
     if(prompts.empty() || (!chunked && prompts.size()!=1)) throw std::runtime_error("speech needs one prompt, or chunks");
+    std::vector<std::vector<float>> clips;  // decoded and checked (spans included) before any engine state changes
+    if(request.has("audio")) {
+      if(!audio_in_ok) throw std::runtime_error("audio input is not supported by this checkpoint");
+      if(request.at("audio").array().size()>kSpeechMaxClips) throw std::runtime_error("too many audio clips");
+      if(chunked) throw std::runtime_error("chunks cannot take audio input");
+      std::vector<size_t> clip_tokens;
+      for(const auto& a:request.at("audio").array()) {
+        clips.push_back(lfm3_speech::clip_from_base64(a.string()));
+        clip_tokens.push_back(lfm::audio_features::tokens(clips.back().size()));
+      }
+      lfm3_speech::check_audio_spans(prompts[0],clip_tokens);
+    } else {
+      for(const auto& p:prompts) lfm3_speech::check_audio_spans(p,{});
+    }
     if(!weights) weights=std::make_shared<lfm::Safetensors>(directory+"/model.safetensors");
     if(!speech_session) {  // both or neither: a failed construction leaves nothing half-built allocated
       auto runner=std::make_unique<Runner>(directory,lfm::ModelConfig::load(directory+"/config.json",kSpeechCapacity),weights);
@@ -550,8 +582,8 @@ class WorkerCore {
       speech_runner=std::move(runner);speech_session=std::move(session);
     }
     lfm3_speech::Options o;
-    o.mode=mode=="audio"?lfm::audio::Requested::Audio:lfm::audio::Requested::Interleaved;
-    o.max_new_tokens=count;o.seed=uint64_t(seed);
+    o.mode=mode=="audio"?lfm::audio::Requested::Audio:mode=="text"?lfm::audio::Requested::Text:lfm::audio::Requested::Interleaved;
+    o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);
     o.cancelled=[&] {return cancellation_enabled && cancellation.requested(uint64_t(rpc_id));};
     std::vector<lfm3_speech::ChunkInfo> info;
     lfm3_speech::Result r;
