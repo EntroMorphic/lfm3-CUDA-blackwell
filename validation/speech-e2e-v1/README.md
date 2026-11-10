@@ -50,7 +50,9 @@ was not recorded or held fixed, so compare engines within a round (native 1.4-1.
 Native split long-form, end to end: 3.42; again in MAXN, 3.53 (30 runs, range 3.45-3.58; WER 0.000 on 30 of 30, 150 of
 150 chunks ended by EOS; `build/speech-split-maxn-v1`).
 Since 2026-11-09 Thor runs in MAXN, and every round records its power state (`tools/thor/power_state.sh`; it refuses to
-run outside MAXN). The clocks are not locked (jetson_clocks), so the GPU clock still scales with load. The MAXN e2e
+run outside MAXN). The clocks were not locked for the MAXN rounds above, so the GPU clock scaled with load. Since 2026-11-09 17:20
+(`tools/thor/pin_power.sh`, run by Tripp) they are: GPU 1575/1692 MHz, CPU 2601 MHz fixed, kept across reboots by
+`jetson-clocks.service`. power_state.sh records `clocks_locked: true`. Speed measured before that is not comparable. The MAXN e2e
 rerun produced bit-identical native outputs (30 of 30) and identical WERs in both engines, yet ran slower than the
 first e2e round. The outputs are bit-identical, so the code is not the cause; the clock governor is the
 likely one (not measured).
