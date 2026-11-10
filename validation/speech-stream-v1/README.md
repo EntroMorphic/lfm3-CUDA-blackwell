@@ -123,3 +123,39 @@ No serious defect. Its findings and what was done:
 ## Using it
 `tools/lfm3_speech_stream_client.py PORT OUT.wav --text "..."` (or `--wav QUESTION_16K.wav` for a spoken question)
 prints the text as it comes, writes the WAV, and with `--play` pipes the audio to `aplay` as it arrives.
+
+## Second red-team (a fresh reviewer with the code only), and server-stream-v3
+No serious defect. Its findings and what was done:
+1. **Half-closing clients:** a client that half-closes its sending side after the request (`nc -N`, socat) got an empty
+   reply: the POLLRDHUP check took it for gone. **Fixed:** the socket now reports three states (open, the peer sent
+   its end, broken). When the peer's end arrives before anything was sent, the server sends the status line at once. A
+   half-closed client reads on. A client that is really gone answers that write with a reset, which cancels the
+   request. Test added.
+   - The cost: a client that closes mid-stream is now noticed at the next send (0.28 s on the GPU check, rule 5),
+     not on the 50 ms poll (0.06 s on v2).
+2. **Playback-speed readers:** a client reading at playback speed holds its handler for the length of the audio, so a
+   few long listeners could occupy every handler. **Fixed:**
+   - At most max(1, handlers / 2) streams run at once; others get 429 `stream_limit`. Test added.
+   - The bundled client now reads the network as fast as the server sends and feeds the player from a thread.
+3. **Streams cut without a done line:** a stream can end without a done or error line, when a reader stalls for the
+   socket timeout or at shutdown after the drain. **Documented** in the API comment: clients must treat that as a
+   failure. Test added: a stalled reader is cut off and its generation cancelled.
+4. **Error after all audio:** a request that completes just past its deadline gets an error event even though all
+   its audio was sent. That is the unstreamed path's rule (the outcome past the deadline is unknown). **Kept.**
+5. **Test gaps, all fixed:**
+   - A test that one client leaving leaves another stream alone.
+   - The GPU check now requires every audio and text event's `chunk` to be the running chunk.
+   - A GPU case long enough for the step budget to cut it (`budget-truncated-s1`: 371 s of audio, truncated, exact,
+     no stalls).
+
+Also fixed: `tests/test_text_batch_cancellation.py`'s 46 UBSan cases had failed to compile since 933e419 (the worker's
+own `base64` helper was unused outside speech). The worker now uses `lfm::base64::encode`, tested equal to Python's
+on lengths 0 to 300 and 1 MiB.
+
+server-stream-v3 (sources identical to this commit, `build-v3/`):
+- **Stream check:** 42 of 42 exact (the 41 cases and the budget case); first audio TTS median 0.266 s / max 0.270 s,
+  interleaved median 0.417 s; no stalls; rule 5 +0.28 s, reply exact; cost 1.004.
+- **Unchanged output:** the server's TTS WAVs equal the validated ones (the WAV now base64-encoded by the shared
+  encoder); the audio-input server cases and the full text gate pass.
+- **Host tests:** 786 passed, 2 skipped: the earlier 727, the 12 new stream tests, the encoder test and the 46 cases
+  that compile again. The one failure is the known transformers-version test.

@@ -26,21 +26,6 @@ std::string quote(const std::string& value) {
   }
   out<<'"';return out.str();
 }
-std::string base64(const std::string& bytes) {
-  static const char* t="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  std::string out;out.reserve((bytes.size()+2)/3*4);
-  size_t i=0;
-  for(;i+2<bytes.size();i+=3) {
-    const unsigned v=(unsigned char)bytes[i]<<16|(unsigned char)bytes[i+1]<<8|(unsigned char)bytes[i+2];
-    out+=t[v>>18];out+=t[(v>>12)&63];out+=t[(v>>6)&63];out+=t[v&63];
-  }
-  if(i+1==bytes.size()) {const unsigned v=(unsigned char)bytes[i]<<16;out+=t[v>>18];out+=t[(v>>12)&63];out+="==";}
-  else if(i+2==bytes.size()) {
-    const unsigned v=(unsigned char)bytes[i]<<16|(unsigned char)bytes[i+1]<<8;
-    out+=t[v>>18];out+=t[(v>>12)&63];out+=t[(v>>6)&63];out+='=';
-  }
-  return out;
-}
 std::string session_id(const lfm::Json& req) {
   auto id=req.at("session_id").string();
   if(id.empty() || id.size()>64) throw std::runtime_error("invalid session ID");
@@ -598,7 +583,7 @@ class WorkerCore {
     if(stream) {
       o.on_audio=[&](const float* x,size_t n) {
         std::string pcm;lfm3_speech::append_pcm16(x,n,pcm);
-        progress("{\"audio\":\""+base64(pcm)+"\"}");
+        progress("{\"audio\":\""+lfm::base64::encode(pcm)+"\"}");
       };
       o.on_slot=[&](int slot) {
         if(slot!=lfm::audio::ModeTokens{}.audio_out) progress("{\"text\":["+std::to_string(slot)+"]}");
@@ -616,7 +601,7 @@ class WorkerCore {
       out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"cancelled\":true}\n"<<std::flush;return;
     }
     // before any output: a throw leaves no half line
-    const std::string wav=stream?std::string():base64(lfm3_speech::wav_bytes(r.wav,24000));
+    const std::string wav=stream?std::string():lfm::base64::encode(lfm3_speech::wav_bytes(r.wav,24000));
     std::ostringstream line;line<<std::setprecision(std::numeric_limits<double>::max_digits10);
     line<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"cancelled\":false,\"truncated\":"<<(truncated?"true":"false")<<",\"slots\":[";
     for(size_t i=0;i<r.slots.size();++i) line<<(i?",":"")<<r.slots[i];

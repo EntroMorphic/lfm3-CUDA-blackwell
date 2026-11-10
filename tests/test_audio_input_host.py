@@ -183,3 +183,27 @@ def test_features_match_fp64_reference(tool, tmp_path, samples):
     # float32 window and filter values in the engine; the rest in double (validation/audio-in-v1: within 1.2e-4 of
     # FP64 on real speech, closer than HF's float32 arithmetic)
     assert np.abs(got - ref).max() < 2e-4, np.abs(got - ref).max()
+
+
+def test_base64_encode_matches_python(tmp_path):
+    """lfm::base64::encode (the worker's WAV and streamed-audio encoder) against Python's, and through the strict
+    decoder back to the bytes."""
+    import random
+    if shutil.which("g++") is None:
+        pytest.skip("g++ required")
+    src = tmp_path / "enc.cpp"
+    src.write_text('#include <lfm/base64.hpp>\n#include <fstream>\n#include <iostream>\n#include <iterator>\n'
+                   'int main(int, char** argv) { std::ifstream f(argv[1], std::ios::binary); '
+                   'std::string b((std::istreambuf_iterator<char>(f)), {}); const auto e = lfm::base64::encode(b); '
+                   'if (lfm::base64::decode(e) != b) return 2; std::cout << e; }\n')
+    subprocess.run(["g++", "-std=c++20", "-O1", "-Wall", "-Wextra", "-Werror", "-fsanitize=address,undefined",
+                    "-fno-sanitize-recover=all", "-I", str(ROOT / "native/include"), str(src), "-o", str(tmp_path / "enc")],
+                   check=True)
+    rng = random.Random(5)
+    blobs = [bytes(rng.getrandbits(8) for _ in range(n)) for n in range(301)]
+    blobs += [b"\0" * 7, b"\xff" * 8, bytes(rng.getrandbits(8) for _ in range(1 << 20))]
+    for i, b in enumerate(blobs):
+        p = tmp_path / "in.bin"
+        p.write_bytes(b)
+        out = subprocess.run([str(tmp_path / "enc"), str(p)], capture_output=True, check=True).stdout
+        assert out == base64.b64encode(b), (i, len(b))

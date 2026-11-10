@@ -1,0 +1,891 @@
+{
+ "server_sha256": "4fa910839d10ca547349131c401881c36e56b0ee38a0c7789aa2d6971d04ad37",
+ "cases": {
+  "il-fridge-s1": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.4353268810082227,
+   "first_event": 0.030232935008825734,
+   "done_at": 10.314148257006309,
+   "audio_events": 27,
+   "text_events": 99,
+   "audio_seconds": 25.36,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5145,
+   "generate_seconds": [
+    10.216954092,
+    10.233919707
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "il-fridge-s2": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.4354674539936241,
+   "first_event": 0.030367738989298232,
+   "done_at": 10.412555399991106,
+   "audio_events": 28,
+   "text_events": 95,
+   "audio_seconds": 25.92,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5156,
+   "generate_seconds": [
+    10.310053241,
+    10.332196991
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "il-fridge-s3": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.4362923670123564,
+   "first_event": 0.03052485101216007,
+   "done_at": 10.710374118003529,
+   "audio_events": 28,
+   "text_events": 101,
+   "audio_seconds": 26.48,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5139,
+   "generate_seconds": [
+    10.618927694,
+    10.629850296
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "il-reflective-s1": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.4360795349930413,
+   "first_event": 0.030487850002828054,
+   "done_at": 7.818590131995734,
+   "audio_events": 22,
+   "text_events": 59,
+   "audio_seconds": 20.16,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5127,
+   "generate_seconds": [
+    7.721484245,
+    7.738165292
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "il-reflective-s2": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.43465079501038417,
+   "first_event": 0.03119485299976077,
+   "done_at": 10.354039010009728,
+   "audio_events": 29,
+   "text_events": 92,
+   "audio_seconds": 27.12,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5144,
+   "generate_seconds": [
+    10.635528427,
+    10.273326987
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "il-reflective-s3": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.35912444299901836,
+   "first_event": 0.022311854001600295,
+   "done_at": 9.93438715999946,
+   "audio_events": 32,
+   "text_events": 99,
+   "audio_seconds": 30.08,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5869,
+   "generate_seconds": [
+    9.836292512,
+    9.86208582
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "il-study-s1": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.35865877200558316,
+   "first_event": 0.02240829900256358,
+   "done_at": 7.2348664040036965,
+   "audio_events": 23,
+   "text_events": 75,
+   "audio_seconds": 21.68,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5872,
+   "generate_seconds": [
+    7.136132916,
+    7.162654214
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "il-study-s2": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.3574801619979553,
+   "first_event": 0.022394992003683,
+   "done_at": 5.974557894995087,
+   "audio_events": 20,
+   "text_events": 56,
+   "audio_seconds": 18.24,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.588,
+   "generate_seconds": [
+    5.885835711,
+    5.902259597
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "il-study-s3": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.3587881900020875,
+   "first_event": 0.022742308996384963,
+   "done_at": 7.988295450995793,
+   "audio_events": 25,
+   "text_events": 84,
+   "audio_seconds": 23.92,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5873,
+   "generate_seconds": [
+    7.893262365,
+    7.91607322
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-fox-female-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26691736199427396,
+   "first_event": 0.26691736199427396,
+   "done_at": 1.0473743220063625,
+   "audio_events": 4,
+   "text_events": 0,
+   "audio_seconds": 3.52,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6807,
+   "generate_seconds": [
+    0.966821412,
+    0.975193008
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-fox-female-s2": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.2651907749968814,
+   "first_event": 0.2651907749968814,
+   "done_at": 1.0652141369937453,
+   "audio_events": 4,
+   "text_events": 0,
+   "audio_seconds": 3.6,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6812,
+   "generate_seconds": [
+    0.990592141,
+    0.992863554
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-fox-female-s3": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.265142606003792,
+   "first_event": 0.265142606003792,
+   "done_at": 1.086986424998031,
+   "audio_events": 4,
+   "text_events": 0,
+   "audio_seconds": 3.68,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6808,
+   "generate_seconds": [
+    1.010208017,
+    1.014535331
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-fox-male-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26507597499585245,
+   "first_event": 0.26507597499585245,
+   "done_at": 1.0866970109927934,
+   "audio_events": 4,
+   "text_events": 0,
+   "audio_seconds": 3.68,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6811,
+   "generate_seconds": [
+    1.010207004,
+    1.014519486
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-fox-male-s2": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26554268099425826,
+   "first_event": 0.26554268099425826,
+   "done_at": 1.1527472029993078,
+   "audio_events": 5,
+   "text_events": 0,
+   "audio_seconds": 3.92,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6813,
+   "generate_seconds": [
+    1.07734372,
+    1.080607798
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-fox-male-s3": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.2667432540038135,
+   "first_event": 0.2667432540038135,
+   "done_at": 1.0023014119942673,
+   "audio_events": 4,
+   "text_events": 0,
+   "audio_seconds": 3.36,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6814,
+   "generate_seconds": [
+    0.924342513,
+    0.929791319
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-long-male-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.2647556320007425,
+   "first_event": 0.2647556320007425,
+   "done_at": 10.58642067600158,
+   "audio_events": 42,
+   "text_events": 0,
+   "audio_seconds": 38.24,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6819,
+   "generate_seconds": [
+    10.431086519,
+    10.474375344
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-long-male-s2": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26666549799847417,
+   "first_event": 0.26666549799847417,
+   "done_at": 10.947977631003596,
+   "audio_events": 43,
+   "text_events": 0,
+   "audio_seconds": 39.36,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6814,
+   "generate_seconds": [
+    10.735178364,
+    10.785898022000001
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-long-male-s3": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26460934500209987,
+   "first_event": 0.26460934500209987,
+   "done_at": 11.000837508996483,
+   "audio_events": 44,
+   "text_events": 0,
+   "audio_seconds": 39.52,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6818,
+   "generate_seconds": [
+    10.779031278999998,
+    10.838743711000001
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-museum-female-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26953155899536796,
+   "first_event": 0.26953155899536796,
+   "done_at": 3.405003104999196,
+   "audio_events": 13,
+   "text_events": 0,
+   "audio_seconds": 12.16,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6803,
+   "generate_seconds": [
+    3.335326621,
+    3.329747132
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-museum-female-s2": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26734075299464166,
+   "first_event": 0.26734075299464166,
+   "done_at": 3.4491154959978303,
+   "audio_events": 13,
+   "text_events": 0,
+   "audio_seconds": 12.32,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6803,
+   "generate_seconds": [
+    3.360594178,
+    3.374354259
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-museum-female-s3": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26853869600745384,
+   "first_event": 0.26853869600745384,
+   "done_at": 3.360158183000749,
+   "audio_events": 13,
+   "text_events": 0,
+   "audio_seconds": 12.0,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6804,
+   "generate_seconds": [
+    3.275344891,
+    3.285125313
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-museum-male-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26934381799947005,
+   "first_event": 0.26934381799947005,
+   "done_at": 3.363512323005125,
+   "audio_events": 13,
+   "text_events": 0,
+   "audio_seconds": 12.0,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6814,
+   "generate_seconds": [
+    3.275466259,
+    3.288686512
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-museum-male-s2": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26865712499420624,
+   "first_event": 0.26865712499420624,
+   "done_at": 3.4035628979909234,
+   "audio_events": 13,
+   "text_events": 0,
+   "audio_seconds": 12.16,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6813,
+   "generate_seconds": [
+    3.31769965,
+    3.328547281
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-museum-male-s3": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.2689610600064043,
+   "first_event": 0.2689610600064043,
+   "done_at": 3.3190648989984766,
+   "audio_events": 13,
+   "text_events": 0,
+   "audio_seconds": 11.84,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6807,
+   "generate_seconds": [
+    3.232726014,
+    3.243948819
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-numbers-female-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26589116800460033,
+   "first_event": 0.26589116800460033,
+   "done_at": 2.612545323994709,
+   "audio_events": 10,
+   "text_events": 0,
+   "audio_seconds": 9.28,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6806,
+   "generate_seconds": [
+    2.530034441,
+    2.539841307
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-numbers-female-s2": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.2661411949957255,
+   "first_event": 0.2661411949957255,
+   "done_at": 2.5704679420014145,
+   "audio_events": 10,
+   "text_events": 0,
+   "audio_seconds": 9.12,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6818,
+   "generate_seconds": [
+    2.48661895,
+    2.497808834
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-numbers-female-s3": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.266725920009776,
+   "first_event": 0.266725920009776,
+   "done_at": 2.526516042998992,
+   "audio_events": 10,
+   "text_events": 0,
+   "audio_seconds": 8.96,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6816,
+   "generate_seconds": [
+    2.440997496,
+    2.453563552
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-numbers-male-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26512790699780453,
+   "first_event": 0.26512790699780453,
+   "done_at": 2.6999916580098215,
+   "audio_events": 11,
+   "text_events": 0,
+   "audio_seconds": 9.6,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6797,
+   "generate_seconds": [
+    2.616330288,
+    2.627202473
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-numbers-male-s2": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26614921700092964,
+   "first_event": 0.26614921700092964,
+   "done_at": 2.571375721003278,
+   "audio_events": 10,
+   "text_events": 0,
+   "audio_seconds": 9.12,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6796,
+   "generate_seconds": [
+    2.486699993,
+    2.498756346
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "tts-numbers-male-s3": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26494325400562957,
+   "first_event": 0.26494325400562957,
+   "done_at": 2.6628286370105343,
+   "audio_events": 10,
+   "text_events": 0,
+   "audio_seconds": 9.44,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6816,
+   "generate_seconds": [
+    2.573971252,
+    2.590181474
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "lighthouse-split-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.2675938970060088,
+   "first_event": 0.2675938970060088,
+   "done_at": 10.643614568005432,
+   "audio_events": 42,
+   "text_events": 0,
+   "audio_seconds": 38.24,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6818,
+   "generate_seconds": [
+    10.444476592000001,
+    10.481174851
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "bread-split-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26622765899810474,
+   "first_event": 0.26622765899810474,
+   "done_at": 9.55261430599785,
+   "audio_events": 38,
+   "text_events": 0,
+   "audio_seconds": 34.24,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6821,
+   "generate_seconds": [
+    9.347511319,
+    9.391277487
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "budget-truncated-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.26733136900293175,
+   "first_event": 0.26733136900293175,
+   "done_at": 103.04797052500362,
+   "audio_events": 404,
+   "text_events": 0,
+   "audio_seconds": 371.12,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6806,
+   "generate_seconds": [
+    101.24508222700001,
+    101.92271460999997
+   ],
+   "truncated": true,
+   "pass": true
+  },
+  "numbers-normalized-s1": {
+   "kind": "tts",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.2661560959968483,
+   "first_event": 0.2661560959968483,
+   "done_at": 5.749251566987368,
+   "audio_events": 23,
+   "text_events": 0,
+   "audio_seconds": 20.48,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.6804,
+   "generate_seconds": [
+    5.6084078040000005,
+    5.632251263
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "spoken-q0": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.42028178500186186,
+   "first_event": 0.08116543799405918,
+   "done_at": 3.605542011995567,
+   "audio_events": 12,
+   "text_events": 33,
+   "audio_seconds": 10.64,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5851,
+   "generate_seconds": [
+    3.464197396,
+    3.474468634
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "spoken-q1": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.4130321699922206,
+   "first_event": 0.07376543899590615,
+   "done_at": 3.9361358109890716,
+   "audio_events": 13,
+   "text_events": 39,
+   "audio_seconds": 11.52,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5854,
+   "generate_seconds": [
+    3.797025146,
+    3.812466211
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "spoken-q2": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.3976473079965217,
+   "first_event": 0.060163659989484586,
+   "done_at": 3.876957508997293,
+   "audio_events": 12,
+   "text_events": 38,
+   "audio_seconds": 11.44,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5853,
+   "generate_seconds": [
+    3.754456366,
+    3.766891117
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "spoken-q3": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.4272083539981395,
+   "first_event": 0.08859090899932198,
+   "done_at": 2.7614917430037167,
+   "audio_events": 9,
+   "text_events": 25,
+   "audio_seconds": 8.0,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.582,
+   "generate_seconds": [
+    2.611378898,
+    2.622987987
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "spoken-q4": {
+   "kind": "interleaved",
+   "exact": true,
+   "why": "",
+   "first_audio": 0.40729496300627943,
+   "first_event": 0.06969835600466467,
+   "done_at": 2.809700393001549,
+   "audio_events": 9,
+   "text_events": 24,
+   "audio_seconds": 8.32,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": 0.5819,
+   "generate_seconds": [
+    2.674608142,
+    2.690093399
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "asr-1089-134686-0000": {
+   "kind": "asr",
+   "exact": true,
+   "why": "",
+   "first_audio": null,
+   "first_event": 0.17021307999675628,
+   "done_at": 0.7946977050014539,
+   "audio_events": 0,
+   "text_events": 36,
+   "audio_seconds": 0.0,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": null,
+   "generate_seconds": [
+    0.576871325,
+    0.574513569
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "asr-4446-2275-0004": {
+   "kind": "asr",
+   "exact": true,
+   "why": "",
+   "first_audio": null,
+   "first_event": 0.053489051992073655,
+   "done_at": 0.19868249600403942,
+   "audio_events": 0,
+   "text_events": 6,
+   "audio_seconds": 0.0,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": null,
+   "generate_seconds": [
+    0.094239142,
+    0.095275629
+   ],
+   "truncated": false,
+   "pass": true
+  },
+  "asr-121-123859-0002": {
+   "kind": "asr",
+   "exact": true,
+   "why": "",
+   "first_audio": null,
+   "first_event": 0.44319405799615197,
+   "done_at": 1.9315423450025264,
+   "audio_events": 0,
+   "text_events": 89,
+   "audio_seconds": 0.0,
+   "stalls": 0,
+   "stalled_seconds": 0.0,
+   "min_slack": null,
+   "generate_seconds": [
+    1.438457467,
+    1.438451265
+   ],
+   "truncated": false,
+   "pass": true
+  }
+ },
+ "first_audio": {
+  "tts": {
+   "median": 0.26622765899810474,
+   "max": 0.26953155899536796,
+   "n": 25
+  },
+  "interleaved": {
+   "median": 0.4166569774970412,
+   "max": 0.4362923670123564,
+   "n": 14
+  }
+ },
+ "rule2_pass": true,
+ "rule1_pass": true,
+ "rule3_pass": true,
+ "cancel": {
+  "first_audio_alone": 0.2658734240103513,
+  "first_audio_after_close": 0.5413915449898923,
+  "delay": 0.275518120979541,
+  "next_exact": true,
+  "why": "",
+  "pass_": true
+ },
+ "cost": {
+  "plain": [
+   10.452167673,
+   10.437436313,
+   10.43259968,
+   10.426900824,
+   10.459980281
+  ],
+  "stream": [
+   10.475520911,
+   10.480283122,
+   10.47261065,
+   10.475745825,
+   10.512031494999999
+  ],
+  "median_plain": 10.437436313,
+  "median_stream": 10.475745825,
+  "ratio": 1.0036703948030117,
+  "pass_": true
+ },
+ "server_exit": 0,
+ "server_stderr": "",
+ "pass": true
+}

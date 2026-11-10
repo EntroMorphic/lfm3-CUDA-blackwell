@@ -910,10 +910,32 @@ class Service {
   //   {"event": "done", ...}: the unstreamed reply's fields but "audio_wav_base64"; or {"event": "error", "error": code}.
   // A client that goes away is cancelled at the engine's next step. Events queue between the engine-owner thread and
   // this one: the engine never waits on a client.
-  // `gone` (polled about every 50 ms, from before the request is queued) says whether the client has closed its end.
-  void speech_stream(std::shared_ptr<const Json> body, const std::function<bool(const std::string&)>& send,
-                     const std::function<bool()>& gone) {
+  // The sink: `send` writes one line (false: the client is gone); `commit` sends the reply's head alone (false: gone);
+  // `peer` (polled about every 50 ms, from before the request is queued) says whether the client's side has closed
+  // (Fin: it sent its end, which a client that half-closes after its request also does) or the connection is broken
+  // (Reset). Fin before anything was sent commits the reply: a half-closed client keeps reading it, and a client that
+  // is gone answers that write with a reset, which ends the request.
+  // A client must treat a stream without a final done or error line as failed: the server closes the connection when a
+  // send makes no progress for the socket timeout (a reader that stalls), or at shutdown after its drain.
+  // At most max(1, handlers / 2) streams at once (429 stream_limit): a client reading at playback speed holds its
+  // handler for the length of the audio, and the other endpoints keep the rest.
+  enum class Peer { Open, Fin, Reset };
+  struct StreamSink {
+    std::function<bool(const std::string&)> send;
+    std::function<bool()> commit;
+    std::function<Peer()> peer;
+  };
+  void speech_stream(std::shared_ptr<const Json> body, const StreamSink& sink) {
     if (!policy_.speech || settings_.engine_timeout < kSpeechMinEngineTimeout) throw ApiError(501, "speech_unsupported");
+    if (streams_.fetch_add(1) >= std::max(1, settings_.handlers / 2)) {
+      --streams_;
+      throw ApiError(429, "stream_limit");
+    }
+    struct Release {
+      std::atomic<int>& n;
+      ~Release() { --n; }
+    } release{streams_};
+    const auto& send = sink.send;
     const auto deadline = Clock::now() + seconds(settings_.request_timeout);
     auto request = std::make_shared<Speech>(validate_speech(*body));
     if (!request->stream) throw std::logic_error("speech_stream without stream");
@@ -1021,7 +1043,12 @@ class Service {
       const bool ready = future.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
       if (!flush()) { leave(); return; }  // every line queued before completion is flushed before the outcome
       if (ready) break;
-      if (gone()) { leave(); return; }
+      const Peer peer = sink.peer();
+      if (peer == Peer::Reset) { leave(); return; }
+      if (peer == Peer::Fin && !started) {
+        if (!sink.commit()) { leave(); return; }
+        started = true;
+      }
       if (Clock::now() >= deadline) {
         if (abandon(*job, future)) continue;  // completed meanwhile
         leave();
@@ -1439,6 +1466,7 @@ class Service {
   bool backend_closed_ = false;  // guarded by active_lock_
   std::uint64_t sequence_ = 0;   // owner thread only
   std::atomic<std::uint64_t> stream_serial_{0};
+  std::atomic<int> streams_{0};  // streamed /speech requests in progress
   std::atomic<bool> in_call_{false}, timed_out_{false};
   std::atomic<Clock::rep> call_started_{0};
   std::mutex done_lock_;
@@ -1674,21 +1702,30 @@ class Connection {
   // connection closes). The status line goes out with the first event.
   void stream_speech(std::shared_ptr<const Json> parsed) {
     bool headed = false;
-    service_.speech_stream(std::move(parsed), [&](const std::string& line) {
+    const auto header = [&] {
       std::string out;
       if (!headed) {
         out = head(200) + "\r\nContent-Type: application/x-ndjson; charset=utf-8\r\nCache-Control: no-store\r\n"
                           "Connection: close\r\n\r\n";
         headed = true;
       }
+      return out;
+    };
+    Service::StreamSink sink;
+    sink.send = [&](const std::string& line) {
+      std::string out = header();
       out += line;
       out += '\n';
       return send_all(out);
-    }, [&] {
-      // the peer closed (or reset) the connection; HTTP/1.0 clients keep their sending side open until the reply
+    };
+    sink.commit = [&] { return send_all(header()); };
+    sink.peer = [&] {
       pollfd p{fd_, POLLRDHUP, 0};
-      return ::poll(&p, 1, 0) > 0 && (p.revents & (POLLRDHUP | POLLHUP | POLLERR));
-    });
+      if (::poll(&p, 1, 0) <= 0) return Service::Peer::Open;
+      if (p.revents & (POLLHUP | POLLERR)) return Service::Peer::Reset;
+      return p.revents & POLLRDHUP ? Service::Peer::Fin : Service::Peer::Open;
+    };
+    service_.speech_stream(std::move(parsed), sink);
   }
 
   void get(const Request& r) {

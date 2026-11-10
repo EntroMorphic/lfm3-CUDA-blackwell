@@ -236,3 +236,76 @@ def test_concurrent_streams_each_get_their_own_events(harness_binary):
         for i, (status, events, _) in enumerate(results):
             assert status == 200 and events[-1]["event"] == "done" and events[-1]["seed"] == i
             assert pcm(events) == b"".join(bytes([k, i, 255, 127]) for k in range(3))  # its own audio
+
+
+def test_a_client_that_half_closes_after_its_request_gets_the_whole_stream(harness_binary):
+    # shutdown(SHUT_WR) after the request (nc -N, socat) is not leaving: the reply is committed and streamed in full
+    with running(harness_binary, "--token-delay-ms", "100") as h:
+        s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
+        s.sendall(request_bytes(tts(LONG, seed=4, stream=True)))
+        s.shutdown(socket.SHUT_WR)
+        data = b""
+        while block := s.recv(65536):
+            data += block
+        s.close()
+        head, _, body = data.partition(b"\r\n\r\n")
+        assert head.startswith(b"HTTP/1.0 200 OK") and b"application/x-ndjson" in head
+        events = [json.loads(line) for line in body.split(b"\n") if line]
+        assert events[-1]["event"] == "done" and events[-1]["cancelled"] is False
+        assert pcm(events) == b"".join(bytes([k, 4, 255, 127]) for k in range(3))
+
+
+def test_a_stalled_reader_is_cut_off_and_cancelled(harness_binary):
+    # 1 MB audio pieces into a client that never reads: once the socket buffers fill, a send makes no progress for the
+    # socket timeout (1 s), the server closes the connection and cancels the generation
+    with running(harness_binary, "--token-delay-ms", "100", "--socket-timeout", "1",
+                 "--speech-stream-piece-bytes", str(1 << 20)) as h:
+        s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
+        s.sendall(request_bytes(tts(" ".join([LONG] * 20), stream=True)))  # 60 chunks, 6 s and 60 MB in full
+        time.sleep(0.5)
+        t0 = time.monotonic()
+        status, body = h.call("POST", "/speech", tts("Short sentence here."))  # queued behind the stalled one
+        assert status == 200 and body["cancelled"] is False
+        assert time.monotonic() - t0 < 4.5, time.monotonic() - t0
+        s.settimeout(5)
+        data = b""
+        try:
+            while block := s.recv(1 << 20):
+                data += block
+        except (ConnectionResetError, socket.timeout):
+            pass
+        s.close()
+        assert b'"event":"done"' not in data  # cut short: no done line, which a client must treat as failure
+
+
+def test_streams_beyond_half_the_handlers_are_refused(harness_binary):
+    with running(harness_binary, "--token-delay-ms", "400", "--handlers", "2") as h:  # one stream at a time
+        result = {}
+        t = threading.Thread(target=lambda: result.update(r=stream(h, tts(LONG, stream=True))))
+        t.start()
+        time.sleep(0.2)
+        status, body, events = stream(h, tts(LONG, stream=True))
+        assert events is None and status == 429 and body == {"error": "stream_limit"}
+        t.join(30)
+        assert result["r"][0] == 200 and result["r"][1][-1]["event"] == "done"
+        assert stream(h, tts(LONG, stream=True))[1][-1]["event"] == "done"  # the slot is free again
+
+
+def test_one_client_leaving_leaves_another_stream_alone(harness_binary):
+    with running(harness_binary, "--token-delay-ms", "100") as h:
+        result = {}
+        def other():
+            time.sleep(0.05)  # queued behind the leaver
+            for _ in range(100):
+                result["r"] = stream(h, tts(LONG, seed=9, stream=True))
+                if result["r"][:2] != (429, {"error": "frontend_busy"}):
+                    return
+                time.sleep(0.01)
+        t = threading.Thread(target=other)
+        t.start()
+        status, events, _ = stream(h, tts(" ".join([LONG] * 6), stream=True), close_after=1)
+        assert status == 200
+        t.join(30)
+        status, events, _ = result["r"]
+        assert status == 200 and events[-1]["event"] == "done" and events[-1]["cancelled"] is False
+        assert pcm(events) == b"".join(bytes([k, 9, 255, 127]) for k in range(3))

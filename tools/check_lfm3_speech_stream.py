@@ -51,6 +51,10 @@ def cases(build, libri):
                        ("bread-split-s1", "speech-chunk-native-v1/requests/probe-other-long-s1.req.json")):
         r = json.loads((b / path).read_text())
         out.append((name, "tts", dict(messages=r["conversation"], mode="audio", normalize=False, max_new_tokens=1536, seed=1)))
+    # long enough that the step budget (6144) cuts it: truncated, chunks skipped (added after the second red-team)
+    r = json.loads((b / "speech-chunk-native-v1/requests/tts-long-male-s1.req.json").read_text())
+    conv = [dict(m, content=" ".join([m["content"]] * 14)) if m["role"] == "user" else m for m in r["conversation"]]
+    out.append(("budget-truncated-s1", "tts", dict(messages=conv, mode="audio", normalize=False, max_new_tokens=1536, seed=1)))
     out.append(("numbers-normalized-s1", "tts", dict(
         messages=[{"role": "system", "content": "Perform TTS in American English using a female voice."},
                   {"role": "user", "content": NUMBERS}], mode="audio", max_new_tokens=512, seed=1)))
@@ -172,6 +176,14 @@ def compare(plain, events):
     chunks = [{k: v for k, v in e.items() if k not in ("event", "chunk")} for e in events if e["event"] == "chunk"]
     if chunks != plain["chunks"]:
         return False, "chunk events differ"
+    ended = 0  # every audio and text event belongs to the chunk running, and chunk events count up from 0
+    for e in events[:-1]:
+        if e["event"] in ("audio", "text") and e["chunk"] != ended:
+            return False, f"{e['event']} event in chunk {e['chunk']} while chunk {ended} runs"
+        if e["event"] == "chunk":
+            if e["chunk"] != ended:
+                return False, "chunk events out of order"
+            ended += 1
     return True, ""
 
 
@@ -195,7 +207,9 @@ def main(binary, model, build, libri, out_json):
                        audio_seconds=plain.get("audio_seconds"), stalls=stalls, stalled_seconds=round(stalled, 4),
                        min_slack=None if slack is None else round(slack, 4),
                        generate_seconds=(plain.get("generate_seconds"), events[-1].get("generate_seconds")))
-            res["pass"] = exact and (kind == "asr" or (audio_times and stalls == 0))
+            res["truncated"] = plain.get("truncated")
+            res["pass"] = exact and (kind == "asr" or (audio_times and stalls == 0)) and \
+                (name != "budget-truncated-s1" or plain.get("truncated") is True)
             ok &= bool(res["pass"])
             report["cases"][name] = res
             print(name, json.dumps(res), flush=True)
