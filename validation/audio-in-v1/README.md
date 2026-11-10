@@ -138,6 +138,10 @@ unusable speech in HF as in the native engine ("Set, set.", "Zix. Zay. Lay.", ec
 voice chat uses interleaved, which answers well: the speech says what the text says. The server documents it; Tripp's
 listening set is the interleaved answers.
 
+Tripp's listening (8 files: five spoken questions `q0`–`q4` and three LibriSpeech clips, each answered in interleaved
+speech by the native engine): "100/100 of the spoken-answer samples were good." Still open: in one answer the content
+is wrong ("200 grams" of pasta for four people); the speech is fine.
+
 ## Red-team (one pass, an independent reviewer with the code only)
 No memory-safety bug (libFuzzer with ASan+UBSan, 428k runs over the parsers and the front end), no request the HTTP
 layer accepts that the worker refuses, and no divergence from HF in the front end, encoder, projector, rendering or
