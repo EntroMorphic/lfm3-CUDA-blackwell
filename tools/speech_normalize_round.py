@@ -17,6 +17,8 @@
   score WHISPER_DIR ARMS.json TTS_DIR OUT.json
       Whisper large-v3 transcripts of every run, WER against the spoken reference (tools/lfm3_asr.py's scoring), case
       means over seeds, per-arm means per set, and the rules' one-sided paired Wilcoxon tests
+  interleaved-requests OUT_DIR SEEDS / interleaved-score WHISPER_DIR DIR OUT.json
+      phase 2: ten questions answered interleaved, with and without the instruction to write numbers in words
 """
 import difflib
 import hashlib
@@ -40,6 +42,16 @@ HELDOUT_PROMPT = ("Write 12 different everyday sentences, one per line. Each sen
 ABBR = {k.lower() + "." for k in list(TITLES) + list(ABBREVIATIONS) + ["St", "No", "Jan", "Feb", "Mar", "Apr", "Jun",
                                                                        "Jul", "Aug", "Sep", "Sept", "Oct", "Nov", "Dec"]}
 SYMBOLS = set("$£€%#&+=°/×−")
+# Phase 2: interleaved replies, where no preprocessor can reach (the model speaks as it writes)
+INTERLEAVED_SYSTEM = "Respond with interleaved text and audio."
+INTERLEAVED_INSTRUCTION = " Write every number and abbreviation out in words."
+INTERLEAVED_QUESTIONS = [
+    "How tall is Mount Everest?", "What year did the first person walk on the moon?",
+    "How many days are in a leap year, and why?", "What is the boiling point of water in Fahrenheit and Celsius?",
+    "How far is the Moon from Earth?", "What's 15 percent of 240?",
+    "When did World War Two end?", "How many people live in Tokyo, roughly?",
+    "What time zone is New York in, and how many hours behind London is it?",
+    "How much should I tip on a 64 dollar dinner?"]
 
 
 def light(s):
@@ -140,6 +152,20 @@ def main(cmd, *a):
         print(len(seen), "distinct texts,", len(seen) * len(seeds), "runs")
     elif cmd == "score":
         score(*a)
+    elif cmd == "interleaved-requests":  # OUT_DIR SEEDS
+        out = Path(a[0])
+        out.mkdir(parents=True, exist_ok=True)
+        with open(out / "list.txt", "w") as lst:
+            for arm, system in (("plain", INTERLEAVED_SYSTEM), ("instructed", INTERLEAVED_SYSTEM + INTERLEAVED_INSTRUCTION)):
+                for i, q in enumerate(INTERLEAVED_QUESTIONS):
+                    for seed in range(1, int(a[1]) + 1):
+                        name = f"{arm}-q{i:02d}-s{seed}"
+                        (out / f"{name}.req.json").write_text(json.dumps(dict(
+                            messages=[{"role": "system", "content": system}, {"role": "user", "content": q}],
+                            mode="interleaved", max_new_tokens=1024, seed=seed)))
+                        lst.write(f"{out}/{name}.req.json {out}/{name}\n")
+    elif cmd == "interleaved-score":  # WHISPER_DIR DIR OUT.json
+        interleaved_score(*a)
     else:
         sys.exit(__doc__)
 
@@ -200,6 +226,44 @@ def score(whisper_dir, arms_json, tts_dir, out_json):
     summary["all_chunks_ended_by_eos"] = all(t["chunks_ended_by_eos"] for t in transcripts.values())
     summary["asr_seconds"] = time.time() - t0
     json.dump(dict(summary=summary, rows=rows, transcripts=transcripts), open(out_json, "w"), indent=1, ensure_ascii=False)
+    print(json.dumps(summary, indent=1))
+
+
+def interleaved_score(whisper_dir, d, out_json):
+    """Per reply: whether its text holds a digit, and the speech's WER against the reply's own text (tools/lfm3_asr.py's
+    scoring, as the interleaved runs of the TTS quality bar)."""
+    import librosa
+    import numpy as np
+    import torch
+    from transformers import WhisperForConditionalGeneration, WhisperProcessor
+    from lfm3_asr import ascii_punctuation, fold_ordinals
+    from lfm3_asr import score as wer_score
+    processor = WhisperProcessor.from_pretrained(whisper_dir)
+    model = WhisperForConditionalGeneration.from_pretrained(whisper_dir, dtype=torch.float16).to("cuda").eval()
+    norm = processor.tokenizer.normalize
+    rows = []
+    for meta_path in sorted(p for p in Path(d).glob("*-q*-s*.json") if not p.name.endswith(".req.json")):
+        name = meta_path.stem
+        meta = json.load(open(meta_path))
+        audio, _ = librosa.load(Path(d) / f"{name}.wav", sr=16_000)
+        f = processor(audio, sampling_rate=16_000, return_tensors="pt", truncation=False, padding="longest",
+                      return_attention_mask=True)
+        if f.input_features.shape[-1] < 3000:
+            f = processor(audio, sampling_rate=16_000, return_tensors="pt", return_attention_mask=True)
+        with torch.inference_mode():
+            ids = model.generate(f.input_features.to("cuda", torch.float16), attention_mask=f.attention_mask.to("cuda"),
+                                 language="en", task="transcribe", return_timestamps=True, num_beams=1, do_sample=False)
+        heard = processor.batch_decode(ids, skip_special_tokens=True)[0].strip()
+        ref = fold_ordinals(norm(ascii_punctuation(meta["text"])).split())
+        errors, n = wer_score(ref, fold_ordinals(norm(ascii_punctuation(heard)).split()))
+        rows.append(dict(name=name, arm=name.split("-")[0], text=meta["text"], heard=heard,
+                         has_digit=bool(re.search(r"\d", meta["text"])), wer=errors / max(n, 1)))
+    summary = {arm: dict(replies=len(r), with_digits=sum(x["has_digit"] for x in r),
+                         mean_wer=float(np.mean([x["wer"] for x in r])),
+                         mean_wer_with_digits=float(np.mean([x["wer"] for x in r if x["has_digit"]] or [float("nan")])),
+                         mean_wer_without_digits=float(np.mean([x["wer"] for x in r if not x["has_digit"]] or [float("nan")])))
+               for arm in ("plain", "instructed") for r in [[x for x in rows if x["arm"] == arm]]}
+    json.dump(dict(summary=summary, rows=rows), open(out_json, "w"), indent=1, ensure_ascii=False)
     print(json.dumps(summary, indent=1))
 
 

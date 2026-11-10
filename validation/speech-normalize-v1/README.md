@@ -58,5 +58,46 @@ The preprocessor cannot reach interleaved replies, where the model speaks as it 
 hold numbers, three seeds, with and without `Write every number and abbreviation out in words.` appended to the system
 prompt: the share of replies whose text holds a digit, and the speech's WER against the reply's own text.
 
-## Results
-(pending)
+## Results (rules, prompts and dev set frozen at f7b6e47; held-out sentences and references at 31a37b0)
+The model wrote 11 held-out sentences, not the 12 asked for: times with "AM"/"PM", prices, dates, percentages, a
+weight, an emergency number, an address and a ZIP code, and no abbreviations. Abbreviation coverage therefore rests
+on the dev set, which the rules were tuned on.
+
+| | dev (20) | held out (11) |
+|---|---|---|
+| text accuracy: none / rules / model / hybrid | 0 / 20 / 2 / 19 | 0 / **8** / 1 / 8 |
+| model rewrites passing the guard | 3 | 1 |
+| rewrite latency, mean (max) | 0.57 s (4.2 s) | 0.41 s (0.48 s) |
+| mean WER: none / rules / model / hybrid | 0.342 / **0.150** / 0.294 / 0.150 | 0.232 / **0.162** / 0.208 / 0.162 |
+| rules lower than none, one-sided Wilcoxon | p = 0.0001 | **p = 0.003** |
+
+- **Rule 1 PASS:** the rules help on the held-out set (p = 0.003). **The rules are adopted.**
+- **Rule 2:** the model fails it. With the fixed prompt it returned most sentences unchanged, digits included; its
+  text accuracy on H is 1 against the rules' 8. Hybrid's texts are the rules' whenever the guard fails, so hybrid
+  equals rules (8). One prompt was tested; a few-shot prompt was not.
+- **The rules' three held-out misses** are the ones visible before any run: "9:00 AM" (the time rule knows only
+  lowercase "a.m."; read "nine o'clock AM"), "911" ("nine hundred eleven") and a ZIP code ("twelve thousand three
+  hundred forty-five").
+- **The WER understates the gain.** Whisper writes numbers as digits ("7.45", "$42.50", "8,336,817") and its normalizer
+  does not always match them to the spoken words, so a correct reading still scores errors (both "seven forty-five"
+  readings score 0.17 on d01). Identical speech scores identically, so the paired comparison stands, but the
+  absolute values are mostly artifacts. Read from the transcripts, the rules fix real misreadings: "389" was heard
+  as "309" without them, "1,500 residents" as "one Feimtund residence", "8,336,817" as "8,3260's 807", "911" as
+  "919".
+- **Found, not normalization:** in d14 the voice drops the aside "for example apples and nuts" in both arms
+  ("Bring snacks to the third floor.").
+- Every chunk of every run ended by EOS; 990 runs, Thor MAXN with locked clocks, unchanged (`power-*.json`).
+
+### Phase 2: interleaved replies (`interleaved-score.json`)
+| | replies with digits | speech WER against the reply's text |
+|---|---|---|
+| plain | 25 of 30 | 0.022 (0.016 on replies with digits) |
+| instructed to write numbers in words | 19 of 30 | 0.041 |
+
+Interleaved speech already reads its own digits well, and the instruction is only partly obeyed without making the
+speech clearer: nothing is added for interleaved replies.
+
+### Next
+Tripp's blind listening (none against rules, seed 1 of every held-out sentence, the key kept on Thor). Then the
+rules go native (C++, checked against this Python reference) ahead of the sentence split in lfm3-speech and
+/speech; the three held-out misses are fixed there and recorded as changes made after this test.
