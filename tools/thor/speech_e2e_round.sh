@@ -27,5 +27,5 @@ for e in hf native-cases; do docker exec lfm3-omni-dev bash -c "/opt/venv/bin/py
 echo "== report"
 $PY $T/lfm3_speech_report.py $P $C/$tag/asr-native-cases.json $C/$tag/asr-hf.json $C/$tag/native-cases $C/$tag/hf $C/$tag/report.json > $O/report.md 2>&1 || fail report
 cat $O/report.md
-mem end; bash $R/tools/thor/power_state.sh $O/power-end.json || fail "power state changed"
+mem end; bash $R/tools/thor/power_state.sh $O/power-end.json $O/power-start.json || fail "power state changed"
 echo "ALL DONE $(date +%T)"

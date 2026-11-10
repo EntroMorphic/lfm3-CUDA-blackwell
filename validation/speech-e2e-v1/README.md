@@ -52,7 +52,8 @@ Native split long-form, end to end: 3.42; again in MAXN, 3.53 (30 runs, range 3.
 Since 2026-11-09 Thor runs in MAXN, and every round records its power state (`tools/thor/power_state.sh`; it refuses to
 run outside MAXN). The clocks are not locked (jetson_clocks), so the GPU clock still scales with load. The MAXN e2e
 rerun produced bit-identical native outputs (30 of 30) and identical WERs in both engines, yet ran slower than the
-first e2e round. Speed spread of this size is the clock governor, not the code.
+first e2e round. The outputs are bit-identical, so the code is not the cause; the clock governor is the
+likely one (not measured).
 
 ## C3 (listening): PASS
 Blind A/B, seed 1 of every case (`outputs/listening-c3-v1`, not in the repo; key in `listening-c3-v1.key.json`), Tripp,

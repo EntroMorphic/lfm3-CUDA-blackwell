@@ -7,15 +7,17 @@
 //
 // split_sentences is tools/lfm3_speech_chunked_hf.py sentences(), exactly (tests/test_speech_text.py); the rule was
 // chosen by test (validation/speech-split-v1: WER, then Tripp's listening):
-//   1. cut the stripped text at each whitespace run that follows . ! or ?, except after a title (Mr. Dr. ...: never)
-//      or after an abbreviation (a.m. U.S. Jan. ...) when the next word does not start with an ASCII capital;
+//   1. cut the stripped text at each whitespace run that follows . ! or ?, except after a title (Mr. Dr. vs. ...: never)
+//      or after an abbreviation (a.m. U.S. Jan. no. ...) or an ellipsis when the next word does not start with an
+//      ASCII capital (after any opening quote or bracket);
 //   2. a part under kMinWords words (str.split()) joins the next one; a short last part joins the one before;
-//   3. a chunk over kCapWords words is cut at its last clause mark (a word ending in , ; : or an em or en dash, or
-//      followed by a lone - em or en dash) that leaves both sides kMinWords long and the first at most kCapWords;
-//      with none, into the fewest equal pieces; repeated. Cut pieces are their words joined by single spaces.
+//   3. every chunk becomes its words joined by single spaces, and one over kCapWords words is cut at its last clause
+//      mark (a word ending in , ; : -- or an em or en dash, or followed by a lone - -- em or en dash) that leaves both
+//      sides kMinWords long and the first at most kCapWords; with none, into the fewest equal pieces; repeated.
 // Whitespace is Python's str.isspace (the same set as re's Unicode \s), pinned code point by code point.
 // sentence_requests turns a [system?, user] chat into one chat per sentence of the user text, each rendered
 // later exactly as a single request is (lfm3_text::encode_messages).
+#include <algorithm>
 #include <initializer_list>
 #include <string>
 #include <string_view>
@@ -34,10 +36,21 @@ inline bool in_list(std::string_view word, std::initializer_list<std::string_vie
   for (auto w : list) if (low == w) return true;
   return false;
 }
-inline bool is_title(std::string_view w) { return in_list(w, {"mr.", "mrs.", "ms.", "dr.", "prof.", "st.", "jr.", "sr.", "mt.", "no."}); }
+// Titles never end a sentence; an abbreviation, or a word ending in "...", ends one only before a word that starts with
+// an ASCII capital after any opening quote or bracket (" ' U+201C U+2018 ( [). Red-team 2026-11-09: no. jr. sr. are
+// abbreviations (they often end sentences), vs. is a title.
+inline bool is_title(std::string_view w) { return in_list(w, {"mr.", "mrs.", "ms.", "dr.", "prof.", "st.", "mt.", "vs."}); }
 inline bool is_abbreviation(std::string_view w) {
-  return in_list(w, {"a.m.", "p.m.", "u.s.", "u.k.", "e.g.", "i.e.", "etc.", "vs.", "jan.", "feb.", "mar.", "apr.", "jun.",
-                     "jul.", "aug.", "sep.", "sept.", "oct.", "nov.", "dec."});
+  return in_list(w, {"a.m.", "p.m.", "u.s.", "u.k.", "e.g.", "i.e.", "etc.", "no.", "jr.", "sr.", "jan.", "feb.", "mar.",
+                     "apr.", "jun.", "jul.", "aug.", "sep.", "sept.", "oct.", "nov.", "dec."});
+}
+inline bool starts_capital(std::string_view word) {  // after any opening quotes or brackets
+  for (;;) {
+    if (!word.empty() && (word[0] == '"' || word[0] == '\'' || word[0] == '(' || word[0] == '[')) word.remove_prefix(1);
+    else if (word.starts_with("\u201c") || word.starts_with("\u2018")) word.remove_prefix(3);
+    else break;
+  }
+  return !word.empty() && word[0] >= 'A' && word[0] <= 'Z';
 }
 
 // Python str.isspace(): bidirectional class WS, B or S, or general category Zs.
@@ -91,22 +104,32 @@ inline std::uint32_t last_code_point(std::string_view w) {
   return c;
 }
 
-inline void cap_comma(const std::string& chunk, size_t cap, std::vector<std::string>& out) {
+inline bool is_mark(std::string_view word, std::string_view next) {
+  const std::uint32_t last = last_code_point(word);
+  return last == ',' || last == ';' || last == ':' || last == 0x2014 || last == 0x2013 || word.ends_with("--") ||
+         next == "-" || next == "--" || next == "\u2014" || next == "\u2013";
+}
+
+// The chunk's words joined by single spaces; over cap words, cut at the last clause mark at or before word cap that
+// leaves both sides kMinWords long, or with none into the fewest equal pieces; repeated on the rest (linear).
+inline void cap_words(const std::string& chunk, size_t cap, std::vector<std::string>& out) {
   const auto w = split_words(chunk);
-  if (w.size() <= cap) { out.push_back(chunk); return; }
-  size_t cut = 0;
-  for (size_t i = 0; i + 1 < w.size(); ++i) {
-    const std::uint32_t last = last_code_point(w[i]);
-    const bool mark = last == ',' || last == ';' || last == ':' || last == 0x2014 || last == 0x2013 ||
-                      w[i + 1] == "-" || w[i + 1] == "\u2014" || w[i + 1] == "\u2013";
-    if (mark && i + 1 >= kMinWords && i + 1 <= cap && w.size() - (i + 1) >= kMinWords) cut = i + 1;
+  size_t start = 0;
+  while (w.size() - start > cap) {
+    const size_t n = w.size() - start;
+    size_t cut = 0;
+    for (size_t i = start; i < std::min(start + cap, w.size() - 1); ++i) {
+      const size_t k = i + 1 - start;
+      if (k >= kMinWords && n - k >= kMinWords && is_mark(w[i], w[i + 1])) cut = k;
+    }
+    if (cut == 0) {  // the fewest equal pieces of at most cap words
+      const size_t pieces = (n + cap - 1) / cap;
+      cut = (n + pieces - 1) / pieces;
+    }
+    out.push_back(join_words(w, start, start + cut));
+    start += cut;
   }
-  if (cut == 0) {  // the fewest equal pieces of at most cap words
-    const size_t pieces = (w.size() + cap - 1) / cap;
-    cut = (w.size() + pieces - 1) / pieces;
-  }
-  out.push_back(join_words(w, 0, cut));
-  cap_comma(join_words(w, cut, w.size()), cap, out);
+  out.push_back(join_words(w, start, w.size()));
 }
 
 inline std::vector<std::string> split_sentences(std::string_view text, size_t min_words = kMinWords,
@@ -131,10 +154,13 @@ inline std::vector<std::string> split_sentences(std::string_view text, size_t mi
     size_t j = i;
     while (is_space(cps[j].c)) ++j;  // cps[e - 1] is not a space: the run ends inside the text
     const std::string_view before = text.substr(byte(prev_end), byte(i) - byte(prev_end));
-    const std::uint32_t prev = cps[i - 1].c, next = cps[j].c;
+    const std::uint32_t prev = cps[i - 1].c;
+    size_t k = j;
+    while (k < e && !is_space(cps[k].c)) ++k;
+    const std::string_view next = text.substr(byte(j), byte(k) - byte(j));
     prev_end = j;
     if ((prev == '.' || prev == '!' || prev == '?') && !is_title(before) &&
-        !(is_abbreviation(before) && !(next >= 'A' && next <= 'Z'))) {
+        !((is_abbreviation(before) || before.ends_with("...")) && !starts_capital(next))) {
       parts.emplace_back(text.substr(byte(start), byte(i) - byte(start)));
       start = j;
     }
@@ -151,7 +177,7 @@ inline std::vector<std::string> split_sentences(std::string_view text, size_t mi
     merged.pop_back();
   }
   std::vector<std::string> out;
-  for (const auto& m : merged) cap_comma(m, cap, out);
+  for (const auto& m : merged) cap_words(m, cap, out);
   return out;
 }
 

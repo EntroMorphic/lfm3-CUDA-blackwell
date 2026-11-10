@@ -106,7 +106,7 @@ def test_the_cap_and_the_guard_as_chosen(tool, tmp_path):
 def test_cap_boundaries_exhaustively(tool, tmp_path):
     # every chunk length 40-110 words, one clause mark at every position, each mark form; plus two marks at once
     forms = [lambda w: w + ",", lambda w: w + ";", lambda w: w + ":", lambda w: w + "\u2014", lambda w: w + "\u2013",
-             lambda w: w + " -", lambda w: w + " \u2014", lambda w: w + " \u2013"]
+             lambda w: w + " -", lambda w: w + " \u2014", lambda w: w + " \u2013", lambda w: w + "--", lambda w: w + " --"]
     texts = [" ".join(["w"] * n) for n in range(40, 111)]
     for n in range(40, 111):
         for pos in range(1, n):
@@ -125,6 +125,88 @@ def test_cap_boundaries_exhaustively(tool, tmp_path):
     assert not bad, (len(bad), bad[:2])
 
 
+def test_every_title_and_abbreviation(tool, tmp_path):
+    # each list entry, in lower, title and upper case, before a lowercase word, a capital, and a quoted capital
+    lead = "This sentence has enough words before the word"
+    rows, want = [], []
+    for entry in sorted(chunked.TITLES | chunked.ABBREVIATIONS) + ["it..."]:
+        for form in {entry, entry[:1].upper() + entry[1:], entry.upper()}:
+            for nxt, capital in (("then the rest follows on for many more words.", False),
+                                 ("Then the rest follows on for many more words.", True),
+                                 ("\u201cThen the rest follows on for many more words.\u201d", True),
+                                 ("(Then the rest follows on for many more words.)", True),
+                                 ("[Then the rest follows on for many more words.]", True),
+                                 ("(A rest follows on here for many more words.)", True),
+                                 ("'Then the rest follows on for many more words.'", True),
+                                 ("\u2018Then the rest follows on for many more words.\u2019", True),
+                                 ("\"(Then the rest follows on for many more words.)\"", True),
+                                 ("\u201c\u2018[Then the rest follows on for many more words.]\u2019\u201d", True),
+                                 ("\"(then the rest follows on for many more words.)\"", False)):
+                rows.append(f"{lead} {form} {nxt}")
+                title = entry in chunked.TITLES
+                want.append(1 if title or not capital else 2)
+    got = run(tool, tmp_path, "split", [{"text": t} for t in rows])
+    for t, g, n in zip(rows, got, want):
+        assert g["sentences"] == chunked.sentences(t), t
+        assert len(g["sentences"]) == n, (t, g["sentences"])
+
+
+def test_dashes_ellipses_and_whitespace(tool, tmp_path):
+    cases = {  # text -> the chunks the rule gives
+        "I was going to say something... but I forgot what it was all about.": 1,
+        "I was going to say something important... Then I forgot what it was all about.": 2,
+        "He asked me twice and I told him no. Then we left for the long drive home.": 2,
+        "Line one of the text is here\n\nand line two of it continues right here.": 1,
+    }
+    long_dash = " ".join(["w"] * 30) + "-- " + " ".join(["v"] * 40) + "."
+    lone_dash = " ".join(["w"] * 30) + " -- " + " ".join(["v"] * 40) + "."
+    texts = list(cases) + [long_dash, lone_dash]
+    got = run(tool, tmp_path, "split", [{"text": t} for t in texts])
+    for t, g in zip(texts, got):
+        assert g["sentences"] == chunked.sentences(t), t
+        assert all("\n" not in c and "  " not in c for c in g["sentences"])  # every chunk: single spaces
+    for t, g in zip(cases, got):
+        assert len(g["sentences"]) == cases[t], (t, g["sentences"])
+    assert [len(c.split()) for c in got[-2]["sentences"]] == [30, 40]  # "w--" ends the first piece
+    assert [len(c.split()) for c in got[-1]["sentences"]] == [31, 40]  # a lone "--" is itself a mark: the cut falls after it
+
+
+def test_size_is_linear(tool, tmp_path):
+    import time
+    texts = [" ".join(["word"] * 300000), "Short sentence number one here. " * 100000, "Mr. " * 200000 + "end."]
+    t0 = time.time()
+    got = run(tool, tmp_path, "split", [{"text": t} for t in texts])
+    native = time.time() - t0
+    t0 = time.time()
+    want = [chunked.sentences(t) for t in texts]
+    python = time.time() - t0
+    assert [g["sentences"] for g in got] == want
+    assert native < 20 and python < 20, (native, python)  # was quadratic: 200k words took 12 s and 9 GB natively
+
+
+def test_clean_under_sanitizers(tmp_path):
+    # memory errors and undefined behaviour (e.g. a whitespace scan running past the end) do not change outputs often
+    # enough for the parity tests to see; AddressSanitizer and UBSan do
+    if shutil.which("g++") is None:
+        pytest.skip("g++ required")
+    binary = tmp_path / "lfm3-text-tool-sanitized"
+    subprocess.run(["g++", "-std=c++20", "-O1", "-g", "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
+                    "-I", str(ROOT / "native/include"), str(ROOT / "native/tests/lfm3_text_tool.cpp"), "-o", str(binary)],
+                   check=True)
+    rng = random.Random(7)
+    pieces = ["word", "Then", "Mr.", "no.", "a.m.", "etc.", "x...", "\"(So", ",", "--", "\u2014", " ", "  ", "\n", "\u3000",
+              ".", "!", "?", "\u00e9", "\U0001F642"]
+    texts = HAND + ["", " ", ".", "a.", " a. ", "a. ", "Mr. ", "\n\n."]
+    texts += ["".join(rng.choice(pieces) + (" " if rng.random() < 0.7 else "") for _ in range(rng.randrange(0, 160)))
+              for _ in range(3000)]
+    src, dst = tmp_path / "in.jsonl", tmp_path / "out.jsonl"
+    src.write_text("".join(json.dumps({"text": t}) + "\n" for t in texts), encoding="utf-8")
+    p = subprocess.run([str(binary), str(TOKENIZER), "split", str(src), str(dst)], capture_output=True, text=True)
+    assert p.returncode == 0, p.stderr[-2000:]
+    got = [json.loads(line) for line in dst.read_text(encoding="utf-8").split("\n") if line]
+    assert [g["sentences"] for g in got] == [chunked.sentences(t) for t in texts]
+
+
 def test_short_last_sentence_joins_the_one_before(tool, tmp_path):
     # the prototype's first version crashed on two parts and overwrote the wrong one on three (never hit by a
     # validation prompt); both now give the intended join
@@ -139,7 +221,9 @@ def test_short_last_sentence_joins_the_one_before(tool, tmp_path):
 def test_split_matches_python_fuzzed(tool, tmp_path):
     rng = random.Random(20261109)
     words = ["the", "a", "lighthouse", "keeper", "café", "漢字", "3.14", "e.g.", "Mr.", "🙂", "x", "Then", "Über",
-             "dr.", "MRS.", "a.m.", "P.M.", "U.S.", "u.\u212a.", "Jan.", "etc.", "No.", "-", "\u2014", "\u2013", "word\u2014"]
+             "dr.", "MRS.", "a.m.", "P.M.", "U.S.", "u.\u212a.", "Jan.", "etc.", "No.", "-", "\u2014", "\u2013", "word\u2014",
+             "no.", "Jr.", "vs.", "word...", "\"Then", "(Next", "\u201cWhy", "--", "so--", "\u2018quiet",
+             "'Then", "\u2018Then", "\"(Then", "\u201c'[So", "\u2026", "word....", "---"]
     puncts = [".", "!", "?", "...", "?!", ",", ";", ":", ""]
     spaces = [" ", "  ", "\t", "\n", " ", "　", " ", "\r\n", "\x1f", "\x85", "​"]
     texts = []

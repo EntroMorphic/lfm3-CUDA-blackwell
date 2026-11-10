@@ -5,7 +5,8 @@ Why: the backbone's five sliding-attention layers (window 256) lose sight of the
 about 180 frames into an utterance (validation/speech-long-form-v1); from there only the six full-attention layers
 keep the place, and long utterances skip and loop. Utterances under ~50 words never reach that point.
 
-The text is split into sentences (at . ! ? followed by space); a sentence under MIN_WORDS joins the next one.
+The text is split by sentences() (validation/speech-split-v1: sentence ends with a title and abbreviation guard, short
+parts joined, chunks capped at CAP_WORDS words at clause marks; the native splitter, lfm/speech_text.hpp, equals it).
   fresh:    each chunk is its own request (system + user chunk), as the single-shot TTS request is built.
   continue: one conversation; each chunk is a new user turn after the previous turn exactly as generated
             (<|audio_start|>, its frames with the end-of-audio frame, <|im_end|>), so the earlier speech is in
@@ -31,14 +32,25 @@ CAP_WORDS = 49  # validation/speech-split-v1: phase A's longest safe single chun
 # Candidate rules for the splitter's open gap (no length cap), prototyped here for the split experiment (validation/
 # speech-split-v1). LFM3_SPLIT_RULE selects one: "sentences" (the default, the rule the experiment chose), or
 # "sentences-v1" (the first rule) and the candidates below, built on sentences_v1. LFM3_SPLIT_CAP is their cap in words.
-#   cap-comma: sentences(), then a chunk over CAP words is cut at its last clause mark (, ; : or a dash) at or before
+#   cap-comma: sentences_v1(), then a chunk over CAP words is cut at its last clause mark (, ; : or a dash) at or before
 #              word CAP that leaves both sides MIN_WORDS long; with none, at the even cut below; repeated.
-#   cap-hard:  sentences(), then a chunk over CAP words is cut into the fewest equal pieces of at most CAP words.
+#   cap-hard:  sentences_v1(), then a chunk over CAP words is cut into the fewest equal pieces of at most CAP words.
 #   full:      paragraphs (blank lines) first; sentence ends also after a closing quote or bracket; titles (Mr. Dr. ...)
 #              never end a sentence, other abbreviations (a.m. U.S. Jan. ...) only before a capital; then cap-comma.
-TITLES = {"mr.", "mrs.", "ms.", "dr.", "prof.", "st.", "jr.", "sr.", "mt.", "no."}
-ABBREVIATIONS = {"a.m.", "p.m.", "u.s.", "u.k.", "e.g.", "i.e.", "etc.", "vs.", "jan.", "feb.", "mar.", "apr.", "jun.",
-                 "jul.", "aug.", "sep.", "sept.", "oct.", "nov.", "dec."}
+# the experiment's lists and cap, frozen as they ran (the default's own are below, refined in the red-team)
+X_TITLES = {"mr.", "mrs.", "ms.", "dr.", "prof.", "st.", "jr.", "sr.", "mt.", "no."}
+X_ABBREVIATIONS = {"a.m.", "p.m.", "u.s.", "u.k.", "e.g.", "i.e.", "etc.", "vs.", "jan.", "feb.", "mar.", "apr.",
+                   "jun.", "jul.", "aug.", "sep.", "sept.", "oct.", "nov.", "dec."}
+
+# The default rule's lists. Titles never end a sentence; an abbreviation (or an ellipsis "...") ends one only before a
+# word that starts with an ASCII capital, after any opening quote or bracket. Red-team 2026-11-09: no. jr. sr. moved
+# from titles (they often end sentences: "told him no."), vs. moved to titles (it essentially never does).
+TITLES = {"mr.", "mrs.", "ms.", "dr.", "prof.", "st.", "mt.", "vs."}
+ABBREVIATIONS = {"a.m.", "p.m.", "u.s.", "u.k.", "e.g.", "i.e.", "etc.", "no.", "jr.", "sr.", "jan.", "feb.", "mar.",
+                 "apr.", "jun.", "jul.", "aug.", "sep.", "sept.", "oct.", "nov.", "dec."}
+OPENERS = "\"'\u201c\u2018(["
+DASHES = ("-", "--", "\u2014", "\u2013")
+WORD = re.compile(r"\S+")
 
 
 def even_cut(n, cap):
@@ -46,7 +58,8 @@ def even_cut(n, cap):
     return -(-n // pieces)
 
 
-def cap_comma(chunk, cap):
+def x_cap_comma(chunk, cap):
+    """The experiment's cap-comma (recursive; whitespace kept in chunks under the cap)."""
     words = chunk.split()
     if len(words) <= cap:
         return [chunk]
@@ -54,7 +67,7 @@ def cap_comma(chunk, cap):
              if (words[i][-1] in ",;:\u2014\u2013" or words[i + 1] in ("-", "\u2014", "\u2013"))
              and MIN_WORDS <= i + 1 <= cap and len(words) - (i + 1) >= MIN_WORDS]
     cut = max(marks) if marks else even_cut(len(words), cap)
-    return [" ".join(words[:cut])] + cap_comma(" ".join(words[cut:]), cap)
+    return [" ".join(words[:cut])] + x_cap_comma(" ".join(words[cut:]), cap)
 
 
 def cap_hard(chunk, cap):
@@ -86,7 +99,7 @@ def full_sentences(paragraph):
         if k + 1 < len(words) and bare[-1:] in (".", "!", "?"):
             low = bare.lower()
             nxt = words[k + 1].lstrip("\"'\u201c\u2018([")
-            if low in TITLES or (low in ABBREVIATIONS and not nxt[:1].isupper()):
+            if low in X_TITLES or (low in X_ABBREVIATIONS and not nxt[:1].isupper()):
                 continue
             parts.append(" ".join(cur)); cur = []
     if cur:
@@ -97,19 +110,19 @@ def full_sentences(paragraph):
 def split_text(text, rule=None, cap=None):
     import os
     rule = rule or os.environ.get("LFM3_SPLIT_RULE", "sentences")
-    cap = int(cap or os.environ.get("LFM3_SPLIT_CAP", "0"))
+    cap = int(cap or os.environ.get("LFM3_SPLIT_CAP") or "0")
     if rule == "sentences":
         return sentences(text)
     if rule == "sentences-v1":
         return sentences_v1(text)
     assert cap >= 2 * MIN_WORDS, "LFM3_SPLIT_CAP must be at least 12"
     if rule in ("cap-comma", "cap-hard"):
-        f = cap_comma if rule == "cap-comma" else cap_hard
+        f = x_cap_comma if rule == "cap-comma" else cap_hard
         return [q for c in sentences_v1(text) for q in f(c, cap)]
     if rule == "full":
         paragraphs = [p for p in re.split(r"\n\s*\n", text.strip()) if p.strip()]
         chunks = merge_short([q for p in paragraphs for q in full_sentences(p)])
-        return [q for c in chunks for q in cap_comma(c, cap)]
+        return [q for c in chunks for q in x_cap_comma(c, cap)]
     raise SystemExit(f"unknown LFM3_SPLIT_RULE {rule}")
 
 
@@ -134,8 +147,8 @@ def sentence_parts(text):
         if before[-1] not in ".!?":
             continue
         low = ascii_lower(before)
-        nxt = t[j]
-        if low in TITLES or (low in ABBREVIATIONS and not "A" <= nxt <= "Z"):
+        nxt = WORD.match(t, j).group().lstrip(OPENERS)  # (not t[j:]: a copy per sentence would be quadratic)
+        if low in TITLES or ((low in ABBREVIATIONS or before.endswith("...")) and not "A" <= nxt[:1] <= "Z"):
             continue
         parts.append(t[start:i])
         start = j
@@ -144,10 +157,33 @@ def sentence_parts(text):
     return parts
 
 
+def is_mark(word, nxt):
+    """A clause mark ends `word`: it ends in , ; : -- or an em or en dash, or the next word is a lone dash."""
+    return word[-1] in ",;:\u2014\u2013" or word.endswith("--") or nxt in DASHES
+
+
+def cap_words(chunk, cap):
+    """The chunk's words joined by single spaces; over `cap` words, cut at the last clause mark at or before word `cap`
+    that leaves both sides MIN_WORDS long, or with none into the fewest equal pieces; repeated on the rest (a loop:
+    linear in the text)."""
+    words, out, start = chunk.split(), [], 0
+    while len(words) - start > cap:
+        n, cut = len(words) - start, 0
+        for i in range(start, min(start + cap, len(words) - 1)):
+            k = i + 1 - start
+            if k >= MIN_WORDS and n - k >= MIN_WORDS and is_mark(words[i], words[i + 1]):
+                cut = k
+        cut = cut or even_cut(n, cap)
+        out.append(" ".join(words[start:start + cut]))
+        start += cut
+    out.append(" ".join(words[start:]))
+    return out
+
+
 def sentences(text):
-    """The default rule (validation/speech-split-v1): sentence_parts, parts under MIN_WORDS joined, then any chunk over
-    CAP_WORDS cut at its last clause mark at or before word CAP_WORDS (cap_comma)."""
-    return [q for c in merge_short(sentence_parts(text)) for q in cap_comma(c, CAP_WORDS)]
+    """The default rule (validation/speech-split-v1): sentence_parts, parts under MIN_WORDS joined, then every chunk
+    normalized to single spaces and any over CAP_WORDS cut at clause marks (cap_words)."""
+    return [q for c in merge_short(sentence_parts(text)) for q in cap_words(c, CAP_WORDS)]
 
 
 def main(model_dir, prompts, out_dir, mode, dtype="bfloat16"):
