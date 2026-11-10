@@ -1,6 +1,6 @@
 #pragma once
 // Strict standard base64 (RFC 4648, "+/" alphabet, "=" padding, no whitespace) for audio input (#3): a WAV clip
-// travels base64 in the /speech request and in the engine frame. Host-only.
+// travels base64 in the /speech request and in the engine frame; streamed audio out travels the same way. Host-only.
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -37,6 +37,23 @@ inline std::string decode(std::string_view s) {
     else if (n & 0xFFFF) return fail();
     if (pad < 1) out += char(n & 255);
     else if (n & 0xFF) return fail();
+  }
+  return out;
+}
+
+inline std::string encode(std::string_view bytes) {
+  static const char* t = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  std::string out;
+  out.reserve((bytes.size() + 2) / 3 * 4);
+  for (size_t i = 0; i < bytes.size(); i += 3) {
+    const size_t left = bytes.size() - i;
+    unsigned n = unsigned(static_cast<unsigned char>(bytes[i])) << 16;
+    if (left > 1) n |= unsigned(static_cast<unsigned char>(bytes[i + 1])) << 8;
+    if (left > 2) n |= unsigned(static_cast<unsigned char>(bytes[i + 2]));
+    out += t[n >> 18];
+    out += t[(n >> 12) & 63];
+    out += left > 1 ? t[(n >> 6) & 63] : '=';
+    out += left > 2 ? t[n & 63] : '=';
   }
   return out;
 }

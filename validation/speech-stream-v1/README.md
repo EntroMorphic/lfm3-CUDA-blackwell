@@ -65,3 +65,61 @@ ratio was 1.005). Clocks were locked at MAXN before and after. The failure stand
 one more measurement, set now: the same lighthouse request on server-stream-v2, 15 pairs, each pair one unstreamed and
 one streamed run with the order alternating pair by pair; the cost is the median over pairs of streamed / unstreamed
 `generate_seconds`. Streaming costs at most 3% if that median is at most 1.03.
+**Result:** passes. The median over 15 pairs of streamed / unstreamed is 1.004: medians of 10.60 s streamed and 10.51 s
+unstreamed (`build-v2/cost-remeasure.json`, clocks locked at MAXN before and after). Pairs 5 to 8 ran about 12 s
+whether streamed or not, the same kind of slowdown the 5-run median caught.
+
+## Results
+On Thor (MAXN, clocks locked, power recorded): lfm3-speech stream-v1, server-stream-v1 (first build), then
+server-stream-v2 (after the red-team's fixes; sources identical to this commit, `build-v2/sources-server.sha256`;
+lfm3-speech's sources unchanged). Binary sha256 in `binaries.sha256`. 41 cases: 30 e2e requests, the lighthouse,
+the bread, the normalized numbers, 5 spoken questions and 3 ASR clips.
+
+| rule | server-stream-v1 | server-stream-v2 |
+|---|---|---|
+| 1. exact (PCM, done event, text, chunks) | 41 of 41 | 41 of 41 |
+| 2. first audio, TTS median / max | 0.266 s / 0.315 s | 0.267 s / 0.338 s |
+| 2. first audio, interleaved median | 0.417 s | 0.409 s |
+| 3. no gaps (a player starting at the first audio never runs dry) | 0 stalls; least slack 0.51 s | 0 stalls; least slack 0.51 s |
+| 4. nothing else moves | pass (below) | pass (below) |
+| 5. a client that leaves: next request's first audio, delay | +0.53 s, reply exact | +0.06 s, reply exact |
+| 6. cost, lighthouse generate_seconds | 1.005 | 1.044, **fail**; re-measured 1.004 (above) |
+
+- **Rule 4, nothing else moves:**
+  - lfm3-speech's regression check: 36 of 36 outputs bit-identical.
+  - The server's TTS WAVs equal the validated ones; the audio-input server cases pass; the full text gate passes. All on
+    both server builds.
+  - The audio-input edge cases are token-identical to HF (9 of 9), and the 22 refusal and rendering checks pass, on
+    stream-v1.
+- **Rule 5, before and after the fixes:** on v1 a client that left was noticed only at the next send. v2 also watches
+  the socket for the peer closing, which takes the delay from 0.53 s to 0.06 s.
+- **Speed:** the first audio arrives about 0.27 s after a TTS request and about 0.41 s after a spoken or written
+  question answered in interleaved speech, whether the reply is one sentence or 39 s of speech (both end to end at the
+  client). Generation runs ahead of playback, about 3.6 times faster for TTS (lighthouse: 38.2 s of audio in 10.4 s)
+  and about 2.5 times for interleaved (fridge: 25.4 s in 10.2 s), so playback never waits.
+
+**Host tests:** 727 passed and 2 skipped: the earlier 661, plus the streaming suite's 22 tests on each of the plain,
+ASan+UBSan and TSan builds. The fake engine's tests cover framing, order, errors before and after the start, deadlines,
+shutdown, a client leaving before and after its first event, concurrent streams and every refusal. The one failure is
+the known `test_speech_text.py::test_every_validation_prompt_matches_hf_ids`, which needs a newer transformers than
+this workstation has. Across all of `tests/`, `test_text_batch_cancellation.py`'s 46 UBSan cases fail to compile on
+this workstation (an unused `base64` in the worker, `-Werror`). They fail the same way at fba8e30, before this change.
+
+## Red-team (one pass, an independent reviewer with the code only)
+No serious defect. Its findings and what was done:
+1. A text piece held back for an unfinished character was flushed only after the call, so it arrived after its chunk's end event.
+   **Fixed:** it is flushed before the end event.
+2. A client that left was noticed only at a later send: while queued or in a long prefill, it was not noticed before
+   its first audio was made. **Fixed:** the handler also polls the socket for the peer closing, from before the request
+   is queued (POLLRDHUP: an HTTP/1.0 client that half-closes its sending side counts as gone). A client that stops
+   reading but keeps the socket open still runs to the end, bounded by the step budget, as unstreamed requests do.
+3. An unused variable. **Removed.**
+4. The concurrency test could not tell the streams' audio apart. **Fixed:** the fake engine's audio now depends on the
+   seed. Also **added** a test for a client that leaves before its first event.
+5. The GPU check could crash rather than fail on an error event in the cost loop, and did not assert the e2e request
+   count. **Fixed** (the assertion then showed that the README had miscounted the requests as 27).
+6. The README named the observer `on_text`; the code calls it `on_slot`. **Corrected.**
+
+## Using it
+`tools/lfm3_speech_stream_client.py PORT OUT.wav --text "..."` (or `--wav QUESTION_16K.wav` for a spoken question)
+prints the text as it comes, writes the WAV, and with `--play` pipes the audio to `aplay` as it arrives.

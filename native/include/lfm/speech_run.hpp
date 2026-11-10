@@ -19,6 +19,8 @@
 
 namespace lfm3_speech {
 
+struct ChunkInfo { size_t frames, slots; bool ended_by_eos; };
+
 struct Options {
   lfm::audio::Requested mode = lfm::audio::Requested::Audio;
   int max_new_tokens = 512;
@@ -37,6 +39,12 @@ struct Options {
   bool codec_continue = false, codec_finalize = true;
   // polled before every step (null: never); true ends the call with Cancelled, the codec stream left closed
   std::function<bool()> cancelled;
+  // Streaming observers (null: none). They only read, in generation order: on_audio after each codec call with the
+  // samples it made final (Result::wav grows by exactly these), on_slot with each emitted slot (Result::slots grows by
+  // exactly these), and, from run_chunks, on_chunk as chunk k ends. A throw from one ends the call like any failure.
+  std::function<void(const float* samples, size_t count)> on_audio;
+  std::function<void(int slot)> on_slot;
+  std::function<void(size_t chunk, const ChunkInfo& info)> on_chunk;
 };
 
 struct Cancelled : std::runtime_error {
@@ -100,8 +108,6 @@ inline std::vector<float> clip_from_base64(const std::string& b64) {
 // short of its text because of the budget: chunks skipped, or the chunk whose cap the budget lowered used all of it
 // without ending by EOS. (A chunk cut by its own max_new_tokens shows only in its ended_by_eos.) A request that never
 // comes near the budget runs exactly as without one.
-struct ChunkInfo { size_t frames, slots; bool ended_by_eos; };
-
 template <class SessionT>
 inline Result run_chunks(SessionT& session, const std::vector<std::vector<int>>& prompts, Options o, bool chunked,
                          std::vector<ChunkInfo>& info, size_t step_budget = 0, bool* truncated = nullptr) {
@@ -136,6 +142,7 @@ inline Result run_chunks(SessionT& session, const std::vector<std::vector<int>>&
                        std::find(last.begin(), last.end(), lfm::audio::kEosCode) != last.end() &&
                        !c.slots.empty() && c.slots.back() == lfm::audio::ModeTokens{}.eos[0];
     info.push_back({c.frames.size(), c.slots.size(), ended});
+    if (o.on_chunk) o.on_chunk(k, info.back());
     if (k == 0) {
       r = std::move(c);
     } else {
@@ -156,8 +163,22 @@ inline Result run_chunks(SessionT& session, const std::vector<std::vector<int>>&
   return r;
 }
 
-// The waveform as a 16-bit mono PCM WAV file (clipped to [-1, 1], rounded to nearest). A NaN or infinite sample is a
-// numeric fault upstream and throws (it would otherwise become a full-scale click).
+// Samples as 16-bit little-endian PCM appended to `f` (clipped to [-1, 1], rounded to nearest): a WAV file's data, and
+// a streamed reply's audio. A NaN or infinite sample is a numeric fault upstream and throws (it would otherwise become
+// a full-scale click).
+inline void append_pcm16(const float* x, size_t n, std::string& f) {
+  static_assert(sizeof(int16_t) == 2);
+  const size_t at = f.size();
+  f.resize(at + 2 * n);
+  for (size_t i = 0; i < n; ++i) {
+    if (!std::isfinite(x[i])) throw std::runtime_error("speech: non-finite sample in the waveform");  // a fault, not a click
+    const float c = std::max(-1.0f, std::min(1.0f, x[i]));
+    const uint16_t s = uint16_t(int16_t(std::lrint(c * 32767.0f)));
+    f[at + 2 * i] = char(s & 0xff), f[at + 2 * i + 1] = char(s >> 8);
+  }
+}
+
+// The waveform as a 16-bit mono PCM WAV file (append_pcm16's samples).
 inline std::string wav_bytes(const std::vector<float>& x, int rate) {
   std::string f;
   auto u32 = [&](uint32_t v) { f.append(reinterpret_cast<const char*>(&v), 4); };
@@ -166,12 +187,7 @@ inline std::string wav_bytes(const std::vector<float>& x, int rate) {
   const uint32_t bytes = uint32_t(x.size() * 2);
   f.append("RIFF", 4); u32(36 + bytes); f.append("WAVEfmt ", 8); u32(16); u16(1); u16(1); u32(rate); u32(rate * 2);
   u16(2); u16(16); f.append("data", 4); u32(bytes);
-  for (float v : x) {
-    if (!std::isfinite(v)) throw std::runtime_error("speech: non-finite sample in the waveform");  // a fault, not a click
-    const float c = std::max(-1.0f, std::min(1.0f, v));
-    const int16_t s = int16_t(std::lrint(c * 32767.0f));
-    f.append(reinterpret_cast<const char*>(&s), 2);
-  }
+  append_pcm16(x.data(), x.size(), f);
   return f;
 }
 

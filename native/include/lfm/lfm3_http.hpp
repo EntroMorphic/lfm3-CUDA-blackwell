@@ -339,6 +339,14 @@ class Backend {
   virtual ~Backend() = default;
   // One request line (no newline) in, one reply line out. Engine-owner thread only.
   virtual std::string call(const std::string& line) = 0;
+  // As call, for a request that streams (op "speech" with "stream": true): the engine's progress lines (no newline)
+  // go to `progress`, in order, on the engine-owner thread, before the reply returns. A throw from `progress` fails
+  // the call. Backends that cannot stream throw.
+  using Progress = std::function<void(const std::string&)>;
+  virtual std::string call_streaming(const std::string& line, const Progress& progress) {
+    (void)line, (void)progress;
+    throw std::runtime_error("this engine cannot stream");
+  }
   // Write end of the engine's nonblocking cancellation pipe (8-byte little-endian frames).
   virtual int cancellation_fd() const = 0;
   // After a fatal failure: refuse every later call. Engine-owner thread only, or after it stopped.
@@ -689,10 +697,12 @@ class Service {
     std::string audio_json;          // audio input (#3): the clips (base64 WAV) as the engine request carries them
     bool audio_input = false;        // the messages hold audio parts
     bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
+    bool stream = false;             // the reply as events while the engine generates (speech_stream)
   };
   Speech validate_speech(const Json& item) const {
     const auto& o = object_of(item);
-    static const std::set<std::string> allowed = {"messages", "mode", "max_new_tokens", "seed", "split", "normalize"};
+    static const std::set<std::string> allowed = {"messages", "mode", "max_new_tokens", "seed", "split", "normalize",
+                                                  "stream"};
     for (const auto& [key, value] : o)
       if (!allowed.count(key)) throw std::invalid_argument("invalid speech fields");
     for (const char* key : {"messages", "mode", "max_new_tokens"})
@@ -729,6 +739,11 @@ class Service {
       s.normalize = s.mode == "audio";
     }
     if (s.normalize && s.mode != "audio") throw std::invalid_argument("normalize is for audio mode");
+    if (o.count("stream")) {
+      const auto* b = std::get_if<bool>(&o.at("stream").value);
+      if (!b) throw std::invalid_argument("stream must be a boolean");
+      s.stream = *b;
+    }
     return s;
   }
   // Render and tokenize each chunk as a single request (lfm3_text::encode_messages), split by sentences when asked.
@@ -778,10 +793,13 @@ class Service {
     s.messages = nullptr;
     s.body.reset();
   }
+  // The reply; streamed, the done event: {"event": "done"} and the same fields but the audio.
   std::string speech_response(const Speech& s, const Json& r) const {
     if (!r.has("cancelled") || !std::holds_alternative<bool>(r.at("cancelled").value)) throw WorkerFailure("invalid speech reply");
+    Obj head;
+    if (s.stream) head.str("event", "done");
     if (std::get<bool>(r.at("cancelled").value))
-      return Obj().str("mode", s.mode).boolean("cancelled", true).num("seed", s.seed).boolean("split", s.split)
+      return head.str("mode", s.mode).boolean("cancelled", true).num("seed", s.seed).boolean("split", s.split)
           .boolean("normalize", s.normalize).done();
     std::vector<int> slots;
     for (const auto& v : r.at("slots").array()) {
@@ -800,8 +818,9 @@ class Service {
       list += (k ? "," : "") + c.done();
     }
     list += "]";
-    const auto out = Obj().str("mode", s.mode).str("text", s.mode == "audio" ? std::string() : tokenizer_.decode(slots, true))
-        .str("audio_wav_base64", r.at("wav_base64").string()).num("sample_rate", 24000)
+    head.str("mode", s.mode).str("text", s.mode == "audio" ? std::string() : tokenizer_.decode(slots, true));
+    if (!s.stream) head.str("audio_wav_base64", r.at("wav_base64").string());
+    const auto out = head.num("sample_rate", 24000)
         .raw("audio_seconds", py_float(std::get<double>(r.at("audio_seconds").value)))
         .num("frames", r.at("frames").integer()).raw("chunks", list).num("seed", s.seed).boolean("split", s.split)
         .boolean("normalize", s.normalize)
@@ -848,7 +867,8 @@ class Service {
   // "audio" | "interleaved" | "text", "max_new_tokens": 1..4095 (per chunk), "seed": 0..2^31-1 (default 0), "split":
   // bool (audio mode with text input only; default true there: long-form TTS by sentences, lfm/speech_text.hpp),
   // "normalize": bool (audio mode only; default true there: numbers, symbols and abbreviations in the user's text read
-  // out as words first, lfm/speech_normalize.hpp, validation/speech-normalize-v1)}.
+  // out as words first, lfm/speech_normalize.hpp, validation/speech-normalize-v1), "stream": bool (default false: with
+  // true, the reply comes as events while the engine generates, speech_stream)}.
   // Spoken replies to audio input: use "interleaved", as the model card's voice chat does; in "audio" mode the model
   // answers speech with unusable speech, in HF as here (validation/audio-in-v1).
   // Reply: {"mode", "text" (the emitted text; "" in audio mode), "audio_wav_base64" (24 kHz 16-bit mono WAV; in text
@@ -877,6 +897,151 @@ class Service {
       return speech_response(*request, result);
     };
     return submit(run, [] {}, nullptr, deadline);
+  }
+
+  // POST /speech with "stream": true (validation/speech-stream-v1): the same request, its reply as events while the
+  // engine generates, each one JSON line given to `send` (false: the client is gone). The first call to `send` is the
+  // client's first byte of the reply, so anything thrown before it is an ordinary error reply; once a line is sent this
+  // returns normally, ending with a done event, or an error event if the request fails after the start. Events:
+  //   {"event": "audio", "chunk": k, "pcm_base64": 24 kHz mono 16-bit little-endian PCM}: all of them in order are the
+  //     samples of the WAV the request would return unstreamed;
+  //   {"event": "text", "chunk": k, "text": the next piece of the decoded text} (interleaved and text modes);
+  //   {"event": "chunk", "chunk": k, "text" (split only), "frames", "ended_by_eos"}: chunk k has ended;
+  //   {"event": "done", ...}: the unstreamed reply's fields but "audio_wav_base64"; or {"event": "error", "error": code}.
+  // A client that goes away is cancelled at the engine's next step. Events queue between the engine-owner thread and
+  // this one: the engine never waits on a client.
+  // `gone` (polled about every 50 ms, from before the request is queued) says whether the client has closed its end.
+  void speech_stream(std::shared_ptr<const Json> body, const std::function<bool(const std::string&)>& send,
+                     const std::function<bool()>& gone) {
+    if (!policy_.speech || settings_.engine_timeout < kSpeechMinEngineTimeout) throw ApiError(501, "speech_unsupported");
+    const auto deadline = Clock::now() + seconds(settings_.request_timeout);
+    auto request = std::make_shared<Speech>(validate_speech(*body));
+    if (!request->stream) throw std::logic_error("speech_stream without stream");
+    if (request->audio_input && !policy_.audio_input) throw ApiError(501, "audio_input_unsupported");
+    request->body = std::move(body);
+    frontend_call([&] { encode_speech(*request); }, deadline);
+    struct Queue {
+      std::mutex m;
+      std::condition_variable cv;
+      std::deque<std::string> lines;
+    };
+    auto queue = std::make_shared<Queue>();
+    Event event = std::make_shared<std::atomic<bool>>(false);
+    const std::string key = "speech:" + std::to_string(++stream_serial_);  // this request's cancellation target
+    auto run = [this, request, event, queue, key, deadline] {
+      if (Clock::now() >= deadline) throw ApiError(504, "queue_deadline");
+      const auto push = [&](std::string line) {
+        { std::lock_guard g(queue->m); queue->lines.push_back(std::move(line)); }
+        queue->cv.notify_one();
+      };
+      // The engine's progress lines checked and turned into events (a malformed one is an engine fault).
+      const bool text_mode = request->mode != "audio";
+      lfm3_text::Tokenizer::StreamDecoder decoder(tokenizer_, true);
+      size_t chunk = 0, samples = 0;
+      std::vector<int> text_slots;
+      std::vector<std::pair<long long, bool>> ended;  // per chunk: frames, ended_by_eos
+      const Backend::Progress progress = [&](const std::string& line) {
+        if (line.size() > kMaxBody) throw WorkerFailure("progress frame exceeds limit");
+        const Json p = strict_json(line);
+        const auto& o = std::get<Json::Object>(p.value);
+        if (o.size() != 1 || chunk >= request->prompts.size()) throw WorkerFailure("invalid speech progress");
+        if (o.count("audio")) {
+          const auto& b64 = o.at("audio").string();
+          const size_t bytes = lfm::base64::decode(b64).size();  // strict: the client gets these characters as they are
+          if (bytes == 0 || bytes % 2) throw WorkerFailure("invalid speech progress");
+          samples += bytes / 2;
+          push(Obj().str("event", "audio").num("chunk", (long long)chunk).str("pcm_base64", b64).done());
+        } else if (o.count("text")) {
+          const auto& ids = o.at("text").array();
+          if (ids.size() != 1) throw WorkerFailure("invalid speech progress");
+          const int id = ids[0].integer();
+          if (id < 0 || id >= policy_.vocabulary || id == kAudioOutToken) throw WorkerFailure("invalid speech progress");
+          text_slots.push_back(id);
+          if (!text_mode) return;
+          const auto piece = decoder.push(id);
+          if (!piece.empty()) push(Obj().str("event", "text").num("chunk", (long long)chunk).str("text", piece).done());
+        } else if (o.count("chunk")) {
+          // the chunk's text is complete: bytes held back for an unfinished character end as decode() ends them
+          // (text comes only unsplit, in one chunk, so this is decode() of all the text)
+          if (text_mode) {
+            const auto rest = decoder.finish();
+            if (!rest.empty()) push(Obj().str("event", "text").num("chunk", (long long)chunk).str("text", rest).done());
+          }
+          const auto& c = o.at("chunk");
+          const long long frames = c.at("frames").integer();
+          const bool eos = c.at("ended_by_eos").boolean();
+          Obj e;
+          e.str("event", "chunk").num("chunk", (long long)chunk);
+          if (request->split) e.str("text", request->texts[chunk]);
+          push(e.num("frames", frames).boolean("ended_by_eos", eos).done());
+          ended.emplace_back(frames, eos);
+          ++chunk;
+        } else {
+          throw WorkerFailure("invalid speech progress");
+        }
+      };
+      Obj frame;
+      frame.str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
+          .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split)
+          .boolean("stream", true);
+      if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
+      const auto result = rpc(std::move(frame), {{key, event}}, false, kMaxBody, &progress);
+      // The reply must agree with what was streamed: the samples, the slots, the chunks.
+      if (!result.has("cancelled") || !std::holds_alternative<bool>(result.at("cancelled").value))
+        throw WorkerFailure("invalid speech reply");
+      if (!std::get<bool>(result.at("cancelled").value)) {
+        if (result.has("wav_base64") || result.at("samples").integer() != (long long)samples) throw WorkerFailure("invalid speech reply");
+        std::vector<int> want;
+        for (const auto& v : result.at("slots").array())
+          if (v.integer() != kAudioOutToken) want.push_back(v.integer());
+        const auto& chunks = result.at("chunks").array();
+        if (want != text_slots || chunks.size() != ended.size()) throw WorkerFailure("invalid speech reply");
+        for (size_t k = 0; k < chunks.size(); ++k)
+          if (chunks[k].at("frames").integer() != ended[k].first || chunks[k].at("ended_by_eos").boolean() != ended[k].second)
+            throw WorkerFailure("invalid speech reply");
+      }
+      return speech_response(*request, result);
+    };
+    auto [job, future] = enqueue(run, [] {}, nullptr, deadline);
+    bool started = false;
+    const auto leave = [&] {  // the client is gone (or past the deadline): stop the generation at its next step
+      event->store(true);
+      try { send_cancel(key); } catch (const WorkerFailure&) {}  // then it finishes normally, unread
+    };
+    const auto flush = [&] {
+      std::deque<std::string> lines;
+      { std::lock_guard g(queue->m); lines.swap(queue->lines); }
+      for (auto& line : lines) {
+        if (!send(line)) return false;
+        started = true;
+      }
+      return true;
+    };
+    for (;;) {
+      const bool ready = future.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+      if (!flush()) { leave(); return; }  // every line queued before completion is flushed before the outcome
+      if (ready) break;
+      if (gone()) { leave(); return; }
+      if (Clock::now() >= deadline) {
+        if (abandon(*job, future)) continue;  // completed meanwhile
+        leave();
+        if (!started) throw ApiError(504, "request_deadline_outcome_unknown");
+        send(Obj().str("event", "error").str("error", "request_deadline_outcome_unknown").done());
+        return;
+      }
+      std::unique_lock g(queue->m);
+      queue->cv.wait_until(g, std::min(deadline, Clock::now() + std::chrono::milliseconds(50)),
+                           [&] { return !queue->lines.empty(); });
+    }
+    std::string done;
+    try {
+      done = future.get();
+    } catch (const ApiError& e) {
+      if (!started) throw;
+      send(Obj().str("event", "error").str("error", e.code).done());
+      return;
+    }
+    send(done);
   }
 
  private:
@@ -1052,7 +1217,7 @@ class Service {
 
   // lfm3_worker_client.WorkerClient.call + Service._rpc: owner thread only. Any failure is fatal.
   Json rpc(Obj request, std::vector<std::pair<std::string, Event>> targets = {}, bool batch = false,
-           size_t max_reply = kMaxBody) {
+           size_t max_reply = kMaxBody, const Backend::Progress* progress = nullptr) {
     if (backend_closed_) throw WorkerFailure("worker closed");
     if (sequence_ >= 2147483647) throw WorkerFailure("RPC sequence exhausted; restart required");
     const std::uint64_t id = ++sequence_;
@@ -1074,7 +1239,7 @@ class Service {
     call_started_ = Clock::now().time_since_epoch().count();
     in_call_ = true;
     try {
-      reply = backend_.call(line);
+      reply = progress ? backend_.call_streaming(line, *progress) : backend_.call(line);
     } catch (const std::exception& e) {
       in_call_ = false;
       throw WorkerFailure(std::string("worker RPC failed: ") + e.what());
@@ -1126,6 +1291,23 @@ class Service {
   std::string submit(std::function<std::string()> function, std::function<void()> cleanup, std::function<void()> discard,
                      std::optional<Clock::time_point> when = std::nullopt) {
     const auto deadline = when ? *when : Clock::now() + seconds(settings_.request_timeout);
+    auto [job, future] = enqueue(std::move(function), std::move(cleanup), std::move(discard), deadline);
+    if (future.wait_until(deadline) == std::future_status::ready) return future.get();
+    if (abandon(*job, future)) return future.get();
+    // Do not release a running generation lease or pretend cancellation.
+    throw ApiError(504, "request_deadline_outcome_unknown");
+  }
+  // Past its deadline: marks the job abandoned, unless it completed meanwhile (then false: its result stands).
+  static bool abandon(Job& job, std::future<std::string>& future) {
+    std::lock_guard g(job.completion);
+    if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) return true;
+    job.abandoned = true;
+    return false;
+  }
+  std::pair<std::shared_ptr<Job>, std::future<std::string>> enqueue(std::function<std::string()> function,
+                                                                    std::function<void()> cleanup,
+                                                                    std::function<void()> discard,
+                                                                    Clock::time_point deadline) {
     auto job = std::make_shared<Job>();
     job->function = std::move(function);
     job->deadline = deadline;
@@ -1144,14 +1326,7 @@ class Service {
       throw;
     }
     queue_cv_.notify_all();
-    if (future.wait_until(deadline) == std::future_status::ready) return future.get();
-    {
-      std::lock_guard g(job->completion);
-      if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) return future.get();
-      job->abandoned = true;
-    }
-    // Do not release a running generation lease or pretend cancellation.
-    throw ApiError(504, "request_deadline_outcome_unknown");
+    return {job, std::move(future)};
   }
 
   // lfm3_worker_client's per-RPC deadline: an engine call running past engine_timeout fails the
@@ -1263,6 +1438,7 @@ class Service {
   std::map<std::string, Active> active_;
   bool backend_closed_ = false;  // guarded by active_lock_
   std::uint64_t sequence_ = 0;   // owner thread only
+  std::atomic<std::uint64_t> stream_serial_{0};
   std::atomic<bool> in_call_{false}, timed_out_{false};
   std::atomic<Clock::rep> call_started_{0};
   std::mutex done_lock_;
@@ -1465,8 +1641,7 @@ class Connection {
     }
   }
 
-  void reply(int status, std::string body, size_t limit = kMaxResponse) {
-    if (body.size() > limit) { status = 500; body = "{\"error\":\"response_limit\"}"; }
+  static std::string head(int status) {
     char date[64];
     const std::time_t now = std::time(nullptr);
     std::tm tm{};
@@ -1475,15 +1650,45 @@ class Connection {
     std::string out = "HTTP/1.0 " + std::to_string(status) + " " + reason_phrase(status) + "\r\n";
     out += "Server: LFM3Local \r\nDate: ";  // http.server: server_version + " " + sys_version ("")
     out += date;
-    out += "\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: " + std::to_string(body.size()) +
-           "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n" + body;
+    return out;
+  }
+  // false: the peer is gone or not reading (a send failed or timed out).
+  bool send_all(const std::string& out) {
     size_t sent = 0;
     while (sent < out.size()) {
       const auto n = ::send(fd_, out.data() + sent, out.size() - sent, MSG_NOSIGNAL);
       if (n < 0 && errno == EINTR) continue;
-      if (n <= 0) return;  // a disconnected or non-reading peer cannot receive a second reply
+      if (n <= 0) return false;
       sent += size_t(n);
     }
+    return true;
+  }
+  void reply(int status, std::string body, size_t limit = kMaxResponse) {
+    if (body.size() > limit) { status = 500; body = "{\"error\":\"response_limit\"}"; }
+    std::string out = head(status);
+    out += "\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: " + std::to_string(body.size()) +
+           "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n" + body;
+    send_all(out);  // a disconnected or non-reading peer cannot receive a second reply
+  }
+  // A streamed /speech reply: 200 and newline-delimited JSON, no Content-Length (HTTP/1.0: the body ends when the
+  // connection closes). The status line goes out with the first event.
+  void stream_speech(std::shared_ptr<const Json> parsed) {
+    bool headed = false;
+    service_.speech_stream(std::move(parsed), [&](const std::string& line) {
+      std::string out;
+      if (!headed) {
+        out = head(200) + "\r\nContent-Type: application/x-ndjson; charset=utf-8\r\nCache-Control: no-store\r\n"
+                          "Connection: close\r\n\r\n";
+        headed = true;
+      }
+      out += line;
+      out += '\n';
+      return send_all(out);
+    }, [&] {
+      // the peer closed (or reset) the connection; HTTP/1.0 clients keep their sending side open until the reply
+      pollfd p{fd_, POLLRDHUP, 0};
+      return ::poll(&p, 1, 0) > 0 && (p.revents & (POLLRDHUP | POLLHUP | POLLERR));
+    });
   }
 
   void get(const Request& r) {
@@ -1548,7 +1753,20 @@ class Connection {
       if (r.path == "/sessions") result = service_.create(request);
       else if (r.path == "/generate") result = service_.generate(std::move(parsed));
       else if (r.path == "/generate_batch") result = service_.generate_batch(std::move(parsed));
-      else if (r.path == "/speech") { reply(200, service_.speech(std::move(parsed)), kMaxSpeechResponse); return; }
+      else if (r.path == "/speech") {
+        // "stream" is checked as a field by validate_speech: only a literal true streams
+        bool stream = false;
+        if (const auto* o = std::get_if<Json::Object>(&request.value)) {
+          const auto it = o->find("stream");
+          stream = it != o->end() && std::holds_alternative<bool>(it->second.value) && std::get<bool>(it->second.value);
+        }
+        if (stream) {
+          stream_speech(std::move(parsed));
+          return;
+        }
+        reply(200, service_.speech(std::move(parsed)), kMaxSpeechResponse);
+        return;
+      }
       else {
         // /sessions/<32 URL-safe characters>/(reset|close|cancel)
         const std::string prefix = "/sessions/";

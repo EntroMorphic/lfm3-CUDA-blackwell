@@ -32,6 +32,17 @@ class CoreBackend final : public lfm::http::Backend {
     if(!core_->handle(line,false,out)) throw std::runtime_error("engine shut down");
     return out.str();
   }
+  std::string call_streaming(const std::string& line,const Progress& progress) override {
+    if(closed_) throw std::runtime_error("engine closed");
+    struct Hook {
+      WorkerCore& core;
+      ~Hook() {core.progress=nullptr;}
+    } hook{*core_};
+    core_->progress=progress;
+    std::ostringstream out;
+    if(!core_->handle(line,false,out)) throw std::runtime_error("engine shut down");
+    return out.str();
+  }
   int cancellation_fd() const override {return pipe_[1];}
   // The engine may hold a faulted CUDA context: refuse further calls, and let process exit release it.
   void close() override {closed_=true;}

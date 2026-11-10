@@ -120,7 +120,10 @@ class Session {
         r = m.on_text(token);
         res.text_tokens.push_back(token);
         res.steps.push_back({false, r.decode, r.token, {}});
-        if (r.emitted) res.slots.push_back(r.slot);
+        if (r.emitted) {
+          res.slots.push_back(r.slot);
+          if (o.on_slot) o.on_slot(r.slot);
+        }
         if (r.decode) {
           const auto a = std::chrono::steady_clock::now();
           dec_.step({r.token});
@@ -159,13 +162,16 @@ class Session {
         if (!r.eos) sampler.accept(r.fed);
         if (r.emitted) {
           res.slots.push_back(r.slot);
+          if (o.on_slot) o.on_slot(r.slot);
           if (!r.eos) {  // the codec takes speech frames only
             res.frames.push_back(r.fed);
             pending.insert(pending.end(), r.fed.begin(), r.fed.end());
             if (pending.size() == 12 * 12) {
               const auto a = std::chrono::steady_clock::now();
+              const size_t before = res.wav.size();
               codec_.decode(pending.data(), 12, false, res.wav), pending.clear();
               res.codec_seconds += secs(a);
+              if (o.on_audio && res.wav.size() > before) o.on_audio(res.wav.data() + before, res.wav.size() - before);
             }
           }
         }
@@ -183,9 +189,11 @@ class Session {
     if ((!o.forced_tokens.empty() || !o.forced_frames.empty()) &&
         (forced_token != o.forced_tokens.size() || forced_frame != o.forced_frames.size()))
       throw std::runtime_error("speech: forced replay ended with tokens or frames unused");
+    const size_t before = res.wav.size();
     codec_.decode(pending.empty() ? nullptr : pending.data(), int(pending.size() / 12), o.codec_finalize, res.wav);
     cuda_check(cudaDeviceSynchronize());
     stream_open_ = !o.codec_finalize;
+    if (o.on_audio && res.wav.size() > before) o.on_audio(res.wav.data() + before, res.wav.size() - before);
     const auto t2 = std::chrono::steady_clock::now();
     res.prefill_seconds = std::chrono::duration<double>(t1 - t0).count();
     res.generate_seconds = std::chrono::duration<double>(t2 - t1).count();

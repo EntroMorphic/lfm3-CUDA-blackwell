@@ -4,7 +4,7 @@
 // including deadlines, abandonment, cancellation, batching and fatal failure, runs on any host.
 //
 //   lfm3-http-harness CHECKPOINT_DIR [--mode phrase|stop] [--token-delay-ms N] [--create-delay-ms N]
-//                     [--speech on|off] [--audio-input on|off] [--speech-truncate K] [--fail-op OP] [--fail-after N] [--port N] [--request-timeout S] [--socket-timeout S]
+//                     [--speech on|off] [--audio-input on|off] [--speech-truncate K] [--speech-stream-fault KIND] [--fail-op OP] [--fail-after N] [--port N] [--request-timeout S] [--socket-timeout S]
 //                     [--session-idle-timeout S] [--total-capacity N] [--max-sessions N] [--queue-size N]
 //                     [--handlers N]
 // Token from LFM3_SERVER_TOKEN. Prints {"ready":true,"port":N}. SIGTERM exits like liquid-lfm3-server.
@@ -34,7 +34,13 @@ class FakeEngine final : public lfm::http::Backend {
   // prompts the Service sent, audio placeholders expanded), the slots are the phrase with an <|audio_out|> after each
   // token (interleaved), audio_out only (audio) or the phrase only (text), and the WAV is a fixed 4-sample file. --token-delay-ms sleeps per chunk and honours
   // cancellation there.
-  void speech(const Json& request, int rpc, std::ostringstream& out) {
+  // Streamed ("stream": true, through call_streaming), as WorkerCore streams: per chunk, after --token-delay-ms and a
+  // cancellation check, the phrase's text slots (chunk 0 only), one audio piece of 2 samples (bytes k, seed % 256, 255,
+  // 127 for chunk k) and the chunk's end; the reply then has no WAV and "samples" 2 per chunk run. --speech-stream-fault KIND
+  // makes the stream disagree with the reply (KIND: samples, slots, chunk, malformed).
+  void speech(const Json& request, int rpc, std::ostringstream& out, const Progress* progress = nullptr) {
+    const bool stream = request.has("stream") && request.at("stream").boolean();
+    if (stream && !progress) throw std::runtime_error("speech streaming needs the in-process server");
     // WorkerCore::speech's refusals, so a request the Service accepts but the engine would refuse fails the
     // harness closed here too (a test then sees 503)
     const auto mode = request.at("mode").string();
@@ -52,7 +58,7 @@ class FakeEngine final : public lfm::http::Backend {
       for (const auto& x : c.array())
         if (x.integer() < 0 || x.integer() >= int(tokenizer_.token_count())) throw std::runtime_error("speech prompt id out of range");
       lengths.push_back(c.array().size());  // every chunk validated first, as WorkerCore does
-      if (token_delay_ms_ > 0) std::this_thread::sleep_for(std::chrono::milliseconds(token_delay_ms_));
+      if (token_delay_ms_ > 0 && !stream) std::this_thread::sleep_for(std::chrono::milliseconds(token_delay_ms_));
       if (reader_->requested(rpc)) { out << "{\"rpc_id\":" << rpc << ",\"ok\":true,\"cancelled\":true}\n"; return; }
     }
     // audio input (#3), as WorkerCore checks it: each clip decoded, and the spans matching the clips
@@ -74,9 +80,24 @@ class FakeEngine final : public lfm::http::Backend {
     }
     const bool truncated = speech_truncate_ > 0 && size_t(speech_truncate_) < lengths.size();
     if (truncated) lengths.resize(size_t(speech_truncate_));
+    if (stream) {
+      for (size_t k = 0; k < lengths.size(); ++k) {
+        if (token_delay_ms_ > 0) std::this_thread::sleep_for(std::chrono::milliseconds(token_delay_ms_));
+        if (reader_->requested(rpc)) { out << "{\"rpc_id\":" << rpc << ",\"ok\":true,\"cancelled\":true}\n"; return; }
+        if (k == 0 && mode != "audio")
+          for (const int id : phrase_) (*progress)("{\"text\":[" + std::to_string(id) + "]}");
+        if (stream_fault_ == "malformed") (*progress)("{\"audio\":\"AAA\"}");
+        const unsigned char seed = (unsigned char)(request.has("seed") ? request.at("seed").integer() : 0);
+        const unsigned char pcm[4] = {(unsigned char)k, seed, 255, 127};
+        (*progress)("{\"audio\":\"" + lfm::base64::encode(std::string(reinterpret_cast<const char*>(pcm), 4)) + "\"}");
+        (*progress)("{\"chunk\":{\"frames\":" + std::to_string(lengths[k] + (stream_fault_ == "chunk")) +
+                    ",\"slots\":1,\"ended_by_eos\":" + (k % 2 ? "false" : "true") + "}}");
+      }
+    }
     out << "{\"rpc_id\":" << rpc << ",\"ok\":true,\"cancelled\":false,\"truncated\":" << (truncated ? "true" : "false") << ",\"slots\":[";
     bool first = true;
     for (const int id : phrase_) {
+      if (stream && stream_fault_ == "slots" && first) { out << id; first = false; }  // one text slot too many
       if (mode != "audio") { out << (first ? "" : ",") << id; first = false; }
       if (mode != "text") { out << (first ? "" : ",") << lfm::http::kAudioOutToken; first = false; }
     }
@@ -85,6 +106,11 @@ class FakeEngine final : public lfm::http::Backend {
     for (size_t k = 0; k < lengths.size(); ++k) {
       out << (k ? "," : "") << "{\"frames\":" << lengths[k] << ",\"slots\":1,\"ended_by_eos\":" << (k % 2 ? "false" : "true") << "}";
       frames += lengths[k];
+    }
+    if (stream) {
+      out << "],\"frames\":" << frames << ",\"samples\":" << 2 * lengths.size() + (stream_fault_ == "samples")
+          << ",\"audio_seconds\":0.000166666,\"prefill_seconds\":0.25,\"generate_seconds\":0.5}\n";
+      return;
     }
     out << "],\"frames\":" << frames << ",\"samples\":4,\"audio_seconds\":0.000166666,\"prefill_seconds\":0.25,"
         << "\"generate_seconds\":0.5,\"wav_base64\":\"UklGRiwAAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0YQgAAAAAAAEA//8AgA==\"}\n";
@@ -101,7 +127,9 @@ class FakeEngine final : public lfm::http::Backend {
   int cancellation_fd() const override { return pipe_[1]; }
   void close() override { closed_ = true; }
 
-  std::string call(const std::string& line) override {
+  std::string call(const std::string& line) override { return dispatch(line, nullptr); }
+  std::string call_streaming(const std::string& line, const Progress& progress) override { return dispatch(line, &progress); }
+  std::string dispatch(const std::string& line, const Progress* progress) {
     if (closed_) throw std::runtime_error("engine closed");
     std::ostringstream out;
     int rpc = 0;
@@ -113,7 +141,7 @@ class FakeEngine final : public lfm::http::Backend {
       const auto op = request.at("op").string();
       if (op == fail_op_ && ++fail_count_ >= fail_after_) throw std::runtime_error("injected failure");
       if (op == "generate_batch") { batch(request, rpc, out); return out.str(); }
-      if (op == "speech") { speech(request, rpc, out); return out.str(); }
+      if (op == "speech") { speech(request, rpc, out, progress); return out.str(); }
       const auto id = request.at("session_id").string();
       if (op == "create") {
         std::this_thread::sleep_for(std::chrono::milliseconds(create_delay_ms_));
@@ -228,6 +256,7 @@ class FakeEngine final : public lfm::http::Backend {
   std::string fail_op_;
  public:
   int speech_truncate_ = 0;
+  std::string stream_fault_;  // --speech-stream-fault
   bool audio_input_ = true;  // --audio-input: WorkerCore::audio_input_supported  // --speech-truncate K: answer only the first K chunks, as a request the step budget cut
  private:
   int fail_after_, fail_count_ = 0;
@@ -249,6 +278,7 @@ int main(int argc, char** argv) try {
   bool speech = true;  // --speech off: the engine reports no speech support (a text-only checkpoint or build)
   bool audio_input = true;  // --audio-input off: speech without audio input (no encoder for the checkpoint)
   int speech_truncate = 0;
+  std::string stream_fault;
   for (int i = 2; i < argc; i += 2) {
     const std::string o = argv[i], v = argv[i + 1];
     if (o == "--mode") mode = v;
@@ -258,6 +288,7 @@ int main(int argc, char** argv) try {
     else if (o == "--speech") speech = v == "on";
     else if (o == "--audio-input") audio_input = v == "on";
     else if (o == "--speech-truncate") speech_truncate = std::stoi(v);
+    else if (o == "--speech-stream-fault") stream_fault = v;
     else if (o == "--fail-after") fail_after = std::stoi(v);
     else if (o == "--port") port = std::stoi(v);
     else if (o == "--request-timeout") settings.request_timeout = std::stod(v);
@@ -295,6 +326,7 @@ int main(int argc, char** argv) try {
   const auto tokenizer = lfm::lfm3_text::Tokenizer::load(directory + "/tokenizer.json");
   FakeEngine engine(tokenizer, policy.stops, mode, token_delay, create_delay, fail_op, fail_after);
   engine.speech_truncate_ = speech_truncate;
+  engine.stream_fault_ = stream_fault;
   engine.audio_input_ = speech && audio_input;
   auto service = std::make_unique<lfm::http::Service>(engine, tokenizer, policy, settings);
   auto server = std::make_unique<lfm::http::Server>(*service, token, port);
