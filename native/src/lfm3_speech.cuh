@@ -14,43 +14,17 @@
 // Forced mode replays given tokens and frames instead of picking and sampling, and records the hidden state every
 // frame step reads: the deterministic check of the whole loop.
 #include <lfm/audio_modes.hpp>
+#include <lfm/speech_run.hpp>
 #include <lfm/audio_sampling.hpp>
 #include <lfm/codec.cuh>
 #include <lfm/depth.cuh>
 
 #include <chrono>
+#include <cmath>
 #include <deque>
+#include <functional>
 
 namespace lfm3_speech {
-
-struct Options {
-  lfm::audio::Requested mode = lfm::audio::Requested::Audio;
-  int max_new_tokens = 512;
-  uint64_t seed = 0;
-  bool return_audio_eos = false;
-  // forced replay: the text tokens and the raw frames to use, in order (empty: pick and sample)
-  std::vector<int> forced_tokens;
-  std::vector<lfm::audio::Frame> forced_frames;
-  bool record_hidden = false;
-  // long-form TTS by sentences (tools/lfm3_speech_chunked_hf.py): each sentence is its own request, and the codec
-  // stream runs on across them: codec_continue skips the reset, codec_finalize = false keeps the stream's tail open
-  bool codec_continue = false, codec_finalize = true;
-};
-
-struct Result {
-  std::vector<int> prompt, slots, text_tokens;
-  std::vector<lfm::audio::Frame> frames;    // emitted (codec input)
-  std::vector<lfm::audio::Frame> raw_frames;  // as sampled, EOS frames included
-  std::vector<float> wav;
-  std::vector<std::vector<uint16_t>> hidden;  // per frame step, the BF16 bits of the state the depth decoder read
-  std::vector<std::vector<uint16_t>> embeds;  // per decoded step (record_hidden), the BF16 input embedding fed
-  struct StepRecord { bool frame, decode; int token; lfm::audio::Frame fed; };
-  std::vector<StepRecord> steps;
-  int decode_steps = 0;
-  double prefill_seconds = 0, generate_seconds = 0;
-  // where the generation time goes (host wall time, each phase synchronized at its end)
-  double lm_step_seconds = 0, text_pick_seconds = 0, depth_seconds = 0, sample_host_seconds = 0, codec_seconds = 0;
-};
 
 class Session {
  public:
@@ -90,6 +64,7 @@ class Session {
     size_t forced_token = 0, forced_frame = 0;
     std::vector<int> last_suppressed;
     for (Step st; (st = m.next()) != Step::Done;) {
+      if (o.cancelled && o.cancelled()) throw Cancelled();
       Outcome r;
       if (st == Step::Text) {
         int token;
@@ -196,4 +171,5 @@ class Session {
   bool stream_open_ = false;  // the last call returned normally with codec_finalize = false
 };
 
+// (run_chunks and wav_bytes, used by lfm3-speech and liquid-lfm3-server alike, are in lfm/speech_run.hpp)
 }  // namespace lfm3_speech

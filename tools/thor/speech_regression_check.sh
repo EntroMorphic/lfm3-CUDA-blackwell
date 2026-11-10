@@ -39,6 +39,9 @@ for name, key in (("forced-leftover-token", "forced_tokens"), ("forced-leftover-
     json.dump(r, open(f"{o}/req/{name}.json", "w"))
 PY
 for t in forced-leftover-token forced-leftover-frame; do out=$($X $C/$T-check/req/$t.json $C/$T-check/ref-$t 2>&1 >/dev/null); s=$?; echo "REFUSE $t: status $s, outputs left $(ls $O/ref-$t.* 2>/dev/null | wc -l): $out"; done
+# a request file that is one of the stem's outputs is refused (and survives)
+cp $B/speech-e2e-v1/requests/tts-fox-female-s1.req.json $O/self.json
+out=$($X $C/$T-check/self.json $C/$T-check/self 2>&1 >/dev/null); st=$?; echo "REFUSE request-is-output: status $st, request kept $(test -s $O/self.json && echo yes || echo no): $out"
 # stale optional outputs are removed: an earlier run left hidden/embeds under this stem
 cp $O/forced-tts-fox-female.hidden.bf16 $O/unsplit-tts-fox-female-s1.hidden.bf16
 $X $C/speech-e2e-v1/requests/tts-fox-female-s1.req.json $C/$T-check/unsplit-tts-fox-female-s1 >/dev/null

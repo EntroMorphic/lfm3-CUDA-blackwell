@@ -32,17 +32,9 @@
 
 namespace {
 void write_wav(const std::string& path, const std::vector<float>& x, int rate) {
+  const auto bytes = lfm3_speech::wav_bytes(x, rate);
   std::ofstream f(path, std::ios::binary);
-  auto u32 = [&](uint32_t v) { f.write(reinterpret_cast<const char*>(&v), 4); };
-  auto u16 = [&](uint16_t v) { f.write(reinterpret_cast<const char*>(&v), 2); };
-  const uint32_t bytes = uint32_t(x.size() * 2);
-  f.write("RIFF", 4); u32(36 + bytes); f.write("WAVEfmt ", 8); u32(16); u16(1); u16(1); u32(rate); u32(rate * 2);
-  u16(2); u16(16); f.write("data", 4); u32(bytes);
-  for (float v : x) {
-    const float c = std::max(-1.0f, std::min(1.0f, v));
-    const int16_t s = int16_t(std::lrint(c * 32767.0f));
-    f.write(reinterpret_cast<const char*>(&s), 2);
-  }
+  f.write(bytes.data(), std::streamsize(bytes.size()));
   if (!f) throw std::runtime_error("cannot write " + path);
 }
 template <class T>
@@ -60,8 +52,11 @@ int main(int argc, char** argv) try {
   const std::string mode = req.has("mode") ? req.at("mode").string() : "audio";
   if (mode != "audio" && mode != "interleaved" && mode != "text" && mode != "none")
     throw std::runtime_error("mode must be audio, interleaved, text or none");
-  for (const char* ext : {".wav", ".f32", ".frames.i32", ".raw.i32", ".hidden.bf16", ".embeds.bf16", ".json"})
-    std::filesystem::remove(stem + ext);
+  const auto outputs = {".wav", ".f32", ".frames.i32", ".raw.i32", ".hidden.bf16", ".embeds.bf16", ".json"};
+  for (const char* ext : outputs)  // the request is read already; removing it as an "earlier output" would lose it
+    if (std::filesystem::weakly_canonical(stem + ext) == std::filesystem::weakly_canonical(argv[2]))
+      throw std::runtime_error("the request file is one of OUT_STEM's outputs; use another stem");
+  for (const char* ext : outputs) std::filesystem::remove(stem + ext);
   const int capacity = req.has("capacity") ? req.at("capacity").integer() : 4096;
   auto cfg = lfm::ModelConfig::load(std::string(argv[1]) + "/config.json", capacity);
   Runner runner(argv[1], cfg);
@@ -116,31 +111,8 @@ int main(int argc, char** argv) try {
       throw std::runtime_error("prompt (" + std::to_string(p.size()) + ") + max_new_tokens exceeds capacity (" +
                                std::to_string(capacity) + ")");
   }
-  lfm3_speech::Result r;
-  struct ChunkInfo { size_t frames, slots; bool eos; };
-  std::vector<ChunkInfo> chunk_info;
-  const uint64_t seed = o.seed;
-  for (size_t k = 0; k < prompts.size(); ++k) {
-    if (chunked) o.seed = seed * 1000 + k;
-    o.codec_continue = k > 0, o.codec_finalize = k + 1 == prompts.size();
-    auto c = session.generate(prompts[k], o);
-    const auto& eos_frame = c.raw_frames.empty() ? lfm::audio::Frame{} : c.raw_frames.back();
-    const bool ended = !c.raw_frames.empty() &&
-                       std::find(eos_frame.begin(), eos_frame.end(), lfm::audio::kEosCode) != eos_frame.end() &&
-                       !c.slots.empty() && c.slots.back() == lfm::audio::ModeTokens{}.eos[0];
-    chunk_info.push_back({c.frames.size(), c.slots.size(), ended});
-    if (k == 0) {
-      r = std::move(c);
-      continue;
-    }
-    auto cat = [](auto& to, auto& from) { to.insert(to.end(), from.begin(), from.end()); };
-    cat(r.slots, c.slots), cat(r.text_tokens, c.text_tokens), cat(r.frames, c.frames), cat(r.raw_frames, c.raw_frames);
-    cat(r.wav, c.wav), cat(r.hidden, c.hidden), cat(r.embeds, c.embeds), cat(r.steps, c.steps);
-    r.decode_steps += c.decode_steps;
-    r.prefill_seconds += c.prefill_seconds, r.generate_seconds += c.generate_seconds;
-    r.lm_step_seconds += c.lm_step_seconds, r.text_pick_seconds += c.text_pick_seconds;
-    r.depth_seconds += c.depth_seconds, r.sample_host_seconds += c.sample_host_seconds, r.codec_seconds += c.codec_seconds;
-  }
+  std::vector<lfm3_speech::ChunkInfo> chunk_info;
+  const auto r = lfm3_speech::run_chunks(session, prompts, o, chunked, chunk_info);
   write_wav(stem + ".wav", r.wav, 24000);
   write_raw(stem + ".f32", r.wav.data(), r.wav.size());
   std::vector<int32_t> fr, raw;
@@ -173,7 +145,7 @@ int main(int argc, char** argv) try {
     f << ",\"chunks\":[";
     for (size_t k = 0; k < chunk_info.size(); ++k)
       f << (k ? "," : "") << "{\"frames\":" << chunk_info[k].frames << ",\"slots\":" << chunk_info[k].slots
-        << ",\"ended_by_eos\":" << (chunk_info[k].eos ? "true" : "false")
+        << ",\"ended_by_eos\":" << (chunk_info[k].ended_by_eos ? "true" : "false")
         << (chunk_texts.empty() ? "" : ",\"text\":" + lfm::lfm3_text::json_string(chunk_texts[k])) << "}";
     f << "]";
   }

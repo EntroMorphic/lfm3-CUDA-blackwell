@@ -99,6 +99,7 @@ int main(int argc,char** argv) try {
   policy.vocabulary=backend.core().vocabulary();
   policy.suppress=backend.core().suppressed_tokens();
   policy.stops=backend.core().stop_tokens();
+  policy.speech=backend.core().speech_supported();
   for(auto* ids:{&policy.suppress,&policy.stops}) {
     std::sort(ids->begin(),ids->end());ids->erase(std::unique(ids->begin(),ids->end()),ids->end());
   }

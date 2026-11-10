@@ -7,6 +7,10 @@
 #include <lfm/text_cancellation.hpp>
 #include <lfm/text_batch_cancellation.hpp>
 #include <lfm/lfm3_text_request.hpp>
+#ifdef LFM3_NATIVE_GEMM  // speech (#2) was validated only with the native GEMM; other builds refuse op "speech"
+#include "lfm3_batch.cuh"
+#include "lfm3_speech.cuh"
+#endif
 #include <map>
 #include <iomanip>
 #include <sstream>
@@ -20,6 +24,21 @@ std::string quote(const std::string& value) {
     else {const char* hex="0123456789abcdef";out<<"\\u00"<<hex[c>>4]<<hex[c&15];}
   }
   out<<'"';return out.str();
+}
+std::string base64(const std::string& bytes) {
+  static const char* t="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  std::string out;out.reserve((bytes.size()+2)/3*4);
+  size_t i=0;
+  for(;i+2<bytes.size();i+=3) {
+    const unsigned v=(unsigned char)bytes[i]<<16|(unsigned char)bytes[i+1]<<8|(unsigned char)bytes[i+2];
+    out+=t[v>>18];out+=t[(v>>12)&63];out+=t[(v>>6)&63];out+=t[v&63];
+  }
+  if(i+1==bytes.size()) {const unsigned v=(unsigned char)bytes[i]<<16;out+=t[v>>18];out+=t[(v>>12)&63];out+="==";}
+  else if(i+2==bytes.size()) {
+    const unsigned v=(unsigned char)bytes[i]<<16|(unsigned char)bytes[i+1]<<8;
+    out+=t[v>>18];out+=t[(v>>12)&63];out+=t[(v>>6)&63];out+='=';
+  }
+  return out;
 }
 std::string session_id(const lfm::Json& req) {
   auto id=req.at("session_id").string();
@@ -87,6 +106,7 @@ void schema(const lfm::Json& request,const std::string& op) {
     if(op=="create" && key=="capacity") continue;
     if(op=="generate" && generate.count(key)) continue;
     if(op=="generate_batch" && (key=="op" || key=="rpc_id" || key=="lanes")) continue;
+    if(op=="speech" && (key=="chunks" || key=="mode" || key=="max_new_tokens" || key=="seed" || key=="chunked")) continue;
     throw std::runtime_error("unsupported request field: "+key);
   }
 }
@@ -286,6 +306,20 @@ class WorkerCore {
     choice_suppressed=below(suppressed,live);
     for(int id:stops) if(id>=live) throw std::runtime_error("stop token outside the tokenizer vocabulary");
     text.path=directory+"/tokenizer.json";text.live=live;
+#ifdef LFM3_NATIVE_GEMM
+    // Speech needs an Omni checkpoint with its codec, whose special ids are the ones lfm/audio_modes.hpp fixes.
+    if(cfg.architecture==lfm::ModelConfig::Architecture::Lfm3Omni &&
+       std::filesystem::exists(directory+"/audio_tokenizer/model.safetensors")) {
+      const lfm::audio::ModeTokens t{};
+      std::vector<int> placeholders;
+      for(auto name:{"audio_token_id","audio_out_token_id","image_token_id","video_token_id"}) placeholders.push_back(model.at(name).integer());
+      std::vector<int> fixed=t.placeholders;
+      std::sort(placeholders.begin(),placeholders.end());std::sort(fixed.begin(),fixed.end());
+      speech_ok=model.at("audio_start_token_id").integer()==t.audio_start && model.at("audio_out_token_id").integer()==t.audio_out &&
+                model.at("mixed_start_token_id").integer()==t.mixed_start && model.at("text_end_token_id").integer()==t.text_end &&
+                placeholders==fixed && std::find(cfg.eos.begin(),cfg.eos.end(),t.eos[0])!=cfg.eos.end() && live>t.audio_out;
+    }
+#endif
   }
   void ready(std::ostream& out) const {
     out<<"{\"ready\":true,\"protocol\":2,\"max_sessions\":2,\"aggregate_capacity\":32768,\"gpu_batching\":false,\"decode_batching\":true,\"cancellation\":"
@@ -298,6 +332,9 @@ class WorkerCore {
   const std::vector<int>& suppressed_tokens() const {return suppressed;}
   const std::vector<int>& stop_tokens() const {return stops;}
   const lfm::lfm3_text::Tokenizer& tokenizer() {return text.get();}
+  // Whether op "speech" can run (native-GEMM build, an Omni checkpoint with its codec and the expected special ids);
+  // the HTTP layer refuses /speech up front otherwise, since any engine refusal fails the server closed.
+  bool speech_supported() const {return speech_ok;}
 #endif
   // One protocol line (`oversized`: the line exceeded 4 MiB). Writes exactly one reply line to `out`;
   // returns false after a shutdown request.
@@ -339,6 +376,7 @@ class WorkerCore {
        generate_batch(request,rpc_id,directory,cfg,suppressed,live,stops,sampling_trace_root,weights,sessions,ledger,cancellation,text,out);
        return true;
      }
+     if(op=="speech") {speech(request,rpc_id,out);return true;}
      const auto id=session_id(request);
     if(op=="create") {
       int capacity=request.at("capacity").integer();lfm::text::scratch_rows(capacity);
@@ -466,6 +504,76 @@ class WorkerCore {
   std::string directory,sampling_trace_root;
   lfm::text::CancellationReader cancellation;
   bool cancellation_enabled;
+  // Speech (#2, lfm3_speech.cuh): one request at a time on its own runner (capacity kSpeechCapacity per chunk),
+  // sharing the loaded weights; created on first use. Same loop as lfm3-speech (run_chunks), so the same bytes.
+  static constexpr int kSpeechCapacity=4096;
+  // Decode steps per request, across all its chunks (lfm3_speech::run_chunks): bounds its worst-case time under the
+  // default engine timeout (validation/speech-server-v1: ~40 frames/s measured with locked clocks, ~34 assumed).
+  static constexpr size_t kSpeechStepBudget=6144;
+  bool speech_ok=false;
+#ifdef LFM3_NATIVE_GEMM
+  std::unique_ptr<Runner> speech_runner;
+  std::unique_ptr<lfm3_speech::Session> speech_session;
+#endif
+  // {"op":"speech","chunks":[[ids..],..],"mode":"audio"|"interleaved","max_new_tokens":N,"seed":S,"chunked":B}
+  // -> {"ok":true,"cancelled":false,"truncated":B,"slots":[..],"chunks":[{"frames","slots","ended_by_eos"}],"frames",
+  //     "samples","audio_seconds","prefill_seconds","generate_seconds","wav_base64"}   (cancelled: only "cancelled")
+  void speech(const lfm::Json& request,int rpc_id,std::ostream& out) {
+#ifndef LFM3_NATIVE_GEMM
+    (void)request;(void)rpc_id;(void)out;
+    throw std::runtime_error("speech requires the native GEMM build (LIQUID_LFM3_NATIVE_GEMM=ON)");
+#else
+    if(!speech_ok) throw std::runtime_error("speech is not supported by this checkpoint");
+    const auto mode=request.at("mode").string();
+    if(mode!="audio" && mode!="interleaved") throw std::runtime_error("speech mode must be audio or interleaved");
+    const int count=request.at("max_new_tokens").integer();
+    if(count<1 || count>=kSpeechCapacity) throw std::runtime_error("speech max_new_tokens out of range");
+    const long long seed=request.has("seed")?request.at("seed").integer():0;
+    if(seed<0) throw std::runtime_error("speech seed must be nonnegative");
+    const bool chunked=request.has("chunked") && request.at("chunked").boolean();
+    std::vector<std::vector<int>> prompts;
+    for(const auto& c:request.at("chunks").array()) {
+      prompts.emplace_back();
+      for(const auto& x:c.array()) {
+        const int id=x.integer();
+        if(id<0 || id>=live) throw std::runtime_error("speech prompt id out of range");
+        prompts.back().push_back(id);
+      }
+      if(prompts.back().empty() || prompts.back().size()+size_t(count)>size_t(kSpeechCapacity))
+        throw std::runtime_error("speech prompt empty or over capacity");
+    }
+    if(prompts.empty() || (!chunked && prompts.size()!=1)) throw std::runtime_error("speech needs one prompt, or chunks");
+    if(!weights) weights=std::make_shared<lfm::Safetensors>(directory+"/model.safetensors");
+    if(!speech_session) {  // both or neither: a failed construction leaves nothing half-built allocated
+      auto runner=std::make_unique<Runner>(directory,lfm::ModelConfig::load(directory+"/config.json",kSpeechCapacity),weights);
+      auto session=std::make_unique<lfm3_speech::Session>(*runner,directory);
+      speech_runner=std::move(runner);speech_session=std::move(session);
+    }
+    lfm3_speech::Options o;
+    o.mode=mode=="audio"?lfm::audio::Requested::Audio:lfm::audio::Requested::Interleaved;
+    o.max_new_tokens=count;o.seed=uint64_t(seed);
+    o.cancelled=[&] {return cancellation_enabled && cancellation.requested(uint64_t(rpc_id));};
+    std::vector<lfm3_speech::ChunkInfo> info;
+    lfm3_speech::Result r;
+    bool truncated=false;
+    try {r=lfm3_speech::run_chunks(*speech_session,prompts,o,chunked,info,kSpeechStepBudget,&truncated);}
+    catch(const lfm3_speech::Cancelled&) {
+      out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"cancelled\":true}\n"<<std::flush;return;
+    }
+    const std::string wav=base64(lfm3_speech::wav_bytes(r.wav,24000));  // before any output: a throw leaves no half line
+    std::ostringstream line;line<<std::setprecision(std::numeric_limits<double>::max_digits10);
+    line<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"cancelled\":false,\"truncated\":"<<(truncated?"true":"false")<<",\"slots\":[";
+    for(size_t i=0;i<r.slots.size();++i) line<<(i?",":"")<<r.slots[i];
+    line<<"],\"chunks\":[";
+    for(size_t k=0;k<info.size();++k)
+      line<<(k?",":"")<<"{\"frames\":"<<info[k].frames<<",\"slots\":"<<info[k].slots<<",\"ended_by_eos\":"
+          <<(info[k].ended_by_eos?"true":"false")<<"}";
+    line<<"],\"frames\":"<<r.frames.size()<<",\"samples\":"<<r.wav.size()<<",\"audio_seconds\":"<<r.wav.size()/24000.0
+        <<",\"prefill_seconds\":"<<r.prefill_seconds<<",\"generate_seconds\":"<<r.generate_seconds
+        <<",\"wav_base64\":\""<<wav<<"\"}\n";
+    out<<line.str()<<std::flush;
+#endif
+  }
   lfm::ModelConfig cfg;
   std::vector<int> suppressed,stops,choice_suppressed;
   int live=0;

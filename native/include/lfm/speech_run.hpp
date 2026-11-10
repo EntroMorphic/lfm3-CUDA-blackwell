@@ -1,0 +1,139 @@
+#pragma once
+// The host-side parts of the native speech path (#2): request options and results, the chunk loop over a speech
+// session (long-form TTS by sentences, with the server's step budget) and the WAV writer. Host-only, so the chunk
+// loop is tested on any host with a fake session (tests/test_speech_run.py); src/lfm3_speech.cuh holds the CUDA
+// Session and includes this.
+#include <lfm/audio_modes.hpp>
+#include <lfm/audio_sampling.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <functional>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace lfm3_speech {
+
+struct Options {
+  lfm::audio::Requested mode = lfm::audio::Requested::Audio;
+  int max_new_tokens = 512;
+  uint64_t seed = 0;
+  bool return_audio_eos = false;
+  // forced replay: the text tokens and the raw frames to use, in order (empty: pick and sample)
+  std::vector<int> forced_tokens;
+  std::vector<lfm::audio::Frame> forced_frames;
+  bool record_hidden = false;
+  // long-form TTS by sentences (tools/lfm3_speech_chunked_hf.py): each sentence is its own request, and the codec
+  // stream runs on across them: codec_continue skips the reset, codec_finalize = false keeps the stream's tail open
+  bool codec_continue = false, codec_finalize = true;
+  // polled before every step (null: never); true ends the call with Cancelled, the codec stream left closed
+  std::function<bool()> cancelled;
+};
+
+struct Cancelled : std::runtime_error {
+  Cancelled() : std::runtime_error("speech generation cancelled at a step boundary") {}
+};
+
+struct Result {
+  std::vector<int> prompt, slots, text_tokens;
+  std::vector<lfm::audio::Frame> frames;    // emitted (codec input)
+  std::vector<lfm::audio::Frame> raw_frames;  // as sampled, EOS frames included
+  std::vector<float> wav;
+  std::vector<std::vector<uint16_t>> hidden;  // per frame step, the BF16 bits of the state the depth decoder read
+  std::vector<std::vector<uint16_t>> embeds;  // per decoded step (record_hidden), the BF16 input embedding fed
+  struct StepRecord { bool frame, decode; int token; lfm::audio::Frame fed; };
+  std::vector<StepRecord> steps;
+  int decode_steps = 0;
+  double prefill_seconds = 0, generate_seconds = 0;
+  // where the generation time goes (host wall time, each phase synchronized at its end)
+  double lm_step_seconds = 0, text_pick_seconds = 0, depth_seconds = 0, sample_host_seconds = 0, codec_seconds = 0;
+};
+
+// One request as one or more chunks (long-form TTS by sentences): chunk k is its own generation, seeded
+// seed * 1000 + k when `chunked` (tools/lfm3_speech_chunked_hf.py), the codec stream running on across the chunks.
+// The results concatenate (prompt: the first chunk's). A chunk "ended_by_eos" as the HF tool decides it: its last
+// sampled frame is the EOS frame and its last slot is <|im_end|>.
+//
+// step_budget (0: none) bounds the steps of the whole request (sampled frames plus text picks), so its worst-case time
+// is bounded (the server's engine timeout). A chunk whose max_new_tokens could use up what remains gets the remainder
+// as its cap, finalizes the codec stream and is the last one run; *truncated then says whether the request stopped
+// short of its text because of the budget: chunks skipped, or the chunk whose cap the budget lowered used all of it
+// without ending by EOS. (A chunk cut by its own max_new_tokens shows only in its ended_by_eos.) A request that never
+// comes near the budget runs exactly as without one.
+struct ChunkInfo { size_t frames, slots; bool ended_by_eos; };
+
+template <class SessionT>
+inline Result run_chunks(SessionT& session, const std::vector<std::vector<int>>& prompts, Options o, bool chunked,
+                         std::vector<ChunkInfo>& info, size_t step_budget = 0, bool* truncated = nullptr) {
+  if (prompts.empty()) throw std::runtime_error("speech: no prompt");
+  if (chunked && (!o.forced_tokens.empty() || !o.forced_frames.empty())) throw std::runtime_error("chunks cannot be forced");
+  Result r;
+  info.clear();
+  if (truncated) *truncated = false;
+  const uint64_t seed = o.seed;
+  const int requested = o.max_new_tokens;
+  size_t used = 0;
+  for (size_t k = 0; k < prompts.size(); ++k) {
+    if (chunked) o.seed = seed * 1000 + k;
+    bool final_chunk = k + 1 == prompts.size(), capped = false;
+    if (step_budget) {
+      const size_t remaining = step_budget > used ? step_budget - used : 0;
+      if (remaining == 0) throw std::runtime_error("speech: step budget exhausted before a chunk");  // unreachable
+      if (remaining <= size_t(requested)) {
+        o.max_new_tokens = int(remaining);
+        capped = remaining < size_t(requested);  // the budget lowered its cap (at equality its own cap stands)
+        if (!final_chunk && truncated) *truncated = true;
+        final_chunk = true;
+      }
+    }
+    o.codec_continue = k > 0, o.codec_finalize = final_chunk;
+    auto c = session.generate(prompts[k], o);
+    const size_t chunk_steps = c.raw_frames.size() + c.text_tokens.size();  // one per step (audio_modes.hpp)
+    used += chunk_steps;
+    const auto& last = c.raw_frames.empty() ? lfm::audio::Frame{} : c.raw_frames.back();
+    const bool ended = !c.raw_frames.empty() &&
+                       std::find(last.begin(), last.end(), lfm::audio::kEosCode) != last.end() &&
+                       !c.slots.empty() && c.slots.back() == lfm::audio::ModeTokens{}.eos[0];
+    info.push_back({c.frames.size(), c.slots.size(), ended});
+    if (k == 0) {
+      r = std::move(c);
+    } else {
+      auto cat = [](auto& to, auto& from) { to.insert(to.end(), from.begin(), from.end()); };
+      cat(r.slots, c.slots), cat(r.text_tokens, c.text_tokens), cat(r.frames, c.frames), cat(r.raw_frames, c.raw_frames);
+      cat(r.wav, c.wav), cat(r.hidden, c.hidden), cat(r.embeds, c.embeds), cat(r.steps, c.steps);
+      r.decode_steps += c.decode_steps;
+      r.prefill_seconds += c.prefill_seconds, r.generate_seconds += c.generate_seconds;
+      r.lm_step_seconds += c.lm_step_seconds, r.text_pick_seconds += c.text_pick_seconds;
+      r.depth_seconds += c.depth_seconds, r.sample_host_seconds += c.sample_host_seconds, r.codec_seconds += c.codec_seconds;
+    }
+    if (final_chunk) {
+      // cut by its cap: it used all of it without ending (a chunk can also end by EOS on exactly its last step)
+      if (truncated && capped && chunk_steps >= size_t(o.max_new_tokens) && !info.back().ended_by_eos) *truncated = true;
+      break;
+    }
+  }
+  return r;
+}
+
+// The waveform as a 16-bit mono PCM WAV file (clipped to [-1, 1], rounded to nearest). A NaN or infinite sample is a
+// numeric fault upstream and throws (it would otherwise become a full-scale click).
+inline std::string wav_bytes(const std::vector<float>& x, int rate) {
+  std::string f;
+  auto u32 = [&](uint32_t v) { f.append(reinterpret_cast<const char*>(&v), 4); };
+  auto u16 = [&](uint16_t v) { f.append(reinterpret_cast<const char*>(&v), 2); };
+  if (x.size() > (size_t(1) << 30)) throw std::runtime_error("speech: audio too long for a WAV file");
+  const uint32_t bytes = uint32_t(x.size() * 2);
+  f.append("RIFF", 4); u32(36 + bytes); f.append("WAVEfmt ", 8); u32(16); u16(1); u16(1); u32(rate); u32(rate * 2);
+  u16(2); u16(16); f.append("data", 4); u32(bytes);
+  for (float v : x) {
+    if (!std::isfinite(v)) throw std::runtime_error("speech: non-finite sample in the waveform");  // a fault, not a click
+    const float c = std::max(-1.0f, std::min(1.0f, v));
+    const int16_t s = int16_t(std::lrint(c * 32767.0f));
+    f.append(reinterpret_cast<const char*>(&s), 2);
+  }
+  return f;
+}
+
+}  // namespace lfm3_speech

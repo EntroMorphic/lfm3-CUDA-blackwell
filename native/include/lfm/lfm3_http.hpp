@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <charconv>
 #include <atomic>
 #include <cerrno>
 #include <chrono>
@@ -59,6 +60,7 @@
 #include <vector>
 
 #include "lfm/lfm3_text.hpp"
+#include "lfm/speech_text.hpp"
 #include "lfm/model_config.hpp"
 
 namespace lfm::http {
@@ -66,6 +68,20 @@ namespace lfm::http {
 using Clock = std::chrono::steady_clock;
 inline constexpr size_t kMaxBody = 4 * 1024 * 1024;
 inline constexpr size_t kMaxResponse = 4 * 1024 * 1024;
+// POST /speech (#2): the WAV travels base64 in the JSON, so its replies (engine frame and HTTP body) get a larger
+// limit: 64 MiB of base64 holds about 17.5 minutes of 24 kHz 16-bit audio, far more than the step budget allows.
+// kSpeechCapacity is the engine's per-chunk capacity (WorkerCore::kSpeechCapacity). The engine bounds a request's
+// work itself (WorkerCore::kSpeechStepBudget, 6144 decode steps across all chunks, then truncation); this layer bounds
+// the rest of it: at most kSpeechMaxChunks chunks and kSpeechMaxPromptTokens prompt tokens (prefill), and an engine
+// request frame within kMaxBody. Worst case, at the slower rates assumed (34 frames/s, 4,700 prefill tokens/s,
+// 0.035 s per chunk): 6144/34 + 512 x 0.035 + 131072/4700 = about 227 s, under 80% of the default engine timeout
+// (validation/speech-server-v1).
+inline constexpr size_t kMaxSpeechResponse = 64 * 1024 * 1024;
+inline constexpr int kSpeechCapacity = 4096;
+inline constexpr size_t kSpeechMaxChunks = 512;
+inline constexpr size_t kSpeechMaxPromptTokens = 131072;
+inline constexpr double kSpeechMinEngineTimeout = 300;  // seconds; /speech is refused below it
+inline constexpr int kAudioOutToken = 125032;
 
 // An HTTP-visible refusal: status and error code, exactly as lfm3_server.APIError.
 struct ApiError : std::exception {
@@ -130,6 +146,39 @@ inline std::string exact_number(double v) {
   char buf[40];
   std::snprintf(buf, sizeof buf, "%.17g", v);
   return buf;
+}
+
+// A finite double as Python's json.dumps writes it (float.__repr__): the shortest digits that round-trip, in fixed
+// notation for decimal exponents -4..15 ("0.0001", "1.0", "123.5") and otherwise "d[.ddd]e[+-]XX" ("1e-05",
+// "1.5e+16"). Responses carry floats only from /speech (seconds).
+inline std::string py_float(double v) {
+  if (!std::isfinite(v)) throw std::invalid_argument("non-finite number in a response");
+  if (v == 0) return std::signbit(v) ? "-0.0" : "0.0";
+  char buf[64];
+  const auto r = std::to_chars(buf, buf + sizeof buf, v, std::chars_format::scientific);  // shortest round-trip
+  std::string sci(buf, r.ptr);
+  std::string sign;
+  if (sci[0] == '-') { sign = "-"; sci.erase(0, 1); }
+  const size_t epos = sci.find('e');
+  const int exp = std::stoi(sci.substr(epos + 1));
+  std::string digits = sci.substr(0, epos);
+  if (digits.size() > 1) digits.erase(1, 1);  // drop the '.'
+  std::string out;
+  if (exp >= -4 && exp < 16) {
+    if (exp < 0) {
+      out = "0." + std::string(size_t(-exp - 1), '0') + digits;
+    } else if (size_t(exp) + 1 >= digits.size()) {
+      out = digits + std::string(size_t(exp) + 1 - digits.size(), '0') + ".0";
+    } else {
+      out = digits.substr(0, size_t(exp) + 1) + "." + digits.substr(size_t(exp) + 1);
+    }
+  } else {
+    out = digits.substr(0, 1) + (digits.size() > 1 ? "." + digits.substr(1) : "");
+    char e[16];
+    std::snprintf(e, sizeof e, "e%c%02d", exp < 0 ? '-' : '+', exp < 0 ? -exp : exp);
+    out += e;
+  }
+  return sign + out;
 }
 
 // ------------------------------------------------------------------ JSON in (strict_json, integer, ...)
@@ -312,6 +361,7 @@ struct Settings {
 struct Policy {
   int vocabulary = 0;
   std::vector<int> suppress, stops;
+  bool speech = false;  // the engine can run op "speech" (WorkerCore::speech_supported); /speech is refused otherwise
 };
 
 inline std::chrono::nanoseconds seconds(double s) {
@@ -623,6 +673,104 @@ class Service {
     std::vector<int> input;
     void drop_body() { messages = nullptr; body.reset(); }
   };
+  struct Speech {
+    std::shared_ptr<const Json> body;  // keeps `messages` alive until encoding
+    const Json* messages = nullptr;
+    std::string mode;
+    int count = 0;
+    long long seed = 0;
+    bool split = false;
+    std::vector<std::vector<int>> prompts;
+    std::vector<std::string> texts;  // each chunk's text, when split
+    std::string chunks_json;         // the prompts as the engine request carries them
+  };
+  Speech validate_speech(const Json& item) const {
+    const auto& o = object_of(item);
+    static const std::set<std::string> allowed = {"messages", "mode", "max_new_tokens", "seed", "split"};
+    for (const auto& [key, value] : o)
+      if (!allowed.count(key)) throw std::invalid_argument("invalid speech fields");
+    for (const char* key : {"messages", "mode", "max_new_tokens"})
+      if (!o.count(key)) throw std::invalid_argument("invalid speech fields");
+    Speech s;
+    const auto* mode = std::get_if<std::string>(&o.at("mode").value);
+    if (!mode || (*mode != "audio" && *mode != "interleaved")) throw std::invalid_argument("mode must be audio or interleaved");
+    s.mode = *mode;
+    s.count = int(integer(o.at("max_new_tokens"), 1, kSpeechCapacity - 1));
+    s.seed = o.count("seed") ? integer(o.at("seed"), 0, 2147483647) : 0;
+    if (o.count("split")) {
+      const auto* b = std::get_if<bool>(&o.at("split").value);
+      if (!b) throw std::invalid_argument("split must be a boolean");
+      s.split = *b;
+    } else {
+      s.split = s.mode == "audio";
+    }
+    if (s.split && s.mode != "audio") throw std::invalid_argument("split is for audio mode");
+    if (!std::holds_alternative<Json::Array>(o.at("messages").value)) throw std::invalid_argument("messages must be a list");
+    s.messages = &o.at("messages");
+    (void)lfm3_text::parse_messages(*s.messages);
+    return s;
+  }
+  // Render and tokenize each chunk as a single request (lfm3_text::encode_messages), split by sentences when asked.
+  void encode_speech(Speech& s) const {
+    const auto messages = lfm3_text::parse_messages(*s.messages);
+    const auto chats = s.split ? speech_text::sentence_requests(messages)
+                               : std::vector<std::vector<lfm3_text::Message>>{messages};
+    if (chats.size() > kSpeechMaxChunks) throw std::invalid_argument("speech request has too many sentences");
+    size_t tokens = 0;
+    for (const auto& chat : chats) {
+      auto ids = lfm3_text::encode_messages(tokenizer_, chat, kSpeechCapacity, s.count);
+      for (const int id : ids) {
+        if (id < 0 || id >= policy_.vocabulary) throw std::invalid_argument("input_ids out of range");
+        if (std::binary_search(policy_.suppress.begin(), policy_.suppress.end(), id))
+          throw std::invalid_argument("multimodal placeholder input is unsupported");
+      }
+      tokens += ids.size();
+      if (tokens > kSpeechMaxPromptTokens) throw std::invalid_argument("speech request has too many prompt tokens");
+      s.prompts.push_back(std::move(ids));
+      if (s.split) s.texts.push_back(chat.back().content);
+    }
+    // The engine request, built here so that one too large for an engine frame is a 400, not a fatal engine error.
+    s.chunks_json = "[";
+    for (size_t k = 0; k < s.prompts.size(); ++k) {
+      s.chunks_json += k ? ",[" : "[";
+      for (size_t i = 0; i < s.prompts[k].size(); ++i) s.chunks_json += (i ? "," : "") + std::to_string(s.prompts[k][i]);
+      s.chunks_json += "]";
+    }
+    s.chunks_json += "]";
+    if (s.chunks_json.size() + 256 > kMaxBody) throw std::invalid_argument("speech request exceeds the engine frame");
+    s.messages = nullptr;
+    s.body.reset();
+  }
+  std::string speech_response(const Speech& s, const Json& r) const {
+    if (!r.has("cancelled") || !std::holds_alternative<bool>(r.at("cancelled").value)) throw WorkerFailure("invalid speech reply");
+    if (std::get<bool>(r.at("cancelled").value))
+      return Obj().str("mode", s.mode).boolean("cancelled", true).num("seed", s.seed).boolean("split", s.split).done();
+    std::vector<int> slots;
+    for (const auto& v : r.at("slots").array()) {
+      const int id = v.integer();
+      if (id != kAudioOutToken) slots.push_back(id);
+    }
+    const auto& chunks = r.at("chunks").array();
+    const bool truncated = r.at("truncated").boolean();
+    if (chunks.empty() || chunks.size() > s.prompts.size() || (chunks.size() < s.prompts.size() && !truncated))
+      throw WorkerFailure("invalid speech reply");  // fewer chunks only when truncated
+    std::string list = "[";
+    for (size_t k = 0; k < chunks.size(); ++k) {
+      Obj c;
+      if (s.split) c.str("text", s.texts[k]);
+      c.num("frames", chunks[k].at("frames").integer()).boolean("ended_by_eos", chunks[k].at("ended_by_eos").boolean());
+      list += (k ? "," : "") + c.done();
+    }
+    list += "]";
+    const auto out = Obj().str("mode", s.mode).str("text", s.mode == "audio" ? std::string() : tokenizer_.decode(slots, true))
+        .str("audio_wav_base64", r.at("wav_base64").string()).num("sample_rate", 24000)
+        .raw("audio_seconds", py_float(std::get<double>(r.at("audio_seconds").value)))
+        .num("frames", r.at("frames").integer()).raw("chunks", list).num("seed", s.seed).boolean("split", s.split)
+        .boolean("cancelled", false).boolean("truncated", truncated).raw("prefill_seconds", py_float(std::get<double>(r.at("prefill_seconds").value)))
+        .raw("generate_seconds", py_float(std::get<double>(r.at("generate_seconds").value))).done();
+    if (out.size() > kMaxSpeechResponse) throw WorkerFailure("response exceeds limit");
+    return out;
+  }
   struct Response {
     Obj body;
     std::vector<int> generated;
@@ -652,6 +800,36 @@ class Service {
     return s && *s == sid;
   }
 
+ public:
+  // POST /speech (#2): text in, speech (and, interleaved, text) out. No session: one request at a time on the
+  // engine's speech runner, queued and timed like every engine job. Body: {"messages": [...] (the chat, as for
+  // /generate), "mode": "audio" | "interleaved", "max_new_tokens": 1..4095 (per chunk), "seed": 0..2^31-1 (default
+  // 0), "split": bool (audio only; default true: long-form TTS by sentences, lfm/speech_text.hpp)}. Reply:
+  // {"mode", "text" (the emitted text; "" in audio mode), "audio_wav_base64" (24 kHz 16-bit mono WAV),
+  // "sample_rate", "audio_seconds", "frames", "chunks": [{"text" (split only), "frames", "ended_by_eos"}], "seed",
+  // "split", "cancelled", "truncated" (the step budget stopped it short of its text: chunks skipped, or the last one
+  // cut), "prefill_seconds", "generate_seconds"}. The WAV is byte for byte lfm3-speech's for the same request.
+  std::string speech(std::shared_ptr<const Json> body) {
+    // the step budget's worst case (~227 s) is sized for the default engine timeout; a shorter one could let an
+    // admitted request fail the service closed
+    if (!policy_.speech || settings_.engine_timeout < kSpeechMinEngineTimeout) throw ApiError(501, "speech_unsupported");
+    const auto deadline = Clock::now() + seconds(settings_.request_timeout);
+    auto request = std::make_shared<Speech>(validate_speech(*body));
+    request->body = std::move(body);  // `messages` points into it until encode_speech drops it
+    frontend_call([&] { encode_speech(*request); }, deadline);
+    Event event = std::make_shared<std::atomic<bool>>(false);
+    auto run = [this, request, event, deadline] {
+      if (Clock::now() >= deadline) throw ApiError(504, "queue_deadline");
+      const auto result = rpc(Obj().str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
+                                  .num("max_new_tokens", request->count).num("seed", request->seed)
+                                  .boolean("chunked", request->split),
+                              {{"speech", event}}, false, kMaxSpeechResponse);
+      return speech_response(*request, result);
+    };
+    return submit(run, [] {}, nullptr, deadline);
+  }
+
+ private:
   // lfm3_server.Service._validate_generation (before any lease): fields, types, ranges, the messages
   // themselves and the sampling options.
   Generation validate_generation(const Json& item, std::shared_ptr<const Json> owner) const {
@@ -823,7 +1001,8 @@ class Service {
   }
 
   // lfm3_worker_client.WorkerClient.call + Service._rpc: owner thread only. Any failure is fatal.
-  Json rpc(Obj request, std::vector<std::pair<std::string, Event>> targets = {}, bool batch = false) {
+  Json rpc(Obj request, std::vector<std::pair<std::string, Event>> targets = {}, bool batch = false,
+           size_t max_reply = kMaxBody) {
     if (backend_closed_) throw WorkerFailure("worker closed");
     if (sequence_ >= 2147483647) throw WorkerFailure("RPC sequence exhausted; restart required");
     const std::uint64_t id = ++sequence_;
@@ -853,7 +1032,7 @@ class Service {
     in_call_ = false;
     if (timed_out_) throw WorkerFailure("engine call exceeded the engine timeout");
     while (!reply.empty() && reply.back() == '\n') reply.pop_back();
-    if (reply.size() > kMaxBody) throw WorkerFailure("worker frame exceeds limit");
+    if (reply.size() > max_reply) throw WorkerFailure("worker frame exceeds limit");
     Json result;
     try { result = strict_json(reply); }
     catch (const std::exception&) { throw WorkerFailure("invalid worker reply"); }
@@ -1236,8 +1415,8 @@ class Connection {
     }
   }
 
-  void reply(int status, std::string body) {
-    if (body.size() > kMaxResponse) { status = 500; body = "{\"error\":\"response_limit\"}"; }
+  void reply(int status, std::string body, size_t limit = kMaxResponse) {
+    if (body.size() > limit) { status = 500; body = "{\"error\":\"response_limit\"}"; }
     char date[64];
     const std::time_t now = std::time(nullptr);
     std::tm tm{};
@@ -1319,6 +1498,7 @@ class Connection {
       if (r.path == "/sessions") result = service_.create(request);
       else if (r.path == "/generate") result = service_.generate(std::move(parsed));
       else if (r.path == "/generate_batch") result = service_.generate_batch(std::move(parsed));
+      else if (r.path == "/speech") { reply(200, service_.speech(std::move(parsed)), kMaxSpeechResponse); return; }
       else {
         // /sessions/<32 URL-safe characters>/(reset|close|cancel)
         const std::string prefix = "/sessions/";

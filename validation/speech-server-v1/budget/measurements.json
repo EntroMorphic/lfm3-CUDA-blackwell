@@ -1,0 +1,404 @@
+{
+ "many-chunks": {
+  "frames": 1024,
+  "raw_frames": 1024,
+  "decode_steps": 960,
+  "prefill_seconds": 1.91914,
+  "generate_seconds": 24.9191,
+  "chunks": [
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   }
+  ]
+ },
+ "big-prefill": {
+  "frames": 124,
+  "raw_frames": 125,
+  "decode_steps": 118,
+  "prefill_seconds": 5.69224,
+  "generate_seconds": 3.11195,
+  "chunks": [
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 12,
+    "slots": 13,
+    "ended_by_eos": true
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   },
+   {
+    "frames": 16,
+    "slots": 16,
+    "ended_by_eos": false
+   }
+  ]
+ },
+ "note": "speech-v8 lfm3-speech, MAXN with clocks locked (2026-11-09). many-chunks: 64 chunks of a 36-token prompt, max_new_tokens 16; big-prefill: 8 chunks of a 3920-token prompt, max_new_tokens 16. Rates: frames (raw) per generate second; prefill tokens per prefill second. high-position (speech-v11): one chunk of a 2815-token prompt, ending by EOS after 269 frames (positions to 3085); lighthouse-unsplit-s1 (speech-v11): the 97-word paragraph unsplit, 1182 frames.",
+ "rates": {
+  "frames_per_second_many_chunks": 41.092976873161554,
+  "prefill_seconds_per_short_chunk": 0.0299865625,
+  "prefill_tokens_per_second_long": 5509.2547046505415,
+  "frames_per_second_high-position": 38.54923052009934,
+  "frames_per_second_lighthouse-unsplit-s1": 38.43864937903045
+ },
+ "high-position": {
+  "frames": 268,
+  "raw_frames": 269,
+  "decode_steps": 269,
+  "prefill_seconds": 0.445565,
+  "generate_seconds": 6.97809,
+  "prompt_tokens": 2815
+ },
+ "lighthouse-unsplit-s1": {
+  "frames": 1181,
+  "raw_frames": 1182,
+  "decode_steps": 1182,
+  "prefill_seconds": 0.0396466,
+  "generate_seconds": 30.7503,
+  "prompt_tokens": 144
+ }
+}
