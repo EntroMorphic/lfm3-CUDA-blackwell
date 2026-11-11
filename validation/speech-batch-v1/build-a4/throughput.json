@@ -1,0 +1,111 @@
+{
+ "by_rows": {
+  "1": {
+   "runs": [
+    {
+     "rows": 1,
+     "requests": 42,
+     "steps": 8522,
+     "audio_seconds": 671.68,
+     "wall_seconds": 183.831,
+     "audio_per_wall_second": 3.65379
+    },
+    {
+     "rows": 1,
+     "requests": 42,
+     "steps": 8522,
+     "audio_seconds": 671.68,
+     "wall_seconds": 184.012,
+     "audio_per_wall_second": 3.65019
+    }
+   ],
+   "median": 3.6519899999999996
+  },
+  "2": {
+   "runs": [
+    {
+     "rows": 2,
+     "requests": 42,
+     "steps": 4295,
+     "audio_seconds": 671.68,
+     "wall_seconds": 102.782,
+     "audio_per_wall_second": 6.53502
+    },
+    {
+     "rows": 2,
+     "requests": 42,
+     "steps": 4295,
+     "audio_seconds": 671.68,
+     "wall_seconds": 102.941,
+     "audio_per_wall_second": 6.52491
+    }
+   ],
+   "median": 6.529965000000001
+  },
+  "4": {
+   "runs": [
+    {
+     "rows": 4,
+     "requests": 42,
+     "steps": 2266,
+     "audio_seconds": 671.68,
+     "wall_seconds": 62.9527,
+     "audio_per_wall_second": 10.6696
+    },
+    {
+     "rows": 4,
+     "requests": 42,
+     "steps": 2266,
+     "audio_seconds": 671.68,
+     "wall_seconds": 63.1191,
+     "audio_per_wall_second": 10.6415
+    }
+   ],
+   "median": 10.655550000000002
+  },
+  "8": {
+   "runs": [
+    {
+     "rows": 8,
+     "requests": 42,
+     "steps": 1601,
+     "audio_seconds": 671.68,
+     "wall_seconds": 50.0689,
+     "audio_per_wall_second": 13.4151
+    },
+    {
+     "rows": 8,
+     "requests": 42,
+     "steps": 1601,
+     "audio_seconds": 671.68,
+     "wall_seconds": 52.1535,
+     "audio_per_wall_second": 12.8789
+    }
+   ],
+   "median": 13.147
+  },
+  "16": {
+   "runs": [
+    {
+     "rows": 16,
+     "requests": 64,
+     "steps": 1513,
+     "audio_seconds": 1010.72,
+     "wall_seconds": 57.5249,
+     "audio_per_wall_second": 17.5701
+    },
+    {
+     "rows": 16,
+     "requests": 64,
+     "steps": 1513,
+     "audio_seconds": 1010.72,
+     "wall_seconds": 57.7752,
+     "audio_per_wall_second": 17.494
+    }
+   ],
+   "median": 17.532049999999998
+  }
+ },
+ "ratio_8_to_1": 3.5999550929767064,
+ "pass_": false
+}

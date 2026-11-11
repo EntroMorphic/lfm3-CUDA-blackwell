@@ -6,6 +6,8 @@ not in audio mode), one audio piece of 2 samples (bytes k, seed % 256, 255, 127 
 reply's framing; every event line byte for byte against Python's json.dumps of its content; the events' order and
 content against the unstreamed reply for the same request; refusals and failures before the first event as ordinary JSON
 errors; failures, deadlines and shutdown after it as a last event; a client that goes away cancels its generation.
+The harness runs the concurrent speech batch (2 rows by default); tests that show a cancellation by a follow-up request
+waiting behind the cancelled one run with one row, where it must wait.
 """
 import base64
 import json
@@ -167,7 +169,7 @@ def test_events_arrive_as_the_engine_makes_them(harness_binary):
 
 
 def test_a_client_that_goes_away_is_cancelled(harness_binary):
-    with running(harness_binary, "--token-delay-ms", "300") as h:
+    with running(harness_binary, "--token-delay-ms", "300", "--speech-rows", "1") as h:
         long = " ".join([LONG] * 6)  # 18 chunks, ~5.4 s if run to the end
         status, events, _ = stream(h, tts(long, stream=True), close_after=1)
         assert status == 200 and events[0]["event"] == "audio"
@@ -178,7 +180,7 @@ def test_a_client_that_goes_away_is_cancelled(harness_binary):
 
 
 def test_a_client_that_goes_away_before_the_first_event_is_cancelled(harness_binary):
-    with running(harness_binary, "--token-delay-ms", "1000") as h:
+    with running(harness_binary, "--token-delay-ms", "1000", "--speech-rows", "1") as h:
         s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
         s.sendall(request_bytes(tts(" ".join([LONG] * 3), stream=True)))  # 9 chunks, 9 s if run to the end
         time.sleep(0.2)
@@ -205,7 +207,7 @@ def test_shutdown_mid_stream_ends_with_a_cancelled_done(harness_binary):
 
 
 def test_deadline_after_the_start_is_an_error_event(harness_binary):
-    with running(harness_binary, "--token-delay-ms", "300", "--request-timeout", "1") as h:
+    with running(harness_binary, "--token-delay-ms", "300", "--request-timeout", "1", "--speech-rows", "1") as h:
         status, events, _ = stream(h, tts(" ".join([LONG] * 3), stream=True))
         assert status == 200 and events[0]["event"] == "audio"
         assert events[-1] == {"event": "error", "error": "request_deadline_outcome_unknown"}
@@ -259,7 +261,7 @@ def test_a_stalled_reader_is_cut_off_and_cancelled(harness_binary):
     # 1 MB audio pieces into a client that never reads: once the socket buffers fill, a send makes no progress for the
     # socket timeout (1 s), the server closes the connection and cancels the generation
     with running(harness_binary, "--token-delay-ms", "100", "--socket-timeout", "1",
-                 "--speech-stream-piece-bytes", str(1 << 20)) as h:
+                 "--speech-stream-piece-bytes", str(1 << 20), "--speech-rows", "1") as h:
         s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
         s.sendall(request_bytes(tts(" ".join([LONG] * 20), stream=True)))  # 60 chunks, 6 s and 60 MB in full
         time.sleep(0.5)
@@ -292,7 +294,7 @@ def test_streams_beyond_half_the_handlers_are_refused(harness_binary):
 
 
 def test_one_client_leaving_leaves_another_stream_alone(harness_binary):
-    with running(harness_binary, "--token-delay-ms", "100") as h:
+    with running(harness_binary, "--token-delay-ms", "100", "--speech-rows", "1") as h:
         result = {}
         def other():
             time.sleep(0.05)  # queued behind the leaver
@@ -315,7 +317,7 @@ def test_a_reset_after_the_reply_began_cancels_without_waiting_for_a_send(harnes
     # a client half-closes (the reply is committed), then resets the connection during a long gap with no events: the
     # socket's reset state cancels it within the poll, not at the next event's send (2 s later here)
     import struct
-    with running(harness_binary, "--token-delay-ms", "2000") as h:
+    with running(harness_binary, "--token-delay-ms", "2000", "--speech-rows", "1") as h:
         s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
         s.sendall(request_bytes(tts(LONG, stream=True)))  # 3 chunks, 6 s in full
         s.shutdown(socket.SHUT_WR)

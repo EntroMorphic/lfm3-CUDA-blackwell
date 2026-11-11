@@ -108,59 +108,95 @@ inline std::vector<float> clip_from_base64(const std::string& b64) {
 // short of its text because of the budget: chunks skipped, or the chunk whose cap the budget lowered used all of it
 // without ending by EOS. (A chunk cut by its own max_new_tokens shows only in its ended_by_eos.) A request that never
 // comes near the budget runs exactly as without one.
-template <class SessionT>
-inline Result run_chunks(SessionT& session, const std::vector<std::vector<int>>& prompts, Options o, bool chunked,
-                         std::vector<ChunkInfo>& info, size_t step_budget = 0, bool* truncated = nullptr) {
-  if (prompts.empty()) throw std::runtime_error("speech: no prompt");
-  if (chunked && (!o.forced_tokens.empty() || !o.forced_frames.empty())) throw std::runtime_error("chunks cannot be forced");
-  if (chunked && !o.audio.empty()) throw std::runtime_error("chunks cannot take audio input");
-  Result r;
-  info.clear();
-  if (truncated) *truncated = false;
-  const uint64_t seed = o.seed;
-  const int requested = o.max_new_tokens;
-  size_t used = 0;
-  for (size_t k = 0; k < prompts.size(); ++k) {
-    if (chunked) o.seed = seed * 1000 + k;
-    bool final_chunk = k + 1 == prompts.size(), capped = false;
-    if (step_budget) {
-      const size_t remaining = step_budget > used ? step_budget - used : 0;
+// The chunk loop one chunk at a time: next() gives the next chunk's prompt and options (false: the request is
+// complete), done() takes its result. A batch row runs it between its chunks; run_chunks runs it to the end.
+class ChunkRun {
+ public:
+  ChunkRun(std::vector<std::vector<int>> prompts, Options o, bool chunked, size_t step_budget)
+      : prompts_(std::move(prompts)), o_(std::move(o)), chunked_(chunked), budget_(step_budget), seed_(o_.seed),
+        requested_(o_.max_new_tokens) {
+    if (prompts_.empty()) throw std::runtime_error("speech: no prompt");
+    if (chunked && (!o_.forced_tokens.empty() || !o_.forced_frames.empty())) throw std::runtime_error("chunks cannot be forced");
+    if (chunked && !o_.audio.empty()) throw std::runtime_error("chunks cannot take audio input");
+  }
+  bool next(const std::vector<int>*& prompt, Options& o) {
+    if (complete_) return false;
+    if (chunked_) o_.seed = seed_ * 1000 + k_;
+    final_ = k_ + 1 == prompts_.size(), capped_ = false;
+    o_.max_new_tokens = requested_;
+    if (budget_) {
+      const size_t remaining = budget_ > used_ ? budget_ - used_ : 0;
       if (remaining == 0) throw std::runtime_error("speech: step budget exhausted before a chunk");  // unreachable
-      if (remaining <= size_t(requested)) {
-        o.max_new_tokens = int(remaining);
-        capped = remaining < size_t(requested);  // the budget lowered its cap (at equality its own cap stands)
-        if (!final_chunk && truncated) *truncated = true;
-        final_chunk = true;
+      if (remaining <= size_t(requested_)) {
+        o_.max_new_tokens = int(remaining);
+        capped_ = remaining < size_t(requested_);  // the budget lowered its cap (at equality its own cap stands)
+        if (!final_) truncated_ = true;
+        final_ = true;
       }
     }
-    o.codec_continue = k > 0, o.codec_finalize = final_chunk;
-    auto c = session.generate(prompts[k], o);
+    o_.codec_continue = k_ > 0, o_.codec_finalize = final_;
+    prompt = &prompts_[k_];
+    o = o_;
+    return true;
+  }
+  void done(Result c) {
     const size_t chunk_steps = c.raw_frames.size() + c.text_tokens.size();  // one per step (audio_modes.hpp)
-    used += chunk_steps;
+    used_ += chunk_steps;
     const auto& last = c.raw_frames.empty() ? lfm::audio::Frame{} : c.raw_frames.back();
     const bool ended = !c.raw_frames.empty() &&
                        std::find(last.begin(), last.end(), lfm::audio::kEosCode) != last.end() &&
                        !c.slots.empty() && c.slots.back() == lfm::audio::ModeTokens{}.eos[0];
-    info.push_back({c.frames.size(), c.slots.size(), ended});
-    if (o.on_chunk) o.on_chunk(k, info.back());
-    if (k == 0) {
-      r = std::move(c);
+    info_.push_back({c.frames.size(), c.slots.size(), ended});
+    if (o_.on_chunk) o_.on_chunk(k_, info_.back());
+    if (k_ == 0) {
+      r_ = std::move(c);
     } else {
       auto cat = [](auto& to, auto& from) { to.insert(to.end(), from.begin(), from.end()); };
-      cat(r.slots, c.slots), cat(r.text_tokens, c.text_tokens), cat(r.frames, c.frames), cat(r.raw_frames, c.raw_frames);
-      cat(r.wav, c.wav), cat(r.hidden, c.hidden), cat(r.embeds, c.embeds), cat(r.steps, c.steps);
-      r.decode_steps += c.decode_steps;
-      r.prefill_seconds += c.prefill_seconds, r.generate_seconds += c.generate_seconds;
-      r.lm_step_seconds += c.lm_step_seconds, r.text_pick_seconds += c.text_pick_seconds;
-      r.depth_seconds += c.depth_seconds, r.sample_host_seconds += c.sample_host_seconds, r.codec_seconds += c.codec_seconds;
+      cat(r_.slots, c.slots), cat(r_.text_tokens, c.text_tokens), cat(r_.frames, c.frames), cat(r_.raw_frames, c.raw_frames);
+      cat(r_.wav, c.wav), cat(r_.hidden, c.hidden), cat(r_.embeds, c.embeds), cat(r_.steps, c.steps);
+      r_.decode_steps += c.decode_steps;
+      r_.prefill_seconds += c.prefill_seconds, r_.generate_seconds += c.generate_seconds;
+      r_.lm_step_seconds += c.lm_step_seconds, r_.text_pick_seconds += c.text_pick_seconds;
+      r_.depth_seconds += c.depth_seconds, r_.sample_host_seconds += c.sample_host_seconds, r_.codec_seconds += c.codec_seconds;
     }
-    if (final_chunk) {
+    if (final_) {
       // cut by its cap: it used all of it without ending (a chunk can also end by EOS on exactly its last step)
-      if (truncated && capped && chunk_steps >= size_t(o.max_new_tokens) && !info.back().ended_by_eos) *truncated = true;
-      break;
+      if (capped_ && chunk_steps >= size_t(o_.max_new_tokens) && !info_.back().ended_by_eos) truncated_ = true;
+      complete_ = true;
+    } else {
+      ++k_;
     }
   }
-  return r;
+  bool complete() const { return complete_; }
+  bool truncated() const { return truncated_; }
+  const std::vector<ChunkInfo>& info() const { return info_; }
+  Result take() { return std::move(r_); }
+
+ private:
+  std::vector<std::vector<int>> prompts_;
+  Options o_;
+  bool chunked_;
+  size_t budget_;
+  uint64_t seed_;
+  int requested_;
+  size_t k_ = 0, used_ = 0;
+  bool final_ = false, capped_ = false, truncated_ = false, complete_ = false;
+  std::vector<ChunkInfo> info_;
+  Result r_;
+};
+
+template <class SessionT>
+inline Result run_chunks(SessionT& session, const std::vector<std::vector<int>>& prompts, Options o, bool chunked,
+                         std::vector<ChunkInfo>& info, size_t step_budget = 0, bool* truncated = nullptr) {
+  ChunkRun run(prompts, std::move(o), chunked, step_budget);
+  info.clear();
+  if (truncated) *truncated = false;
+  const std::vector<int>* prompt = nullptr;
+  Options chunk;
+  while (run.next(prompt, chunk)) run.done(session.generate(*prompt, chunk));
+  info = run.info();
+  if (truncated) *truncated = run.truncated();
+  return run.take();
 }
 
 // Samples as 16-bit little-endian PCM appended to `f` (clipped to [-1, 1], rounded to nearest): a WAV file's data, and

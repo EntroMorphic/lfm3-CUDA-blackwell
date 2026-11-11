@@ -2,6 +2,12 @@
 //
 //   lfm3-speech MODEL_DIR REQUEST.json OUT_STEM
 //   lfm3-speech MODEL_DIR --batch LIST   (each line: REQUEST.json OUT_STEM; the model is loaded once per capacity)
+//   lfm3-speech MODEL_DIR --concurrent ROWS LIST [STAGGER_SEED]
+//      concurrent speech (validation/speech-batch-v1): every request of LIST runs in one batch of ROWS rows, a row
+//      refilled as its request finishes (each request's chunks run in its row), the outputs as a lone run writes
+//      them. STAGGER_SEED: the requests join in a random order, each 0-60 steps after the one before. Every request
+//      must have the same capacity; record_hidden is refused (it needs a batch of one). Prints the aggregate audio
+//      seconds per wall second of the batch loop.
 // REQUEST: {"prompt_ids": [...], "mode": "audio" | "interleaved" | "text" | "none", "max_new_tokens": N, "seed": S,
 //           "capacity": C (default 4096), "forced_tokens": [...], "forced_frames": [[12 codes]...],
 //           "record_hidden": false, "chunks": [[ids...], ...]}
@@ -35,7 +41,10 @@
 #include <lfm/speech_text.hpp>
 #include <lfm/wav.hpp>
 
+#include <chrono>
 #include <cstdio>
+#include <optional>
+#include <random>
 
 namespace {
 void write_wav(const std::string& path, const std::vector<float>& x, int rate) {
@@ -60,7 +69,21 @@ struct Loaded {
   lfm::ModelConfig cfg;
 };
 
-void run(const char* model_dir, const char* request_path, const std::string& stem, Loaded& m) {
+// A request read and rendered, ready to generate.
+struct Job {
+  std::string stem, mode;
+  lfm3_speech::Options o;
+  std::vector<std::vector<int>> prompts;
+  std::vector<std::string> chunk_texts;
+  std::shared_ptr<const lfm::lfm3_text::Tokenizer> text_tokenizer;
+  bool chunked = false;
+  int capacity = 4096;
+};
+void write_outputs(const Job& job, const lfm3_speech::Result& r, const std::vector<lfm3_speech::ChunkInfo>& chunk_info);
+
+// Reads, checks and renders a request (loading the model for its capacity when it differs); removes OUT_STEM's
+// earlier outputs.
+Job prepare(const char* model_dir, const char* request_path, const std::string& stem, Loaded& m) {
   char* argv[] = {nullptr, const_cast<char*>(model_dir), const_cast<char*>(request_path)};
   const auto req = read_json(argv[2]);
   const std::string mode = req.has("mode") ? req.at("mode").string() : "audio";
@@ -100,12 +123,12 @@ void run(const char* model_dir, const char* request_path, const std::string& ste
     m.session.reset(), m.runner.reset();
     m.cfg = lfm::ModelConfig::load(std::string(argv[1]) + "/config.json", capacity);
     m.runner = std::make_unique<Runner>(argv[1], m.cfg);
-    m.session = std::make_unique<lfm3_speech::Session>(*m.runner, argv[1]);
     m.capacity = capacity;
   }
   const auto& cfg = m.cfg;
-  auto& session = *m.session;
-  lfm3_speech::Options o;
+  Job job;
+  job.stem = stem, job.mode = mode, job.capacity = capacity;
+  lfm3_speech::Options& o = job.o;
   using lfm::audio::Requested;
   o.mode = mode == "audio" ? Requested::Audio : mode == "interleaved" ? Requested::Interleaved
          : mode == "text" ? Requested::Text : Requested::None;
@@ -138,18 +161,17 @@ void run(const char* model_dir, const char* request_path, const std::string& ste
       for (int c = 0; c < 12; ++c) fr[c] = a[c].integer();
       o.forced_frames.push_back(fr);
     }
-  std::vector<std::vector<int>> prompts;
-  std::vector<std::string> chunk_texts;
-  std::shared_ptr<const lfm::lfm3_text::Tokenizer> text_tokenizer;  // with messages: "text" in the json, as the server
-                                                                     // decodes it (slots without <|audio_out|>, special
-                                                                     // tokens skipped)
+  auto& prompts = job.prompts;
+  auto& chunk_texts = job.chunk_texts;
+  auto& text_tokenizer = job.text_tokenizer;  // with messages: "text" in the json, as the server decodes it (slots
+                                              // without <|audio_out|>, special tokens skipped)
   const bool split = req.has("split") && req.at("split").boolean();
   // numbers and abbreviations in words before the split (lfm/speech_normalize.hpp); default off here, so the validated
   // requests run as they did (the server defaults it on in audio mode)
   const bool normalize = req.has("normalize") && req.at("normalize").boolean();
   if (normalize && (mode != "audio" || !req.has("messages")))
     throw std::runtime_error("normalize is for audio mode with messages");
-  const bool chunked = req.has("chunks") || split;
+  const bool chunked = job.chunked = req.has("chunks") || split;
   if (chunked && (!o.forced_tokens.empty() || !o.forced_frames.empty())) throw std::runtime_error("chunks cannot be forced");
   if (req.has("messages")) {
     if (req.has("prompt_ids") || req.has("chunks")) throw std::runtime_error("messages cannot be combined with prompt_ids or chunks");
@@ -192,8 +214,24 @@ void run(const char* model_dir, const char* request_path, const std::string& ste
       throw std::runtime_error("prompt (" + std::to_string(p.size()) + ") + max_new_tokens exceeds capacity (" +
                                std::to_string(capacity) + ")");
   }
+  return job;
+}
+
+void run(const char* model_dir, const char* request_path, const std::string& stem, Loaded& m) {
+  const Job job = prepare(model_dir, request_path, stem, m);
+  if (!m.session) m.session = std::make_unique<lfm3_speech::Session>(*m.runner, model_dir);
   std::vector<lfm3_speech::ChunkInfo> chunk_info;
-  const auto r = lfm3_speech::run_chunks(session, prompts, o, chunked, chunk_info);
+  const auto r = lfm3_speech::run_chunks(*m.session, job.prompts, job.o, job.chunked, chunk_info);
+  write_outputs(job, r, chunk_info);
+}
+
+void write_outputs(const Job& job, const lfm3_speech::Result& r, const std::vector<lfm3_speech::ChunkInfo>& chunk_info) {
+  const auto& stem = job.stem;
+  const auto& o = job.o;
+  const auto& mode = job.mode;
+  const bool chunked = job.chunked;
+  const auto& chunk_texts = job.chunk_texts;
+  const auto& text_tokenizer = job.text_tokenizer;
   write_wav(stem + ".wav", r.wav, 24000);
   write_raw(stem + ".f32", r.wav.data(), r.wav.size());
   std::vector<int32_t> fr, raw;
@@ -259,7 +297,95 @@ void run(const char* model_dir, const char* request_path, const std::string& ste
             << ",\"generate_seconds\":" << r.generate_seconds << ",\"slots\":" << r.slots.size() << "}\n";
 }
 
+// --concurrent: every request of LIST through one batch of `rows` rows; see the header.
+int concurrent(const char* model_dir, int rows, const char* list_path, const char* stagger_seed) {
+  std::ifstream list(list_path);
+  if (!list) throw std::runtime_error(std::string("cannot read ") + list_path);
+  Loaded m;
+  std::vector<Job> jobs;
+  std::string request, stem;
+  int failed = 0, done = 0;
+  while (list >> request >> stem) {
+    try {
+      jobs.push_back(prepare(model_dir, request.c_str(), stem, m));
+      if (jobs.back().capacity != jobs.front().capacity) throw std::runtime_error("--concurrent needs one capacity");
+    } catch (const std::exception& e) {
+      std::cerr << "lfm3-speech: " << request << ": " << e.what() << "\n";
+      ++failed;
+    }
+  }
+  if (jobs.empty()) throw std::runtime_error("no request to run");
+  // arrival order and gaps (in steps): the list's order at once, or shuffled with random gaps
+  std::vector<size_t> order(jobs.size());
+  std::vector<long> gap(jobs.size(), 0);
+  for (size_t i = 0; i < order.size(); ++i) order[i] = i;
+  if (stagger_seed) {
+    std::mt19937_64 rng(std::stoull(stagger_seed));
+    std::shuffle(order.begin(), order.end(), rng);
+    for (auto& g : gap) g = long(rng() % 61);
+  }
+  lfm3_speech::Batch batch(*m.runner, model_dir, rows);
+  struct Running { size_t job; std::unique_ptr<lfm3_speech::ChunkRun> run; };
+  std::vector<std::optional<Running>> lanes(static_cast<size_t>(rows));
+  const size_t budget = 0;  // as lone lfm3-speech: no step budget
+  size_t next = 0;
+  long steps = 0, since = 0;
+  double audio = 0;
+  const auto t0 = std::chrono::steady_clock::now();
+  auto start_chunk = [&](int r) {  // the row's next chunk, or its request written and the row freed
+    auto& run = *lanes[size_t(r)]->run;
+    const std::vector<int>* prompt = nullptr;
+    lfm3_speech::Options o;
+    if (run.next(prompt, o)) { batch.admit(r, *prompt, o); return; }
+    const Job& job = jobs[lanes[size_t(r)]->job];
+    auto result = run.take();
+    audio += result.wav.size() / 24000.0;
+    write_outputs(job, result, run.info());
+    std::cout << "{\"done\":" << lfm::lfm3_text::json_string(job.stem) << ",\"row\":" << r << ",\"step\":" << steps
+              << ",\"audio_seconds\":" << result.wav.size() / 24000.0 << "}\n" << std::flush;
+    lanes[size_t(r)].reset();
+    ++done;
+  };
+  for (;;) {
+    // admit arrivals into free rows (one per step boundary while their gaps allow)
+    while (next < order.size() && since >= gap[next]) {
+      const int r = [&] { for (int i = 0; i < rows; ++i) if (!lanes[size_t(i)] && !batch.busy(i)) return i; return -1; }();
+      if (r < 0) break;
+      const size_t j = order[next++];
+      since = 0;
+      try {
+        lanes[size_t(r)] = Running{j, std::make_unique<lfm3_speech::ChunkRun>(jobs[j].prompts, jobs[j].o, jobs[j].chunked, budget)};
+        start_chunk(r);
+      } catch (const std::exception& e) {
+        std::cerr << "lfm3-speech: " << jobs[j].stem << ": " << e.what() << "\n";
+        lanes[size_t(r)].reset();
+        ++failed;
+      }
+    }
+    bool any = false;
+    for (int r = 0; r < rows; ++r) any |= bool(lanes[size_t(r)]);
+    if (!any && next >= order.size()) break;
+    if (!any) { ++since; continue; }  // waiting for the next arrival's gap
+    for (int r : batch.step()) {
+      if (batch.cancelled(r)) throw std::runtime_error("unexpected cancellation");
+      lanes[size_t(r)]->run->done(batch.take(r));
+      start_chunk(r);
+    }
+    ++steps, ++since;
+  }
+  const double wall = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+  std::cout << "{\"rows\":" << rows << ",\"requests\":" << done << ",\"steps\":" << steps << ",\"audio_seconds\":" << audio
+            << ",\"wall_seconds\":" << wall << ",\"audio_per_wall_second\":" << audio / wall << "}\n";
+  std::cerr << "lfm3-speech: concurrent: " << done << " done, " << failed << " failed\n";
+  return failed ? 1 : 0;
+}
+
 int main(int argc, char** argv) try {
+  if ((argc == 5 || argc == 6) && std::string(argv[2]) == "--concurrent") {
+    const int rows = std::stoi(argv[3]);
+    if (rows < 1 || rows > 64) throw std::runtime_error("--concurrent ROWS must be 1..64");
+    return concurrent(argv[1], rows, argv[4], argc == 6 ? argv[5] : nullptr);
+  }
   Loaded m;
   if (argc == 4 && std::string(argv[2]) == "--batch") {
     // each line of LIST: REQUEST.json OUT_STEM; a failed request prints its error and the batch goes on; the exit

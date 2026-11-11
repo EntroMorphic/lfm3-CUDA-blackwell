@@ -1,0 +1,5 @@
+fd5adc320cb05b2edebdee13a6e608eadadcc209d296072b0073a0d1fa4df50e  batch-a4/lfm3-speech
+9eda38e64d16fd4348df4e1da406cb05b74cf8829c19d319f6715a31a154c12f  batch-a4/lfm3-batch-capacity-check
+0c9d6019c3d330f168d583dad22bfe46e30927cf1c5617eb3dec2ab918086616  batch-a4/lfm3-batch-capacity-check-prefix
+e47b138288001dba4ac7998f219926475d84dc058a0ebc2800b081620d06fe0c  batch-s3/liquid-lfm3-server
+d6026ddca64c1e698b24d1775c89741464b6e7544e142c5fcb2fdc8c9397104e  batch-s3/liquid-lfm3-worker

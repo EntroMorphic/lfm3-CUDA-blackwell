@@ -167,12 +167,15 @@ inline void linear_tiled(const lfm::gemm::Problem& p, int rows, int in, int out)
   }
 }
 
-// K/V of row b into its cache [b][kv_head][capacity][dim] at position cursor[b].
+// K/V of row b into its cache [b][kv_head][capacity][dim] at position cursor[b]: active rows only. An inactive row
+// (finished, or never loaded) is not written: its cursor can be at the capacity (a request that ran to its cap), where
+// the write would land in the next head's or the next row's cache (validation/speech-batch-v1, red-team).
 __global__ void scatter_rows(const bf16* k, const bf16* v, bf16* kc, bf16* vc, int rows, int heads, int dim,
-                             int capacity, const int* cursor) {
+                             int capacity, const int* cursor, const unsigned char* active) {
   const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= size_t(rows) * heads * dim) return;
   const int d = i % dim, h = (i / dim) % heads, b = i / (size_t(heads) * dim);
+  if (!active[b] || cursor[b] < 0 || cursor[b] >= capacity) return;
   const size_t dst = ((size_t(b) * heads + h) * capacity + cursor[b]) * dim + d;
   kc[dst] = k[i];
   vc[dst] = v[i];
@@ -276,11 +279,13 @@ __global__ void attention_combine(const float* part_o, const float* part_ml, con
 }
 
 // Greedy selection, one block of 1024 per row: the largest logit not suppressed, lowest id on ties (torch.argmax).
+// Row b's suppression mask is suppress + b * suppress_stride (0: one mask for every row).
 __global__ void __launch_bounds__(1024) greedy_rows(const float* logits, int vocab, const unsigned char* suppress,
-                                                    const unsigned char* active, int* out) {
+                                                    const unsigned char* active, int* out, size_t suppress_stride = 0) {
   const int b = blockIdx.x;
   if (!active[b]) { if (threadIdx.x == 0) out[b] = -1; return; }
   const float* x = logits + size_t(b) * vocab;
+  if (suppress) suppress += size_t(b) * suppress_stride;
   float best = -INFINITY;
   int id = INT_MAX;
   for (int i = threadIdx.x; i < vocab; i += 1024) {
@@ -481,6 +486,17 @@ class BatchDecoder {
     return out;
   }
 
+  // Greedy picks with a suppression mask per row (rows x vocabulary bytes on the device): concurrent speech, where each
+  // row's mode machine suppresses its own set. -1 for inactive rows.
+  std::vector<int> select_greedy_rows(const unsigned char* suppress_rows_dev) {
+    cuda_check(cudaMemcpy(active_dev.p, active.data(), rows, cudaMemcpyHostToDevice));
+    greedy_rows<<<rows, 1024>>>(logits.p, s.vocabulary, suppress_rows_dev, active_dev.p, picked.p, size_t(s.vocabulary));
+    cuda_check(cudaGetLastError());
+    std::vector<int> out(rows);
+    cuda_check(cudaMemcpy(out.data(), picked.p, rows * sizeof(int), cudaMemcpyDeviceToHost));
+    return out;
+  }
+
   // Row r's final-normed hidden state after the last step (or the load): the depth decoder's input for a frame.
   const bf16* hidden_state(int r) const { return normalized.p + size_t(r) * s.hidden; }
 
@@ -539,7 +555,7 @@ class BatchDecoder {
         rotary_from_frequencies<<<grid(size_t(R) * s.kv_width() / 2), 256>>>(k.p, positions.p, base.frequencies[layer]->p,
                                                                              R, s.kv_heads, s.head_dim, spec.rotary_pairs);
         scatter_rows<<<grid(size_t(R) * s.kv_width()), 256>>>(k.p, v.p, keys[layer]->p, values[layer]->p, R, s.kv_heads,
-                                                             s.head_dim, s.context, cursor_dev.p);
+                                                             s.head_dim, s.context, cursor_dev.p, active_dev.p);
         const int splits = spec.window ? (spec.window + kSplit - 1) / kSplit : full_splits;
         attention_partial<4><<<dim3(splits, s.kv_heads, R), 256>>>(q.p, keys[layer]->p, values[layer]->p, cursor_dev.p,
                                                                    active_dev.p, spec.window, s.context, s.kv_heads,

@@ -373,6 +373,9 @@ struct Policy {
   std::vector<int> suppress, stops;
   bool speech = false;  // the engine can run op "speech" (WorkerCore::speech_supported); /speech is refused otherwise
   bool audio_input = false;  // op "speech" takes audio (WorkerCore::audio_input_supported); audio parts get 501 otherwise
+  // Concurrent speech (validation/speech-batch-v1): the engine's speech batch rows (ops speech_admit/speech_step,
+  // WorkerCore::speech_rows); 0: one /speech at a time through op "speech".
+  int speech_rows = 0;
 };
 
 inline std::chrono::nanoseconds seconds(double s) {
@@ -629,6 +632,7 @@ class Service {
   // Stops admission, fails every later request, cancels running generations at their next token
   // boundary and waits for the engine owner to finish its queue.
   void close() {
+    cancel_all_ = true;  // running speech rows are cancelled at their next step
     {
       std::lock_guard g(lock_);
       stopping_ = true;
@@ -829,6 +833,104 @@ class Service {
     if (out.size() > kMaxSpeechResponse) throw WorkerFailure("response exceeds limit");
     return out;
   }
+  // A streamed reply's event lines, from the engine-owner thread to the connection's handler.
+  struct Lines {
+    std::mutex m;
+    std::condition_variable cv;
+    std::deque<std::string> lines;
+    void push(std::string line) {
+      { std::lock_guard g(m); lines.push_back(std::move(line)); }
+      cv.notify_one();
+    }
+  };
+  // One streamed request's engine progress, checked and turned into its events (engine-owner thread). A malformed
+  // progress line, or a reply that disagrees with what was streamed, is an engine fault (WorkerFailure).
+  class StreamState {
+   public:
+    StreamState(const Service& service, const Speech& request, std::shared_ptr<Lines> lines)
+        : s_(service), request_(request), lines_(std::move(lines)), decoder_(service.tokenizer_, true),
+          text_mode_(request.mode != "audio") {}
+    // `o`: a progress object of `keys` keys (1, or 2 with the batch's "ticket")
+    void event(const Json::Object& o, size_t keys) {
+      if (o.size() != keys || chunk_ >= request_.prompts.size()) throw WorkerFailure("invalid speech progress");
+      if (o.count("audio")) {
+        const auto& b64 = o.at("audio").string();
+        const size_t bytes = lfm::base64::decode(b64).size();  // strict: the client gets these characters as they are
+        if (bytes == 0 || bytes % 2) throw WorkerFailure("invalid speech progress");
+        samples_ += bytes / 2;
+        lines_->push(Obj().str("event", "audio").num("chunk", (long long)chunk_).str("pcm_base64", b64).done());
+      } else if (o.count("text")) {
+        const auto& ids = o.at("text").array();
+        if (ids.size() != 1) throw WorkerFailure("invalid speech progress");
+        const int id = ids[0].integer();
+        if (id < 0 || id >= s_.policy_.vocabulary || id == kAudioOutToken) throw WorkerFailure("invalid speech progress");
+        text_slots_.push_back(id);
+        if (!text_mode_) return;
+        const auto piece = decoder_.push(id);
+        if (!piece.empty()) lines_->push(Obj().str("event", "text").num("chunk", (long long)chunk_).str("text", piece).done());
+      } else if (o.count("chunk")) {
+        // the chunk's text is complete: bytes held back for an unfinished character end as decode() ends them
+        // (text comes only unsplit, in one chunk, so this is decode() of all the text)
+        if (text_mode_) {
+          const auto rest = decoder_.finish();
+          if (!rest.empty()) lines_->push(Obj().str("event", "text").num("chunk", (long long)chunk_).str("text", rest).done());
+        }
+        const auto& c = o.at("chunk");
+        const long long frames = c.at("frames").integer();
+        const bool eos = c.at("ended_by_eos").boolean();
+        Obj e;
+        e.str("event", "chunk").num("chunk", (long long)chunk_);
+        if (request_.split) e.str("text", request_.texts[chunk_]);
+        lines_->push(e.num("frames", frames).boolean("ended_by_eos", eos).done());
+        ended_.emplace_back(frames, eos);
+        ++chunk_;
+      } else {
+        throw WorkerFailure("invalid speech progress");
+      }
+    }
+    // The reply must agree with what was streamed: the samples, the slots, the chunks.
+    void check(const Json& result) const {
+      if (!result.has("cancelled") || !std::holds_alternative<bool>(result.at("cancelled").value))
+        throw WorkerFailure("invalid speech reply");
+      if (std::get<bool>(result.at("cancelled").value)) return;
+      if (result.has("wav_base64") || result.at("samples").integer() != (long long)samples_)
+        throw WorkerFailure("invalid speech reply");
+      std::vector<int> want;
+      for (const auto& v : result.at("slots").array())
+        if (v.integer() != kAudioOutToken) want.push_back(v.integer());
+      const auto& chunks = result.at("chunks").array();
+      if (want != text_slots_ || chunks.size() != ended_.size()) throw WorkerFailure("invalid speech reply");
+      for (size_t k = 0; k < chunks.size(); ++k)
+        if (chunks[k].at("frames").integer() != ended_[k].first || chunks[k].at("ended_by_eos").boolean() != ended_[k].second)
+          throw WorkerFailure("invalid speech reply");
+    }
+
+   private:
+    const Service& s_;
+    const Speech& request_;
+    std::shared_ptr<Lines> lines_;
+    lfm3_text::Tokenizer::StreamDecoder decoder_;
+    bool text_mode_;
+    size_t chunk_ = 0, samples_ = 0;
+    std::vector<int> text_slots_;
+    std::vector<std::pair<long long, bool>> ended_;  // per chunk: frames, ended_by_eos
+  };
+  // A /speech request in the concurrent speech batch: queued, then running in a row (engine-owner thread), then
+  // settled once (its reply, or an error) through `promise`.
+  struct Ticket {
+    long long id = -1;
+    std::shared_ptr<Speech> request;
+    Clock::time_point deadline, arrived;
+    std::shared_ptr<Lines> lines;  // streamed: its events
+    std::promise<std::string> promise;
+    std::mutex completion;
+    bool abandoned = false, settled = false;  // under completion
+    std::atomic<bool> cancel{false};          // the client is gone or past its deadline: cancel at the next step
+    // engine-owner thread only
+    std::unique_ptr<StreamState> state;
+    bool cancel_sent = false;
+  };
+
   struct Response {
     Obj body;
     std::vector<int> generated;
@@ -837,7 +939,7 @@ class Service {
   struct Job {
     std::function<std::string()> function;
     std::promise<std::string> promise;
-    Clock::time_point deadline;
+    Clock::time_point deadline, arrived;
     std::function<void()> cleanup, discard;
     std::mutex completion;
     bool abandoned = false;
@@ -885,6 +987,16 @@ class Service {
     if (request->audio_input && !policy_.audio_input) throw ApiError(501, "audio_input_unsupported");
     request->body = std::move(body);  // `messages` points into it until encode_speech drops it
     frontend_call([&] { encode_speech(*request); }, deadline);
+    if (policy_.speech_rows > 0) {
+      auto t = std::make_shared<Ticket>();
+      t->request = request, t->deadline = deadline;
+      auto future = t->promise.get_future();
+      enqueue_ticket(t);
+      if (future.wait_until(deadline) == std::future_status::ready) return future.get();
+      if (abandon_ticket(*t, future)) return future.get();
+      t->cancel = true;  // nobody will read it: free its row
+      throw ApiError(504, "request_deadline_outcome_unknown");
+    }
     Event event = std::make_shared<std::atomic<bool>>(false);
     auto run = [this, request, event, deadline] {
       if (Clock::now() >= deadline) throw ApiError(504, "queue_deadline");
@@ -927,7 +1039,6 @@ class Service {
   };
   void speech_stream(std::shared_ptr<const Json> body, const StreamSink& sink) {
     if (!policy_.speech || settings_.engine_timeout < kSpeechMinEngineTimeout) throw ApiError(501, "speech_unsupported");
-    const auto& send = sink.send;
     const auto deadline = Clock::now() + seconds(settings_.request_timeout);
     auto request = std::make_shared<Speech>(validate_speech(*body));
     if (!request->stream) throw std::logic_error("speech_stream without stream");
@@ -943,98 +1054,52 @@ class Service {
     } release{streams_};
     request->body = std::move(body);
     frontend_call([&] { encode_speech(*request); }, deadline);
-    struct Queue {
-      std::mutex m;
-      std::condition_variable cv;
-      std::deque<std::string> lines;
-    };
-    auto queue = std::make_shared<Queue>();
-    Event event = std::make_shared<std::atomic<bool>>(false);
-    const std::string key = "speech:" + std::to_string(++stream_serial_);  // this request's cancellation target
-    auto run = [this, request, event, queue, key, deadline] {
-      if (Clock::now() >= deadline) throw ApiError(504, "queue_deadline");
-      const auto push = [&](std::string line) {
-        { std::lock_guard g(queue->m); queue->lines.push_back(std::move(line)); }
-        queue->cv.notify_one();
+    auto lines = std::make_shared<Lines>();
+    std::future<std::string> future;
+    std::function<bool()> abandon_now;  // past the deadline: true if it completed meanwhile, else marks it abandoned
+    std::function<void()> leave;        // stop the generation at its next step
+    if (policy_.speech_rows > 0) {
+      auto t = std::make_shared<Ticket>();
+      t->request = request, t->deadline = deadline, t->lines = lines;
+      future = t->promise.get_future();
+      enqueue_ticket(t);
+      abandon_now = [t, &future] { return abandon_ticket(*t, future); };
+      leave = [t] { t->cancel = true; };
+    } else {
+      Event event = std::make_shared<std::atomic<bool>>(false);
+      const std::string key = "speech:" + std::to_string(++stream_serial_);  // this request's cancellation target
+      auto run = [this, request, event, lines, key, deadline] {
+        if (Clock::now() >= deadline) throw ApiError(504, "queue_deadline");
+        StreamState state(*this, *request, lines);
+        const Backend::Progress progress = [&](const std::string& line) {
+          if (line.size() > kMaxBody) throw WorkerFailure("progress frame exceeds limit");
+          const Json p = strict_json(line);
+          state.event(std::get<Json::Object>(p.value), 1);
+        };
+        Obj frame;
+        frame.str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
+            .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split)
+            .boolean("stream", true);
+        if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
+        const auto result = rpc(std::move(frame), {{key, event}}, false, kMaxBody, &progress);
+        state.check(result);
+        return speech_response(*request, result);
       };
-      // The engine's progress lines checked and turned into events (a malformed one is an engine fault).
-      const bool text_mode = request->mode != "audio";
-      lfm3_text::Tokenizer::StreamDecoder decoder(tokenizer_, true);
-      size_t chunk = 0, samples = 0;
-      std::vector<int> text_slots;
-      std::vector<std::pair<long long, bool>> ended;  // per chunk: frames, ended_by_eos
-      const Backend::Progress progress = [&](const std::string& line) {
-        if (line.size() > kMaxBody) throw WorkerFailure("progress frame exceeds limit");
-        const Json p = strict_json(line);
-        const auto& o = std::get<Json::Object>(p.value);
-        if (o.size() != 1 || chunk >= request->prompts.size()) throw WorkerFailure("invalid speech progress");
-        if (o.count("audio")) {
-          const auto& b64 = o.at("audio").string();
-          const size_t bytes = lfm::base64::decode(b64).size();  // strict: the client gets these characters as they are
-          if (bytes == 0 || bytes % 2) throw WorkerFailure("invalid speech progress");
-          samples += bytes / 2;
-          push(Obj().str("event", "audio").num("chunk", (long long)chunk).str("pcm_base64", b64).done());
-        } else if (o.count("text")) {
-          const auto& ids = o.at("text").array();
-          if (ids.size() != 1) throw WorkerFailure("invalid speech progress");
-          const int id = ids[0].integer();
-          if (id < 0 || id >= policy_.vocabulary || id == kAudioOutToken) throw WorkerFailure("invalid speech progress");
-          text_slots.push_back(id);
-          if (!text_mode) return;
-          const auto piece = decoder.push(id);
-          if (!piece.empty()) push(Obj().str("event", "text").num("chunk", (long long)chunk).str("text", piece).done());
-        } else if (o.count("chunk")) {
-          // the chunk's text is complete: bytes held back for an unfinished character end as decode() ends them
-          // (text comes only unsplit, in one chunk, so this is decode() of all the text)
-          if (text_mode) {
-            const auto rest = decoder.finish();
-            if (!rest.empty()) push(Obj().str("event", "text").num("chunk", (long long)chunk).str("text", rest).done());
-          }
-          const auto& c = o.at("chunk");
-          const long long frames = c.at("frames").integer();
-          const bool eos = c.at("ended_by_eos").boolean();
-          Obj e;
-          e.str("event", "chunk").num("chunk", (long long)chunk);
-          if (request->split) e.str("text", request->texts[chunk]);
-          push(e.num("frames", frames).boolean("ended_by_eos", eos).done());
-          ended.emplace_back(frames, eos);
-          ++chunk;
-        } else {
-          throw WorkerFailure("invalid speech progress");
-        }
+      auto queued = enqueue(run, [] {}, nullptr, deadline);
+      future = std::move(queued.second);
+      auto job = queued.first;
+      abandon_now = [job, &future] { return abandon(*job, future); };
+      leave = [this, event, key] {
+        event->store(true);
+        try { send_cancel(key); } catch (const WorkerFailure&) {}  // then it finishes normally, unread
       };
-      Obj frame;
-      frame.str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
-          .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split)
-          .boolean("stream", true);
-      if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
-      const auto result = rpc(std::move(frame), {{key, event}}, false, kMaxBody, &progress);
-      // The reply must agree with what was streamed: the samples, the slots, the chunks.
-      if (!result.has("cancelled") || !std::holds_alternative<bool>(result.at("cancelled").value))
-        throw WorkerFailure("invalid speech reply");
-      if (!std::get<bool>(result.at("cancelled").value)) {
-        if (result.has("wav_base64") || result.at("samples").integer() != (long long)samples) throw WorkerFailure("invalid speech reply");
-        std::vector<int> want;
-        for (const auto& v : result.at("slots").array())
-          if (v.integer() != kAudioOutToken) want.push_back(v.integer());
-        const auto& chunks = result.at("chunks").array();
-        if (want != text_slots || chunks.size() != ended.size()) throw WorkerFailure("invalid speech reply");
-        for (size_t k = 0; k < chunks.size(); ++k)
-          if (chunks[k].at("frames").integer() != ended[k].first || chunks[k].at("ended_by_eos").boolean() != ended[k].second)
-            throw WorkerFailure("invalid speech reply");
-      }
-      return speech_response(*request, result);
-    };
-    auto [job, future] = enqueue(run, [] {}, nullptr, deadline);
+    }
+    const auto& send = sink.send;
     bool started = false;
-    const auto leave = [&] {  // the client is gone (or past the deadline): stop the generation at its next step
-      event->store(true);
-      try { send_cancel(key); } catch (const WorkerFailure&) {}  // then it finishes normally, unread
-    };
     const auto flush = [&] {
-      std::deque<std::string> lines;
-      { std::lock_guard g(queue->m); lines.swap(queue->lines); }
-      for (auto& line : lines) {
+      std::deque<std::string> out;
+      { std::lock_guard g(lines->m); out.swap(lines->lines); }
+      for (auto& line : out) {
         if (!send(line)) return false;
         started = true;
       }
@@ -1051,15 +1116,15 @@ class Service {
         started = true;
       }
       if (Clock::now() >= deadline) {
-        if (abandon(*job, future)) continue;  // completed meanwhile
+        if (abandon_now()) continue;  // completed meanwhile
         leave();
         if (!started) throw ApiError(504, "request_deadline_outcome_unknown");
         send(Obj().str("event", "error").str("error", "request_deadline_outcome_unknown").done());
         return;
       }
-      std::unique_lock g(queue->m);
-      queue->cv.wait_until(g, std::min(deadline, Clock::now() + std::chrono::milliseconds(50)),
-                           [&] { return !queue->lines.empty(); });
+      std::unique_lock g(lines->m);
+      lines->cv.wait_until(g, std::min(deadline, Clock::now() + std::chrono::milliseconds(50)),
+                           [&] { return !lines->lines.empty(); });
     }
     std::string done;
     try {
@@ -1071,6 +1136,7 @@ class Service {
     }
     send(done);
   }
+
 
  private:
   // lfm3_server.Service._validate_generation (before any lease): fields, types, ranges, the messages
@@ -1316,6 +1382,133 @@ class Service {
     }
   }
 
+  // Concurrent speech: a ticket joins the speech queue (429 queue_full when queue_size requests, text or speech, wait).
+  void enqueue_ticket(const std::shared_ptr<Ticket>& t) {
+    {
+      std::lock_guard g(lock_);
+      if (failed_ || stopping_) throw ApiError(503, "worker_unavailable");
+      if (Clock::now() >= t->deadline) throw ApiError(504, "queue_deadline");
+      std::lock_guard q(queue_lock_);
+      if (int(queue_.size() + speech_queue_.size()) >= settings_.queue_size) throw ApiError(429, "queue_full");
+      t->id = ++ticket_serial_;
+      t->arrived = Clock::now();
+      speech_queue_.push_back(t);
+    }
+    queue_cv_.notify_all();
+  }
+  // Past its deadline: marks the ticket abandoned, unless it settled meanwhile (then true: its outcome stands).
+  static bool abandon_ticket(Ticket& t, std::future<std::string>& future) {
+    std::lock_guard g(t.completion);
+    if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) return true;
+    t.abandoned = true;
+    return false;
+  }
+  // Settle a ticket once: its reply (as the job path: past its deadline or abandoned, the outcome is unknown), or an
+  // error.
+  static void settle(Ticket& t, std::string reply) {
+    std::lock_guard g(t.completion);
+    if (t.settled) return;
+    t.settled = true;
+    if (t.abandoned || Clock::now() >= t.deadline)
+      t.promise.set_exception(std::make_exception_ptr(ApiError(504, "request_deadline_outcome_unknown")));
+    else
+      t.promise.set_value(std::move(reply));
+  }
+  static void settle(Ticket& t, const ApiError& e) {
+    std::lock_guard g(t.completion);
+    if (t.settled) return;
+    t.settled = true;
+    t.promise.set_exception(std::make_exception_ptr(e));
+  }
+  // Whether queued speech goes first: it arrived before the oldest waiting job (caller holds queue_lock_). Requests
+  // are served in arrival order between the two queues, so neither kind starves the other.
+  bool speech_first() const {
+    return !speech_queue_.empty() && (queue_.empty() || speech_queue_.front()->arrived < queue_.front()->arrived);
+  }
+  // One cycle of the speech batch (engine-owner thread): drop queued tickets nobody will read; admit queued tickets
+  // into free rows while they arrived before any waiting job (a job that arrived first waits only for the running rows:
+  // the batch drains for it); then one step of every row, with the cancellations of tickets whose clients are gone or
+  // past their deadline (all of them at shutdown). Any engine failure fails the service closed and every ticket with it.
+  void speech_cycle() {
+    try {
+      {  // queued tickets nobody will read (the client left, or it is past its deadline) give up their places
+        std::deque<std::shared_ptr<Ticket>> gone;
+        {
+          std::lock_guard q(queue_lock_);
+          const auto now = Clock::now();
+          for (auto it = speech_queue_.begin(); it != speech_queue_.end();)
+            if ((*it)->cancel || now >= (*it)->deadline) gone.push_back(*it), it = speech_queue_.erase(it);
+            else ++it;
+        }
+        for (auto& t : gone) settle(*t, ApiError(504, "queue_deadline"));
+      }
+      for (;;) {
+        std::shared_ptr<Ticket> t;
+        {
+          std::lock_guard q(queue_lock_);
+          if (!speech_first() || int(running_.size()) >= policy_.speech_rows) break;
+          t = speech_queue_.front();
+          speech_queue_.pop_front();
+        }
+        if (failed()) { settle(*t, ApiError(503, "worker_unavailable")); continue; }
+        if (Clock::now() >= t->deadline) { settle(*t, ApiError(504, "queue_deadline")); continue; }
+        const Speech& r = *t->request;
+        Obj frame;
+        frame.str("op", "speech_admit").num("ticket", t->id).raw("chunks", r.chunks_json).str("mode", r.mode)
+            .num("max_new_tokens", r.count).num("seed", r.seed).boolean("chunked", r.split).boolean("stream", r.stream);
+        if (!r.audio_json.empty()) frame.raw("audio", r.audio_json);
+        if (r.stream) t->state = std::make_unique<StreamState>(*this, r, t->lines);
+        running_[t->id] = t;  // before the call: a failure fails it with the rest
+        const Backend::Progress none = [](const std::string&) { throw WorkerFailure("unexpected speech progress"); };
+        const auto reply = rpc(std::move(frame), {}, false, kMaxBody, &none);
+        if (!reply.has("ticket") || reply.at("ticket").integer() != t->id) throw WorkerFailure("invalid speech admit reply");
+      }
+      if (running_.empty()) return;
+      std::string cancel = "[";
+      for (auto& [id, t] : running_)
+        if (!t->cancel_sent && (t->cancel || cancel_all_)) {
+          cancel += (cancel.size() > 1 ? "," : "") + std::to_string(id);
+          t->cancel_sent = true;
+        }
+      cancel += "]";
+      const Backend::Progress progress = [&](const std::string& line) {
+        if (line.size() > kMaxSpeechResponse) throw WorkerFailure("progress frame exceeds limit");
+        const Json p = strict_json(line);
+        const auto& o = std::get<Json::Object>(p.value);
+        const auto it = o.count("ticket") ? running_.find(o.at("ticket").integer()) : running_.end();
+        if (it == running_.end()) throw WorkerFailure("invalid speech progress");
+        const auto t = it->second;
+        if (o.count("finished")) {
+          if (o.size() != 2) throw WorkerFailure("invalid speech progress");
+          const Json& result = o.at("finished");
+          if (t->state) t->state->check(result);
+          std::string reply = speech_response(*t->request, result);
+          running_.erase(it);
+          settle(*t, std::move(reply));
+          return;
+        }
+        if (!t->state) throw WorkerFailure("invalid speech progress");  // events only for a streamed ticket
+        t->state->event(o, 2);
+      };
+      Obj frame;
+      frame.str("op", "speech_step");
+      if (cancel.size() > 2) frame.raw("cancel", cancel);
+      const auto reply = rpc(std::move(frame), {}, false, kMaxBody, &progress);
+      if (!reply.has("busy") || reply.at("busy").integer() != (long long)running_.size())
+        throw WorkerFailure("invalid speech step reply");
+    } catch (...) {
+      fatal();
+      std::deque<std::shared_ptr<Ticket>> queued;
+      {
+        std::lock_guard q(queue_lock_);
+        queued.swap(speech_queue_);
+      }
+      for (auto& [id, t] : running_) settle(*t, ApiError(503, "worker_unavailable"));
+      for (auto& t : queued) settle(*t, ApiError(503, "worker_unavailable"));
+      running_.clear();
+    }
+  }
+
   std::string submit(std::function<std::string()> function, std::function<void()> cleanup, std::function<void()> discard,
                      std::optional<Clock::time_point> when = std::nullopt) {
     const auto deadline = when ? *when : Clock::now() + seconds(settings_.request_timeout);
@@ -1339,6 +1532,7 @@ class Service {
     auto job = std::make_shared<Job>();
     job->function = std::move(function);
     job->deadline = deadline;
+    job->arrived = Clock::now();
     job->cleanup = cleanup;
     job->discard = std::move(discard);
     auto future = job->promise.get_future();
@@ -1347,7 +1541,8 @@ class Service {
       if (failed_ || stopping_) throw ApiError(503, "worker_unavailable");
       if (Clock::now() >= deadline) throw ApiError(504, "queue_deadline");
       std::lock_guard q(queue_lock_);
-      if (int(queue_.size()) >= settings_.queue_size) throw ApiError(429, "queue_full");
+      // one limit for every waiting request, text and speech alike
+      if (int(queue_.size() + speech_queue_.size()) >= settings_.queue_size) throw ApiError(429, "queue_full");
       queue_.push_back(job);
     } catch (...) {
       cleanup();
@@ -1401,16 +1596,28 @@ class Service {
       std::shared_ptr<Job> job;
       {
         std::unique_lock q(queue_lock_);
-        if (stopping_ && queue_.empty()) return;
+        if (stopping_ && queue_.empty() && speech_queue_.empty() && running_.empty()) return;
       }
       try { reap_idle(); }
       catch (...) { fatal(); }
+      bool speech = false;
       {
         std::unique_lock q(queue_lock_);
-        queue_cv_.wait_for(q, std::chrono::milliseconds(50), [&] { return !queue_.empty() || stopping_.load(); });
-        if (queue_.empty()) continue;
-        job = queue_.front();
-        queue_.pop_front();
+        queue_cv_.wait_for(q, std::chrono::milliseconds(50), [&] {
+          return !queue_.empty() || !speech_queue_.empty() || !running_.empty() || stopping_.load();
+        });
+        // speech rows run on until they finish; queued speech is admitted in arrival order with the other jobs (a job
+        // that arrived first waits only for the running rows: the batch drains for it)
+        speech = !running_.empty() || speech_first();
+        if (!speech) {
+          if (queue_.empty()) continue;
+          job = queue_.front();
+          queue_.pop_front();
+        }
+      }
+      if (speech) {
+        speech_cycle();
+        continue;
       }
       std::string result;
       try {
@@ -1468,6 +1675,12 @@ class Service {
   std::uint64_t sequence_ = 0;   // owner thread only
   std::atomic<std::uint64_t> stream_serial_{0};
   std::atomic<int> streams_{0};  // streamed /speech requests in progress
+  // concurrent speech: the queue (guarded by queue_lock_), the tickets running in rows (engine-owner thread; read
+  // under queue_lock_ by that thread only), and shutdown's cancellation of them all
+  std::deque<std::shared_ptr<Ticket>> speech_queue_;
+  std::map<long long, std::shared_ptr<Ticket>> running_;
+  std::atomic<long long> ticket_serial_{0};
+  std::atomic<bool> cancel_all_{false};
   std::atomic<bool> in_call_{false}, timed_out_{false};
   std::atomic<Clock::rep> call_started_{0};
   std::mutex done_lock_;
@@ -1845,7 +2058,10 @@ class Server {
     address.sin_family = AF_INET;
     address.sin_port = htons(std::uint16_t(port));
     address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    if (::bind(listener_, reinterpret_cast<sockaddr*>(&address), sizeof address) != 0 || ::listen(listener_, 5) != 0) {
+    // the accept queue holds a crowd of clients arriving at once (http.server's 5 overflowed under concurrent speech,
+    // and an overflowing queue can reset a connection: validation/speech-batch-v1); handlers bound the work, not this
+    const int backlog = std::max(16, service.settings().handlers);
+    if (::bind(listener_, reinterpret_cast<sockaddr*>(&address), sizeof address) != 0 || ::listen(listener_, backlog) != 0) {
       ::close(listener_);
       throw std::runtime_error(std::string("cannot listen on 127.0.0.1: ") + std::strerror(errno));
     }

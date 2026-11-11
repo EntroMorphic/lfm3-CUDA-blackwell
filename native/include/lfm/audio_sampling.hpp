@@ -90,25 +90,45 @@ class FrameSampler {
     return last;  // rounding at the very end of the CDF
   }
 
+  // One frame drawn pass by pass (a batch interleaves many): begin() draws the reveal order; while !done(), the caller
+  // scores the codebooks `picked` from `codes` where !`masked`, then take() draws them from those logits. sample_frame
+  // is the same steps in one call.
+  struct Draw {
+    std::array<int, kCodebooks> order{};
+    Frame codes{};
+    bool masked[kCodebooks], picked[kCodebooks];
+    int pass = 0, next = 0;
+    bool done() const { return pass == int(kSchedule.size()); }
+  };
+  Draw begin() {
+    Draw d;
+    d.order = order();
+    for (int c = 0; c < kCodebooks; ++c) d.masked[c] = true;
+    pick(d);
+    return d;
+  }
+  // `logits`: at least the picked codebooks' 2017 logits, codebook c at logits + c * 2017 (host).
+  void take(Draw& d, const float* logits) {
+    if (d.done()) throw std::logic_error("audio frame draw already complete");
+    const int count = kSchedule[size_t(d.pass)];
+    for (int i = d.next; i < d.next + count; ++i) d.codes[d.order[i]] = sample_code(d.order[i], logits + size_t(d.order[i]) * kCodes);
+    for (int i = d.next; i < d.next + count; ++i) d.masked[d.order[i]] = false;
+    d.next += count;
+    ++d.pass;
+    if (!d.done()) pick(d);
+  }
+
   // One frame. `score(codes, masked, picked, logits)` must write the logits of every picked codebook c to
   // logits[c * 2017 ...] (host), from `codes` where !masked. Returns the raw codes (any may be the EOS code 2016).
   template <class Score>
   Frame sample_frame(Score&& score) {
-    const auto o = order();
-    Frame codes{};
-    bool masked[kCodebooks], picked[kCodebooks];
-    for (int c = 0; c < kCodebooks; ++c) masked[c] = true;
+    Draw d = begin();
     std::vector<float> logits(size_t(kCodebooks) * kCodes);
-    int next = 0;
-    for (int count : kSchedule) {
-      for (int c = 0; c < kCodebooks; ++c) picked[c] = false;
-      for (int i = next; i < next + count; ++i) picked[o[i]] = true;
-      score(codes.data(), masked, picked, logits.data());
-      for (int i = next; i < next + count; ++i) codes[o[i]] = sample_code(o[i], logits.data() + size_t(o[i]) * kCodes);
-      for (int i = next; i < next + count; ++i) masked[o[i]] = false;
-      next += count;
+    while (!d.done()) {
+      score(d.codes.data(), d.masked, d.picked, logits.data());
+      take(d, logits.data());
     }
-    return codes;
+    return d.codes;
   }
 
   // An accepted (non-EOS) frame joins the penalty history; HF keeps the last `repetition_window`.
@@ -134,6 +154,10 @@ class FrameSampler {
   }
 
  private:
+  static void pick(Draw& d) {
+    for (int c = 0; c < kCodebooks; ++c) d.picked[c] = false;
+    for (int i = d.next; i < d.next + kSchedule[size_t(d.pass)]; ++i) d.picked[d.order[i]] = true;
+  }
   static FrameSamplingOptions checked(FrameSamplingOptions o) {
     if (o.repetition_window < 0) throw std::invalid_argument("invalid audio repetition window");
     if (!(o.temperature >= 0) || !std::isfinite(o.temperature)) throw std::invalid_argument("invalid audio temperature");
