@@ -64,3 +64,40 @@ findings, and any test added for them, go in a dated section below before that t
    nothing new unless a byte changed. Any changed byte is a failure under rules 2–5 first.
 
 Speed is not measured here.
+
+## Added 2026-11-11, from the evidence audit (set before these runs)
+The auditor (records only) found that every exactness check since speech-batch-v1 compares a build with itself or
+with the build just before it, not with the builds on which fidelity was measured. It also found that no check since
+depth-v1 reads the depth decoder's logits: forced replays force the codes, and a sampled code rarely moves at
+temperature 0.4. Rules 7–9 tie the engine in the tree back to the measured builds. Rule 10 is a defect the audit
+found.
+
+7. **The depth decoder at its measured precision.** `tools/thor/depth_round.sh` at this tree (liquid-depth on the
+   current depth.cuh and staged FP32 kernel) against depth-anchor-v1 and tts-trace-v2. Pass:
+   - A1 and B1 pass;
+   - the tripwire holds (median relative L2 from FP64 ≤ 1e-6, max ≤ 1e-5, KL ≤ 1e-9).
+8. **The audio encoder's stages, unchanged.** lfm3-speech speed-a4 on audio-in-v1's 40 dumped clips
+   (`build/audioin-v2/list-dump.txt`) and on its 9 edge cases (`build/server-stream-v1-check/edge`). Pass: every
+   output file (features, mel, downsampler, encoder and projected outputs, tokens) equals the recorded native run's
+   bytes, timings aside. Those runs were tied to HF: the stage errors 0.15–0.19 times HF BF16's, and the edge cases
+   token-identical to HF.
+9. **The sampled speech, unchanged.** speed-a4 on the 30 requests of speech-e2e-v1 and the 30 split long-form runs
+   (speech-chunk-native-v1), on which C1 (WER against HF), C2 and the listening verdicts were measured. Pass: every
+   `raw.i32`, `frames.i32` and `f32` byte-identical to the recorded outputs.
+10. **Normalization only where it applies.** Today `POST /speech` in audio mode normalizes by default whatever
+    language the system prompt names (`lfm3_http.hpp`), and the normalizer is American English only. A host test is
+    written first and must fail on today's code. Its cases:
+    - TTS requests in Spanish, German, French and Japanese with digits;
+    - American English and British English;
+    - no system prompt;
+    - explicit `normalize: true` with a non-English language.
+
+    The pass condition, after the fix: default normalization only when the TTS system prompt names American or
+    British English (or there is no system prompt); otherwise off. An explicit `normalize: true` with another
+    language is refused (400). The English defaults keep every validated reply byte-identical (the server checks of
+    rules 4–5).
+
+    The sentence splitter is English-only as well: it splits at `. ! ?` followed by a space. Whether multilingual
+    TTS is in scope is Tripp's call. Until then, the splitter's default is left as is and reported.
+11. **The staged FP32 kernel under the sanitizers.** fp32-linear-check (speed-a4) under memcheck, racecheck,
+    synccheck and initcheck. Pass: 0 errors, 0 hazards, and the check passes.
