@@ -1,0 +1,332 @@
+diff --git a/native/include/lfm/depth.cuh b/native/include/lfm/depth.cuh
+index 435bd05..5a68a4b 100644
+--- a/native/include/lfm/depth.cuh
++++ b/native/include/lfm/depth.cuh
+@@ -86,17 +86,10 @@ __global__ void attention(const float* q, const float* k, const float* v, const
+   out[size_t(t) * kHeads * kHeadDim + h * kHeadDim + lane] = __fmul_rn(o, g);
+ }
+ 
+-// Batched forms (one launch for every frame), each element computed exactly as the one-frame kernels compute it.
+-// attention over n frames: frame f's slots are rows [12f, 12f + 12) of q, k, v, gate and out.
+-__global__ void attention_frames(const float* q, const float* k, const float* v, const float* gate, float* out, int n) {
+-  const int all = (blockIdx.x * blockDim.x + threadIdx.x) / 32;
+-  if (all >= n * kCodebooks * kHeads) return;
+-  const int f = all / (kCodebooks * kHeads), warp = all % (kCodebooks * kHeads), lane = threadIdx.x % 32;
+-  const size_t s0 = size_t(f) * kCodebooks;
+-  q += s0 * kHeads * kHeadDim, k += s0 * kKvHeads * kHeadDim, v += s0 * kKvHeads * kHeadDim, gate += s0 * kHeads;
+-  out += s0 * kHeads * kHeadDim;
+-  const int t = warp / kHeads, h = warp % kHeads, kv = h / (kHeads / kKvHeads);
+-  const float qv = q[size_t(warp) * kHeadDim + lane], scale = 0.17677669529663687f;
++// One (slot, query head) of a frame: qv is the query's lane element; k and v the frame's slot rows (12 x 8 x 32);
++// gate the slot's gate for head h. The arithmetic of `attention`, element for element.
++__device__ __forceinline__ float attend(float qv, const float* k, const float* v, float gate, int kv, int lane) {
++  const float scale = 0.17677669529663687f;
+   float scores[kCodebooks], top = -INFINITY;
+ #pragma unroll
+   for (int s = 0; s < kCodebooks; ++s) {
+@@ -112,8 +105,34 @@ __global__ void attention_frames(const float* q, const float* k, const float* v,
+ #pragma unroll
+   for (int s = 0; s < kCodebooks; ++s)
+     o = __fmaf_rn(__fdiv_rn(scores[s], total), v[(size_t(s) * kKvHeads + kv) * kHeadDim + lane], o);
+-  const float g = __fdiv_rn(1.0f, __fadd_rn(1.0f, expf(-gate[size_t(t) * kHeads + h])));
+-  out[size_t(t) * kHeads * kHeadDim + h * kHeadDim + lane] = __fmul_rn(o, g);
++  const float g = __fdiv_rn(1.0f, __fadd_rn(1.0f, expf(-gate)));
++  return __fmul_rn(o, g);
++}
++
++// Batched forms (one launch for every frame), each element computed exactly as the one-frame kernels compute it.
++// attention over n frames: frame f's slots are rows [12f, 12f + 12) of q, k, v, gate and out.
++__global__ void attention_frames(const float* q, const float* k, const float* v, const float* gate, float* out, int n) {
++  const int all = (blockIdx.x * blockDim.x + threadIdx.x) / 32;
++  if (all >= n * kCodebooks * kHeads) return;
++  const int f = all / (kCodebooks * kHeads), warp = all % (kCodebooks * kHeads), lane = threadIdx.x % 32;
++  const size_t s0 = size_t(f) * kCodebooks;
++  q += s0 * kHeads * kHeadDim, k += s0 * kKvHeads * kHeadDim, v += s0 * kKvHeads * kHeadDim, gate += s0 * kHeads;
++  out += s0 * kHeads * kHeadDim;
++  const int t = warp / kHeads, h = warp % kHeads, kv = h / (kHeads / kKvHeads);
++  out[size_t(t) * kHeads * kHeadDim + h * kHeadDim + lane] =
++      attend(q[size_t(warp) * kHeadDim + lane], k, v, gate[size_t(t) * kHeads + h], kv, lane);
++}
++// attention for some slots only: query row i (of q, gate and out, m rows) is slot index[i] (frame index[i] / 12,
++// position index[i] % 12); k and v hold every frame's slots.
++__global__ void attention_rows(const float* q, const float* k, const float* v, const float* gate, float* out,
++                               const int* index, int m) {
++  const int all = (blockIdx.x * blockDim.x + threadIdx.x) / 32;
++  if (all >= m * kHeads) return;
++  const int i = all / kHeads, h = all % kHeads, lane = threadIdx.x % 32, kv = h / (kHeads / kKvHeads);
++  const size_t s0 = size_t(index[i] / kCodebooks) * kCodebooks;
++  out[(size_t(i) * kHeads + h) * kHeadDim + lane] =
++      attend(q[(size_t(i) * kHeads + h) * kHeadDim + lane], k + s0 * kKvHeads * kHeadDim, v + s0 * kKvHeads * kHeadDim,
++             gate[size_t(i) * kHeads + h], kv, lane);
+ }
+ 
+ // fp32::rotary's angles for positions 0..11 and the 16 pairs of a 32-wide head, computed once on the device by
+@@ -141,12 +160,27 @@ __global__ void rotary_frames(float* x, int rows, int heads, const double* table
+   v[d + half] = float(__dadd_rn(__dmul_rn(b, cs), __dmul_rn(a, sn)));
+ }
+ 
++// rotary_frames for gathered rows: row r is slot index[r], at position index[r] % 12.
++__global__ void rotary_rows(float* x, int rows, int heads, const double* table, const int* index) {
++  constexpr int half = kHeadDim / 2;
++  const int i = blockIdx.x * blockDim.x + threadIdx.x;
++  if (i >= rows * heads * half) return;
++  const int d = i % half, head_row = i / half, t = index[head_row / heads] % kCodebooks;
++  const double sn = table[2 * (t * half + d)], cs = table[2 * (t * half + d) + 1];
++  float* v = x + size_t(head_row) * kHeadDim;
++  const double a = v[d], b = v[d + half];
++  v[d] = float(__dsub_rn(__dmul_rn(a, cs), __dmul_rn(b, sn)));
++  v[d + half] = float(__dadd_rn(__dmul_rn(b, cs), __dmul_rn(a, sn)));
++}
++
+ // The heads' norm over n frames: row r uses codebook r % 12's weight (fp32::kernels::rms_norm's arithmetic).
+-__global__ void head_norm_frames(const float* x, const bf16* w, float* y, int rows, int width, float eps) {
++// With `index`, row r is slot index[r] (codebook index[r] % 12).
++__global__ void head_norm_frames(const float* x, const bf16* w, float* y, int rows, int width, float eps,
++                                 const int* index = nullptr) {
+   const int row = (blockIdx.x * blockDim.x + threadIdx.x) / 32, lane = threadIdx.x % 32;
+   if (row >= rows) return;
+   const float* xr = x + size_t(row) * width;
+-  const bf16* wr = w + size_t(row % kCodebooks) * width;
++  const bf16* wr = w + size_t((index ? index[row] : row) % kCodebooks) * width;
+   float sum = 0.0f;
+   for (int d = lane; d < width; d += 32) sum = __fmaf_rn(xr[d], xr[d], sum);
+   for (int o = 16; o; o /= 2) sum = __fadd_rn(sum, __shfl_down_sync(0xffffffffu, sum, o));
+@@ -193,6 +227,7 @@ class Decoder {
+     ffn_b_ = fp32::DeviceArray<float>(S * kFfn);
+     head_in_ = fp32::DeviceArray<float>(S * kHidden);
+     gathered_ = fp32::DeviceArray<float>(S * kHidden);
++    x_rows_ = fp32::DeviceArray<float>(S * kHidden);
+     gathered_logits_ = fp32::DeviceArray<float>(S * kCodes);
+     index_ = fp32::DeviceArray<int>(S);
+     rotary_ = fp32::DeviceArray<double>(size_t(kCodebooks) * kHeadDim);
+@@ -276,13 +311,16 @@ class Decoder {
+     }
+     if (!index.empty())
+       fp32::check(cudaMemcpy(index_.p, index.data(), index.size() * sizeof(int), cudaMemcpyHostToDevice), "depth heads");
+-    const int R = n * kCodebooks;
++    // No codebook scored: nothing is read (the trunk's values reach only the heads).
++    if (index.empty()) return;
++    const int R = n * kCodebooks, m = int(index.size());
+     for (int f = 0; f < n; ++f) {
+       const size_t at = size_t(f) * kCodebooks * kHidden;
+       kernels::slot_inputs<<<fp32::blocks(kCodebooks * kHidden), 256>>>(projected_.p + at, tables_, mask_embedding_,
+                                                                         state_.p + size_t(f) * 2 * kCodebooks, x_.p + at);
+     }
+-    for (const Layer& y : layers_) {
++    for (int li = 0; li + 1 < kLayers; ++li) {
++      const Layer& y = layers_[li];
+       fp32::rms_norm(x_.p, y.operator_norm, normed_.p, nullptr, R, kHidden, kNormEps);
+       float *q = q_.p, *k = k_.p, *v = v_.p, *gate = gate_.p;
+       linear(normed_.p, y.q, nullptr, q, R, kHeads * kHeadDim, kHidden);
+@@ -304,28 +342,51 @@ class Decoder {
+       linear(ffn_a_.p, y.w2, nullptr, out_.p, R, kHidden, kFfn);
+       kernels::add<<<fp32::blocks(R * kHidden), 256>>>(x_.p, out_.p, R * kHidden);
+     }
+-    fp32::rms_norm(x_.p, final_norm_, normed_.p, nullptr, R, kHidden, kNormEps);
++    // The last layer: K and V for every slot (attention reads them); the rest only for the m scored slots, gathered
++    // in the heads' order (index). Every operator below computes a row as it would among all R rows
++    // (validation/speech-speed-v2).
++    {
++      const Layer& y = layers_[kLayers - 1];
++      float *q = q_.p, *k = k_.p, *v = v_.p, *gate = gate_.p;
++      fp32::rms_norm(x_.p, y.operator_norm, normed_.p, nullptr, R, kHidden, kNormEps);
++      linear(normed_.p, y.k, nullptr, k, R, kKvHeads * kHeadDim, kHidden);
++      linear(normed_.p, y.v, nullptr, v, R, kKvHeads * kHeadDim, kHidden);
++      fp32::rms_norm(k, y.k_norm, k, nullptr, R * kKvHeads, kHeadDim, kNormEps);
++      kernels::rotary_frames<<<fp32::blocks(size_t(R) * kKvHeads * kHeadDim / 2), 256>>>(k, R, kKvHeads, rotary_.p);
++      kernels::gather_rows<<<fp32::blocks(size_t(m) * kHidden), 256>>>(normed_.p, index_.p, gathered_.p, m, kHidden);
++      linear(gathered_.p, y.q, nullptr, q, m, kHeads * kHeadDim, kHidden);
++      linear(gathered_.p, y.gate, nullptr, gate, m, kHeads, kHidden);
++      fp32::rms_norm(q, y.q_norm, q, nullptr, m * kHeads, kHeadDim, kNormEps);
++      kernels::rotary_rows<<<fp32::blocks(size_t(m) * kHeads * kHeadDim / 2), 256>>>(q, m, kHeads, rotary_.p, index_.p);
++      kernels::attention_rows<<<fp32::blocks(size_t(m) * kHeads * 32), 256>>>(q, k, v, gate, attended_.p, index_.p, m);
++      linear(attended_.p, y.o, nullptr, out_.p, m, kHidden, kHeads * kHeadDim);
++      kernels::gather_rows<<<fp32::blocks(size_t(m) * kHidden), 256>>>(x_.p, index_.p, x_rows_.p, m, kHidden);
++      kernels::add<<<fp32::blocks(m * kHidden), 256>>>(x_rows_.p, out_.p, m * kHidden);
++      fp32::rms_norm(x_rows_.p, y.ffn_norm, normed_.p, nullptr, m, kHidden, kNormEps);
++      linear(normed_.p, y.w1, nullptr, ffn_a_.p, m, kFfn, kHidden);
++      linear(normed_.p, y.w3, nullptr, ffn_b_.p, m, kFfn, kHidden);
++      fp32::swiglu(ffn_a_.p, ffn_b_.p, size_t(m) * kFfn);
++      linear(ffn_a_.p, y.w2, nullptr, out_.p, m, kHidden, kFfn);
++      kernels::add<<<fp32::blocks(m * kHidden), 256>>>(x_rows_.p, out_.p, m * kHidden);
++    }
++    fp32::rms_norm(x_rows_.p, final_norm_, normed_.p, nullptr, m, kHidden, kNormEps);
+     // the heads' norm: each codebook's own weight (HF Lfm3OmniRMSNorm; in FP32 the same arithmetic as above)
+-    kernels::head_norm_frames<<<fp32::blocks(size_t(R) * 32), 256>>>(normed_.p, head_norms_.p, head_in_.p, R, kHidden,
+-                                                                      kNormEps);
++    kernels::head_norm_frames<<<fp32::blocks(size_t(m) * 32), 256>>>(normed_.p, head_norms_.p, head_in_.p, m, kHidden,
++                                                                      kNormEps, index_.p);
+     // the heads, one call per codebook over every frame that scores it (its tied embedding read once)
+-    if (!index.empty()) {
+-      const int m = int(index.size());
+-      kernels::gather_rows<<<fp32::blocks(size_t(m) * kHidden), 256>>>(head_in_.p, index_.p, gathered_.p, m, kHidden);
+-      for (int c = 0; c < kCodebooks; ++c)
+-        if (spans[size_t(c)].second)
+-          linear(gathered_.p + size_t(spans[size_t(c)].first) * kHidden, tables_.embedding[c], nullptr,
+-                 gathered_logits_.p + size_t(spans[size_t(c)].first) * kCodes, spans[size_t(c)].second, kCodes, kHidden);
+-      kernels::scatter_rows<<<fp32::blocks(size_t(m) * kCodes), 256>>>(gathered_logits_.p, index_.p, logits, m, kCodes);
+-    }
++    for (int c = 0; c < kCodebooks; ++c)
++      if (spans[size_t(c)].second)
++        linear(head_in_.p + size_t(spans[size_t(c)].first) * kHidden, tables_.embedding[c], nullptr,
++               gathered_logits_.p + size_t(spans[size_t(c)].first) * kCodes, spans[size_t(c)].second, kCodes, kHidden);
++    kernels::scatter_rows<<<fp32::blocks(size_t(m) * kCodes), 256>>>(gathered_logits_.p, index_.p, logits, m, kCodes);
+     fp32::check(cudaGetLastError(), "depth pass");
+   }
+ 
+   size_t buffer_bytes() const {
+     return hidden_.bytes() + projected_.bytes() + state_.bytes() + x_.bytes() + normed_.bytes() + q_.bytes() +
+            k_.bytes() + v_.bytes() + gate_.bytes() + attended_.bytes() + out_.bytes() + ffn_a_.bytes() +
+-           ffn_b_.bytes() + head_in_.bytes() + head_norms_.bytes() + gathered_.bytes() + gathered_logits_.bytes() +
+-           index_.bytes() + rotary_.bytes();
++           ffn_b_.bytes() + head_in_.bytes() + head_norms_.bytes() + gathered_.bytes() + x_rows_.bytes() +
++           gathered_logits_.bytes() + index_.bytes() + rotary_.bytes();
+   }
+ 
+  private:
+@@ -351,7 +412,7 @@ class Decoder {
+   fp32::DeviceArray<bf16> head_norms_;
+   fp32::DeviceArray<int32_t> state_;
+   fp32::DeviceArray<float> hidden_, projected_, x_, normed_, q_, k_, v_, gate_, attended_, out_, ffn_a_, ffn_b_,
+-      head_in_, gathered_, gathered_logits_;
++      head_in_, gathered_, x_rows_, gathered_logits_;
+   fp32::DeviceArray<int> index_;
+   fp32::DeviceArray<double> rotary_;
+ };
+diff --git a/native/include/lfm/gemm.cuh b/native/include/lfm/gemm.cuh
+index fd3c944..e25354e 100644
+--- a/native/include/lfm/gemm.cuh
++++ b/native/include/lfm/gemm.cuh
+@@ -91,7 +91,8 @@ struct Tile {
+   static constexpr int KCH = BK / 8;  // 16-byte chunks per K row
+   static constexpr int A_CHUNKS = BM * KCH, B_CHUNKS = BN * KCH;
+   static constexpr int SMEM = STAGES * (A_CHUNKS + B_CHUNKS) * 16;
+-  static_assert(WM % 16 == 0 && WN % 16 == 0 && (KCH == 4 || KCH == 8) && BN % 64 == 0, "tile");
++  // BN 32 only for B stored N x K (wide_kernel checks): the K x N tile's swizzle needs eight chunks per row.
++  static_assert(WM % 16 == 0 && WN % 16 == 0 && (KCH == 4 || KCH == 8) && BN % 32 == 0, "tile");
+ };
+ 
+ // K-row tiles: XOR-swizzle the 16-byte chunk so the eight rows an ldmatrix phase reads land on eight
+@@ -108,6 +109,7 @@ template <class T, bool BK_CONTIGUOUS>
+ __global__ void __launch_bounds__(T::THREADS) wide_kernel(Problem p) {
+   constexpr int BM = T::BM, BN = T::BN, BK = T::BK, MI = T::MI, NI = T::NI, KCH = T::KCH, STAGES = T::STAGES;
+   constexpr int NCH = BN / 8;  // chunks per row of a K x BN tile
++  static_assert(BK_CONTIGUOUS || BN % 64 == 0, "a K x N B tile needs BN a multiple of 64");
+   extern __shared__ __align__(128) unsigned char smem[];
+   int4* sa = reinterpret_cast<int4*>(smem);
+   int4* sb = sa + STAGES * T::A_CHUNKS;
+diff --git a/native/include/lfm/gemm_lossless.cuh b/native/include/lfm/gemm_lossless.cuh
+index 8c24e56..91da1e3 100644
+--- a/native/include/lfm/gemm_lossless.cuh
++++ b/native/include/lfm/gemm_lossless.cuh
+@@ -104,6 +104,7 @@ template <class T>
+ __global__ void __launch_bounds__(T::THREADS) wide_lossless_kernel(Problem p, Packed w) {
+   constexpr int BM = T::BM, BN = T::BN, BK = T::BK, MI = T::MI, NI = T::NI, KCH = T::KCH, STAGES = T::STAGES;
+   static_assert(BK == 64 && KCH == 8, "lossless tiles are one 64-weight group deep");
++  static_assert(BN % 64 == 0, "the packed streams are 64-row tile-major");
+   static_assert(STAGES >= 3, "the decode of k-tile kt + 1 runs in iteration kt: k-tile kt + 1 must already be in flight");
+   // per stage: A (BM x 64 bf16), man (BN x 64 B), code (BN x 32 B), hdr (BN x 8 B); B fragments decode to registers
+   constexpr int MAN_CH = BN * 4, CODE_CH = BN * 2, HDR_CH = (BN + 1) / 2;
+diff --git a/native/src/lfm3_batch.cuh b/native/src/lfm3_batch.cuh
+index 9fefd62..f245ee5 100644
+--- a/native/src/lfm3_batch.cuh
++++ b/native/src/lfm3_batch.cuh
+@@ -35,13 +35,18 @@ constexpr int kGroupMax = 8;  // query heads per KV head supported by the attent
+ // (the sweep checks it bitwise); a tile's row count is at least the batch's, so weights are read once per step.
+ namespace tiles {
+ using lfm::gemm::detail::Tile;
+-using S16 = Tile<16, 64, 64, 1, 4, 8>;    // narrow outputs and the 2048-wide projections, rows <= 16
+-using C32 = Tile<32, 64, 64, 1, 4, 6>;    // 2048 x 2048 and the long-K down projection
+-using W32 = Tile<32, 128, 64, 2, 2, 6>;   // wide outputs (MLP up, LM head), rows <= 32
++using S16 = Tile<16, 64, 64, 1, 4, 8>;    // rows <= 16 before speech-speed-v2 (lfm3_lossless_check compares with it)
++using C32 = Tile<32, 64, 64, 1, 4, 6>;    // 2048 x 2048, rows 17..32
++using W32 = Tile<32, 128, 64, 2, 2, 6>;   // wide outputs (MLP up, LM head), rows 17..32
+ using N32 = Tile<32, 64, 64, 2, 2, 6>;    // the long-K down projection, rows 17..32
+ using A64 = Tile<64, 64, 64, 2, 2, 4>;    // MLP up, rows 33..64
+ using B64 = Tile<64, 64, 64, 4, 2, 4>;    // 2048-wide and the down projection, rows 33..64
+ using H64 = Tile<64, 128, 64, 2, 2, 3>;   // conv input and LM head, rows 33..64
++// rows <= 16 (validation/speech-speed-v2, sweep at 1, 4, 8 and 16 rows): deep pipelines, 240-250 GB/s against
++// 200-230 for S16, C32 and W32; the 7680-deep down projection in 32-column tiles
++// (64 blocks on 20 SMs), 205 against 160.
++using D16 = Tile<16, 64, 64, 1, 4, 12>;   // every projection but the down projection, rows <= 16
++using K16 = Tile<16, 32, 64, 1, 2, 24>;   // the down projection, rows <= 16
+ }  // namespace tiles
+ // Split-K for long reductions: K is cut into `splits` equal slices (a function of K alone, never of the batch), each
+ // slice's FP32 partial is the wide kernel over that slice (the slices ride on its batch dimension), and the partials
+@@ -150,9 +155,8 @@ inline void linear_tiled(const lfm::gemm::Problem& p, int rows, int in, int out)
+   }
+   const bool head = out >= 65536, up = out >= 6144 && out < 65536, longk = in > 4096;
+   if (rows <= 16) {
+-    if (head || (up && out == 7680)) launch<W32>(p);
+-    else if (longk || out == 2048) launch<C32>(p);
+-    else launch<S16>(p);  // conv input (6144), K/V (512), gates
++    if (longk) launch<K16>(p);
++    else launch<D16>(p);
+   } else if (rows <= 32) {
+     if (head || up) launch<W32>(p);
+     else if (longk) launch<N32>(p);
+diff --git a/native/tests/lfm3_decode_tile_sweep.cu b/native/tests/lfm3_decode_tile_sweep.cu
+index 4ce7a01..e01c79d 100644
+--- a/native/tests/lfm3_decode_tile_sweep.cu
++++ b/native/tests/lfm3_decode_tile_sweep.cu
+@@ -1,5 +1,6 @@
+ // Decode tile sweep (P0 speed): lfm::gemm's wide kernel in several tile shapes on LFM3's decode projections, distinct
+-// weights per instance (DRAM, not L2), M = 1, 8, 32, 64. Every tile shape must give bitwise the outputs of Wide32
++// weights per instance (DRAM, not L2), M = 1, 3, 8, 12, 16, 32, 64; every instance's output compared, BF16 and
++// FP32 (c_f32) epilogues. Every tile shape must give bitwise the outputs of Wide32
+ // (the G4 tile contract: the same k16 steps in the same order), so a shape can be chosen per projection freely.
+ #include <cuda_bf16.h>
+ #include <algorithm>
+@@ -21,16 +22,19 @@ struct Cfg { const char* name; Launch f; int bm; };
+ 
+ int main() {
+   const Shape shapes[] = {{"w1/w3", 7680, 2048, 48}, {"w2", 2048, 7680, 24}, {"conv in", 6144, 2048, 13},
+-                          {"2048sq", 2048, 2048, 35}, {"k/v", 512, 2048, 22}, {"head", 128000, 2048, 1}};
++                          {"2048sq", 2048, 2048, 35}, {"k/v", 512, 2048, 22}, {"head", 128000, 2048, 1},
++                          {"gate", 16, 2048, 11}};
+   const Cfg cfgs[] = {CFG(32, 128, 64, 2, 2, 3), CFG(32, 128, 64, 2, 2, 4), CFG(32, 128, 64, 2, 2, 6),
+                       CFG(32, 64, 64, 2, 2, 4),  CFG(32, 64, 64, 2, 2, 6),  CFG(32, 64, 64, 1, 4, 6),
+                       CFG(16, 64, 64, 1, 2, 6),  CFG(16, 64, 64, 1, 4, 8),  CFG(16, 128, 64, 1, 4, 6),
+                       CFG(32, 64, 32, 2, 2, 8),  CFG(16, 64, 32, 1, 4, 8),  CFG(64, 128, 64, 2, 2, 3),
+-                      CFG(64, 64, 64, 2, 2, 4),  CFG(64, 64, 64, 4, 2, 4)};
+-  const int ms[] = {1, 8, 32, 64};
++                      CFG(64, 64, 64, 2, 2, 4),  CFG(64, 64, 64, 4, 2, 4),
++                      CFG(16, 64, 64, 1, 4, 12), CFG(16, 32, 64, 1, 2, 24)};  // D16, K16 (speech-speed-v2)
++  const int ms[] = {1, 3, 8, 12, 16, 32, 64};
+   size_t total = 0, max_out = 0;
+-  for (auto& s : shapes) total += size_t(s.n) * s.k * s.count, max_out = std::max(max_out, size_t(64) * s.n);
++  for (auto& s : shapes) total += size_t(s.n) * s.k * s.count, max_out = std::max(max_out, size_t(64) * s.n * s.count);
+   bf16 *w, *x, *y; ck(cudaMalloc(&w, total * 2)); ck(cudaMalloc(&x, size_t(64) * 7680 * 2)); ck(cudaMalloc(&y, max_out * 2));
++  float* y32; ck(cudaMalloc(&y32, max_out * 4));
+   {
+     std::mt19937 g(1); std::normal_distribution<float> d(0, 0.02f);
+     std::vector<bf16> h(size_t(1) << 24); for (auto& v : h) v = __float2bfloat16(d(g));
+@@ -46,13 +50,24 @@ int main() {
+     for (auto& s : shapes) {
+       const size_t start = off; off += size_t(s.n) * s.k * s.count;
+       std::vector<uint16_t> ref;
++      std::vector<uint32_t> ref32;
+       std::printf("  %-8s", s.name);
+       for (auto& c : cfgs) {
+         auto go = [&] { for (int i = 0; i < s.count; ++i) c.f(linear(x, w + start + size_t(i) * s.n * s.k, y, m, s.k, s.n)); };
+-        go(); ck(cudaGetLastError()); ck(cudaDeviceSynchronize());
+-        std::vector<uint16_t> got(size_t(m) * s.n); ck(cudaMemcpy(got.data(), y, got.size() * 2, cudaMemcpyDeviceToHost));
+-        const bool same = ref.empty() || got == ref;
+-        if (ref.empty()) ref = got;
++        // exactness: every instance's output, BF16 and FP32 epilogues
++        const size_t per = size_t(m) * s.n;
++        for (int i = 0; i < s.count; ++i) {
++          const bf16* wi = w + start + size_t(i) * s.n * s.k;
++          c.f(linear(x, wi, y + i * per, m, s.k, s.n));
++          Problem p32 = linear(x, wi, nullptr, m, s.k, s.n);
++          p32.c_f32 = y32 + i * per;
++          c.f(p32);
++        }
++        ck(cudaGetLastError()); ck(cudaDeviceSynchronize());
++        std::vector<uint16_t> got(per * s.count); ck(cudaMemcpy(got.data(), y, got.size() * 2, cudaMemcpyDeviceToHost));
++        std::vector<uint32_t> got32(per * s.count); ck(cudaMemcpy(got32.data(), y32, got32.size() * 4, cudaMemcpyDeviceToHost));
++        const bool same = ref.empty() || (got == ref && got32 == ref32);
++        if (ref.empty()) ref = got, ref32 = got32;
+         all_same &= same;
+         std::vector<float> t;
+         for (int i = 0; i < 7; ++i) { cudaEventRecord(a); go(); cudaEventRecord(b); cudaEventSynchronize(b); float ms; cudaEventElapsedTime(&ms, a, b); t.push_back(ms); }

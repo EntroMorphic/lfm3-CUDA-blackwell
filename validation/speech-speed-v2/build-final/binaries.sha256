@@ -1,0 +1,11 @@
+6f100caf86a97673a8b10dc4417476c37dce1d054de6b890d62462f8f55274c6  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed-a4r/lfm3-speech
+e66b8fcab511c05f98d939796d4b26dea2edc4b4f4d092de85926baf076f66b3  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed-s2r/liquid-lfm3-server
+f18b819849b8b14462f6de828f46dbf7d5544884fff40f767b1d43273eecc216  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed-s2r/liquid-lfm3-worker
+df9dd2ac2a63214bd1a2fce81a0b3bec4ac3a04f34bea256e07a2f60edb6f3ba  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed-t4r/lfm3-batch
+e47bd905778a5ed20724452cd19d5119db7076a0114a4cda0531765b7ae89ee1  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed2-a2/lfm3-speech
+c990588ec7a5923bde499b9a219f8501a5b797aae400f3078118b00efaf954c4  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed2-a2/fp32-linear-check
+835e5ce640cbe3d920c05f251d2c58e23529ea2b5e58b4028ac580676181e00f  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed2-a2/lfm3-batch-capacity-check
+820889c7441f5a775e2b7e6e786d6c191e5f669f2d358b6c0b099dd5d77b8c9d  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed2-t2/lfm3-batch
+399a3bcb2cfb35c8e38801152abacebae68882813bf44c829b94d2b661d1c180  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed2-t2/tile-sweep
+7725eb0a167dba6b62c2a018e3afc7537668947bdf7ad0fda4b363c3d9e4442d  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed2-s1/liquid-lfm3-server
+22944ce0ad369dcfb5f2134b6d0842ff3f6dac2dd452844078eccd20ff6a55e7  /home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed2-s1/liquid-lfm3-worker

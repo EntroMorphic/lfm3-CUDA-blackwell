@@ -1,0 +1,8 @@
+lighthouse-split-s1 {"status": 200, "wav_identical": true, "wav_bytes": 1835564, "reference_bytes": 1835564, "chunks": 5, "all_chunks_ended_by_eos": true, "audio_seconds": 38.24, "generate_seconds": 8.814269782, "wall_seconds": 9.36, "pass": true}
+bread-split-s1 {"status": 200, "wav_identical": true, "wav_bytes": 1643564, "reference_bytes": 1643564, "chunks": 5, "all_chunks_ended_by_eos": true, "audio_seconds": 34.24, "generate_seconds": 7.896064770000001, "wall_seconds": 8.04, "pass": true}
+fox-female-unsplit-s1 {"status": 200, "wav_identical": true, "wav_bytes": 153644, "reference_bytes": 153644, "chunks": 1, "all_chunks_ended_by_eos": true, "audio_seconds": 3.2, "generate_seconds": 0.745343295, "wall_seconds": 0.77, "pass": true}
+il-study-s1 {"status": 200, "wav_identical": true, "wav_bytes": 1040684, "reference_bytes": 1040684, "chunks": 1, "all_chunks_ended_by_eos": true, "audio_seconds": 21.68, "generate_seconds": 6.262897814, "wall_seconds": 6.3, "text_identical": true, "pass": true}
+abbrev-default-s1 {"status": 200, "wav_identical": true, "wav_bytes": 1359404, "reference_bytes": 1359404, "chunks": 4, "all_chunks_ended_by_eos": true, "audio_seconds": 28.32, "generate_seconds": 6.506465373, "wall_seconds": 6.62, "pass": true}
+worst case budget {"status": 200, "wall_seconds": 125.8, "truncated": false, "chunks_run": 512, "frames": 6144, "prefill_seconds": 18.625779336000004, "generate_seconds": 106.68419327199987, "pass": true}
+worst case large-cap {"status": 200, "wall_seconds": 40.9, "truncated": true, "chunks_run": 39, "frames": 2165, "prefill_seconds": 0.863163658, "generate_seconds": 39.89826107900001, "pass": true}
+repeat identical: True | text control identical: True | exit: 0 | PASS

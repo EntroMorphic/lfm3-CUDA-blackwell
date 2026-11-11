@@ -1,0 +1,3 @@
+efd4f4de4deecfec recorded speed-a4/lfm3-speech; stripped d4c4734aee48027d vs rebuilt speed-a4r/lfm3-speech d4c4734aee48027d
+e66b8fcab511c05f recorded speed-s2/liquid-lfm3-server; stripped 98f8b0500ecf38ab vs rebuilt speed-s2r/liquid-lfm3-server 98f8b0500ecf38ab
+6789ab216e2ef5ba recorded speed-s2/liquid-lfm3-worker; stripped d799af8fbb7f9af9 vs rebuilt speed-s2r/liquid-lfm3-worker d799af8fbb7f9af9
