@@ -395,7 +395,7 @@ class BatchDecoder {
   const lfm::RuntimeShape s;
   const int rows;
   Buffer<bf16> hidden, normalized, projected, operated, updated, q, k, v, gates, attended, gated, a, b, act;
-  Buffer<float> logits, part_o, part_ml;
+  Buffer<float> logits, part_o, part_ml;  // logits: with defer_head set, call ensure_logits() before touching them
   Buffer<int> tokens, positions, cursor_dev, picked, frame_codes;
   Buffer<unsigned char> active_dev;
   Buffer<uint64_t> seeds_dev, steps_dev;
@@ -446,6 +446,7 @@ class BatchDecoder {
   // Row `row` takes the base runner's state after its prefill: KV caches, conv states, last-position logits.
   void load(int row) {
     if (row < 0 || row >= rows || base.cursor < 1) throw std::invalid_argument("load: invalid row or empty runner");
+    ensure_logits();  // the other rows' deferred logits, from the states before this row's are replaced
     for (int i = 0; i < s.layers; ++i) {
       if (keys[i]) {
         cuda_check(cudaMemcpy(keys[i]->p + size_t(row) * s.kv_layer_stride(), base.keys[i]->p,
@@ -468,9 +469,22 @@ class BatchDecoder {
   }
   void finish(int row) { active[row] = 0; }
 
+  // Deferred head (concurrent speech, validation/speech-speed-v1): with `defer_head` set, step() leaves the language
+  // model's head (the vocabulary projection) to the first read of the logits: a selection, or a load, which overwrites
+  // its own row afterwards. A step whose logits no one reads skips it. When computed, it is the same GEMM over the same
+  // rows and the same final-normed states as at the end of the step, so the logits are the same.
+  bool defer_head = false;
+  void ensure_logits() {
+    if (!head_pending_) return;
+    head_pending_ = false;
+    linear(normalized.p, base.w("embed_tokens.weight"), nullptr, rows, s.hidden, s.vocabulary, logits.p);
+    cuda_check(cudaGetLastError());
+  }
+
   // Next tokens from the current logits: greedy (temperature 0) or temperature sampling. -1 for inactive rows.
   std::vector<int> select(double temperature, const std::vector<uint64_t>& seed, const std::vector<uint64_t>& step,
                           const unsigned char* suppress_dev = nullptr) {
+    ensure_logits();
     cuda_check(cudaMemcpy(active_dev.p, active.data(), rows, cudaMemcpyHostToDevice));
     if (temperature > 0) {
       cuda_check(cudaMemcpy(seeds_dev.p, seed.data(), rows * sizeof(uint64_t), cudaMemcpyHostToDevice));
@@ -489,6 +503,7 @@ class BatchDecoder {
   // Greedy picks with a suppression mask per row (rows x vocabulary bytes on the device): concurrent speech, where each
   // row's mode machine suppresses its own set. -1 for inactive rows.
   std::vector<int> select_greedy_rows(const unsigned char* suppress_rows_dev) {
+    ensure_logits();
     cuda_check(cudaMemcpy(active_dev.p, active.data(), rows, cudaMemcpyHostToDevice));
     greedy_rows<<<rows, 1024>>>(logits.p, s.vocabulary, suppress_rows_dev, active_dev.p, picked.p, size_t(s.vocabulary));
     cuda_check(cudaGetLastError());
@@ -575,10 +590,14 @@ class BatchDecoder {
       norm<<<R, t_hidden>>>(updated.p, w(p + "post_ffn_norm.weight"), hidden.p, H, s.epsilon, hidden.p);
     }
     norm<<<R, t_hidden>>>(hidden.p, w("embedding_norm.weight"), normalized.p, H, s.epsilon);
-    linear(normalized.p, w("embed_tokens.weight"), nullptr, R, H, s.vocabulary, logits.p);
+    head_pending_ = true;
+    if (!defer_head) ensure_logits();
     cuda_check(cudaGetLastError());
     for (int r = 0; r < rows; ++r) if (active[r]) ++cursor[r];
   }
+
+ private:
+  bool head_pending_ = false;
 };
 
 }  // namespace lfm3_batch

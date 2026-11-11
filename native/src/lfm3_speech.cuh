@@ -29,23 +29,128 @@
 #include <lfm/codec.cuh>
 #include <lfm/depth.cuh>
 
+#include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
+#include <condition_variable>
 #include <deque>
+#include <exception>
 #include <functional>
+#include <mutex>
 #include <optional>
+#include <thread>
 
 namespace lfm3_speech {
+
+// A persistent pool for the batch's per-row host work (frame sampling, validation/speech-speed-v1): run(n, f) calls
+// f(i) for every i in [0, n) on the pool's threads and the caller's, and returns when all are done (rethrowing the
+// first exception). Each call touches only row i's own state, so the results do not depend on the threads.
+class RowPool {
+ public:
+  explicit RowPool(int threads) {
+    try {
+      for (int t = 1; t < threads; ++t) workers_.emplace_back([this] { work(); });
+    } catch (...) {  // a thread that could not start: stop the ones that did, then refuse (no std::terminate)
+      stop();
+      throw;
+    }
+  }
+  ~RowPool() { stop(); }
+  RowPool(const RowPool&) = delete;
+  RowPool& operator=(const RowPool&) = delete;
+
+  void run(int n, const std::function<void(int)>& f) {
+    if (n <= 0) return;
+    if (workers_.empty() || n == 1) {
+      for (int i = 0; i < n; ++i) f(i);
+      return;
+    }
+    {
+      std::lock_guard<std::mutex> l(m_);
+      f_ = &f, n_ = n, next_ = 0, busy_ = int(workers_.size()), error_ = nullptr, ++generation_;
+    }
+    wake_.notify_all();
+    drain();
+    std::unique_lock<std::mutex> l(m_);
+    done_.wait(l, [this] { return busy_ == 0; });
+    f_ = nullptr;
+    if (error_) std::rethrow_exception(error_);
+  }
+
+ private:
+  void drain() {
+    for (int i; (i = next_.fetch_add(1)) < n_;) {
+      try {
+        (*f_)(i);
+      } catch (...) {
+        std::lock_guard<std::mutex> l(m_);
+        if (!error_) error_ = std::current_exception();
+      }
+    }
+  }
+  void stop() {
+    {
+      std::lock_guard<std::mutex> l(m_);
+      stop_ = true;
+    }
+    wake_.notify_all();
+    for (auto& t : workers_)
+      if (t.joinable()) t.join();
+  }
+  void work() {
+    unsigned long long seen = 0;
+    for (;;) {
+      {
+        std::unique_lock<std::mutex> l(m_);
+        wake_.wait(l, [&] { return stop_ || generation_ != seen; });
+        if (stop_) return;
+        seen = generation_;
+      }
+      drain();
+      {
+        std::lock_guard<std::mutex> l(m_);
+        if (--busy_ == 0) done_.notify_one();
+      }
+    }
+  }
+
+  std::vector<std::thread> workers_;
+  std::mutex m_;
+  std::condition_variable wake_, done_;
+  const std::function<void(int)>* f_ = nullptr;
+  int n_ = 0, busy_ = 0;
+  std::atomic<int> next_{0};
+  unsigned long long generation_ = 0;
+  bool stop_ = false;
+  std::exception_ptr error_;
+};
+
+// A non-blocking CUDA stream (a row's codec: it overlaps the language model's step).
+struct CodecStream {
+  cudaStream_t s = nullptr;
+  CodecStream() { cuda_check(cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking)); }
+  ~CodecStream() { if (s) cudaStreamDestroy(s); }
+  CodecStream(const CodecStream&) = delete;
+  CodecStream& operator=(const CodecStream&) = delete;
+};
 
 class Batch {
  public:
   Batch(Runner& runner, const std::string& model_dir, int rows)
       : model_dir_(model_dir), runner_(runner), rows_(rows), dec_(runner, rows), depth_(runner.weights, rows),
         logits_dev_(size_t(rows) * lfm::depth::kCodebooks * lfm::depth::kCodes),
-        suppress_dev_(size_t(rows) * runner.s.vocabulary), row_(size_t(rows)) {
+        suppress_dev_(size_t(rows) * runner.s.vocabulary),
+        host_logits_(size_t(rows) * lfm::depth::kCodebooks * lfm::depth::kCodes), row_(size_t(rows)),
+        pool_(std::max(1, std::min({rows, 8, int(std::thread::hardware_concurrency())}))) {
     // every row's mask defined from the start: the greedy pick reads all rows (a frame row's pick is unused)
     cuda_check(cudaMemset(suppress_dev_.p, 0, size_t(rows) * runner.s.vocabulary));
-    for (int r = 0; r < rows; ++r) codecs_.push_back(std::make_unique<lfm::codec::Decoder>(model_dir + "/audio_tokenizer", 12));
+    dec_.defer_head = true;  // the head only on steps with a text pick (validation/speech-speed-v1)
+    for (int r = 0; r < rows; ++r) {
+      streams_.push_back(std::make_unique<CodecStream>());
+      codecs_.push_back(std::make_unique<lfm::codec::Decoder>(model_dir + "/audio_tokenizer", 12));
+      codecs_.back()->set_stream(streams_.back()->s);
+    }
   }
 
   int rows() const { return rows_; }
@@ -136,6 +241,7 @@ class Batch {
         Row& w = row_[size_t(r)];
         if (w.busy && !w.finished) dec_.finish(r);
         w.busy = w.finished = false, w.stream_open = false;
+        codecs_[size_t(r)]->abandon();  // a chunk in flight is waited for and dropped, so the codec can be reset
       }
       dec_.embed_dump = nullptr;
       throw;
@@ -279,7 +385,6 @@ class Batch {
       in_depth += secs(b);
       std::vector<int32_t> codes(size_t(n) * kCodebooks);
       std::unique_ptr<bool[]> masked(new bool[size_t(n) * kCodebooks]), score(new bool[size_t(n) * kCodebooks]);
-      host_logits_.resize(size_t(n) * kCodebooks * kCodes);
       while (!row_[size_t(sampled[0])].draw.done()) {  // every draw has the same 3 passes
         for (int i = 0; i < n; ++i) {
           const auto& d = row_[size_t(sampled[size_t(i)])].draw;
@@ -289,13 +394,13 @@ class Batch {
         }
         b = Clock::now();
         depth_.pass_frames(n, codes.data(), masked.get(), score.get(), logits_dev_.p);
-        cuda_check(cudaMemcpy(host_logits_.data(), logits_dev_.p, host_logits_.size() * sizeof(float),
+        cuda_check(cudaMemcpy(host_logits_.p, logits_dev_.p, size_t(n) * kCodebooks * kCodes * sizeof(float),
                               cudaMemcpyDeviceToHost));
         in_depth += secs(b);
-        for (int i = 0; i < n; ++i) {
+        pool_.run(n, [&](int i) {  // each row's sampler, draw and logits are its own
           Row& w = row_[size_t(sampled[size_t(i)])];
-          w.sampler->take(w.draw, host_logits_.data() + size_t(i) * kCodebooks * kCodes);
-        }
+          w.sampler->take(w.draw, host_logits_.p + size_t(i) * kCodebooks * kCodes);
+        });
       }
       const double total = secs(a);
       for (int r : sampled) {
@@ -317,12 +422,10 @@ class Batch {
         if (!w.out.eos) {  // the codec takes speech frames only
           w.res.frames.push_back(w.out.fed);
           w.pending.insert(w.pending.end(), w.out.fed.begin(), w.out.fed.end());
-          if (w.pending.size() == 12 * 12) {
+          if (w.pending.size() == 12 * 12) {  // runs beside the decode step below; collected after it
             const auto a = Clock::now();
-            const size_t before = w.res.wav.size();
-            codecs_[size_t(r)]->decode(w.pending.data(), 12, false, w.res.wav), w.pending.clear();
+            codecs_[size_t(r)]->submit(w.pending.data(), 12, false), w.pending.clear();
             w.res.codec_seconds += secs(a);
-            if (w.o.on_audio && w.res.wav.size() > before) w.o.on_audio(w.res.wav.data() + before, w.res.wav.size() - before);
           }
         }
       }
@@ -355,6 +458,16 @@ class Batch {
       dec_.embed_dump = nullptr;
       for (int r : stepping) row_[size_t(r)].res.lm_step_seconds += t, ++row_[size_t(r)].res.decode_steps;
     }
+    // The codec chunks submitted this step: their audio, in each row's own event order (after the row's slot).
+    for (int r : frame_rows) {
+      Row& w = row_[size_t(r)];
+      if (!codecs_[size_t(r)]->pending()) continue;
+      const auto a = Clock::now();
+      const size_t before = w.res.wav.size();
+      codecs_[size_t(r)]->collect(w.res.wav);
+      w.res.codec_seconds += secs(a);
+      if (w.o.on_audio && w.res.wav.size() > before) w.o.on_audio(w.res.wav.data() + before, w.res.wav.size() - before);
+    }
     return done;
   }
 
@@ -366,11 +479,13 @@ class Batch {
   int rows_;
   lfm3_batch::BatchDecoder dec_;
   lfm::depth::Decoder depth_;
+  std::vector<std::unique_ptr<CodecStream>> streams_;  // destroyed after the codecs that use them
   std::vector<std::unique_ptr<lfm::codec::Decoder>> codecs_;
   lfm::fp32::DeviceArray<float> logits_dev_;
   Buffer<unsigned char> suppress_dev_;
-  std::vector<float> host_logits_;
+  lfm::codec::PinnedArray<float> host_logits_;
   std::vector<Row> row_;
+  RowPool pool_;
 };
 
 // One request at a time: a batch of one.

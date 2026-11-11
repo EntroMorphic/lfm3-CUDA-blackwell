@@ -89,7 +89,7 @@ int main() {
         cudaMalloc(&ref, size_t(s.M) * s.N * 4);
     cudaMemcpy(x, hx.data(), hx.size() * 4, cudaMemcpyHostToDevice);
     cudaMemcpy(w, hw.data(), hw.size() * 2, cudaMemcpyHostToDevice);
-    lfm::fp32::linear(x, w, nullptr, ref, s.M, s.N, s.K);
+    k::linear<bf16><<<dim3((s.N + 31) / 32, (s.M + 15) / 16), 256>>>(x, w, nullptr, ref, s.M, s.N, s.K);  // the original
     std::vector<float> want(size_t(s.M) * s.N), got(want.size());
     cudaMemcpy(want.data(), ref, want.size() * 4, cudaMemcpyDeviceToHost);
     for (const auto& v : variants) {

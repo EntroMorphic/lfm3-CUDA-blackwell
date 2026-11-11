@@ -1,0 +1,91 @@
+{
+ "speech_sha256": "efd4f4de4deecfec67b3dde1cfb2ee7e204f57a5a7159424e1d7d3bad986904e",
+ "requests": 41,
+ "runs": {
+  "alone": {
+   "exit": 0,
+   "wall_seconds": 205.6,
+   "stderr": "lfm3-speech: batch: 41 done, 0 failed\n",
+   "summary": null
+  },
+  "conc4": {
+   "exit": 0,
+   "wall_seconds": 70.5,
+   "stderr": "lfm3-speech: concurrent: 41 done, 0 failed\n",
+   "summary": {
+    "rows": 4,
+    "requests": 41,
+    "steps": 2529,
+    "audio_seconds": 697.68,
+    "wall_seconds": 58.7472,
+    "audio_per_wall_second": 11.876
+   },
+   "rows": 4,
+   "stagger_seed": null,
+   "identical": 41,
+   "differ": [],
+   "pass": true
+  },
+  "conc8": {
+   "exit": 0,
+   "wall_seconds": 55.2,
+   "stderr": "lfm3-speech: concurrent: 41 done, 0 failed\n",
+   "summary": {
+    "rows": 8,
+    "requests": 41,
+    "steps": 1607,
+    "audio_seconds": 697.68,
+    "wall_seconds": 42.9247,
+    "audio_per_wall_second": 16.2536
+   },
+   "rows": 8,
+   "stagger_seed": null,
+   "identical": 41,
+   "differ": [],
+   "pass": true
+  },
+  "conc8-staggered": {
+   "exit": 0,
+   "wall_seconds": 60.2,
+   "stderr": "lfm3-speech: concurrent: 41 done, 0 failed\n",
+   "summary": {
+    "rows": 8,
+    "requests": 41,
+    "steps": 1668,
+    "audio_seconds": 697.68,
+    "wall_seconds": 44.6599,
+    "audio_per_wall_second": 15.6221
+   },
+   "rows": 8,
+   "stagger_seed": "11",
+   "identical": 41,
+   "differ": [],
+   "pass": true
+  },
+  "conc16-staggered": {
+   "exit": 0,
+   "wall_seconds": 61.0,
+   "stderr": "lfm3-speech: concurrent: 41 done, 0 failed\n",
+   "summary": {
+    "rows": 16,
+    "requests": 41,
+    "steps": 1720,
+    "audio_seconds": 697.68,
+    "wall_seconds": 45.9188,
+    "audio_per_wall_second": 15.1938
+   },
+   "rows": 16,
+   "stagger_seed": "12",
+   "identical": 41,
+   "differ": [],
+   "pass": true
+  }
+ },
+ "alone_vs_reference": {
+  "reference": "/workspace/liquid-CUDA/build/batch-final2/conc/alone",
+  "identical": 41,
+  "differ": [],
+  "pass_": true
+ },
+ "pass": true
+}

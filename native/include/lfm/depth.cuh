@@ -264,6 +264,18 @@ class Decoder {
         state[size_t(f) * 2 * kCodebooks + kCodebooks + c] = masked[i];
       }
     fp32::check(cudaMemcpy(state_.p, state.data(), state.size() * sizeof(int32_t), cudaMemcpyHostToDevice), "depth state");
+    // the heads' rows, uploaded before the trunk's kernels (validation/speech-speed-v1: a copy after them waited for
+    // them, and the device idled until the next launch): per codebook, the frames that score it
+    std::vector<int> index;
+    std::vector<std::pair<int, int>> spans;  // per codebook scored: first gathered row, count
+    for (int c = 0; c < kCodebooks; ++c) {
+      const int first = int(index.size());
+      for (int f = 0; f < n; ++f)
+        if (score[f * kCodebooks + c]) index.push_back(f * kCodebooks + c);
+      spans.emplace_back(first, int(index.size()) - first);
+    }
+    if (!index.empty())
+      fp32::check(cudaMemcpy(index_.p, index.data(), index.size() * sizeof(int), cudaMemcpyHostToDevice), "depth heads");
     const int R = n * kCodebooks;
     for (int f = 0; f < n; ++f) {
       const size_t at = size_t(f) * kCodebooks * kHidden;
@@ -297,17 +309,8 @@ class Decoder {
     kernels::head_norm_frames<<<fp32::blocks(size_t(R) * 32), 256>>>(normed_.p, head_norms_.p, head_in_.p, R, kHidden,
                                                                       kNormEps);
     // the heads, one call per codebook over every frame that scores it (its tied embedding read once)
-    std::vector<int> index;
-    std::vector<std::pair<int, int>> spans;  // per codebook scored: first gathered row, count
-    for (int c = 0; c < kCodebooks; ++c) {
-      const int first = int(index.size());
-      for (int f = 0; f < n; ++f)
-        if (score[f * kCodebooks + c]) index.push_back(f * kCodebooks + c);
-      spans.emplace_back(first, int(index.size()) - first);
-    }
     if (!index.empty()) {
       const int m = int(index.size());
-      fp32::check(cudaMemcpy(index_.p, index.data(), index.size() * sizeof(int), cudaMemcpyHostToDevice), "depth heads");
       kernels::gather_rows<<<fp32::blocks(size_t(m) * kHidden), 256>>>(head_in_.p, index_.p, gathered_.p, m, kHidden);
       for (int c = 0; c < kCodebooks; ++c)
         if (spans[size_t(c)].second)

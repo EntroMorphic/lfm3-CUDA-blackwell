@@ -1,0 +1,111 @@
+{
+ "by_rows": {
+  "1": {
+   "runs": [
+    {
+     "rows": 1,
+     "requests": 42,
+     "steps": 8522,
+     "audio_seconds": 671.68,
+     "wall_seconds": 182.225,
+     "audio_per_wall_second": 3.68599
+    },
+    {
+     "rows": 1,
+     "requests": 42,
+     "steps": 8522,
+     "audio_seconds": 671.68,
+     "wall_seconds": 181.688,
+     "audio_per_wall_second": 3.6969
+    }
+   ],
+   "median": 3.691445
+  },
+  "2": {
+   "runs": [
+    {
+     "rows": 2,
+     "requests": 42,
+     "steps": 4295,
+     "audio_seconds": 671.68,
+     "wall_seconds": 102.544,
+     "audio_per_wall_second": 6.55015
+    },
+    {
+     "rows": 2,
+     "requests": 42,
+     "steps": 4295,
+     "audio_seconds": 671.68,
+     "wall_seconds": 102.536,
+     "audio_per_wall_second": 6.55065
+    }
+   ],
+   "median": 6.5504
+  },
+  "4": {
+   "runs": [
+    {
+     "rows": 4,
+     "requests": 42,
+     "steps": 2266,
+     "audio_seconds": 671.68,
+     "wall_seconds": 62.786,
+     "audio_per_wall_second": 10.6979
+    },
+    {
+     "rows": 4,
+     "requests": 42,
+     "steps": 2266,
+     "audio_seconds": 671.68,
+     "wall_seconds": 62.7869,
+     "audio_per_wall_second": 10.6978
+    }
+   ],
+   "median": 10.69785
+  },
+  "8": {
+   "runs": [
+    {
+     "rows": 8,
+     "requests": 42,
+     "steps": 1601,
+     "audio_seconds": 671.68,
+     "wall_seconds": 49.6731,
+     "audio_per_wall_second": 13.522
+    },
+    {
+     "rows": 8,
+     "requests": 42,
+     "steps": 1601,
+     "audio_seconds": 671.68,
+     "wall_seconds": 49.6365,
+     "audio_per_wall_second": 13.532
+    }
+   ],
+   "median": 13.527000000000001
+  },
+  "16": {
+   "runs": [
+    {
+     "rows": 16,
+     "requests": 64,
+     "steps": 1513,
+     "audio_seconds": 1010.72,
+     "wall_seconds": 57.22,
+     "audio_per_wall_second": 17.6638
+    },
+    {
+     "rows": 16,
+     "requests": 64,
+     "steps": 1513,
+     "audio_seconds": 1010.72,
+     "wall_seconds": 57.195,
+     "audio_per_wall_second": 17.6715
+    }
+   ],
+   "median": 17.667650000000002
+  }
+ },
+ "ratio_8_to_1": 3.664418676155273,
+ "pass_": false
+}

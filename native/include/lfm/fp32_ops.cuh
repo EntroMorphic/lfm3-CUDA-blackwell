@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 namespace lfm::fp32 {
@@ -113,6 +114,91 @@ __global__ void __launch_bounds__(256) linear(const float* X, const W* w, const 
     }
 }
 
+// `linear` restaged (validation/speech-speed-v1), for BF16 weights when K is a multiple of 256 and X and w are 16-byte
+// aligned. Each thread does exactly `linear`'s arithmetic, so every output is the same sum in the same order, bit for
+// bit: lane l sums k = 256 j + 8 l + e in ascending (j, e) with FMA from +0 for each of its rows x columns, then the
+// warp's shuffle tree, then the bias. Only the data movement differs: each 256-chunk of X's rows and of the warp's
+// weight rows is copied to shared memory asynchronously, one chunk ahead (double buffered; X stored so that each lane's
+// 8 values are two float4s at consecutive addresses across the warp); rows past M are zeros there, so the summing loop
+// has no branch and loads the next row's values while it sums the current one. Rows: 16 (8 for M < 16).
+__device__ inline void copy16_async(void* shared, const void* global) {
+  const unsigned s = static_cast<unsigned>(__cvta_generic_to_shared(shared));
+  asm volatile("cp.async.cg.shared.global [%0], [%1], 16;\n" ::"r"(s), "l"(global));
+}
+__device__ inline void commit_async() { asm volatile("cp.async.commit_group;\n" ::); }
+template <int Pending>
+__device__ inline void wait_async() { asm volatile("cp.async.wait_group %0;\n" ::"n"(Pending)); }
+
+template <int Rows>
+constexpr int staged_shared_bytes() { return (2 * Rows * 64 + 2 * kWarps * kColumnsPerWarp * 32) * 16; }
+
+template <int Rows>
+__global__ void __launch_bounds__(256, 2) linear_staged(const float* X, const bf16* w, const bf16* bias, float* Y,
+                                                        int M, int N, int K) {
+  constexpr int Cols = kColumnsPerWarp;
+  extern __shared__ float4 staged[];
+  auto xs = reinterpret_cast<float4 (*)[Rows][2][32]>(staged);                       // [buffer][row][half][lane]
+  auto ws = reinterpret_cast<uint4 (*)[kWarps][Cols][32]>(staged + 2 * Rows * 64);  // [buffer][warp][column][lane]
+  const int warp = threadIdx.x / 32, lane = threadIdx.x % 32, row0 = blockIdx.y * Rows;
+  const int column0 = (blockIdx.x * kWarps + warp) * Cols, rows = min(Rows, M - row0), chunks = K / kChunk;
+  for (int i = threadIdx.x; i < 2 * Rows * 64; i += 256)
+    if ((i / 64) % Rows >= rows) staged[i] = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+  auto fill = [&](int buffer, int k0) {
+    for (int i = threadIdx.x; i < Rows * 64; i += 256) {
+      const int r = i / 64, q = i % 64;  // the chunk's q-th float4: lane q / 2, half q % 2
+      if (r < rows) copy16_async(&xs[buffer][r][q % 2][q / 2], X + size_t(row0 + r) * K + k0 + 4 * q);
+    }
+#pragma unroll
+    for (int c = 0; c < Cols; ++c) {
+      if (column0 + c < N) copy16_async(&ws[buffer][warp][c][lane], w + size_t(column0 + c) * K + k0 + 8 * lane);
+      else ws[buffer][warp][c][lane] = make_uint4(0, 0, 0, 0);
+    }
+    commit_async();
+  };
+  float acc[Rows][Cols] = {};
+  fill(0, 0);
+  for (int j = 0; j < chunks; ++j) {
+    const int buffer = j & 1;
+    if (j + 1 < chunks) {
+      fill(buffer ^ 1, (j + 1) * kChunk);
+      wait_async<1>();
+    } else {
+      wait_async<0>();
+    }
+    __syncthreads();
+    float wv[Cols][8];
+#pragma unroll
+    for (int c = 0; c < Cols; ++c) {
+      const uint4 raw = ws[buffer][warp][c][lane];
+      const bf16* h = reinterpret_cast<const bf16*>(&raw);
+#pragma unroll
+      for (int e = 0; e < 8; ++e) wv[c][e] = __bfloat162float(h[e]);
+    }
+    float4 a = xs[buffer][0][0][lane], b = xs[buffer][0][1][lane];
+#pragma unroll
+    for (int r = 0; r < Rows; ++r) {
+      float4 na, nb;
+      if (r + 1 < Rows) na = xs[buffer][r + 1][0][lane], nb = xs[buffer][r + 1][1][lane];
+      const float xv[8] = {a.x, a.y, a.z, a.w, b.x, b.y, b.z, b.w};
+#pragma unroll
+      for (int e = 0; e < 8; ++e)
+#pragma unroll
+        for (int c = 0; c < Cols; ++c) acc[r][c] = __fmaf_rn(xv[e], wv[c][e], acc[r][c]);
+      if (r + 1 < Rows) a = na, b = nb;
+    }
+    __syncthreads();
+  }
+#pragma unroll
+  for (int r = 0; r < Rows; ++r)
+#pragma unroll
+    for (int c = 0; c < Cols; ++c) {
+      float v = acc[r][c];
+      for (int o = 16; o; o /= 2) v = __fadd_rn(v, __shfl_down_sync(0xffffffffu, v, o));
+      const int n = column0 + c;
+      if (lane == 0 && r < rows && n < N) Y[size_t(row0 + r) * N + n] = bias ? __fadd_rn(v, value(bias[n])) : v;
+    }
+}
+
 // One warp per row: y = w * (x / sqrt(mean(x^2) + eps)), plus `residual` when given; in place is allowed. Row r uses
 // weights w + r * weight_stride (0: one weight vector for all rows).
 __global__ void rms_norm(const float* x, const bf16* w, size_t weight_stride, float* y, const float* residual,
@@ -156,9 +242,32 @@ __global__ void rotary(float* x, int rows, int heads, int dim, long long positio
 
 inline int blocks(size_t threads) { return int((threads + 255) / 256); }
 
+template <int Rows>
+void linear_staged(const float* x, const __nv_bfloat16* w, const __nv_bfloat16* bias, float* y, int M, int N, int K,
+                   cudaStream_t s) {
+  constexpr int bytes = kernels::staged_shared_bytes<Rows>();
+  static const bool configured = [] {  // more than the default 48 KiB of dynamic shared memory for 16 rows
+    check(cudaFuncSetAttribute(kernels::linear_staged<Rows>, cudaFuncAttributeMaxDynamicSharedMemorySize, bytes),
+          "fp32 linear shared memory");
+    return true;
+  }();
+  (void)configured;
+  const int per_block = kernels::kWarps * kernels::kColumnsPerWarp;
+  kernels::linear_staged<Rows><<<dim3((N + per_block - 1) / per_block, (M + Rows - 1) / Rows), 256, bytes, s>>>(
+      x, w, bias, y, M, N, K);
+}
+
 template <class W>
 void linear(const float* x, const W* w, const __nv_bfloat16* bias, float* y, int M, int N, int K, cudaStream_t s = 0) {
   if (M <= 0 || N <= 0) return;
+  if constexpr (std::is_same_v<W, __nv_bfloat16>) {
+    const bool aligned = (reinterpret_cast<uintptr_t>(x) | reinterpret_cast<uintptr_t>(w)) % 16 == 0;
+    if (K > 0 && K % kernels::kChunk == 0 && aligned) {  // the same outputs, restaged (kernels::linear_staged)
+      if (M < 16) linear_staged<8>(x, w, bias, y, M, N, K, s);
+      else linear_staged<16>(x, w, bias, y, M, N, K, s);
+      return;
+    }
+  }
   const int per_block = kernels::kWarps * kernels::kColumnsPerWarp;
   kernels::linear<W><<<dim3((N + per_block - 1) / per_block, (M + kernels::kRows - 1) / kernels::kRows), 256, 0, s>>>(
       x, w, bias, y, M, N, K);

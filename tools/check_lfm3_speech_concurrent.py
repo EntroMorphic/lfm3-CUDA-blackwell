@@ -6,6 +6,9 @@ for byte: OUT.wav, OUT.f32, OUT.frames.i32, OUT.raw.i32, and OUT.json without it
 Requests (41): the 30 of speech-e2e-v1, the two long-form split cases (lighthouse, bread: speech-chunk-native-v1), the
 numbers paragraph normalized, the five spoken questions answered interleaved (audio-in-listen) and three ASR clips.
 Usage (lfm3-profile-v1): check_lfm3_speech_concurrent.py LFM3_SPEECH MODEL_DIR BUILD_DIR LIBRI_WAV_DIR WORK_DIR OUT_JSON
+                         [REFERENCE_ALONE_DIR]
+REFERENCE_ALONE_DIR (validation/speech-speed-v1): another binary's `alone` outputs (a previous WORK_DIR/alone); this
+binary's alone outputs must equal them too, file for file.
 """
 import hashlib
 import json
@@ -59,7 +62,7 @@ def outputs(stem):
     return files
 
 
-def main(speech, model, build, libri, work, out_json):
+def main(speech, model, build, libri, work, out_json, reference_alone=None):
     work = Path(work)
     reqs = requests(build, libri, work)
     report = dict(speech_sha256=hashlib.sha256(Path(speech).read_bytes()).hexdigest(), requests=len(reqs), runs={})
@@ -81,6 +84,15 @@ def main(speech, model, build, libri, work, out_json):
     ref = {name: outputs(ref_dir / name) for name, _ in reqs}
     ok = info["exit"] == 0 and all(v[".wav"] for v in ref.values())
     print("alone", json.dumps({k: v for k, v in info.items() if k != "stderr"}), flush=True)
+    if not reference_alone:  # rule 1 of speech-speed-v1 needs it: without it this binary is compared only to itself
+        report["alone_vs_reference"] = None
+        print("alone vs reference: NONE GIVEN (the batches are compared with this binary alone only)", flush=True)
+    else:
+        differ = [name for name, _ in reqs if outputs(Path(reference_alone) / name) != ref[name]]
+        report["alone_vs_reference"] = dict(reference=str(reference_alone), identical=len(reqs) - len(differ),
+                                            differ=differ, pass_=not differ)
+        ok &= not differ
+        print("alone vs reference", json.dumps(report["alone_vs_reference"]), flush=True)
     for tag, rows, seed in RUNS:
         d, info = run(tag, lambda lst: ["--concurrent", str(rows), str(lst)] + ([seed] if seed else []))
         differ = [name for name, _ in reqs if outputs(d / name) != ref[name]]
@@ -96,6 +108,6 @@ def main(speech, model, build, libri, work, out_json):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 7:
+    if len(sys.argv) not in (7, 8):
         sys.exit(__doc__)
     sys.exit(main(*sys.argv[1:]))
