@@ -924,8 +924,10 @@ class Service {
     std::shared_ptr<Lines> lines;  // streamed: its events
     std::promise<std::string> promise;
     std::mutex completion;
-    bool abandoned = false, settled = false;  // under completion
-    std::atomic<bool> cancel{false};          // the client is gone or past its deadline: cancel at the next step
+    // under completion: admitted into a row (from then on it runs to its end, bounded by the step budget, whatever
+    // its deadline: in a batch every row runs slower than alone), abandoned (past its deadline while queued), settled
+    bool admitted = false, abandoned = false, settled = false;
+    std::atomic<bool> cancel{false};          // the client is gone or abandoned it: cancel at the next step
     // engine-owner thread only
     std::unique_ptr<StreamState> state;
     bool cancel_sent = false;
@@ -993,9 +995,8 @@ class Service {
       auto future = t->promise.get_future();
       enqueue_ticket(t);
       if (future.wait_until(deadline) == std::future_status::ready) return future.get();
-      if (abandon_ticket(*t, future)) return future.get();
-      t->cancel = true;  // nobody will read it: free its row
-      throw ApiError(504, "request_deadline_outcome_unknown");
+      if (abandon_ticket(*t, future)) return future.get();  // admitted: it runs to its end
+      throw ApiError(504, "queue_deadline");  // still queued at its deadline: never started
     }
     Event event = std::make_shared<std::atomic<bool>>(false);
     auto run = [this, request, event, deadline] {
@@ -1056,7 +1057,10 @@ class Service {
     frontend_call([&] { encode_speech(*request); }, deadline);
     auto lines = std::make_shared<Lines>();
     std::future<std::string> future;
-    std::function<bool()> abandon_now;  // past the deadline: true if it completed meanwhile, else marks it abandoned
+    // past the deadline: true if the request goes on (it completed meanwhile, or, in the speech batch, was admitted: it
+    // runs to its end), else it is abandoned and `deadline_code` is the error
+    std::function<bool()> abandon_now;
+    std::string deadline_code = "request_deadline_outcome_unknown";
     std::function<void()> leave;        // stop the generation at its next step
     if (policy_.speech_rows > 0) {
       auto t = std::make_shared<Ticket>();
@@ -1064,6 +1068,7 @@ class Service {
       future = t->promise.get_future();
       enqueue_ticket(t);
       abandon_now = [t, &future] { return abandon_ticket(*t, future); };
+      deadline_code = "queue_deadline";  // abandoned only while queued: it never started
       leave = [t] { t->cancel = true; };
     } else {
       Event event = std::make_shared<std::atomic<bool>>(false);
@@ -1095,7 +1100,7 @@ class Service {
       };
     }
     const auto& send = sink.send;
-    bool started = false;
+    bool started = false, unbounded = false;
     const auto flush = [&] {
       std::deque<std::string> out;
       { std::lock_guard g(lines->m); out.swap(lines->lines); }
@@ -1115,16 +1120,16 @@ class Service {
         if (!sink.commit()) { leave(); return; }
         started = true;
       }
-      if (Clock::now() >= deadline) {
-        if (abandon_now()) continue;  // completed meanwhile
+      if (!unbounded && Clock::now() >= deadline) {
+        if (abandon_now()) { unbounded = true; continue; }  // completed meanwhile, or runs on to its end
         leave();
-        if (!started) throw ApiError(504, "request_deadline_outcome_unknown");
-        send(Obj().str("event", "error").str("error", "request_deadline_outcome_unknown").done());
+        if (!started) throw ApiError(504, deadline_code);
+        send(Obj().str("event", "error").str("error", deadline_code).done());
         return;
       }
+      const auto tick = Clock::now() + std::chrono::milliseconds(50);
       std::unique_lock g(lines->m);
-      lines->cv.wait_until(g, std::min(deadline, Clock::now() + std::chrono::milliseconds(50)),
-                           [&] { return !lines->lines.empty(); });
+      lines->cv.wait_until(g, unbounded ? tick : std::min(deadline, tick), [&] { return !lines->lines.empty(); });
     }
     std::string done;
     try {
@@ -1396,23 +1401,21 @@ class Service {
     }
     queue_cv_.notify_all();
   }
-  // Past its deadline: marks the ticket abandoned, unless it settled meanwhile (then true: its outcome stands).
+  // Past its deadline: marks a still-queued ticket abandoned (false: the caller answers 504 queue_deadline); true when it
+  // settled meanwhile or was admitted (it then runs to its end: wait for it).
   static bool abandon_ticket(Ticket& t, std::future<std::string>& future) {
     std::lock_guard g(t.completion);
-    if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) return true;
+    if (t.admitted || future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) return true;
     t.abandoned = true;
+    t.cancel = true;
     return false;
   }
-  // Settle a ticket once: its reply (as the job path: past its deadline or abandoned, the outcome is unknown), or an
-  // error.
+  // Settle a ticket once: its reply, or an error.
   static void settle(Ticket& t, std::string reply) {
     std::lock_guard g(t.completion);
     if (t.settled) return;
     t.settled = true;
-    if (t.abandoned || Clock::now() >= t.deadline)
-      t.promise.set_exception(std::make_exception_ptr(ApiError(504, "request_deadline_outcome_unknown")));
-    else
-      t.promise.set_value(std::move(reply));
+    t.promise.set_value(std::move(reply));  // an admitted ticket's reply stands, whatever its deadline
   }
   static void settle(Ticket& t, const ApiError& e) {
     std::lock_guard g(t.completion);
@@ -1451,7 +1454,15 @@ class Service {
           speech_queue_.pop_front();
         }
         if (failed()) { settle(*t, ApiError(503, "worker_unavailable")); continue; }
-        if (Clock::now() >= t->deadline) { settle(*t, ApiError(504, "queue_deadline")); continue; }
+        {
+          std::lock_guard g(t->completion);
+          if (t->abandoned || t->cancel || Clock::now() >= t->deadline) {
+            t->settled = true;
+            t->promise.set_exception(std::make_exception_ptr(ApiError(504, "queue_deadline")));
+            continue;
+          }
+          t->admitted = true;
+        }
         const Speech& r = *t->request;
         Obj frame;
         frame.str("op", "speech_admit").num("ticket", t->id).raw("chunks", r.chunks_json).str("mode", r.mode)
@@ -1478,6 +1489,8 @@ class Service {
         const auto it = o.count("ticket") ? running_.find(o.at("ticket").integer()) : running_.end();
         if (it == running_.end()) throw WorkerFailure("invalid speech progress");
         const auto t = it->second;
+        // an event line is as bounded as on the single-request path; only a finished reply (the WAV) may be larger
+        if (!o.count("finished") && line.size() > kMaxBody) throw WorkerFailure("progress frame exceeds limit");
         if (o.count("finished")) {
           if (o.size() != 2) throw WorkerFailure("invalid speech progress");
           const Json& result = o.at("finished");

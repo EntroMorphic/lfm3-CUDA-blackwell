@@ -207,7 +207,9 @@ def test_shutdown_mid_stream_ends_with_a_cancelled_done(harness_binary):
 
 
 def test_deadline_after_the_start_is_an_error_event(harness_binary):
-    with running(harness_binary, "--token-delay-ms", "300", "--request-timeout", "1", "--speech-rows", "1") as h:
+    # the single-request path (--speech-rows 0); in the speech batch an admitted request runs on past its deadline
+    # (test_lfm3_http_speech_batch.py)
+    with running(harness_binary, "--token-delay-ms", "300", "--request-timeout", "1", "--speech-rows", "0") as h:
         status, events, _ = stream(h, tts(" ".join([LONG] * 3), stream=True))
         assert status == 200 and events[0]["event"] == "audio"
         assert events[-1] == {"event": "error", "error": "request_deadline_outcome_unknown"}
@@ -216,7 +218,7 @@ def test_deadline_after_the_start_is_an_error_event(harness_binary):
 
 
 def test_deadline_before_the_start_is_an_ordinary_504(harness_binary):
-    with running(harness_binary, "--token-delay-ms", "1500", "--request-timeout", "1") as h:
+    with running(harness_binary, "--token-delay-ms", "1500", "--request-timeout", "1", "--speech-rows", "0") as h:
         status, body, events = stream(h, tts(LONG, stream=True))
         assert events is None and status == 504 and body == {"error": "request_deadline_outcome_unknown"}
 

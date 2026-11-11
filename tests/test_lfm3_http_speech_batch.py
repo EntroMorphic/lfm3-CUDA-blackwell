@@ -97,20 +97,55 @@ def test_cancelling_one_stream_leaves_the_other(harness_binary):
         assert pcm(events) == b"".join(bytes([k, 5, 255, 127]) for k in range(12))
 
 
-def test_an_abandoned_request_frees_its_row(harness_binary):
+def test_an_admitted_request_runs_past_its_deadline_to_its_reply(harness_binary):
+    # in a batch every row runs slower than alone, so the request deadline bounds only the wait in the queue: once
+    # admitted, a request runs to its end (bounded by the step budget), and its reply equals its reply alone
+    long = " ".join([LONG] * 3)  # 9 steps of 0.4 s, past the 1 s deadline
+    with running(harness_binary, "--speech-rows", "0") as h:
+        alone = h.call("POST", "/speech", tts(long, seed=2))
     with running(harness_binary, "--speech-rows", "1", "--token-delay-ms", "400", "--request-timeout", "1") as h:
-        status, body = h.call("POST", "/speech", tts(" ".join([LONG] * 3)))  # 9 steps: past its deadline
-        assert status == 504 and body == {"error": "request_deadline_outcome_unknown"}
+        assert h.call("POST", "/speech", tts(long, seed=2)) == alone
+        status, events, _ = stream(h, tts(long, seed=2, stream=True))
+        assert status == 200 and events[-1]["event"] == "done" and events[-1]["cancelled"] is False
+        assert {k: v for k, v in events[-1].items() if k != "event"} == {k: v for k, v in alone[1].items()
+                                                                        if k != "audio_wav_base64"}
+
+
+def test_a_request_still_queued_at_its_deadline_is_a_504_and_never_runs(harness_binary):
+    import socket
+    from test_lfm3_http_speech_stream import request_bytes
+    with running(harness_binary, "--speech-rows", "1", "--token-delay-ms", "400", "--request-timeout", "1") as h:
+        long = " ".join([LONG] * 3)
+        first = threading.Thread(target=lambda: results.update(first=h.call("POST", "/speech", tts(long))))
+        results = {}
+        first.start()
+        time.sleep(0.2)
+        assert h.call("POST", "/speech", tts(SHORT)) == (504, {"error": "queue_deadline"})  # queued all along
+        # a queued stream whose reply was committed (its client half-closed) ends with an error event instead
+        s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
+        s.sendall(request_bytes(tts(SHORT, stream=True)))
+        s.shutdown(socket.SHUT_WR)
+        data = b""
+        while block := s.recv(65536):
+            data += block
+        s.close()
+        assert data.startswith(b"HTTP/1.0 200 OK") and data.rstrip().endswith(b'{"event":"error","error":"queue_deadline"}')
+        first.join(30)
+        assert results["first"][0] == 200 and results["first"][1]["cancelled"] is False
         t0 = time.monotonic()
-        status, body = h.call("POST", "/speech", tts(SHORT))  # its row freed at the next step, not after 9
-        assert status == 200 and time.monotonic() - t0 < 1.5, time.monotonic() - t0
+        assert h.call("POST", "/speech", tts(SHORT))[0] == 200 and time.monotonic() - t0 < 1.0  # the abandoned never ran
 
 
-def test_a_queued_request_past_its_deadline_is_a_504(harness_binary):
-    with running(harness_binary, "--speech-rows", "1", "--token-delay-ms", "400", "--request-timeout", "1") as h:
-        got, _ = together([lambda: h.call("POST", "/speech", tts(" ".join([LONG] * 3))),
-                           lambda: h.call("POST", "/speech", tts(SHORT))])
-        assert all(s == 504 for s, _ in got), got
+def test_the_accept_queue_holds_a_crowd(harness_binary):
+    # the listening socket's backlog (ss shows it as Send-Q) is max(16, handlers), not http.server's 5
+    import shutil
+    import subprocess
+    if not shutil.which("ss"):
+        pytest.skip("ss required")
+    for handlers, want in (("8", 16), ("40", 40)):
+        with running(harness_binary, "--handlers", handlers) as h:
+            out = subprocess.run(["ss", "-ltnH", f"sport = :{h.port}"], capture_output=True, text=True, check=True).stdout
+            assert int(out.split()[2]) == want, out
 
 
 def test_shutdown_cancels_every_row_and_fails_the_queued(harness_binary):

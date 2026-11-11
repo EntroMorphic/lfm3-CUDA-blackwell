@@ -7,7 +7,8 @@ Rules (set in the README before any batched run):
      but prefill_seconds, generate_seconds; streamed, every event and the done event), for the cases of
      check_lfm3_speech_stream.py (41 and the budget-truncated one), sent all at once and in a random order with random
      gaps (0-2 s), each unstreamed and streamed (the crowd server takes them all: 96 handlers, a queue of 64);
-  3. real time: 8 (then 12, 16) concurrent streamed TTS requests: no player runs dry (largest N reported);
+  3. real time: 8 (then 12, 16) concurrent streamed TTS requests: no player runs dry (largest N reported); also
+     reported: 7 TTS streams while the five spoken questions (audio input: encoding and prefill inside a step) join;
   4. first audio under load: a TTS request arriving while 7 others stream: median of 10 first-audio times <= 1.0 s;
   5. text: a /generate arriving under continuous speech load: its ids equal its reference; its latency is reported
      beside the time the rows running at its arrival took to finish (it waits for them, then runs).
@@ -81,7 +82,10 @@ def post(server, body):
 
 
 def stream(server, body):
-    return retried(lambda: server.stream(body))
+    """As Server.stream, its times measured from the first attempt (time spent retrying counts)."""
+    first = time.monotonic()
+    status, events, times, t0 = retried(lambda: server.stream(body))
+    return status, events, [t + (t0 - first) for t in times], first
 
 
 def first_audio(events, times):
@@ -218,8 +222,28 @@ def main(binary, old, model, build, libri, out_json):
         finally:
             code, _ = server.stop()
             ok &= code == 0
+    # spoken questions joining 7 running TTS streams: their admissions (audio encoding, prefill) run inside steps
+    server = start(binary, model, out.parent)
+    try:
+        server.post(tts[0])
+        spoken = [b for n, _, b in cases if n.startswith("spoken-q")]
+
+        def later(i):
+            time.sleep(1.0 + 0.7 * i)
+            return stream(server, spoken[i])
+        with concurrent.futures.ThreadPoolExecutor(12) as pool:
+            running = [pool.submit(stream, server, tts[i % len(tts)]) for i in range(7)]
+            joining = [pool.submit(later, i) for i in range(len(spoken))]
+            got = [f.result() for f in running + joining]
+        stalls = [check.gaps(events, times)[0] for _, events, times, _ in got]
+        report["real_time"]["7 tts + 5 spoken joining"] = dict(stalls=stalls, all_done=all(e[-1].get("event") == "done" for _, e, _, _ in got))
+        print("real time 7 tts + 5 spoken joining", json.dumps(report["real_time"]["7 tts + 5 spoken joining"]), flush=True)
+    finally:
+        code, _ = server.stop()
+        ok &= code == 0
     report["rule3_pass"] = sum(report["real_time"][8]["stalls"]) == 0 and report["real_time"][8]["all_done"]
-    report["largest_n_without_gaps"] = max([n for n, r in report["real_time"].items() if sum(r["stalls"]) == 0], default=0)
+    report["largest_n_without_gaps"] = max([n for n, r in report["real_time"].items() if isinstance(n, int) and sum(r["stalls"]) == 0],
+                                           default=0)
     ok &= report["rule3_pass"]
     report["pass"] = bool(ok)
     out.write_text(json.dumps(report, indent=1) + "\n")

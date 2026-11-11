@@ -162,3 +162,39 @@ a 120-client test checks that every client gets a reply.
   that, at the cost of pausing every running stream for the text job's length.
 - **Crowds hit 429 frontend_busy:** the server prepares one request at a time and refuses a second meanwhile, as the
   reference server does; clients retry. A short wait instead of the refusal would suit crowds better.
+
+## Second red-team (a fresh reviewer with the code only), and server batch-s4
+No cross-row coupling: the reviewer traced every buffer, RNG and kernel of the batch path and found none. The text
+engine is unchanged by the masked scatter: every row it steps is active and below its capacity. Findings and what was
+done:
+1. **Long requests timed out under load (medium, design).** In a batch every row runs slower than alone. A request near
+   the step budget (about 227 s alone, sized under the 330 s request deadline) would time out at 8 rows or more. It
+   would get a 504 where alone it gets its reply. **Changed:** the request deadline bounds only the wait in the queue.
+   - Once admitted, a request runs to its end, bounded by the step budget; a client that leaves still cancels it.
+   - A request still queued at its deadline gets 504 `queue_deadline` and never runs. Streamed, if its reply was
+     already committed, it gets the error event instead.
+   - Tests added for both.
+   - The single-request path (`--speech-rows 0`, the fake engine only) keeps its old deadline.
+2. **The accept-queue test did not catch the bug.** With a backlog of 5 the 120-client test still passed: here an
+   overflowing queue drops connection attempts and the clients retry. **Replaced:** the test reads the listening
+   socket's backlog (`ss`, Send-Q), and fails with a backlog of 5 (checked). A crowd larger than the handlers is still
+   closed at accept, by design (LocalHTTPServer); the crowd checks ran with 96 handlers.
+3. **First-audio timing:** the GPU check timed first audio from a request's last attempt, so time spent retrying a 429
+   was not counted. **Fixed:** it times from the first attempt.
+4. **Admission stalls:** an admission's audio encoding and prefill run inside a step and stall the other rows. **Now
+   checked:** 7 TTS streams while the 5 spoken questions join one by one: no stalls.
+5. **Unvalidated row counts:** `--speech-rows` allowed 64, but exactness and memory were validated only to 16 (each
+   row holds its own codec, 147 MB). **Capped at 16.**
+6. **Event-line limit:** streamed event lines in the batch were allowed 64 MiB. They are bounded at 4 MiB again; only
+   a finished reply, with its WAV, may be larger.
+7. **Kept, documented:** the fake engine ends a cancelled row before its step's work. The real batch lets a row whose
+   generation just ended finish normally first, as the single-request loop did. A split request may then start its
+   next chunk and be cancelled one step later.
+
+**batch-s4** (the second red-team's fixes; sources identical to this commit, `build-s4/`):
+- **Crowds (rule 1):** 42 of 42 identical in all four.
+- **Real time (rule 3):** no stalls at 8, 12 and 16 streams, nor with 7 streams and the spoken questions joining.
+- **First audio under load (rule 4):** median 0.445 s.
+- **Text under load (rule 5):** identical ids; 34.1 s, against a 15.0 s drain (as above).
+- **Nothing else moves (rule 6):** streaming, audio-input, TTS and text gate pass.
+- **Host tests:** 888 passed, 2 skipped; the one failure is the known transformers-version test.

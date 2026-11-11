@@ -343,7 +343,7 @@ class WorkerCore {
   // Concurrent speech: the batch's rows (ops speech_admit/speech_step); 0 when speech is unsupported.
   int speech_rows() const {return speech_ok?speech_rows_:0;}
   void set_speech_rows(int rows) {
-    if(rows<1 || rows>64) throw std::runtime_error("speech rows must be 1..64");
+    if(rows<1 || rows>16) throw std::runtime_error("speech rows must be 1..16");  // validated up to 16 (speech-batch-v1)
 #ifdef LFM3_NATIVE_GEMM
     if(speech_batch) throw std::runtime_error("speech rows are fixed once the batch exists");
 #endif

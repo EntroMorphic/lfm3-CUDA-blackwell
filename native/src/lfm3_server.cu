@@ -5,7 +5,7 @@
 //   liquid-lfm3-server --experimental MODEL_DIRECTORY [--token-file FILE] [--port N] [--request-timeout S]
 //                      [--socket-timeout S] [--session-idle-timeout S] [--engine-timeout S] [--total-capacity N]
 //                      [--max-sessions N] [--queue-size N] [--handlers N] [--speech-rows N]
-// --speech-rows (1..64, default 8): /speech requests generated at once in the engine's speech batch
+// --speech-rows (1..16, the most validated; default 8): /speech requests generated at once in the engine's speech batch
 // (validation/speech-batch-v1); more wait in the queue (--queue-size of them). Without --handlers, the server takes
 // max(8, 2 x speech rows) handlers: at most half of them stream at once (Service::speech_stream), so every row can.
 // The bearer token comes from --token-file (an owned mode-0600 file) or LFM3_SERVER_TOKEN. --port 0
@@ -100,7 +100,7 @@ int main(int argc,char** argv) try {
     token=env;
   }
   ::unsetenv("LFM3_SERVER_TOKEN");
-  if(speech_rows<1 || speech_rows>64) throw std::runtime_error("--speech-rows must be 1..64");
+  if(speech_rows<1 || speech_rows>16) throw std::runtime_error("--speech-rows must be 1..16");
   if(!seen.count("--handlers")) settings.handlers=std::max(8,2*speech_rows);
   settings.validate();
   if(port<0 || port>65535) throw std::runtime_error("port must be an integer in 0..65535");
