@@ -191,9 +191,14 @@ inline std::vector<std::vector<lfm3_text::Message>> sentence_requests(const std:
   if (user.content_is_list) throw std::runtime_error("speech split: the user content must be a string");
   const auto sentences = split_sentences(user.content);
   if (sentences.empty()) throw std::runtime_error("speech split: the user text is empty");
+  // each chunk copies the messages without the user text (copying it whole for every sentence made the split's memory
+  // quadratic in the text's length: audio-assurance-v1 red-team)
+  auto base = messages;
+  base.back().content = std::string();
   std::vector<std::vector<lfm3_text::Message>> out;
+  out.reserve(sentences.size());
   for (const auto& s : sentences) {
-    out.push_back(messages);
+    out.push_back(base);
     out.back().back().content = s;
   }
   return out;

@@ -1,0 +1,11 @@
+{
+ "a": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/audioin-v2/native-full",
+ "b": "alone",
+ "slots_only": true,
+ "files": 2620,
+ "identical": 2620,
+ "differ": [],
+ "missing": [],
+ "extra": [],
+ "pass_": true
+}

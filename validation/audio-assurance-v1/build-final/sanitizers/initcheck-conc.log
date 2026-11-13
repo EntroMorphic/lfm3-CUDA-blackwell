@@ -1,0 +1,515 @@
+========= COMPUTE-SANITIZER
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (32,0,0) in block (20,0,0)
+=========     Address 0x1d792ea9c2
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (33,0,0) in block (20,0,0)
+=========     Address 0x1d792ea9d0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (34,0,0) in block (20,0,0)
+=========     Address 0x1d792ea9de
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (35,0,0) in block (20,0,0)
+=========     Address 0x1d792ea9ec
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (36,0,0) in block (20,0,0)
+=========     Address 0x1d792ea9fa
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (37,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa08
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (38,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa16
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (39,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa24
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (40,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa32
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (41,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa40
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (42,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa4e
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (43,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa5c
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (44,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa6a
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (45,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa78
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (46,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa86
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (47,0,0) in block (20,0,0)
+=========     Address 0x1d792eaa94
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (48,0,0) in block (20,0,0)
+=========     Address 0x1d792eaaa2
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (49,0,0) in block (20,0,0)
+=========     Address 0x1d792eaab0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (50,0,0) in block (20,0,0)
+=========     Address 0x1d792eaabe
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (51,0,0) in block (20,0,0)
+=========     Address 0x1d792eaacc
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (52,0,0) in block (20,0,0)
+=========     Address 0x1d792eaada
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (53,0,0) in block (20,0,0)
+=========     Address 0x1d792eaae8
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (54,0,0) in block (20,0,0)
+=========     Address 0x1d792eaaf6
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (55,0,0) in block (20,0,0)
+=========     Address 0x1d792eab04
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (56,0,0) in block (20,0,0)
+=========     Address 0x1d792eab12
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (57,0,0) in block (20,0,0)
+=========     Address 0x1d792eab20
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (58,0,0) in block (20,0,0)
+=========     Address 0x1d792eab2e
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (59,0,0) in block (20,0,0)
+=========     Address 0x1d792eab3c
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (60,0,0) in block (20,0,0)
+=========     Address 0x1d792eab4a
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (61,0,0) in block (20,0,0)
+=========     Address 0x1d792eab58
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (62,0,0) in block (20,0,0)
+=========     Address 0x1d792eab66
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (63,0,0) in block (20,0,0)
+=========     Address 0x1d792eab74
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (64,0,0) in block (20,0,0)
+=========     Address 0x1d792eab82
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (65,0,0) in block (20,0,0)
+=========     Address 0x1d792eab90
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (66,0,0) in block (20,0,0)
+=========     Address 0x1d792eab9e
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (67,0,0) in block (20,0,0)
+=========     Address 0x1d792eabac
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (68,0,0) in block (20,0,0)
+=========     Address 0x1d792eabba
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (69,0,0) in block (20,0,0)
+=========     Address 0x1d792eabc8
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (70,0,0) in block (20,0,0)
+=========     Address 0x1d792eabd6
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (71,0,0) in block (20,0,0)
+=========     Address 0x1d792eabe4
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (72,0,0) in block (20,0,0)
+=========     Address 0x1d792eabf2
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (73,0,0) in block (20,0,0)
+=========     Address 0x1d792eac00
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (74,0,0) in block (20,0,0)
+=========     Address 0x1d792eac0e
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (75,0,0) in block (20,0,0)
+=========     Address 0x1d792eac1c
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (76,0,0) in block (20,0,0)
+=========     Address 0x1d792eac2a
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (77,0,0) in block (20,0,0)
+=========     Address 0x1d792eac38
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (78,0,0) in block (20,0,0)
+=========     Address 0x1d792eac46
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (79,0,0) in block (20,0,0)
+=========     Address 0x1d792eac54
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (80,0,0) in block (20,0,0)
+=========     Address 0x1d792eac62
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (81,0,0) in block (20,0,0)
+=========     Address 0x1d792eac70
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x64153] in lfm3-speech
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x69a3f] in lfm3-speech
+=========         Host Frame: concurrent(char const*, int, char const*, char const*) [0x309c7] in lfm3-speech
+=========         Host Frame: main [0x11fc3] in lfm3-speech
+========= 
+{"frames":40,"audio_seconds":3.2,"generate_seconds":99.2525,"slots":41}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/initcheck-conc/tts-fox-female-s1","row":2,"step":105,"audio_seconds":3.2}
+{"frames":48,"audio_seconds":3.84,"generate_seconds":119.309,"slots":49}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/initcheck-conc/tts-fox-male-s2","row":1,"step":106,"audio_seconds":3.84}
+{"frames":0,"audio_seconds":0,"generate_seconds":81.5386,"slots":37}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/initcheck-conc/asr-1089-134686-0000","row":1,"step":151,"audio_seconds":0}
+{"frames":133,"audio_seconds":10.64,"generate_seconds":538.77,"slots":168}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/initcheck-conc/spoken-q0","row":0,"step":169,"audio_seconds":10.64}
+lfm3-speech: concurrent: 5 done, 0 failed
+{"frames":252,"audio_seconds":20.16,"generate_seconds":564.131,"slots":313}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/initcheck-conc/il-reflective-s1","row":3,"step":410,"audio_seconds":20.16}
+{"rows":4,"requests":5,"steps":411,"audio_seconds":37.84,"wall_seconds":939.213,"audio_per_wall_second":0.0402891}
+========= ERROR SUMMARY: 479232 errors
+========= ERROR SUMMARY: 479182 errors were not printed. Use --print-limit option to adjust the number of printed errors

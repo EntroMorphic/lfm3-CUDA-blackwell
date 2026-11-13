@@ -1,0 +1,5 @@
+fp32-linear-check memcheck: exit 0, 447 s; ========= ERROR SUMMARY: 0 errors  1 PASS lines
+fp32-linear-check initcheck: exit 0, 361 s; ========= ERROR SUMMARY: 0 errors  1 PASS lines
+fp32-linear-check synccheck: exit 0, 147 s; ========= ERROR SUMMARY: 0 errors  1 PASS lines
+plain conc == plain batch
+SANITIZERS DONE 15:14:04

@@ -1,0 +1,10 @@
+{"phase": "idle", "seconds": 60.1, "statuses": {}, "vmrss_mib": 5395.7, "vmrss_delta_mib": 0.0, "anon_maps": 73, "threads": 14, "fds": 55, "delta_by_mapping_mib": {}}
+{"phase": "churn", "seconds": 10.6, "statuses": {"200": 5197, "429": 14803}, "vmrss_mib": 5396.6, "vmrss_delta_mib": 0.96, "anon_maps": 93, "threads": 14, "fds": 55, "delta_by_mapping_mib": {}}
+{"phase": "bad", "seconds": 7.9, "statuses": {"400": 20000}, "vmrss_mib": 5396.4, "vmrss_delta_mib": -0.19, "anon_maps": 93, "threads": 14, "fds": 55, "delta_by_mapping_mib": {}}
+{"phase": "unstreamed", "seconds": 860.9, "statuses": {"200": 200}, "vmrss_mib": 5399.3, "vmrss_delta_mib": 2.88, "anon_maps": 96, "threads": 14, "fds": 55, "delta_by_mapping_mib": {"[anon]": 2.89}}
+{"phase": "unstreamed", "seconds": 1122.0, "statuses": {"200": 200}, "vmrss_mib": 5405.4, "vmrss_delta_mib": 6.13, "anon_maps": 95, "threads": 14, "fds": 55, "delta_by_mapping_mib": {"[anon]": 6.12}}
+{"phase": "unstreamed", "seconds": 1207.7, "statuses": {"200": 200}, "vmrss_mib": 5405.5, "vmrss_delta_mib": 0.1, "anon_maps": 96, "threads": 14, "fds": 55, "delta_by_mapping_mib": {}}
+{"phase": "dropped", "seconds": 78.3, "statuses": {"200": 200}, "vmrss_mib": 5410.8, "vmrss_delta_mib": 5.2, "anon_maps": 109, "threads": 14, "fds": 55, "delta_by_mapping_mib": {"[anon]": 4.24}}
+{"phase": "storm", "seconds": 625.7, "statuses": {"session:429": 2142347, "speech:200": 202, "generate:200": 18, "generate:429": 1}, "vmrss_mib": 5416.7, "vmrss_delta_mib": 5.93, "anon_maps": 114, "threads": 14, "fds": 55, "delta_by_mapping_mib": {"[anon]": 6.55}}
+{"phase": "idle2", "seconds": 60.0, "statuses": {}, "vmrss_mib": 5416.7, "vmrss_delta_mib": 0.0, "anon_maps": 114, "threads": 14, "fds": 55, "delta_by_mapping_mib": {}}
+exit 0

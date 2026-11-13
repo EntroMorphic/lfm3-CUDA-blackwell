@@ -1,0 +1,11 @@
+{
+ "a": "alone",
+ "b": "rows8",
+ "slots_only": false,
+ "files": 13260,
+ "identical": 13260,
+ "differ": [],
+ "missing": [],
+ "extra": [],
+ "pass_": true
+}

@@ -83,6 +83,10 @@ inline constexpr size_t kSpeechMaxChunks = 512;
 inline constexpr size_t kSpeechMaxPromptTokens = 131072;
 inline constexpr double kSpeechMinEngineTimeout = 300;  // seconds; /speech is refused below it
 inline constexpr int kAudioOutToken = 125032;
+// The text of a /speech request's messages (audio aside), checked before normalization and the split: the step budget
+// (6,144 frames, about 8 minutes of audio) reads about 8 KB, and a chunk holds 4,096 tokens, so 64 KiB is generous; it
+// bounds the frontend's work and memory for any request (audio-assurance-v1 red-team: a 2 MB text took 60 GB)
+inline constexpr size_t kSpeechMaxTextBytes = 64 * 1024;
 inline constexpr size_t kSpeechMaxClips = 64;  // audio clips per /speech request (WorkerCore::kSpeechMaxClips)
 
 // An HTTP-visible refusal: status and error code, exactly as lfm3_server.APIError.
@@ -329,6 +333,73 @@ inline std::string token_file(const std::string& path) {
   if (!raw.empty() && raw.back() == '\n') raw.pop_back();
   if (!valid_token(raw)) throw std::runtime_error("bearer token must be 32..256 URL-safe characters");
   return raw;
+}
+
+// The default token file: $XDG_CONFIG_HOME/liquid-lfm3/token, or ~/.config/liquid-lfm3/token. tools/lfm3_token.py
+// finds the same path, so clients need no setup.
+inline std::string default_token_path() {
+  const char* xdg = std::getenv("XDG_CONFIG_HOME");
+  if (xdg && *xdg == '/') return std::string(xdg) + "/liquid-lfm3/token";
+  const char* home = std::getenv("HOME");
+  if (!home || *home != '/') throw std::runtime_error("no token given and no HOME for the default token file");
+  return std::string(home) + "/.config/liquid-lfm3/token";
+}
+
+// The token at `path`, created on first use: a directory this user owns that no one else can write (made mode 0700
+// if missing; its parent too), and in it a new mode-0600 file holding a fresh random token (O_EXCL, no symlinks).
+// An existing file is read under token_file's checks. `created` says which happened.
+inline std::string load_or_create_token(const std::string& path, bool& created) {
+  created = false;
+  const auto slash = path.rfind('/');
+  if (slash == std::string::npos || slash == 0) throw std::runtime_error("token path must be absolute");
+  const std::string dir = path.substr(0, slash);
+  auto ensure_dir = [](const std::string& d) {
+    if (::mkdir(d.c_str(), 0700) != 0 && errno != EEXIST) throw std::runtime_error("cannot create " + d);
+    struct stat info {};
+    if (::lstat(d.c_str(), &info) != 0 || !S_ISDIR(info.st_mode) || info.st_uid != ::getuid() || (info.st_mode & 022))
+      throw std::runtime_error(d + " must be a directory owned by this user that no one else can write");
+  };
+  const auto parent_slash = dir.rfind('/');
+  if (parent_slash != std::string::npos && parent_slash > 0) {  // ~/.config: made if missing; may be any owned dir
+    const std::string parent = dir.substr(0, parent_slash);
+    if (::mkdir(parent.c_str(), 0700) != 0 && errno != EEXIST) throw std::runtime_error("cannot create " + parent);
+  }
+  ensure_dir(dir);
+  const int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
+  if (fd < 0) {
+    if (errno != EEXIST) throw std::runtime_error("cannot create token file");
+    return token_file(path);  // made earlier (or by a server starting at the same moment): its checks apply
+  }
+  const std::string token = token_urlsafe24();
+  const std::string line = token + "\n";
+  bool ok = ::fchmod(fd, 0600) == 0;
+  for (size_t done = 0; ok && done < line.size();) {
+    const auto n = ::write(fd, line.data() + done, line.size() - done);
+    if (n < 0 && errno == EINTR) continue;
+    ok = n > 0;
+    if (ok) done += size_t(n);
+  }
+  ok = ::fsync(fd) == 0 && ok;
+  ::close(fd);
+  if (!ok) { ::unlink(path.c_str()); throw std::runtime_error("cannot write token file"); }
+  created = true;
+  return token;
+}
+
+// The server's token: --token-file FILE, else LFM3_SERVER_TOKEN, else the default file (created on first use).
+// `note` is a line for stderr when the default file was used (its path; never the token).
+inline std::string startup_token(const std::string& token_path, std::string& note) {
+  note.clear();
+  if (!token_path.empty()) return token_file(token_path);
+  if (const char* env = std::getenv("LFM3_SERVER_TOKEN")) {
+    if (!valid_token(env)) throw std::runtime_error("bearer token must be 32..256 URL-safe characters");
+    return env;
+  }
+  const auto path = default_token_path();
+  bool created = false;
+  auto token = load_or_create_token(path, created);
+  note = std::string(created ? "created the bearer token file " : "bearer token from ") + path;
+  return token;
 }
 
 // ------------------------------------------------------------------ engine boundary
@@ -722,8 +793,23 @@ class Service {
     s.messages = &o.at("messages");
     bool audio_input = false;
     size_t clips = 0;
-    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true))
+    // The normalizer is American English only (speech_normalize.hpp): it applies by default when there is no system
+    // prompt or a system prompt names American or British English (the model card's TTS prompt), and is refused for
+    // any other system prompt (audio-assurance-v1 rule 10: "Tengo 3 gatos" must not become "Tengo three gatos").
+    bool has_system = false, english = false;
+    size_t text_bytes = 0;
+    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true)) {
       for (const auto& part : m.parts) clips += part.audio;
+      text_bytes += m.content.size() + m.thinking.size();
+      for (const auto& part : m.parts) text_bytes += part.text.size();
+      if (text_bytes > kSpeechMaxTextBytes) throw std::invalid_argument("speech text exceeds its byte limit");
+      if (m.role != "system") continue;
+      has_system = true;
+      std::string text = m.content;
+      for (const auto& part : m.parts) text += part.text;
+      english |= text.find("American English") != std::string::npos || text.find("British English") != std::string::npos;
+    }
+    const bool normalizable = !has_system || english;
     audio_input = s.audio_input = clips > 0;
     if (clips > kSpeechMaxClips) throw std::invalid_argument("too many audio clips");
     if (o.count("split")) {
@@ -740,9 +826,10 @@ class Service {
       if (!b) throw std::invalid_argument("normalize must be a boolean");
       s.normalize = *b;
     } else {
-      s.normalize = s.mode == "audio";
+      s.normalize = s.mode == "audio" && normalizable;
     }
     if (s.normalize && s.mode != "audio") throw std::invalid_argument("normalize is for audio mode");
+    if (s.normalize && !normalizable) throw std::invalid_argument("normalize is for American or British English");
     if (o.count("stream")) {
       const auto* b = std::get_if<bool>(&o.at("stream").value);
       if (!b) throw std::invalid_argument("stream must be a boolean");
@@ -980,7 +1067,10 @@ class Service {
   // "sample_rate", "audio_seconds", "frames", "chunks": [{"text" (split only), "frames", "ended_by_eos"}], "seed",
   // "split", "normalize", "cancelled", "truncated" (the step budget stopped it short of its text: chunks skipped, or the last one
   // cut), "prefill_seconds", "generate_seconds"}. The WAV is byte for byte lfm3-speech's for the same request.
-  std::string speech(std::shared_ptr<const Json> body) {
+  // `gone` (optional; polled about every 50 ms while a batched request waits): true when the client's connection is
+  // broken; the request is then cancelled at the engine's next step and frees its row (audio-assurance-v1 red-team:
+  // before, an unstreamed request ran to its end for no one). A client that only half-closes keeps its request.
+  std::string speech(std::shared_ptr<const Json> body, const std::function<bool()>& gone = {}) {
     // the step budget's worst case (~227 s) is sized for the default engine timeout; a shorter one could let an
     // admitted request fail the service closed
     if (!policy_.speech || settings_.engine_timeout < kSpeechMinEngineTimeout) throw ApiError(501, "speech_unsupported");
@@ -994,7 +1084,12 @@ class Service {
       t->request = request, t->deadline = deadline;
       auto future = t->promise.get_future();
       enqueue_ticket(t);
-      if (future.wait_until(deadline) == std::future_status::ready) return future.get();
+      for (;;) {
+        const auto tick = std::min(deadline, Clock::now() + std::chrono::milliseconds(50));
+        if (future.wait_until(tick) == std::future_status::ready) return future.get();
+        if (Clock::now() >= deadline) break;
+        if (gone && !t->cancel && gone()) t->cancel = true;  // its reply goes nowhere; the wait ends when it stops
+      }
       if (abandon_ticket(*t, future)) return future.get();  // admitted: it runs to its end
       throw ApiError(504, "queue_deadline");  // still queued at its deadline: never started
     }
@@ -1908,9 +2003,12 @@ class Connection {
     return out;
   }
   // false: the peer is gone or not reading (a send failed or timed out).
-  bool send_all(const std::string& out) {
+  // `until` (optional) bounds the whole send: SO_SNDTIMEO restarts whenever a byte moves, so a reader taking a few
+  // bytes a second could hold the handler for hours (audio-assurance-v1 red-team).
+  bool send_all(const std::string& out, std::optional<Clock::time_point> until = std::nullopt) {
     size_t sent = 0;
     while (sent < out.size()) {
+      if (until && Clock::now() >= *until) return false;
       const auto n = ::send(fd_, out.data() + sent, out.size() - sent, MSG_NOSIGNAL);
       if (n < 0 && errno == EINTR) continue;
       if (n <= 0) return false;
@@ -1923,7 +2021,9 @@ class Connection {
     std::string out = head(status);
     out += "\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: " + std::to_string(body.size()) +
            "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n" + body;
-    send_all(out);  // a disconnected or non-reading peer cannot receive a second reply
+    // a disconnected or non-reading peer cannot receive a second reply; 60 s plus a second per MiB is far beyond any
+    // reader that is reading
+    send_all(out, Clock::now() + std::chrono::seconds(60 + (out.size() >> 20)));
   }
   // A streamed /speech reply: 200 and newline-delimited JSON, no Content-Length (HTTP/1.0: the body ends when the
   // connection closes). The status line goes out with the first event.
@@ -2028,7 +2128,10 @@ class Connection {
           stream_speech(std::move(parsed));
           return;
         }
-        reply(200, service_.speech(std::move(parsed)), kMaxSpeechResponse);
+        reply(200, service_.speech(std::move(parsed), [this] {
+                pollfd p{fd_, POLLRDHUP, 0};
+                return ::poll(&p, 1, 0) > 0 && (p.revents & (POLLHUP | POLLERR)) != 0;
+              }), kMaxSpeechResponse);
         return;
       }
       else {

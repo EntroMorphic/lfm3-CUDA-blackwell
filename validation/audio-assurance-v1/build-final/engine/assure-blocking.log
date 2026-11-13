@@ -1,0 +1,7 @@
+== normal 10:04:16
+exit 0
+== blocking 10:07:26
+exit 0
+{"a": "normal", "b": "blocking", "slots_only": false, "files": 205, "identical": 205, "differ": [], "missing": [], "extra": [], "pass_": true}
+{"a": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/speed-final2/conc/alone", "b": "normal", "slots_only": false, "files": 206, "identical": 205, "differ": [], "missing": ["list.txt"], "extra": [], "pass_": false}
+BLOCKING DONE 11:14:20

@@ -1,0 +1,8 @@
+========= COMPUTE-SANITIZER
+lfm3-speech: batch: 5 done, 0 failed
+{"frames":40,"audio_seconds":3.2,"generate_seconds":38.4449,"slots":41}
+{"frames":48,"audio_seconds":3.84,"generate_seconds":42.3746,"slots":49}
+{"frames":0,"audio_seconds":0,"generate_seconds":28.8811,"slots":37}
+{"frames":133,"audio_seconds":10.64,"generate_seconds":209.539,"slots":168}
+{"frames":252,"audio_seconds":20.16,"generate_seconds":407.438,"slots":313}
+========= ERROR SUMMARY: 0 errors

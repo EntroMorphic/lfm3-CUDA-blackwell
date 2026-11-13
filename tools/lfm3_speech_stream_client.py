@@ -6,7 +6,7 @@ The network is read as fast as the server sends and the player is fed from its o
 playback (the server closes a stream whose reader stalls for its socket timeout). A stream that ends without a done
 line is a failure.
 
-  LFM3_SERVER_TOKEN=... lfm3_speech_stream_client.py PORT OUT.wav (--text "Read this." | --wav QUESTION_16K.wav)
+  lfm3_speech_stream_client.py PORT OUT.wav (--text "Read this." | --wav QUESTION_16K.wav)
       [--mode audio|interleaved|text] [--voice female|male] [--seed N] [--max-new-tokens N] [--play [COMMAND]]
 --text reads the text aloud (audio mode); --wav asks a spoken question, answered in interleaved text and speech.
 """
@@ -22,6 +22,10 @@ import sys
 import threading
 import time
 import wave
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lfm3_token import read_token  # noqa: E402
 
 
 def main():
@@ -36,8 +40,9 @@ def main():
     a.add_argument("--seed", type=int, default=1)
     a.add_argument("--max-new-tokens", type=int, default=1024)
     a.add_argument("--play", nargs="?", const="aplay -q -f S16_LE -r 24000 -c 1")
+    a.add_argument("--token-file", help="the server's token file (default: LFM3_SERVER_TOKEN, else ~/.config/liquid-lfm3/token)")
     o = a.parse_args()
-    token = os.environ["LFM3_SERVER_TOKEN"]
+    token = read_token(o.token_file)  # LFM3_SERVER_TOKEN, else the server's default token file
     if o.text is not None:
         messages = [{"role": "system", "content": f"Perform TTS in American English using a {o.voice} voice."},
                     {"role": "user", "content": o.text}]

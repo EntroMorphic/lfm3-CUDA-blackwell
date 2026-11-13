@@ -1,0 +1,51 @@
+========= COMPUTE-SANITIZER
+depth q/o 1f       M   12 N  1024 K 1024  original   4638.8 us  fp32::linear   4727.0 us  identical
+depth k/v 1f       M   12 N   256 K 1024  original   4575.5 us  fp32::linear   4608.8 us  identical
+depth gate 1f      M   12 N    32 K 1024  original   4617.9 us  fp32::linear   4570.3 us  identical
+depth w1/w3 1f     M   12 N  2816 K 1024  original   4812.9 us  fp32::linear   4967.8 us  identical
+depth w2 1f        M   12 N  1024 K 2816  original   3417.1 us  fp32::linear   4999.1 us  identical
+depth_linear 1f    M    1 N 12288 K 2048  original   6458.1 us  fp32::linear   6333.0 us  identical
+depth head 1       M    1 N  2017 K 1024  original   4726.4 us  fp32::linear   4704.5 us  identical
+depth q/o 8f       M   96 N  1024 K 1024  original   5044.5 us  fp32::linear   5056.6 us  identical
+depth k/v 8f       M   96 N   256 K 1024  original   4762.8 us  fp32::linear   4727.0 us  identical
+depth gate 8f      M   96 N    32 K 1024  original   4294.7 us  fp32::linear   4579.9 us  identical
+depth w1/w3 8f     M   96 N  2816 K 1024  original   5740.1 us  fp32::linear   5838.4 us  identical
+depth w2 8f        M   96 N  1024 K 2816  original   5767.7 us  fp32::linear   5790.9 us  identical
+depth_linear 8f    M    8 N 12288 K 2048  original   6755.9 us  fp32::linear   6334.2 us  identical
+depth head 8       M    8 N  2017 K 1024  original   4739.9 us  fp32::linear   4722.6 us  identical
+depth w1 16f       M  192 N  2816 K 1024  original  11679.5 us  fp32::linear  11729.6 us  identical
+depth_linear 16f   M   16 N 12288 K 2048  original   7378.3 us  fp32::linear   6493.9 us  identical
+codec quantizer    M   72 N   256 K  512  original   4599.9 us  fp32::linear   4620.7 us  identical
+codec q/o          M   72 N   512 K  512  original   4643.7 us  fp32::linear   4657.4 us  identical
+codec in_proj      M   72 N  1536 K  512  original   4863.5 us  fp32::linear   4852.9 us  identical
+codec w1/w3        M   72 N  2304 K  512  original   5076.3 us  fp32::linear   5034.5 us  identical
+codec w2           M   72 N   512 K 2304  original   4978.9 us  fp32::linear   4923.2 us  identical
+codec lin          M   72 N  1282 K  512  original   4932.5 us  fp32::linear   4894.9 us  identical
+ragged 5x77        M    5 N    77 K  512  original   4586.4 us  fp32::linear   4563.4 us  identical
+ragged 33x2017     M   33 N  2017 K  256  original   4729.7 us  fp32::linear   4728.7 us  identical
+ragged 100x1000    M  100 N  1000 K  768  original   4993.3 us  fp32::linear   4993.8 us  identical
+ragged 17x31       M   17 N    31 K 1024  original   4613.1 us  fp32::linear   4562.0 us  identical
+depth w1 3f        M   36 N  2816 K 1024  original   5169.9 us  fp32::linear   5210.7 us  identical
+depth w2 5f        M   60 N  1024 K 2816  original   5484.5 us  fp32::linear   5495.1 us  identical
+depth k/v 13f      M  156 N   256 K 1024  original   4759.0 us  fp32::linear   4717.5 us  identical
+depth head 3       M    3 N  2017 K 1024  original   4733.0 us  fp32::linear   4712.1 us  identical
+depth_linear 13f   M   13 N 12288 K 2048  original   7217.6 us  fp32::linear  12757.2 us  identical
+codec from_q 1f    M    1 N   512 K  256  original   4599.7 us  fp32::linear   4564.9 us  identical
+codec from_q 12f   M   12 N   512 K  256  original   4567.4 us  fp32::linear   4552.8 us  identical
+codec flush 1f     M    6 N  2304 K  512  original   4648.4 us  fp32::linear   4641.9 us  identical
+codec flush 11f    M   66 N   512 K 2304  original   4944.1 us  fp32::linear   4939.8 us  identical
+codec flush 5f     M   30 N  1536 K  512  original   4700.5 us  fp32::linear   4715.2 us  identical
+enc down mid       M 8000 N   256 K  256  original  12827.5 us  fp32::linear  12804.5 us  identical
+enc down end       M 4000 N   256 K  256  original   6367.8 us  fp32::linear   6320.4 us  identical
+enc lin_out 10s    M  125 N   768 K 4096  original   6371.0 us  fp32::linear   6319.8 us  identical
+enc in_proj        M  125 N  2304 K  768  original   5678.5 us  fp32::linear   5627.0 us  identical
+enc k/v            M  125 N   384 K  768  original   4753.4 us  fp32::linear   4763.8 us  identical
+enc w1/w3          M  125 N  1792 K  768  original   5424.2 us  fp32::linear   4141.5 us  identical
+enc w2             M  125 N   768 K 1792  original   5370.7 us  fp32::linear   5319.1 us  identical
+enc linear_1       M  125 N  2048 K  768  original   5615.3 us  fp32::linear   5549.9 us  identical
+enc linear_2       M  125 N  2048 K 2048  original  11617.2 us  fp32::linear  11548.5 us  identical
+enc lin_out 0.5s   M    7 N   768 K 4096  original   4872.6 us  fp32::linear   4844.4 us  identical
+enc o 30s          M  375 N   768 K  768  original   5650.9 us  fp32::linear   5664.3 us  identical
+misaligned         M   20 N   300 K  512  identical
+FP32 LINEAR CHECK PASS (all identical)
+========= ERROR SUMMARY: 0 errors

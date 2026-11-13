@@ -255,3 +255,21 @@ def test_a_crowd_arriving_at_once_gets_replies_not_resets(harness_binary):
         for _ in range(3):
             got, _ = together([lambda i=i: one(i) for i in range(120)])
             assert "reset" not in got and set(got) <= {200, 429}, got
+
+
+def test_an_unstreamed_client_that_resets_frees_its_row(harness_binary):
+    # audio-assurance-v1 red-team: an unstreamed request whose connection is broken is cancelled at the next step;
+    # before, it ran its 12 steps (3.6 s) for no one while the next request waited
+    import socket
+    import struct
+    from test_lfm3_http_speech_stream import request_bytes
+    with running(harness_binary, "--speech-rows", "1", "--token-delay-ms", "300") as h:
+        s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
+        s.sendall(request_bytes(tts(" ".join([LONG] * 4))))  # 12 chunks, one a step
+        time.sleep(0.5)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
+        s.close()  # a reset
+        t0 = time.monotonic()
+        status, body = h.call("POST", "/speech", tts(SHORT))
+        assert status == 200 and body["cancelled"] is False, (status, body)
+        assert time.monotonic() - t0 < 2.0, time.monotonic() - t0

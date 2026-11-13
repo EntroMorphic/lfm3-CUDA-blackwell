@@ -1,0 +1,4 @@
+racecheck-batch: exit 0, 67566 s; ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings) 
+  outputs identical to plain-batch
+plain conc == plain batch
+SANITIZERS DONE 05:03:18

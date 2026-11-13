@@ -350,6 +350,7 @@ int main(int argc, char** argv) try {
   lfm::http::Settings settings;
   std::string mode = "phrase", fail_op;
   int port = 0, token_delay = 0, create_delay = 0, fail_after = 1;
+  std::string token_path;
   bool speech = true;  // --speech off: the engine reports no speech support (a text-only checkpoint or build)
   bool audio_input = true;  // --audio-input off: speech without audio input (no encoder for the checkpoint)
   int speech_truncate = 0;
@@ -358,6 +359,7 @@ int main(int argc, char** argv) try {
   for (int i = 2; i < argc; i += 2) {
     const std::string o = argv[i], v = argv[i + 1];
     if (o == "--mode") mode = v;
+    else if (o == "--token-file") token_path = v;
     else if (o == "--token-delay-ms") token_delay = std::stoi(v);
     else if (o == "--create-delay-ms") create_delay = std::stoi(v);
     else if (o == "--fail-op") fail_op = v;
@@ -379,8 +381,9 @@ int main(int argc, char** argv) try {
     else if (o == "--engine-timeout") settings.engine_timeout = std::stod(v);
     else throw std::runtime_error("unsupported option " + o);
   }
-  const char* token = std::getenv("LFM3_SERVER_TOKEN");
-  if (!token) throw std::runtime_error("LFM3_SERVER_TOKEN required");
+  std::string note;  // as liquid-lfm3-server: --token-file, LFM3_SERVER_TOKEN, or the default file
+  const std::string token = lfm::http::startup_token(token_path, note);
+  if (!note.empty()) std::cerr << "lfm3-http-harness: " << note << "\n";
   sigset_t signals;
   sigemptyset(&signals); sigaddset(&signals, SIGTERM); sigaddset(&signals, SIGINT);
   pthread_sigmask(SIG_BLOCK, &signals, nullptr);

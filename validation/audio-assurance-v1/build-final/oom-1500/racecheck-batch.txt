@@ -1,0 +1,5 @@
+/workspace/liquid-CUDA/build/speech-e2e-v1/requests/tts-fox-female-s1.req.json /workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-batch/tts-fox-female-s1
+/workspace/liquid-CUDA/build/speech-e2e-v1/requests/tts-fox-male-s2.req.json /workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-batch/tts-fox-male-s2
+/workspace/liquid-CUDA/build/speed-final2/conc/requests/asr-1089-134686-0000.req.json /workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-batch/asr-1089-134686-0000
+/workspace/liquid-CUDA/build/speed-final2/conc/requests/spoken-q0.req.json /workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-batch/spoken-q0
+/workspace/liquid-CUDA/build/speech-e2e-v1/requests/il-reflective-s1.req.json /workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-batch/il-reflective-s1

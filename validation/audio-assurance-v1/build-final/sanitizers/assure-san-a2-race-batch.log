@@ -1,0 +1,5 @@
+racecheck-batch: exit 9, 149 s; ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings) 
+  OUTPUTS DIFFER from plain-batch
+fp32-linear-check racecheck: exit 0, 23012 s; ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)  1 PASS lines
+plain conc == plain batch
+SANITIZERS DONE 21:24:10

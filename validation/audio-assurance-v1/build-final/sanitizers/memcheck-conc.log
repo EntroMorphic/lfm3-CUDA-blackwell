@@ -1,0 +1,15 @@
+========= COMPUTE-SANITIZER
+{"frames":40,"audio_seconds":3.2,"generate_seconds":164.431,"slots":41}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/memcheck-conc/tts-fox-female-s1","row":2,"step":105,"audio_seconds":3.2}
+{"frames":48,"audio_seconds":3.84,"generate_seconds":197.412,"slots":49}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/memcheck-conc/tts-fox-male-s2","row":1,"step":106,"audio_seconds":3.84}
+{"frames":0,"audio_seconds":0,"generate_seconds":140.248,"slots":37}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/memcheck-conc/asr-1089-134686-0000","row":1,"step":151,"audio_seconds":0}
+{"frames":133,"audio_seconds":10.64,"generate_seconds":608.539,"slots":168}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/memcheck-conc/spoken-q0","row":0,"step":169,"audio_seconds":10.64}
+{"frames":252,"audio_seconds":20.16,"generate_seconds":977.872,"slots":313}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/memcheck-conc/il-reflective-s1","row":3,"step":410,"audio_seconds":20.16}
+{"rows":4,"requests":5,"steps":411,"audio_seconds":37.84,"wall_seconds":1309.58,"audio_per_wall_second":0.0288948}
+lfm3-speech: concurrent: 5 done, 0 failed
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors

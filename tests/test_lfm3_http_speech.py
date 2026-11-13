@@ -237,3 +237,59 @@ def test_numbers_are_read_as_words_by_default(harness_binary, text_tool, tmp_pat
             assert [c["text"] for c in reply["chunks"]] == want["texts"]
             assert [c["frames"] for c in reply["chunks"]] == [len(ids) for ids in want["ids"]]
     assert "seven forty-five" in reference.normalize(NUMBERS) and "Doctor Patel" in reference.normalize(NUMBERS)
+
+
+# audio-assurance-v1 rule 10: the normalizer is American English only; by default it runs only when the system prompt
+# names American or British English, or there is no system prompt. An explicit normalize true with another language
+# is refused.
+@pytest.mark.parametrize("system, default", [
+    ("Perform TTS in Spanish using a female voice.", False),
+    ("Perform TTS in German using a male voice.", False),
+    ("Perform TTS in French using a female voice.", False),
+    ("Perform TTS in Japanese using a male voice.", False),
+    ("Perform TTS in American English using a female voice.", True),
+    ("Perform TTS in British English using a male voice.", True),
+    (None, True),
+])
+def test_normalization_follows_the_language(harness_binary, system, default):
+    text = {"Spanish": "Tengo 3 gatos y 12 perros.", "German": "Ich habe 3 Katzen und 12 Hunde.",
+            "French": "J'ai 3 chats et 12 chiens.", "Japanese": "猫が3匹います。"}
+    lang = next((k for k in text if system and k in system), None)
+    user = text[lang] if lang else NUMBERS
+    messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": user}]
+    with running(harness_binary) as h:
+        status, reply = h.call("POST", "/speech", dict(messages=messages, mode="audio", max_new_tokens=512))
+        assert status == 200 and reply["normalize"] is default, (system, status, reply)
+        if not default:
+            assert "".join(c["text"] for c in reply["chunks"]).replace(" ", "") == user.replace(" ", ""), reply
+        status, reply = h.call("POST", "/speech", dict(messages=messages, mode="audio", max_new_tokens=512, normalize=True))
+        if default:
+            assert status == 200 and reply["normalize"] is True
+        else:
+            assert status == 400 and reply == {"error": "invalid_request"}, (system, status, reply)
+
+
+def test_speech_text_has_a_byte_limit(harness_binary):
+    """audio-assurance-v1 red-team: a 2 MB text took 60 GB in the split; /speech text is held to 64 KiB, checked first."""
+    with running(harness_binary) as h:
+        for body in (tts("a" * (64 * 1024 + 1)), tts("1," * 500_000), tts("Hi there now friend.", normalize=False) | dict(
+                messages=[{"role": "system", "content": "x" * (64 * 1024)}, {"role": "user", "content": "Hi there."}])):
+            t0 = time.monotonic()
+            status, reply = h.call("POST", "/speech", body, timeout=30)
+            assert status == 400 and reply == {"error": "invalid_request"} and time.monotonic() - t0 < 5
+        status, _ = h.call("POST", "/speech", tts(LONG))
+        assert status == 200
+
+
+@pytest.mark.parametrize("text", ["1," * 30000, "1" * 60000 + "st", "$" + "9" * 60000, "1,000 " * 10000,
+                                  "aa bb cc dd ee ff. " * 3000],
+                         ids=["commas", "ordinal", "money", "grouped", "sentences"])
+def test_hostile_text_is_answered_quickly(harness_binary, text):
+    """Texts that were quadratic in the normalizer or the split, or overflowed its stack (audio-assurance-v1 red-team),
+    just under the byte limit: an answer (200 or 400) in seconds, and the server serves on."""
+    with running(harness_binary) as h:
+        t0 = time.monotonic()
+        status, _ = h.call("POST", "/speech", tts(text) | dict(max_new_tokens=8), timeout=120)
+        assert status in (200, 400) and time.monotonic() - t0 < 30, (status, time.monotonic() - t0)
+        status, _ = h.call("POST", "/speech", tts(LONG))
+        assert status == 200

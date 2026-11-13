@@ -1,0 +1,22 @@
+== rule 7: depth 09:54:42
+depth exit 0
+A1 native median rel-L2 vs fp32 7.385e-07 (p99 1.559e-06)  vs fp64 1.565e-07 (max 6.718e-07)
+A1 sdpa   median rel-L2 vs fp32 4.379e-03 (p99 1.016e-02)  vs fp64 4.379e-03 (max 2.170e-02)
+A1 eager  median rel-L2 vs fp32 4.910e-03 (p99 1.151e-02)  vs fp64 4.910e-03 (max 2.586e-02)
+A1 fp32   median rel-L2 vs fp32 0.000e+00 (p99 0.000e+00)  vs fp64 7.218e-07 (max 3.378e-06)
+A1 bar 4.910e-03: PASS
+B1: PASS
+tripwire {'median_vs_fp64': '1.57e-07 <= 1e-06', 'max_vs_fp64': '6.72e-07 <= 1e-05', 'mean_kl_from_fp64': '1.55e-12 <= 1e-09'} PASS
+ALL DONE rc=0 09:55:46
+== rule 8: 40 dumped clips 09:55:46
+exit 0
+{"a": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/audioin-v2/native-dump", "b": "dump", "slots_only": false, "files": 360, "identical": 360, "differ": [], "missing": [], "extra": [], "pass_": true}
+== rule 8: edge cases 09:56:51
+exit 0
+{"a": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/server-stream-v1-check/edge/native", "b": "edge", "slots_only": false, "files": 93, "identical": 93, "differ": [], "missing": [], "extra": [], "pass_": true}
+== rule 9: e2e and split 09:57:01
+exit 0
+exit 0
+e2e: 90 of 90 identical
+split: 90 of 90 identical
+RERUN DONE 10:19:51

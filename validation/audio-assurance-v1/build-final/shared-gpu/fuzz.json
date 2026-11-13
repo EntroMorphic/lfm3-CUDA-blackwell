@@ -1,0 +1,131 @@
+{
+ "server_sha256": "a8615c00d9810bace8a2dd13f67d51b2d66460e82e5b773022b87e12c7d1b4aa",
+ "count": 3000,
+ "threads": 8,
+ "seed": 2026,
+ "fuzz_seconds": 1090.8,
+ "kinds": {
+  "wav:odd-data": 76,
+  "transport:drop-mid-request": 52,
+  "json:role": 73,
+  "json:max_new_tokens": 64,
+  "wav:chunk": 65,
+  "wav:garbage": 56,
+  "json:content": 69,
+  "json:messages-shape": 85,
+  "wav:header-flip": 62,
+  "base64:spaced": 62,
+  "base64:truncated": 71,
+  "transport:short-body": 53,
+  "json:many-messages": 63,
+  "wav:pcm-extreme": 56,
+  "transport:path-method": 61,
+  "wav:rate": 53,
+  "wav:data-size": 76,
+  "wav:riff-size": 49,
+  "json:drop": 66,
+  "wav:float-extreme": 70,
+  "base64:data-url": 59,
+  "json:type": 70,
+  "json:mode": 68,
+  "transport:auth": 46,
+  "json:seed": 79,
+  "base64:empty": 58,
+  "json:add": 76,
+  "transport:content-length": 61,
+  "json:flags": 80,
+  "wav:truncated": 63,
+  "transport:slow-sender": 57,
+  "base64:urlsafe": 52,
+  "wav:format": 48,
+  "json:deep": 89,
+  "base64:padding": 64,
+  "wav:float-nonfinite": 63,
+  "wav:channels": 44,
+  "transport:drop-mid-stream": 60,
+  "transport:bad-json": 50,
+  "base64:char": 62,
+  "json:reset-by-server": 20,
+  "wav:bits": 61
+ },
+ "statuses": {
+  "400": 1872,
+  "None": 125,
+  "429": 6,
+  "404": 30,
+  "200": 492,
+  "401": 46,
+  "413": 10,
+  "501": 31
+ },
+ "bad": [],
+ "slow": [],
+ "valid": 375,
+ "valid_differ": [],
+ "errors": [
+  {
+   "kind": "wav",
+   "error": "error(\"'H' format requires 0 <= number <= 65535\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'H' format requires 0 <= number <= 65535\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'H' format requires 0 <= number <= 65535\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'I' format requires 0 <= number <= 4294967295\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'I' format requires 0 <= number <= 4294967295\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'H' format requires 0 <= number <= 65535\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'H' format requires 0 <= number <= 65535\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'I' format requires 0 <= number <= 4294967295\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'H' format requires 0 <= number <= 65535\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'I' format requires 0 <= number <= 4294967295\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'I' format requires 0 <= number <= 4294967295\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'I' format requires 0 <= number <= 4294967295\")"
+  },
+  {
+   "kind": "wav",
+   "error": "error(\"'H' format requires 0 <= number <= 65535\")"
+  }
+ ],
+ "alive": true,
+ "crowd_differ": [],
+ "rss_mib": {
+  "server": {
+   "early_max": 5589.5,
+   "end": 5722.7,
+   "overall_max": 5689.4
+  }
+ },
+ "server_exit": 0,
+ "server_stderr": "",
+ "pass_": false
+}

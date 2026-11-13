@@ -1,0 +1,22 @@
+waiting 12:27:52
+quiet 05:03:54
+ 170826  2-05:44:59 [lfm3-speech] <defunct>
+ 202210  1-17:18:22 [liquid-lfm3-ser] <defunct>
+== batch server 05:03:54
+BATCH SERVER CHECK PASS
+== stream check 05:24:26
+STREAM CHECK PASS
+== audio-in server 05:34:25
+repeat identical: True | text control identical: True | exit: 0 | PASS
+== TTS server 05:35:24
+repeat identical: True | text control identical: True | exit: 0 | PASS
+== text gate 05:38:52
+text gate exit 0
+== fuzz (rule 5) 05:40:23
+{"pass_": true, "valid": 375, "valid_differ": 0, "bad": [], "slow": [], "errors": [], "statuses": {"429": 9, "400": 1882, "None": 125, "404": 30, "200": 492, "401": 46, "413": 10, "501": 31}, "crowd_differ": [], "rss": {"server": {"early_max": 5444.4, "end": 5409.3, "overall_max": 5444.4}}, "exit": 0}
+AUDIO FUZZ PASS
+== soak (rule 4) 05:52:58
+{"pass_": false, "counts": {"unstreamed": 781, "streamed": 866, "dropped": 112, "text": 215, "retries_429": 1302626}, "statuses": {"200": 1971, "429": 3}, "differ": 3, "errors": 0, "memory": {"server_rss": {"early_max_mib": 5436.3, "end_mib": 5411.8, "overall_max_mib": 5477.5, "pass_": true}, "host_used": {"early_max_mib": 14150.3, "end_mib": 14149.9, "overall_max_mib": 14644.9, "pass_": true}}, "crowd": {"unstreamed": 42, "streamed": 42}, "exit": 0}
+AUDIO SOAK FAIL
+ASSURANCE SERVER DONE 08:07:01
+DAY3 DONE 08:07:01

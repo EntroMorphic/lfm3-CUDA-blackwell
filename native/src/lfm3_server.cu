@@ -8,7 +8,9 @@
 // --speech-rows (1..16, the most validated; default 8): /speech requests generated at once in the engine's speech batch
 // (validation/speech-batch-v1); more wait in the queue (--queue-size of them). Without --handlers, the server takes
 // max(8, 2 x speech rows) handlers: at most half of them stream at once (Service::speech_stream), so every row can.
-// The bearer token comes from --token-file (an owned mode-0600 file) or LFM3_SERVER_TOKEN. --port 0
+// The bearer token comes from --token-file (an owned mode-0600 file), or LFM3_SERVER_TOKEN, or else the default file
+// ~/.config/liquid-lfm3/token ($XDG_CONFIG_HOME/liquid-lfm3/token), created with a random token on first start and
+// reused after; tools/lfm3_token.py reads the same file for clients. --port 0
 // picks a free port. Once listening, one line {"ready":true,"port":N} is written to stdout. SIGTERM or
 // SIGINT stops admission, cancels running generations at their next token boundary, and exits 0; a
 // second signal exits at once (status 1). An engine call longer than --engine-timeout (default 300 s,
@@ -18,6 +20,8 @@
 #include <lfm/lfm3_http.hpp>
 
 #include <csignal>
+#include <cstdlib>
+#include <malloc.h>
 #include <pthread.h>
 
 namespace {
@@ -70,6 +74,13 @@ double real(const std::string& option,const std::string& value) {
 }  // namespace
 
 int main(int argc,char** argv) try {
+  // A fixed mmap threshold (validation/audio-assurance-v1, the soak's memory finding): glibc otherwise raises it to
+  // 32 MiB after the first large free, so each unstreamed /speech reply's MB-sized WAV, base64 and JSON strings come
+  // from an arena heap they fragment; over a 2 h soak RSS grew ~530 MiB without a bound. With the threshold fixed,
+  // every buffer of 128 KiB or more is its own mapping, returned to the system when freed (600 unstreamed replies:
+  // +4.7 MiB, flat). Allocation only: no output changes. MALLOC_MMAP_THRESHOLD_ in the environment still wins.
+  if(!std::getenv("MALLOC_MMAP_THRESHOLD_") && mallopt(M_MMAP_THRESHOLD,128*1024)!=1)
+    throw std::runtime_error("mallopt(M_MMAP_THRESHOLD) failed");
   if(argc<3 || argc%2!=1 || std::string(argv[1])!="--experimental")
     throw std::runtime_error("usage: liquid-lfm3-server --experimental MODEL_DIRECTORY [--token-file FILE] [--port N] ...");
   const std::string directory=argv[2];
@@ -92,13 +103,9 @@ int main(int argc,char** argv) try {
     else if(option=="--speech-rows") speech_rows=whole(option,value);
     else throw std::runtime_error("unsupported option "+option);
   }
-  std::string token;
-  if(!token_path.empty()) token=lfm::http::token_file(token_path);
-  else {
-    const char* env=std::getenv("LFM3_SERVER_TOKEN");
-    if(!env || !lfm::http::valid_token(env)) throw std::runtime_error("bearer token must be 32..256 URL-safe characters");
-    token=env;
-  }
+  std::string note;
+  std::string token=lfm::http::startup_token(token_path,note);
+  if(!note.empty()) std::cerr<<"liquid-lfm3-server: "<<note<<"\n";
   ::unsetenv("LFM3_SERVER_TOKEN");
   if(speech_rows<1 || speech_rows>16) throw std::runtime_error("--speech-rows must be 1..16");
   if(!seen.count("--handlers")) settings.handlers=std::max(8,2*speech_rows);

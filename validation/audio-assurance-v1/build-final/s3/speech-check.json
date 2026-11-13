@@ -1,0 +1,96 @@
+{
+ "cases": {
+  "lighthouse-split-s1": {
+   "status": 200,
+   "wav_identical": true,
+   "wav_bytes": 1835564,
+   "reference_bytes": 1835564,
+   "chunks": 5,
+   "all_chunks_ended_by_eos": true,
+   "audio_seconds": 38.24,
+   "generate_seconds": 8.707774387,
+   "wall_seconds": 9.26,
+   "pass": true
+  },
+  "bread-split-s1": {
+   "status": 200,
+   "wav_identical": true,
+   "wav_bytes": 1643564,
+   "reference_bytes": 1643564,
+   "chunks": 5,
+   "all_chunks_ended_by_eos": true,
+   "audio_seconds": 34.24,
+   "generate_seconds": 7.804415635000001,
+   "wall_seconds": 7.95,
+   "pass": true
+  },
+  "fox-female-unsplit-s1": {
+   "status": 200,
+   "wav_identical": true,
+   "wav_bytes": 153644,
+   "reference_bytes": 153644,
+   "chunks": 1,
+   "all_chunks_ended_by_eos": true,
+   "audio_seconds": 3.2,
+   "generate_seconds": 0.740076569,
+   "wall_seconds": 0.77,
+   "pass": true
+  },
+  "il-study-s1": {
+   "status": 200,
+   "wav_identical": true,
+   "wav_bytes": 1040684,
+   "reference_bytes": 1040684,
+   "chunks": 1,
+   "all_chunks_ended_by_eos": true,
+   "audio_seconds": 21.68,
+   "generate_seconds": 6.170546121,
+   "wall_seconds": 6.21,
+   "text_identical": true,
+   "pass": true
+  },
+  "abbrev-default-s1": {
+   "status": 200,
+   "wav_identical": true,
+   "wav_bytes": 1359404,
+   "reference_bytes": 1359404,
+   "chunks": 4,
+   "all_chunks_ended_by_eos": true,
+   "audio_seconds": 28.32,
+   "generate_seconds": 6.4505770710000006,
+   "wall_seconds": 6.56,
+   "pass": true
+  }
+ },
+ "server_sha256": "a628ddb581d8d544a27cd75bb2c11259156cae19e3a07d0960e049793c8e57e1",
+ "worst_case_budget": {
+  "status": 200,
+  "wall_seconds": 125.3,
+  "truncated": false,
+  "chunks_run": 512,
+  "frames": 6144,
+  "prefill_seconds": 18.73455325700002,
+  "generate_seconds": 106.12263197200004,
+  "pass": true
+ },
+ "worst_case_large-cap": {
+  "status": 200,
+  "wall_seconds": 40.7,
+  "truncated": true,
+  "chunks_run": 39,
+  "frames": 2165,
+  "prefill_seconds": 0.8690539919999998,
+  "generate_seconds": 39.648536291000006,
+  "pass": true
+ },
+ "repeat_identical": true,
+ "text_control_identical": true,
+ "text_control_statuses": [
+  200,
+  200
+ ],
+ "text_control_tokens": 67,
+ "exit_code": 0,
+ "stderr": "",
+ "pass": true
+}

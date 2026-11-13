@@ -218,8 +218,13 @@ class Batch {
       runner_.forward(prompt, audio_rows_->p, audio_token);
     }
     dec_.load(r);
-    if (!o.codec_continue) codecs_[size_t(r)]->reset();
-    cuda_check(cudaDeviceSynchronize());
+    try {  // the row is active in the decoder from here: a throw must not leave it decoding (audio-assurance-v1)
+      if (!o.codec_continue) codecs_[size_t(r)]->reset();
+      cuda_check(cudaDeviceSynchronize());
+    } catch (...) {
+      dec_.finish(r);
+      throw;
+    }
     w.t1 = Clock::now();
     w.res.prefill_seconds = std::chrono::duration<double>(w.t1 - t0).count();
     w.o = o;

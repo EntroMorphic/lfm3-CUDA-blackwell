@@ -1,0 +1,11 @@
+{
+ "a": "plain-conc",
+ "b": "synccheck-conc",
+ "slots_only": false,
+ "files": 25,
+ "identical": 25,
+ "differ": [],
+ "missing": [],
+ "extra": [],
+ "pass_": true
+}

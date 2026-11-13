@@ -1,0 +1,14 @@
+plain-batch: exit 0, 43 s; 
+plain-conc: exit 0, 34 s; 
+memcheck-conc: exit 0, 1319 s; ========= LEAK SUMMARY: 0 bytes leaked in 0 allocations ========= ERROR SUMMARY: 0 errors 
+  outputs identical to plain-conc
+memcheck-batch: exit 0, 1653 s; ========= LEAK SUMMARY: 0 bytes leaked in 0 allocations ========= ERROR SUMMARY: 0 errors 
+  outputs identical to plain-batch
+initcheck-conc: exit 99, 951 s; ========= ERROR SUMMARY: 479232 errors ========= ERROR SUMMARY: 479182 errors were not printed. Use --print-limit option to adjust the number of printed errors 
+  outputs identical to plain-conc
+initcheck-batch: exit 0, 738 s; ========= ERROR SUMMARY: 0 errors 
+  outputs identical to plain-batch
+synccheck-conc: exit 0, 377 s; ========= ERROR SUMMARY: 0 errors 
+  outputs identical to plain-conc
+synccheck-batch: exit 0, 163 s; ========= ERROR SUMMARY: 0 errors 
+  outputs identical to plain-batch

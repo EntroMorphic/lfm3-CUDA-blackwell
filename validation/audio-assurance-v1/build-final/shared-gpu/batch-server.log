@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/workspace/liquid-CUDA/tools/check_lfm3_speech_batch_server.py", line 257, in <module>
+    sys.exit(main(*sys.argv[1:]))
+             ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/liquid-CUDA/tools/check_lfm3_speech_batch_server.py", line 108, in main
+    assert status == 200, (name, status, reply)
+           ^^^^^^^^^^^^^
+AssertionError: ('budget-truncated-s1', 503, {'error': 'worker_unavailable'})

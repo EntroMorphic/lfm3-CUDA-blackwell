@@ -1,0 +1,491 @@
+{
+ "rows": [
+  {
+   "case": "il-fridge-s1",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "Explain step by step how a refrigerator keeps food cold."
+   ],
+   "text": "First, the compressor runs and squeezes the refrigerant, turning it into a low\u2011pressure gas. Then the gas flows through a condenser where it cools and turns back into a liquid, releasing heat into the room. Next the liquid passes through an evaporator inside the fridge, picking up heat from the food as it evaporates into a gas. Finally the now\u2011high\u2011pressure refrigerant is compressed again and sent back to the compressor to start the cycle over.",
+   "audio_seconds": 25.36,
+   "wav_sha256": "60c7dfcf8e7223c6"
+  },
+  {
+   "case": "il-fridge-s2",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "Explain step by step how a refrigerator keeps food cold."
+   ],
+   "text": "First, the compressor runs and squeezes the refrigerant gas, turning it into a high\u2011pressure, low\u2011temperature gas. Then the condenser coils inside the fridge release that heat into the surrounding air, cooling it down. Next the liquid refrigerant evaporates inside the evaporator, pulling heat out of the food inside the fridge. Finally, a thermostat watches the temperature and switches the compressor on and off to keep everything at the right level.",
+   "audio_seconds": 25.92,
+   "wav_sha256": "acc2b28950f052c8"
+  },
+  {
+   "case": "il-fridge-s3",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "Explain step by step how a refrigerator keeps food cold."
+   ],
+   "text": "First, the compressor runs and squeezes the refrigerant, turning it into a low\u2011pressure gas. Then the gas flows through a condenser where it cools and turns back into a liquid, absorbing heat from inside the fridge. Next the liquid passes through an evaporator, picking up heat from the food and turning back into a gas, which releases that heat into the surrounding air. Finally the now\u2011high\u2011pressure refrigerant goes back to the compressor to start the cycle again.",
+   "audio_seconds": 26.48,
+   "wav_sha256": "a738540c8538da6d"
+  },
+  {
+   "case": "il-reflective-s1",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "Hypothetically, might reflective recursion be a function of cognition?"
+   ],
+   "text": "That's an interesting idea. Reflective recursion is a cognitive mechanism that lets a system examine its own processes and adjust behavior accordingly, which lines up with how humans learn from feedback. So in theory, a system could exhibit a form of reflective recursion, though implementing it reliably would be challenging.",
+   "audio_seconds": 20.16,
+   "wav_sha256": "ef919d4cbcc1cf79"
+  },
+  {
+   "case": "il-reflective-s2",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "Hypothetically, might reflective recursion be a function of cognition?"
+   ],
+   "text": "That's an interesting idea. Reflective recursion is a concept from computer science where a program can examine its own code and adjust its behavior, and it does spark some parallels with how we think about our own thoughts. While we don\u2019t have a literal recursive loop of consciousness, the way we monitor and evaluate our actions can be reminiscent of that kind of self\u2011reflective process. It\u2019s a fascinating bridge between technology and cognition, isn\u2019t it?",
+   "audio_seconds": 27.12,
+   "wav_sha256": "4d970be37ad35559"
+  },
+  {
+   "case": "il-reflective-s3",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "Hypothetically, might reflective recursion be a function of cognition?"
+   ],
+   "text": "That's an interesting idea. Reflective recursion is a concept from computer science where a program can examine its own code and adjust its behavior, and it does spark some parallels with how we think about our own thoughts. While we don\u2019t have a formal definition of reflective cognition yet, researchers are exploring whether aspects like self\u2011monitoring, metacognition and adaptive learning could be captured in that framework. It\u2019s a promising direction for future work at the intersection of computer science and cognitive science.",
+   "audio_seconds": 30.08,
+   "wav_sha256": "51dbb2ce45fc2e2d"
+  },
+  {
+   "case": "il-study-s1",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "What are three tips for staying focused while studying?"
+   ],
+   "text": "Sure, here are three quick tips: first, set up a dedicated study space that\u2019s free of distractions so you can stay in the zone; second, break your work into short, focused sessions with regular breaks to keep your mind fresh; and third, turn off notifications on your phone and computer and consider using an app or website that blocks distracting sites while you study.",
+   "audio_seconds": 21.68,
+   "wav_sha256": "6f0ae9d8f8bd4bc9"
+  },
+  {
+   "case": "il-study-s2",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "What are three tips for staying focused while studying?"
+   ],
+   "text": "Sure, here are three quick tips: first, set up a dedicated study space that\u2019s free of distractions; second, break your work into short, focused sessions with regular breaks; and third, turn off notifications and put your phone out of sight so you can stay on task.",
+   "audio_seconds": 18.24,
+   "wav_sha256": "beb2ba150f25849b"
+  },
+  {
+   "case": "il-study-s3",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "What are three tips for staying focused while studying?"
+   ],
+   "text": "Sure, here are three quick tips: first, set up a dedicated study space that\u2019s free of distractions so you can concentrate more easily; second, use techniques like the Pomodoro method\u2014study for about 25 minutes, then take a short break\u2014to keep your focus sharp; and third, break your material into small, manageable chunks and set clear, specific goals for each session so you stay on track.",
+   "audio_seconds": 23.92,
+   "wav_sha256": "3d853722282896f3"
+  },
+  {
+   "case": "tts-fox-female-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "The quick brown fox jumps over the lazy dog"
+   ],
+   "text": "",
+   "audio_seconds": 3.52,
+   "wav_sha256": "e91fa07eec460d13"
+  },
+  {
+   "case": "tts-fox-female-s2",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "The quick brown fox jumps over the lazy dog"
+   ],
+   "text": "",
+   "audio_seconds": 3.6,
+   "wav_sha256": "20179d7ba68b4898"
+  },
+  {
+   "case": "tts-fox-female-s3",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "The quick brown fox jumps over the lazy dog"
+   ],
+   "text": "",
+   "audio_seconds": 3.68,
+   "wav_sha256": "d74b70b7935d63dc"
+  },
+  {
+   "case": "tts-fox-male-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "The quick brown fox jumps over the lazy dog"
+   ],
+   "text": "",
+   "audio_seconds": 3.68,
+   "wav_sha256": "296f1128e6de09eb"
+  },
+  {
+   "case": "tts-fox-male-s2",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "The quick brown fox jumps over the lazy dog"
+   ],
+   "text": "",
+   "audio_seconds": 3.92,
+   "wav_sha256": "56890ea93fae3481"
+  },
+  {
+   "case": "tts-fox-male-s3",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "The quick brown fox jumps over the lazy dog"
+   ],
+   "text": "",
+   "audio_seconds": 3.36,
+   "wav_sha256": "7351052de067de69"
+  },
+  {
+   "case": "tts-long-male-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched."
+   ],
+   "text": "",
+   "audio_seconds": 38.24,
+   "wav_sha256": "987530cf7536ad44"
+  },
+  {
+   "case": "tts-long-male-s2",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched."
+   ],
+   "text": "",
+   "audio_seconds": 39.36,
+   "wav_sha256": "8f82bf209271000f"
+  },
+  {
+   "case": "tts-long-male-s3",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched."
+   ],
+   "text": "",
+   "audio_seconds": 39.52,
+   "wav_sha256": "79bbb97cde8a7909"
+  },
+  {
+   "case": "tts-museum-female-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "On March 3rd, 2024, the museum reopened after a two-year renovation; visitors could finally see the restored murals, which date back nearly four hundred years."
+   ],
+   "text": "",
+   "audio_seconds": 12.16,
+   "wav_sha256": "4c2356109f0b83c3"
+  },
+  {
+   "case": "tts-museum-female-s2",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "On March 3rd, 2024, the museum reopened after a two-year renovation; visitors could finally see the restored murals, which date back nearly four hundred years."
+   ],
+   "text": "",
+   "audio_seconds": 12.32,
+   "wav_sha256": "672e0f51df586c67"
+  },
+  {
+   "case": "tts-museum-female-s3",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "On March 3rd, 2024, the museum reopened after a two-year renovation; visitors could finally see the restored murals, which date back nearly four hundred years."
+   ],
+   "text": "",
+   "audio_seconds": 12.0,
+   "wav_sha256": "50a5c0a3604159f3"
+  },
+  {
+   "case": "tts-museum-male-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "On March 3rd, 2024, the museum reopened after a two-year renovation; visitors could finally see the restored murals, which date back nearly four hundred years."
+   ],
+   "text": "",
+   "audio_seconds": 12.0,
+   "wav_sha256": "3ac39bf63175fba9"
+  },
+  {
+   "case": "tts-museum-male-s2",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "On March 3rd, 2024, the museum reopened after a two-year renovation; visitors could finally see the restored murals, which date back nearly four hundred years."
+   ],
+   "text": "",
+   "audio_seconds": 12.16,
+   "wav_sha256": "5f5d9beda941f3ca"
+  },
+  {
+   "case": "tts-museum-male-s3",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "On March 3rd, 2024, the museum reopened after a two-year renovation; visitors could finally see the restored murals, which date back nearly four hundred years."
+   ],
+   "text": "",
+   "audio_seconds": 11.84,
+   "wav_sha256": "5e3ea3fbf1432956"
+  },
+  {
+   "case": "tts-numbers-female-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Your flight leaves at 7:45 in the morning from gate 22, and the total fare comes to 389 dollars and 50 cents."
+   ],
+   "text": "",
+   "audio_seconds": 9.28,
+   "wav_sha256": "f7b3dc545aa37ac5"
+  },
+  {
+   "case": "tts-numbers-female-s2",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Your flight leaves at 7:45 in the morning from gate 22, and the total fare comes to 389 dollars and 50 cents."
+   ],
+   "text": "",
+   "audio_seconds": 9.12,
+   "wav_sha256": "fa5737a00862232a"
+  },
+  {
+   "case": "tts-numbers-female-s3",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Your flight leaves at 7:45 in the morning from gate 22, and the total fare comes to 389 dollars and 50 cents."
+   ],
+   "text": "",
+   "audio_seconds": 8.96,
+   "wav_sha256": "a62a8fd807d5ae89"
+  },
+  {
+   "case": "tts-numbers-male-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Your flight leaves at 7:45 in the morning from gate 22, and the total fare comes to 389 dollars and 50 cents."
+   ],
+   "text": "",
+   "audio_seconds": 9.6,
+   "wav_sha256": "4c4b266bf49605cb"
+  },
+  {
+   "case": "tts-numbers-male-s2",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Your flight leaves at 7:45 in the morning from gate 22, and the total fare comes to 389 dollars and 50 cents."
+   ],
+   "text": "",
+   "audio_seconds": 9.12,
+   "wav_sha256": "36d700d0f178ad76"
+  },
+  {
+   "case": "tts-numbers-male-s3",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Your flight leaves at 7:45 in the morning from gate 22, and the total fare comes to 389 dollars and 50 cents."
+   ],
+   "text": "",
+   "audio_seconds": 9.44,
+   "wav_sha256": "cd924736041a1382"
+  },
+  {
+   "case": "lighthouse-split-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched."
+   ],
+   "text": "",
+   "audio_seconds": 38.24,
+   "wav_sha256": "987530cf7536ad44"
+  },
+  {
+   "case": "bread-split-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Bread begins with only four ingredients: flour, water, salt and yeast. The baker mixes them into a rough dough and lets it rest, so the flour can absorb the water. Then the dough is folded and stretched until it becomes smooth and elastic. During a slow rise, the yeast fills it with tiny bubbles of gas. Finally the loaf goes into a hot oven, where the crust turns golden and the kitchen fills with a warm, familiar smell that brings the whole family to the table."
+   ],
+   "text": "",
+   "audio_seconds": 34.24,
+   "wav_sha256": "8ef8c32d2e5c83c4"
+  },
+  {
+   "case": "budget-truncated-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched. Lighthouses were once the most important safety systems on any coast. Before radio and satellite navigation, a ship's captain relied on a steady beam of light to judge distance and direction in the dark. Each lighthouse had its own pattern of flashes, so sailors could tell one from another. Keepers trimmed the wicks, polished the great lenses, and climbed the tower stairs many times every night, in every kind of weather. Today most lights are automatic, but many towers still stand, and visitors climb them to look out over the same waters the keepers once watched."
+   ],
+   "text": "",
+   "audio_seconds": 371.12,
+   "wav_sha256": "509c5dfc4c234693"
+  },
+  {
+   "case": "numbers-normalized-s1",
+   "status": 200,
+   "mode": "audio",
+   "asked": [
+    "The meeting starts at 7:45 and ends by 9:00. Order number 389 cost $3.50, about 2.75% more than in 1984. Dr. Patel met Mr. Lee at St. Mary's on Nov. 9, 2026."
+   ],
+   "text": "",
+   "audio_seconds": 20.48,
+   "wav_sha256": "d42e3b384379d8a5"
+  },
+  {
+   "case": "spoken-q0",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "[audio]"
+   ],
+   "text": "The tallest mountain in the world is Mount Everest, and it rises to about 29,032 feet, which is roughly 8,848 meters high.",
+   "audio_seconds": 10.64,
+   "wav_sha256": "0c523cee2c1e9840"
+  },
+  {
+   "case": "spoken-q1",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "[audio]"
+   ],
+   "text": "Sure, try keeping a consistent bedtime and wake\u2011up time, make your bedroom cool, dark and quiet, and wind down with a calming routine like reading or gentle stretching before you sleep.",
+   "audio_seconds": 11.52,
+   "wav_sha256": "58005fb3f5391f7f"
+  },
+  {
+   "case": "spoken-q2",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "[audio]"
+   ],
+   "text": "A lighthouse shines a powerful beam through a lens that creates a bright, sweeping flash pattern, visible from the sea, warning ships of danger. Want to know how the timing is controlled?",
+   "audio_seconds": 11.44,
+   "wav_sha256": "69294f977b99c865"
+  },
+  {
+   "case": "spoken-q3",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "[audio]"
+   ],
+   "text": "Use about 200 grams of dry pasta for four servings, and follow the package directions for timing. Ready to start cooking?",
+   "audio_seconds": 8.0,
+   "wav_sha256": "de341c4322f977da"
+  },
+  {
+   "case": "spoken-q4",
+   "status": 200,
+   "mode": "interleaved",
+   "asked": [
+    "[audio]"
+   ],
+   "text": "Why did the computer go to therapy? It had too many unresolved issues! Did that give you a chuckle?",
+   "audio_seconds": 8.32,
+   "wav_sha256": "5ff14cb1155c64a1"
+  },
+  {
+   "case": "asr-1089-134686-0000",
+   "status": 200,
+   "mode": "text",
+   "asked": [
+    "[audio]"
+   ],
+   "text": "He hoped there would be stew for dinner, turnips and carrots and bruised potatoes and fat mutton pieces to be ladled out in thick peppered flour fat and sauce.",
+   "audio_seconds": 0.0,
+   "wav_sha256": "712618020da1c979"
+  },
+  {
+   "case": "asr-4446-2275-0004",
+   "status": 200,
+   "mode": "text",
+   "asked": [
+    "[audio]"
+   ],
+   "text": "Alexander did not sit down.",
+   "audio_seconds": 0.0,
+   "wav_sha256": "712618020da1c979"
+  },
+  {
+   "case": "asr-121-123859-0002",
+   "status": 200,
+   "mode": "text",
+   "asked": [
+    "[audio]"
+   ],
+   "text": "But reckoning time, whose million accidents Creep in twisted vows, And change decrees of kings, Tan sacred beauty, blunt the sharpest intense, Diverts strong minds to the course of altering things. Alas, why fearing of time's tyranny, Might I not then say, Now I love you best, When I was certain or in certainty, Crowning the present, Doubting of the rest?",
+   "audio_seconds": 0.0,
+   "wav_sha256": "712618020da1c979"
+  },
+  {
+   "case": "text-0",
+   "status": 200,
+   "asked": [
+    "Explain in one paragraph how a lighthouse warns ships at night."
+   ],
+   "text": "A lighthouse warns ships at night by emitting a powerful, rhythmic beam of light from a rotating lantern room, which is visible from far away and serves as a visual signal to guide vessels safely along the coast or into harbors, while its distinctive pattern of flashes and colors helps ships identify its specific location and purpose."
+  },
+  {
+   "case": "text-1",
+   "status": 200,
+   "asked": [
+    "List three ways to keep bread fresh longer."
+   ],
+   "text": "1. Store bread in a bread box or a paper bag with a dry cloth inside to absorb moisture.\n2. Keep it in a cool, dry place, such as a pantry or cupboard.\n3. If you have leftover bread, wrap it tightly in plastic wrap or a clean kitchen towel to prevent it from drying out."
+  },
+  {
+   "case": "text-2",
+   "status": 200,
+   "asked": [
+    "What is the difference between weather and climate? Answer briefly."
+   ],
+   "text": "Weather is the short-term condition of the atmosphere (day-to-day), while climate is the long-term average pattern of weather over many years."
+  }
+ ],
+ "exit": 0
+}

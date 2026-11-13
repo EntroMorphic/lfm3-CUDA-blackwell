@@ -83,7 +83,7 @@ void write_outputs(const Job& job, const lfm3_speech::Result& r, const std::vect
 
 // Reads, checks and renders a request (loading the model for its capacity when it differs); removes OUT_STEM's
 // earlier outputs.
-Job prepare(const char* model_dir, const char* request_path, const std::string& stem, Loaded& m) {
+Job prepare(const char* model_dir, const char* request_path, const std::string& stem, Loaded& m, bool one_capacity = false) {
   char* argv[] = {nullptr, const_cast<char*>(model_dir), const_cast<char*>(request_path)};
   const auto req = read_json(argv[2]);
   const std::string mode = req.has("mode") ? req.at("mode").string() : "audio";
@@ -120,6 +120,9 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
       std::filesystem::remove(stem + ".audio" + std::to_string(k) + "." + part + ".f32");
   const int capacity = req.has("capacity") ? req.at("capacity").integer() : 4096;
   if (m.capacity != capacity) {
+    // --concurrent: the runner is shared by every job prepared so far; a job of another capacity is refused before it
+    // replaces the runner (audio-assurance-v1 red-team)
+    if (one_capacity && m.runner) throw std::runtime_error("--concurrent needs one capacity");
     m.session.reset(), m.runner.reset();
     m.cfg = lfm::ModelConfig::load(std::string(argv[1]) + "/config.json", capacity);
     m.runner = std::make_unique<Runner>(argv[1], m.cfg);
@@ -307,8 +310,7 @@ int concurrent(const char* model_dir, int rows, const char* list_path, const cha
   int failed = 0, done = 0;
   while (list >> request >> stem) {
     try {
-      jobs.push_back(prepare(model_dir, request.c_str(), stem, m));
-      if (jobs.back().capacity != jobs.front().capacity) throw std::runtime_error("--concurrent needs one capacity");
+      jobs.push_back(prepare(model_dir, request.c_str(), stem, m, /*one_capacity=*/true));
     } catch (const std::exception& e) {
       std::cerr << "lfm3-speech: " << request << ": " << e.what() << "\n";
       ++failed;
@@ -383,7 +385,8 @@ int concurrent(const char* model_dir, int rows, const char* list_path, const cha
 int main(int argc, char** argv) try {
   if ((argc == 5 || argc == 6) && std::string(argv[2]) == "--concurrent") {
     const int rows = std::stoi(argv[3]);
-    if (rows < 1 || rows > 64) throw std::runtime_error("--concurrent ROWS must be 1..64");
+    // 16: the most rows the engine check validates (the language model's tile table changes above 16)
+    if (rows < 1 || rows > 16) throw std::runtime_error("--concurrent ROWS must be 1..16");
     return concurrent(argv[1], rows, argv[4], argc == 6 ? argv[5] : nullptr);
   }
   Loaded m;

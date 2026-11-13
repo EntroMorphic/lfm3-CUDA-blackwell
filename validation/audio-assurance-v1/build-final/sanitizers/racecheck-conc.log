@@ -1,0 +1,14 @@
+========= COMPUTE-SANITIZER
+{"frames":40,"audio_seconds":3.2,"generate_seconds":9196.7,"slots":41}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-conc/tts-fox-female-s1","row":2,"step":105,"audio_seconds":3.2}
+{"frames":48,"audio_seconds":3.84,"generate_seconds":11031.4,"slots":49}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-conc/tts-fox-male-s2","row":1,"step":106,"audio_seconds":3.84}
+{"frames":0,"audio_seconds":0,"generate_seconds":4685.61,"slots":37}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-conc/asr-1089-134686-0000","row":1,"step":151,"audio_seconds":0}
+{"frames":133,"audio_seconds":10.64,"generate_seconds":29888.7,"slots":168}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-conc/spoken-q0","row":0,"step":169,"audio_seconds":10.64}
+{"frames":252,"audio_seconds":20.16,"generate_seconds":36596.8,"slots":313}
+{"done":"/workspace/liquid-CUDA/build/assure/san-assure-a2/racecheck-conc/il-reflective-s1","row":3,"step":410,"audio_seconds":20.16}
+{"rows":4,"requests":5,"steps":411,"audio_seconds":37.84,"wall_seconds":55647.1,"audio_per_wall_second":0.000679999}
+lfm3-speech: concurrent: 5 done, 0 failed
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

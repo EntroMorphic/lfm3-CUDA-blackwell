@@ -1,0 +1,15 @@
+references done
+t=600 s: 236 requests, 0 differ, 0 errors
+t=1200 s: 362 requests, 0 differ, 0 errors
+t=1800 s: 501 requests, 0 differ, 0 errors
+t=2400 s: 680 requests, 0 differ, 0 errors
+t=3000 s: 894 requests, 0 differ, 0 errors
+t=3600 s: 1049 requests, 1 differ, 0 errors
+t=4200 s: 1184 requests, 1 differ, 0 errors
+t=4800 s: 1348 requests, 1 differ, 0 errors
+t=5400 s: 1462 requests, 2 differ, 0 errors
+t=6000 s: 1592 requests, 2 differ, 0 errors
+t=6600 s: 1776 requests, 3 differ, 0 errors
+t=7200 s: 1962 requests, 3 differ, 0 errors
+{"pass_": false, "counts": {"unstreamed": 781, "streamed": 866, "dropped": 112, "text": 215, "retries_429": 1302626}, "statuses": {"200": 1971, "429": 3}, "differ": 3, "errors": 0, "memory": {"server_rss": {"early_max_mib": 5436.3, "end_mib": 5411.8, "overall_max_mib": 5477.5, "pass_": true}, "host_used": {"early_max_mib": 14150.3, "end_mib": 14149.9, "overall_max_mib": 14644.9, "pass_": true}}, "crowd": {"unstreamed": 42, "streamed": 42}, "exit": 0}
+AUDIO SOAK FAIL

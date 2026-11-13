@@ -1,0 +1,94 @@
+{
+ "server_sha256": "a628ddb581d8d544a27cd75bb2c11259156cae19e3a07d0960e049793c8e57e1",
+ "seconds": 7200,
+ "clients": 12,
+ "reference_server_exit": 0,
+ "worker_found": false,
+ "counts": {
+  "unstreamed": 596,
+  "streamed": 677,
+  "dropped": 89,
+  "text": 171,
+  "retries_429": 1294771
+ },
+ "statuses": {
+  "200": 1526,
+  "429": 7
+ },
+ "differ": [
+  {
+   "kind": "text",
+   "case": "text-2",
+   "status": 429,
+   "t": 1075.0
+  },
+  {
+   "kind": "text",
+   "case": "text-1",
+   "status": 429,
+   "t": 1223.7
+  },
+  {
+   "kind": "text",
+   "case": "text-2",
+   "status": 429,
+   "t": 1432.4
+  },
+  {
+   "kind": "text",
+   "case": "text-2",
+   "status": 429,
+   "t": 2595.3
+  },
+  {
+   "kind": "text",
+   "case": "text-0",
+   "status": 429,
+   "t": 3875.8
+  },
+  {
+   "kind": "text",
+   "case": "text-2",
+   "status": 429,
+   "t": 4353.8
+  },
+  {
+   "kind": "text",
+   "case": "text-1",
+   "status": 429,
+   "t": 5022.3
+  }
+ ],
+ "differ_count": 7,
+ "errors": [],
+ "error_count": 0,
+ "soak_seconds": 7329.6,
+ "memory": {
+  "server_rss": {
+   "early_max_mib": 5594.6,
+   "end_mib": 5963.3,
+   "overall_max_mib": 6020.2,
+   "pass_": false
+  },
+  "host_used": {
+   "early_max_mib": 14181.6,
+   "end_mib": 14943.4,
+   "overall_max_mib": 15098.8,
+   "pass_": false
+  }
+ },
+ "alive_throughout": true,
+ "crowd_after": {
+  "unstreamed": {
+   "identical": 42,
+   "differ": []
+  },
+  "streamed": {
+   "identical": 42,
+   "differ": []
+  }
+ },
+ "server_exit": 0,
+ "server_stderr": "",
+ "pass_": false
+}

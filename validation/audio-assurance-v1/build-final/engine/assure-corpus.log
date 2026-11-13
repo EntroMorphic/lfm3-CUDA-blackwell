@@ -1,0 +1,12 @@
+== alone 09:49:38
+exit 0
+lfm3-speech: batch: 2620 done, 0 failed
+== rule 2 10:43:32
+{"a": "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/audioin-v2/native-full", "b": "alone", "slots_only": true, "files": 2620, "identical": 2620, "differ": [], "missing": [], "extra": [], "pass_": true}
+== rows 8 10:43:33
+exit 0
+{"rows":8,"requests":2620,"steps":52985,"audio_seconds":0,"wall_seconds":2595.49,"audio_per_wall_second":0}
+lfm3-speech: concurrent: 2620 done, 0 failed
+== rule 3 11:27:22
+{"a": "alone", "b": "rows8", "slots_only": false, "files": 13260, "identical": 13260, "differ": [], "missing": [], "extra": [], "pass_": true}
+CORPUS DONE 11:27:23

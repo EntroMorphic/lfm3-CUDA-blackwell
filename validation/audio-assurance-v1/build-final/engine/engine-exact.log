@@ -1,0 +1,7 @@
+alone {"exit": 0, "wall_seconds": 526.5, "summary": null}
+alone vs reference {"reference": "/workspace/liquid-CUDA/build/speed-final2/conc/alone", "identical": 41, "differ": [], "pass_": true}
+conc4 {"exit": 0, "wall_seconds": 182.4, "summary": {"rows": 4, "requests": 41, "steps": 2529, "audio_seconds": 697.68, "wall_seconds": 165.049, "audio_per_wall_second": 4.22711}, "rows": 4, "stagger_seed": null, "identical": 41, "differ": [], "pass": true}
+conc8 {"exit": 0, "wall_seconds": 99.2, "summary": {"rows": 8, "requests": 41, "steps": 1607, "audio_seconds": 697.68, "wall_seconds": 80.0104, "audio_per_wall_second": 8.71986}, "rows": 8, "stagger_seed": null, "identical": 41, "differ": [], "pass": true}
+conc8-staggered {"exit": 0, "wall_seconds": 82.6, "summary": {"rows": 8, "requests": 41, "steps": 1668, "audio_seconds": 697.68, "wall_seconds": 69.052, "audio_per_wall_second": 10.1037}, "rows": 8, "stagger_seed": "11", "identical": 41, "differ": [], "pass": true}
+conc16-staggered {"exit": 0, "wall_seconds": 88.3, "summary": {"rows": 16, "requests": 41, "steps": 1720, "audio_seconds": 697.68, "wall_seconds": 73.9913, "audio_per_wall_second": 9.42921}, "rows": 16, "stagger_seed": "12", "identical": 41, "differ": [], "pass": true}
+CONCURRENT PASS

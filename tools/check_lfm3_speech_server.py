@@ -116,6 +116,7 @@ def main(binary, model, build, out_json):
     s1, after = post("/generate", control)
     text_same = s0 == s1 == 200 and before["generated_ids"] == after["generated_ids"]
     report["text_control_identical"] = text_same
+    report["text_control_statuses"] = [s0, s1]
     report["text_control_tokens"] = len(before.get("generated_ids", []))
     ok &= text_same
     proc.terminate()

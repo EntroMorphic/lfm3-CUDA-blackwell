@@ -1,0 +1,9 @@
+========= COMPUTE-SANITIZER
+lfm3-speech: batch: 5 done, 0 failed
+{"frames":40,"audio_seconds":3.2,"generate_seconds":107.466,"slots":41}
+{"frames":48,"audio_seconds":3.84,"generate_seconds":106.172,"slots":49}
+{"frames":0,"audio_seconds":0,"generate_seconds":78.0392,"slots":37}
+{"frames":133,"audio_seconds":10.64,"generate_seconds":463.312,"slots":168}
+{"frames":252,"audio_seconds":20.16,"generate_seconds":869.534,"slots":313}
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors
