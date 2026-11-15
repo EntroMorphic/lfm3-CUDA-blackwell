@@ -1,19 +1,31 @@
-// lfm3-image-decode-check: the native front end's decoded pixels, per file, to compare with HF's
-// (tools/hash_lfm3_image_front.py; validation/images-v1 rule 1). Host only.
-// Usage: lfm3-image-decode-check LABEL=DIR...   (every *.jpg, *.jpeg, *.png in DIR, sorted, as the Python tool does)
+// lfm3-image-decode-check: the native front end's decoded pixels (and, with --preprocess, its pixel_values), per
+// image, to compare with HF's (tools/hash_lfm3_image_front.py; validation/images-v1 rule 1). Host only.
+// Usage: lfm3-image-decode-check [--preprocess] SOURCE...
+//          LABEL=DIR                 every *.jpg, *.jpeg, *.png in DIR, sorted, as the Python tool does
+//          LABEL=noise:SEED:SIZES    SplitMix64 noise images (as the Python tool's noise source), one per "W H" line
+//                                    of the file SIZES, named LABEL/iii-WxH
+//        lfm3-image-decode-check --resize CASES.txt   (tools/hash_torch_resize.py's cases: the resize alone)
 //        lfm3-image-decode-check --selftest
-// Prints one JSON line per file: {"name", "rgb_size": [w, h], "rgb_sha256"} or {"name", "load_error": "code: message"}.
+// Prints one JSON line per image: {"name", "rgb_size": [w, h], "rgb_sha256"} or {"name", "load_error": "code: msg"};
+// with --preprocess also "grid_thw", "tokens", "pixel_values_sha256" (float32 bytes, little-endian) or
+// "process_error". --resize prints {"case", "in_sha256", "out_sha256"} per case.
 #include <lfm/image_decode.hpp>
+#include <lfm/image_preprocess.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <string>
 #include <vector>
+
+namespace lfm::image::detail {
+std::uint64_t taps_fingerprint(int input_size, int output_size);
+}
 
 namespace {
 
@@ -90,6 +102,80 @@ std::string json_escape(const std::string& s) {
   return o;
 }
 
+// SplitMix64 as a counter (the Python tools' noise_rgb): word i is the output for state key + (i + 1) * golden.
+std::vector<std::uint8_t> noise_bytes(std::uint64_t key, std::size_t n) {
+  std::vector<std::uint8_t> out(n);
+  for (std::size_t i = 0; i < n; i += 8) {
+    std::uint64_t z = key + std::uint64_t(i / 8 + 1) * 0x9E3779B97F4A7C15ull;
+    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+    z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+    z ^= z >> 31;
+    for (std::size_t k = 0; k < 8 && i + k < n; ++k) out[i + k] = std::uint8_t(z >> (8 * k));
+  }
+  return out;
+}
+
+std::string sha256_floats(const std::vector<float>& v) {
+  static_assert(sizeof(float) == 4);
+  Sha256 s;
+  s.update(reinterpret_cast<const std::uint8_t*>(v.data()), v.size() * 4);  // little-endian hosts (x86, aarch64)
+  return s.hex();
+}
+
+void emit(const std::string& name, const lfm::image::Rgb& img, bool preprocess) {
+  std::printf("{\"name\": \"%s\", \"rgb_size\": [%d, %d], \"rgb_sha256\": \"%s\"", json_escape(name).c_str(),
+              img.width, img.height, sha256(img.pixels).c_str());
+  if (preprocess) {
+    try {
+      const auto pv = lfm::image::preprocess(img);
+      std::printf(", \"grid_thw\": [%d, %d, %d], \"tokens\": %d, \"pixel_values_sha256\": \"%s\"", pv.grid_t,
+                  pv.grid_h, pv.grid_w, pv.tokens, sha256_floats(pv.values).c_str());
+    } catch (const lfm::image::DecodeError& e) {
+      std::printf(", \"process_error\": \"%s: %s\"", e.code.c_str(), json_escape(e.what()).c_str());
+    }
+  }
+  std::printf("}\n");
+}
+
+int resize_cases(const char* path) {
+  std::ifstream in(path);
+  long long iw, ih, ow, oh;
+  unsigned long long key;
+  int i = 0;
+  while (in >> iw >> ih >> ow >> oh >> key) {
+    lfm::image::Rgb img;
+    img.width = int(iw);
+    img.height = int(ih);
+    img.pixels = noise_bytes(key, std::size_t(iw * ih * 3));
+    const auto out = lfm::image::resize_bicubic_aa(img, int(ow), int(oh));
+    std::printf("{\"case\": %d, \"in_sha256\": \"%s\", \"out_sha256\": \"%s\"}\n", i++, sha256(img.pixels).c_str(),
+                sha256(out.pixels).c_str());
+  }
+  return 0;
+}
+
+// --taps MAX STEP: the resize taps' fingerprint for every input size 1..MAX against every output size 1..MAX in STEP
+// strides (and every multiple of 32 up to MAX), one line "in out fingerprint".
+int taps_sweep(int max, int step) {
+  for (int in = 1; in <= max; ++in)
+    for (int out = 1; out <= max; ++out)
+      if (out % step == 0 || out % 32 == 0)
+        std::printf("%d %d %016llx\n", in, out, (unsigned long long)lfm::image::detail::taps_fingerprint(in, out));
+  return 0;
+}
+
+// --taps-random N SEED: N random pairs, input 1..20000, output a multiple of 32 up to 20000 (what smart_resize gives).
+int taps_random(int n, unsigned long long seed) {
+  for (int k = 0; k < n; ++k) {
+    const auto r = noise_bytes(seed * 1000003ull + std::uint64_t(k), 8);
+    std::uint64_t v = 0;
+    for (int b = 0; b < 8; ++b) v |= std::uint64_t(r[b]) << (8 * b);
+    const int in = int(v % 20000) + 1, out = 32 * (int((v >> 32) % 625) + 1);
+    std::printf("%d %d %016llx\n", in, out, (unsigned long long)lfm::image::detail::taps_fingerprint(in, out));
+  }
+  return 0;
+}
+
 int selftest() {
   const std::string a = sha256({}), b = sha256({'a', 'b', 'c'});
   std::vector<std::uint8_t> million(1000000, 'a');
@@ -105,14 +191,39 @@ int selftest() {
 
 int main(int argc, char** argv) {
   if (argc == 2 && std::string(argv[1]) == "--selftest") return selftest();
+  if (argc == 3 && std::string(argv[1]) == "--resize") return resize_cases(argv[2]);
+  if (argc == 4 && std::string(argv[1]) == "--taps") return taps_sweep(std::atoi(argv[2]), std::atoi(argv[3]));
+  if (argc == 4 && std::string(argv[1]) == "--taps-random") return taps_random(std::atoi(argv[2]), std::stoull(argv[3]));
   if (argc < 2) {
-    std::fprintf(stderr, "usage: lfm3-image-decode-check LABEL=DIR... | --selftest\n");
+    std::fprintf(stderr, "usage: lfm3-image-decode-check [--preprocess] SOURCE... | --resize CASES | --selftest\n");
     return 2;
   }
+  bool preprocess = false;
   for (int a = 1; a < argc; ++a) {
     const std::string arg = argv[a];
+    if (arg == "--preprocess") {
+      preprocess = true;
+      continue;
+    }
     const auto eq = arg.find('=');
     const std::string label = arg.substr(0, eq), dir = arg.substr(eq + 1);
+    if (dir.rfind("noise:", 0) == 0) {  // noise:SEED:SIZES
+      const auto c2 = dir.find(':', 6);
+      const unsigned long long seed = std::stoull(dir.substr(6, c2 - 6));
+      std::ifstream sizes(dir.substr(c2 + 1));
+      long long w, h;
+      int i = 0;
+      while (sizes >> w >> h) {
+        lfm::image::Rgb img;
+        img.width = int(w);
+        img.height = int(h);
+        img.pixels = noise_bytes((seed << 32) | (std::uint64_t(w) << 16) | std::uint64_t(h), std::size_t(w * h * 3));
+        char name[64];
+        std::snprintf(name, sizeof name, "%03d-%lldx%lld", i++, w, h);
+        emit(label + "/" + name, img, preprocess);
+      }
+      continue;
+    }
     std::vector<std::filesystem::path> files;
     for (const auto& e : std::filesystem::directory_iterator(dir)) {
       std::string ext = e.path().extension().string();
@@ -126,8 +237,7 @@ int main(int argc, char** argv) {
       const std::string name = label + "/" + f.filename().string();
       try {
         const auto img = lfm::image::load_rgb(bytes.data(), bytes.size());
-        std::printf("{\"name\": \"%s\", \"rgb_size\": [%d, %d], \"rgb_sha256\": \"%s\"}\n", json_escape(name).c_str(),
-                    img.width, img.height, sha256(img.pixels).c_str());
+        emit(name, img, preprocess);
       } catch (const lfm::image::DecodeError& e) {
         std::printf("{\"name\": \"%s\", \"load_error\": \"%s: %s\"}\n", json_escape(name).c_str(), e.code.c_str(),
                     json_escape(e.what()).c_str());

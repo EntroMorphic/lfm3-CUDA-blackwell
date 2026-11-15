@@ -221,6 +221,47 @@ Records gzipped in `damage/`; tools `check_image_damage_policy.py` (the oracle),
   HF ignores XMP's 8). The native engine treats the unreadable EXIF as absent: the image is shown, oriented by XMP if
   XMP says so. Neither HF behaviour is a choice anyone made; both are accidents of exception handling.
 
+## Resize and pixel_values (2026-11-15): the checks for rule 1's second half, set before the Thor run
+`native/src/image_preprocess.cpp` (`lfm/image_preprocess.hpp`): smart_resize, torch's uint8 antialiased bicubic
+resize (ported from PyTorch v2.10.0's `UpSampleKernel.cpp`; sources fetched to the scratchpad, sha256 recorded in the
+results), the fused float32 normalize, patchify. Passing means, on Thor against Thor's HF (and on x86 against x86's):
+- every `pixel_values` sha256, grid and token count identical, and every processing refusal matched, on the 11 dumped
+  cases, the 47 variants (bar the 4 deliberate 16-bit ones, whose pixels differ by design), the 1,930 benchmark
+  images, and the 500-size sweep regenerated as SplitMix64 noise (`hash_lfm3_image_front.py` source `noise:500:2026`,
+  the same size rules as the numpy sweep, pixels the native check can regenerate);
+- the resize alone (`hash_torch_resize.py`) identical on 3,000 random size pairs (shrink, grow, one dimension,
+  extreme shrinks to 1..64 from up to 3,000) and on the 400 pairs where the compiler-fusion variants' raw taps differ;
+- ASan+UBSan clean on the noise sweep and the cases.
+One open question is settled by measurement, not chosen: which multiply-adds torch's compiled weight code fuses. Three
+variants (`LFM_RESIZE_FMA_MODE` 0, 1, 2) are compared by the effective int16 kernel they produce (every nonzero
+(input index, weight) pair and the precision) over every input 1..1,500 x output (every 7th and every multiple of 32),
+and 200,000 random pairs up to 20,000 with outputs at multiples of 32.
+
+### Results (2026-11-15): **pixel_values bit-identical to HF, on Thor and on x86**
+Records in `preprocess/` (gzipped); native check binaries on Thor: plain `e0ab47e0...`, ASan+UBSan `448f3dca...`.
+PyTorch sources ported from (v2.10.0, raw.githubusercontent.com): `UpSampleKernel.cpp` `3ccfb91f...`,
+`UpSample.h` `a3ed47e3...`, `UpSampleKernelAVXAntialias.h` `51a3ce19...`.
+- **Every image, Thor against Thor's HF: identical** pixel_values sha256, grid and token count for all 1,982 images
+  that decode (1,930 benchmark images, the 10 dumped case images, 42 variants), RGB identical for the 4 deliberate
+  16-bit variants (their pixel_values differ by design), the truncated JPEG refused by both. The same on x86 against
+  x86's HF.
+- **The noise sweep (500 sizes, `noise:500:2026`): 500 of 500 identical** on both machines, the 72 sizes over the
+  aspect limit refused by both; Thor's and x86's HF records agree row for row.
+- **The resize alone:** x86 3,000 of 3,000 identical to torch; the 400 pairs where the raw taps of the fusion
+  variants differ, and the 16 decisive cases below, identical on both machines. **On Thor 2,988 of 3,000: the 12
+  others all have an output width of 1, and there Thor's torch is wrong** (below).
+- **Which multiply-adds torch fuses, settled:** variants 0 and 1 (no fusion; the cubic polynomial fused) give the same
+  effective int16 kernel on all 381,000 exhaustive pairs and 200,000 random large pairs; variant 2 (the center
+  coordinate fused too) differs on 8 random pairs, and on those (16 cases, 1,500 rows each so a one-unit weight
+  difference shows) torch matches 0 and 1 on both machines and never 2. The engine uses 0.
+- **Found: a PyTorch bug on aarch64.** torch 2.10's generic CPU kernel (used where there is no AVX2: Thor) returns a
+  constant column for any antialiased bicubic resize whose output is one pixel wide: every row equals row 0, in uint8
+  and in float32 alike (`width1_probe.py`, `width1_dump.py`: Thor 1 distinct value per channel down 276 rows where x86
+  has 168). x86's AVX2 uint8 kernel is right, and the native port matches it. Unreachable from HF's processor:
+  smart_resize makes every side a multiple of 32, and the horizontal pass's output width is the final width. Recorded,
+  not chased; worth an upstream report.
+- **ASan+UBSan** on the noise sweep and the cases: 0 reports, output identical to the plain build.
+
 ## Rules, set before any native run (draft)
 1. **Decoding and preprocessing match HF exactly.** Decoded pixels are bit-identical to PIL's (Thor's) on every JPEG
    and PNG case: the dumped images, the MMStar and POPE images, and progressive, 4:2:0, 4:2:2, 4:4:4, grayscale, CMYK

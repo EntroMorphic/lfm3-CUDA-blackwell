@@ -19,6 +19,7 @@ if [ ! -f "$OUT/ljt/lib/libjpeg.a" ]; then
   grep -i "simd" "$OUT/ljt-cmake.log" | head -3 || true
 fi
 g++ -std=c++20 -O2 -g -Wall -Wextra "$@" -I "$N/include" -I "$OUT/ljt/include" \
-  "$N/tests/lfm3_image_decode_check.cpp" "$N/src/image_decode.cpp" "$OUT/ljt/lib/libjpeg.a" \
+  "$N/tests/lfm3_image_decode_check.cpp" "$N/src/image_decode.cpp" "$N/src/image_preprocess.cpp" \
+  "$OUT/ljt/lib/libjpeg.a" \
   -o "$OUT/lfm3-image-decode-check"
 "$OUT/lfm3-image-decode-check" --selftest

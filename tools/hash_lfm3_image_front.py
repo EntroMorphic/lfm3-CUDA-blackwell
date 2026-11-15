@@ -11,6 +11,9 @@ Sources (any number, each NAME=KIND:ARG):
   bench:DIR        DIR/manifest.jsonl's unique images (extract_vision_benchmarks.py)
   sweep:N:SEED     N synthetic sizes (below), uniform noise from numpy's PCG64 seeded per size (the same pixels on
                    every machine), made in memory as PIL images (no file; "load" is skipped, the RGB hash is kept)
+  noise:N:SEED     the sweep's N sizes, but the pixels from SplitMix64 as a counter (noise_rgb; the same as
+                   tools/hash_torch_resize.py), keyed (SEED << 32) | (w << 16) | h, so the native check can regenerate
+                   them; named LABEL/iii-WxH
 The sweep: a quarter uniform in 1..4096 for both sides; a quarter with a side at 32k+16 (rounding ties); a quarter
 near the minimum and maximum pixel counts (65,536 and 2,097,152); a quarter near the aspect limit of 200, both sides
 of it (HF refuses above 200).
@@ -54,6 +57,20 @@ def sweep_sizes(n, seed):
         long = max(1, min(4096, round(short * ratio)))
         sizes.append((long, short) if i % 2 else (short, long))
     return sizes
+
+
+GOLDEN, C1, C2 = 0x9E3779B97F4A7C15, 0xBF58476D1CE4E5B9, 0x94D049BB133111EB
+
+
+def noise_rgb(key, w, h):
+    """SplitMix64 as a counter: word i is the output for state key + (i + 1) * golden; bytes little-endian."""
+    n = w * h * 3
+    with np.errstate(over="ignore"):
+        z = np.uint64(key) + np.arange(1, (n + 7) // 8 + 1, dtype=np.uint64) * np.uint64(GOLDEN)
+        z = (z ^ (z >> np.uint64(30))) * np.uint64(C1)
+        z = (z ^ (z >> np.uint64(27))) * np.uint64(C2)
+        z = z ^ (z >> np.uint64(31))
+    return z.astype("<u8").view(np.uint8)[:n].reshape(h, w, 3)
 
 
 def main(model_dir, out_jsonl, *sources):
@@ -128,6 +145,12 @@ def main(model_dir, out_jsonl, *sources):
                         rng = np.random.default_rng([int(seed), w, h])
                         return Image.fromarray(rng.integers(0, 256, (h, w, 3), dtype=np.uint8), "RGB")
                     emit(f"{label}/{w}x{h}", "sweep", None, make)
+            elif kind == "noise":
+                count, _, seed = arg.partition(":")
+                for i, (w, h) in enumerate(sweep_sizes(int(count), int(seed))):
+                    def make(w=w, h=h):
+                        return Image.fromarray(noise_rgb((int(seed) << 32) | (w << 16) | h, w, h), "RGB")
+                    emit(f"{label}/{i:03d}-{w}x{h}", "noise", None, make)
             else:
                 raise SystemExit(f"unknown source kind {kind!r}")
     print(json.dumps(dict(rows=n, seconds=round(time.time() - t0, 1), env=env)))
