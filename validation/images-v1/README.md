@@ -53,7 +53,7 @@ Asked which choices give the model the truest experience: "Proceed accordingly, 
 - **MMStar** (`Lin-Chen/MMStar` at `bc98d668`, `mmstar.parquet`, sha256 `29afd74b...`): 1,500 items, all JPEG
   (1,458 RGB, 42 grayscale). **POPE** (`lmms-lab/POPE` at `4db12766`, `data/test-0000{0,1,2}-of-00003.parquet`):
   adversarial, popular and random, 3,000 each, 1,500 yes and 1,500 no; all JPEG, about 2% grayscale in a 300-image
-  sample of each split. Checksums: `data/dataset-checksums-vision.sha256` in the outer repo.
+  sample of each split. Checksums: `dataset-checksums-vision.sha256` in the outer repo (paths under its `data/`).
 
 ## Rules, set before any native run (draft)
 1. **Decoding and preprocessing match HF exactly.** Decoded pixels are bit-identical to PIL's (Thor's) on every JPEG
