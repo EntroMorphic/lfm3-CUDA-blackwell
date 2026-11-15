@@ -7,7 +7,7 @@
 //                     [--speech on|off] [--audio-input on|off] [--speech-truncate K] [--speech-stream-fault KIND] [--speech-stream-piece-bytes N]
 //                     [--speech-rows N (default 2; 0: one /speech at a time through op "speech")] [--fail-op OP] [--fail-after N] [--port N] [--request-timeout S] [--socket-timeout S]
 //                     [--session-idle-timeout S] [--total-capacity N] [--max-sessions N] [--queue-size N]
-//                     [--handlers N]
+//                     [--handlers N] [--text-slice N] [--trace-ops FILE (each engine call's op, one per line)]
 // Token from LFM3_SERVER_TOKEN. Prints {"ready":true,"port":N}. SIGTERM exits like liquid-lfm3-server.
 #include <lfm/lfm3_http.hpp>
 #include <lfm/speech_run.hpp>
@@ -203,12 +203,46 @@ class FakeEngine final : public lfm::http::Backend {
       if (rpc != last_rpc_ + 1) throw std::runtime_error("out-of-sequence RPC ID");
       last_rpc_ = rpc;
       const auto op = request.at("op").string();
+      if (trace_) trace_ << op << "\n" << std::flush;  // --trace-ops: the order of engine calls, for the scheduler tests
       if (op == fail_op_ && ++fail_count_ >= fail_after_) throw std::runtime_error("injected failure");
       if (op == "generate_batch") { batch(request, rpc, out); return out.str(); }
       if (op == "speech") { speech(request, rpc, out, progress); return out.str(); }
       if (op == "speech_admit") { speech_admit(request, rpc, out, progress); return out.str(); }
       if (op == "speech_step") { speech_step(request, rpc, out, progress); return out.str(); }
       const auto id = request.at("session_id").string();
+      // as WorkerCore: a sliced generation owns its session until its last text_step
+      if (pending_.count(id) && op != "text_step") throw std::runtime_error("session has a text generation in progress");
+      if (op == "text_begin") {
+        Lane lane = start(request);
+        if (reader_->requested(rpc)) { lane.lease->abort(); reply(out, rpc, lane, true, -1); return out.str(); }
+        pending_.emplace(id, std::move(lane));
+        out << "{\"rpc_id\":" << rpc << ",\"ok\":true,\"session_id\":\"" << id << "\",\"begun\":true}";
+        return out.str();
+      }
+      if (op == "text_step") {
+        auto it = pending_.find(id);
+        if (it == pending_.end()) throw std::runtime_error("no text generation in progress");
+        const long long k = request.at("tokens").integer();
+        if (k < 1) throw std::runtime_error("text_step tokens must be positive");
+        const bool cancel = request.has("cancel") && request.at("cancel").boolean();
+        Lane& lane = it->second;
+        for (long long n = 0; n < k; ++n) {  // op generate's loop below, k iterations of it
+          if (reader_->requested(rpc) || cancel) {
+            lane.lease->abort();
+            reply(out, rpc, lane, true, -1);
+            pending_.erase(it);
+            return out.str();
+          }
+          if (step(lane)) {
+            finish(lane);
+            reply(out, rpc, lane, false, -1);
+            pending_.erase(it);
+            return out.str();
+          }
+        }
+        out << "{\"rpc_id\":" << rpc << ",\"ok\":true,\"session_id\":\"" << id << "\",\"busy\":true}";
+        return out.str();
+      }
       if (op == "create") {
         std::this_thread::sleep_for(std::chrono::milliseconds(create_delay_ms_));
         ledger_.create(id, request.at("capacity").integer());
@@ -293,6 +327,8 @@ class FakeEngine final : public lfm::http::Backend {
   }
   void batch(const Json& request, int rpc, std::ostream& out) {
     const auto& lanes_json = request.at("lanes").array();
+    for (const auto& lane : lanes_json)
+      if (pending_.count(lane.at("session_id").string())) throw std::runtime_error("session has a text generation in progress");
     std::array<Lane, 2> lanes{start(lanes_json[0]), start(lanes_json[1])};
     long long paired = 0;
     for (;;) {
@@ -332,12 +368,14 @@ class FakeEngine final : public lfm::http::Backend {
   };
   std::vector<FakeRow> rows_;  // --speech-rows
   int admitted_ = 0, max_busy_ = 0;
+  std::ofstream trace_;  // --trace-ops FILE
   bool audio_input_ = true;  // --audio-input: WorkerCore::audio_input_supported  // --speech-truncate K: answer only the first K chunks, as a request the step budget cut
  private:
   int fail_after_, fail_count_ = 0;
   int pipe_[2] = {-1, -1};
   std::unique_ptr<lfm::text::CancellationReader> reader_;
   lfm::text::SessionLedger ledger_{2, 32768};
+  std::map<std::string, Lane> pending_;  // sliced generations (ops text_begin, text_step)
   int last_rpc_ = 0;
   bool closed_ = false;
 };
@@ -356,6 +394,7 @@ int main(int argc, char** argv) try {
   int speech_truncate = 0;
   std::string stream_fault;
   int stream_piece_bytes = 4, speech_rows = 2;
+  std::string trace_ops;
   for (int i = 2; i < argc; i += 2) {
     const std::string o = argv[i], v = argv[i + 1];
     if (o == "--mode") mode = v;
@@ -369,6 +408,7 @@ int main(int argc, char** argv) try {
     else if (o == "--speech-stream-fault") stream_fault = v;
     else if (o == "--speech-stream-piece-bytes") stream_piece_bytes = std::stoi(v);
     else if (o == "--speech-rows") speech_rows = std::stoi(v);
+    else if (o == "--trace-ops") trace_ops = v;
     else if (o == "--fail-after") fail_after = std::stoi(v);
     else if (o == "--port") port = std::stoi(v);
     else if (o == "--request-timeout") settings.request_timeout = std::stod(v);
@@ -379,6 +419,7 @@ int main(int argc, char** argv) try {
     else if (o == "--queue-size") settings.queue_size = std::stoi(v);
     else if (o == "--handlers") settings.handlers = std::stoi(v);
     else if (o == "--engine-timeout") settings.engine_timeout = std::stod(v);
+    else if (o == "--text-slice") settings.text_slice = std::stoi(v);
     else throw std::runtime_error("unsupported option " + o);
   }
   std::string note;  // as liquid-lfm3-server: --token-file, LFM3_SERVER_TOKEN, or the default file
@@ -412,6 +453,10 @@ int main(int argc, char** argv) try {
   engine.stream_piece_bytes_ = stream_piece_bytes;
   engine.rows_.assign(size_t(std::max(0, speech_rows)), {});
   engine.audio_input_ = speech && audio_input;
+  if (!trace_ops.empty()) {
+    engine.trace_.open(trace_ops);
+    if (!engine.trace_) throw std::runtime_error("cannot open --trace-ops file");
+  }
   auto service = std::make_unique<lfm::http::Service>(engine, tokenizer, policy, settings);
   auto server = std::make_unique<lfm::http::Server>(*service, token, port);
   std::thread waiter([&] {

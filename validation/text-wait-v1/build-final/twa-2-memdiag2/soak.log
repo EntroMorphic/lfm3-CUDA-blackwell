@@ -1,0 +1,15 @@
+references done
+t=600 s: 604 requests, 0 differ, 0 errors
+t=1200 s: 1133 requests, 0 differ, 0 errors
+t=1800 s: 1605 requests, 0 differ, 0 errors
+t=2400 s: 2115 requests, 0 differ, 0 errors
+t=3000 s: 2664 requests, 0 differ, 0 errors
+t=3600 s: 3230 requests, 0 differ, 0 errors
+t=4200 s: 3766 requests, 0 differ, 0 errors
+t=4800 s: 4348 requests, 0 differ, 0 errors
+t=5400 s: 4818 requests, 0 differ, 0 errors
+t=6000 s: 5270 requests, 0 differ, 0 errors
+t=6600 s: 5823 requests, 0 differ, 0 errors
+t=7200 s: 6331 requests, 0 differ, 0 errors
+{"pass_": false, "counts": {"unstreamed": 2056, "streamed": 2491, "dropped": 278, "text": 1518, "retries_429": 36057}, "statuses": {"200": 6343}, "differ": 0, "errors": 0, "memory": {"server_rss": {"base_median_mib": 5442.3, "late_median_mib": 5454.1, "growth_mib": 11.8, "pass_": true}, "host_used_less_client": {"base_median_mib": 11846.3, "late_median_mib": 11922.0, "growth_mib": 75.7, "pass_": false}}, "client": {"base_median_mib": 286.2, "late_median_mib": 449.9, "growth_mib": 163.7, "pass_": false}, "client_trimmed": {"base_median_mib": 265.5, "late_median_mib": 417.6, "growth_mib": 152.1, "pass_": false}, "crowd": {"unstreamed": 42, "streamed": 42}, "exit": 0}
+AUDIO SOAK FAIL

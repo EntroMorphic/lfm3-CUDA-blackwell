@@ -1,0 +1,4 @@
+text alone vs reference: identical
+text beside 8 streams: identical (streams still running at the end: 8; identical 8/8)
+crowd beside text: {'unstreamed': 42, 'streamed': 42} text sets: 26 differ: 0
+TEXT WAIT EXACT PASS

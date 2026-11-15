@@ -1,0 +1,684 @@
+========= COMPUTE-SANITIZER
+PASS alone greedy k=1 (steps 16)
+PASS alone greedy k=3 (steps 6)
+PASS alone greedy k=16 (steps 1)
+PASS alone greedy k=unbounded (steps 1)
+PASS alone sampled k=1 (steps 16)
+PASS alone sampled k=3 (steps 6)
+PASS alone sampled k=16 (steps 1)
+PASS alone sampled k=unbounded (steps 1)
+PASS alone long k=1 (steps 40)
+PASS alone long k=3 (steps 14)
+PASS alone long k=16 (steps 3)
+PASS alone long k=unbounded (steps 1)
+PASS reuse happened (reused 38)
+PASS reuse k=1
+PASS reuse k=3
+PASS cancelled reply ({"rpc_id":193,"ok":true,"session_id":"slice-check-19","cancelled":true,"cache_valid":false,"consumed_tokens":0,"reused_tokens":0,"generated_ids":[41,117323,5711)
+PASS after cancellation equals fresh
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (96,0,0) in block (20,0,0)
+=========     Address 0x1d762ead42
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (97,0,0) in block (20,0,0)
+=========     Address 0x1d762ead50
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (98,0,0) in block (20,0,0)
+=========     Address 0x1d762ead5e
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (99,0,0) in block (20,0,0)
+=========     Address 0x1d762ead6c
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (100,0,0) in block (20,0,0)
+=========     Address 0x1d762ead7a
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (101,0,0) in block (20,0,0)
+=========     Address 0x1d762ead88
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (102,0,0) in block (20,0,0)
+=========     Address 0x1d762ead96
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (103,0,0) in block (20,0,0)
+=========     Address 0x1d762eada4
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (104,0,0) in block (20,0,0)
+=========     Address 0x1d762eadb2
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (105,0,0) in block (20,0,0)
+=========     Address 0x1d762eadc0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (106,0,0) in block (20,0,0)
+=========     Address 0x1d762eadce
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (107,0,0) in block (20,0,0)
+=========     Address 0x1d762eaddc
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (108,0,0) in block (20,0,0)
+=========     Address 0x1d762eadea
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (109,0,0) in block (20,0,0)
+=========     Address 0x1d762eadf8
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (110,0,0) in block (20,0,0)
+=========     Address 0x1d762eae06
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (111,0,0) in block (20,0,0)
+=========     Address 0x1d762eae14
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (112,0,0) in block (20,0,0)
+=========     Address 0x1d762eae22
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (113,0,0) in block (20,0,0)
+=========     Address 0x1d762eae30
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (114,0,0) in block (20,0,0)
+=========     Address 0x1d762eae3e
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (115,0,0) in block (20,0,0)
+=========     Address 0x1d762eae4c
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (116,0,0) in block (20,0,0)
+=========     Address 0x1d762eae5a
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (117,0,0) in block (20,0,0)
+=========     Address 0x1d762eae68
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (118,0,0) in block (20,0,0)
+=========     Address 0x1d762eae76
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (119,0,0) in block (20,0,0)
+=========     Address 0x1d762eae84
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (120,0,0) in block (20,0,0)
+=========     Address 0x1d762eae92
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (121,0,0) in block (20,0,0)
+=========     Address 0x1d762eaea0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (122,0,0) in block (20,0,0)
+=========     Address 0x1d762eaeae
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (123,0,0) in block (20,0,0)
+=========     Address 0x1d762eaebc
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (124,0,0) in block (20,0,0)
+=========     Address 0x1d762eaeca
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (125,0,0) in block (20,0,0)
+=========     Address 0x1d762eaed8
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (126,0,0) in block (20,0,0)
+=========     Address 0x1d762eaee6
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (127,0,0) in block (20,0,0)
+=========     Address 0x1d762eaef4
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (0,0,0) in block (20,0,0)
+=========     Address 0x1d762ea802
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (1,0,0) in block (20,0,0)
+=========     Address 0x1d762ea810
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (2,0,0) in block (20,0,0)
+=========     Address 0x1d762ea81e
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (3,0,0) in block (20,0,0)
+=========     Address 0x1d762ea82c
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (4,0,0) in block (20,0,0)
+=========     Address 0x1d762ea83a
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (5,0,0) in block (20,0,0)
+=========     Address 0x1d762ea848
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (6,0,0) in block (20,0,0)
+=========     Address 0x1d762ea856
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (7,0,0) in block (20,0,0)
+=========     Address 0x1d762ea864
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (8,0,0) in block (20,0,0)
+=========     Address 0x1d762ea872
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (9,0,0) in block (20,0,0)
+=========     Address 0x1d762ea880
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (10,0,0) in block (20,0,0)
+=========     Address 0x1d762ea88e
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (11,0,0) in block (20,0,0)
+=========     Address 0x1d762ea89c
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (12,0,0) in block (20,0,0)
+=========     Address 0x1d762ea8aa
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (13,0,0) in block (20,0,0)
+=========     Address 0x1d762ea8b8
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (14,0,0) in block (20,0,0)
+=========     Address 0x1d762ea8c6
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (15,0,0) in block (20,0,0)
+=========     Address 0x1d762ea8d4
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (16,0,0) in block (20,0,0)
+=========     Address 0x1d762ea8e2
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+========= Uninitialized __global__ memory read of size 2 bytes
+=========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+=========     by thread (17,0,0) in block (20,0,0)
+=========     Address 0x1d762ea8f0
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: lfm3_batch::BatchDecoder::step(std::vector<int, std::allocator<int> > const&, std::vector<int, std::allocator<int> > const*) [0x51f83] in lfm3-text-slice-check
+=========         Host Frame: lfm3_speech::Batch::step_rows() [0x585ab] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::speech_step(lfm::Json const&, int, std::ostream&) [0x7978f] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::WorkerCore::handle(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, std::ostream&) [0x861db] in lfm3-text-slice-check
+=========         Host Frame: (anonymous namespace)::Harness::call(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [0x86f13] in lfm3-text-slice-check
+=========         Host Frame: main::{lambda(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&)#1}::operator()(bool, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) const [0x2b63f] in lfm3-text-slice-check
+=========         Host Frame: main [0xb23f] in lfm3-text-slice-check
+========= 
+PASS speech alone twice is identical (the comparison is exact, timings aside)
+PASS speech row 1 carries a WAV
+PASS speech row 2 carries a WAV
+PASS speech row 3 carries a WAV
+PASS speech row 4 carries a WAV
+PASS speech rows finished (4 and 4)
+PASS speech row 1 with text equals alone
+PASS speech row 2 with text equals alone
+PASS speech row 3 with text equals alone
+PASS speech row 4 with text equals alone
+PASS both texts ran beside speech (2)
+PASS text greedy beside speech equals alone
+PASS text sampled beside speech equals alone
+TEXT SLICE CHECK PASS
+========= ERROR SUMMARY: 319488 errors
+========= ERROR SUMMARY: 319438 errors were not printed. Use --print-limit option to adjust the number of printed errors

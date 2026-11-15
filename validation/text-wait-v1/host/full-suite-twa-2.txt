@@ -1,0 +1,82 @@
+........................................................................ [ 14%]
+........................................................................ [ 29%]
+...s..........................s......................................... [ 43%]
+........................................................................ [ 58%]
+........................................................................ [ 72%]
+........................................................................ [ 87%]
+..............................................................           [100%]
+=============================== warnings summary ===============================
+tests/test_lfm3_http_native.py::test_listener_closes_and_second_signal_exits[plain]
+  /home/ztflynn/miniconda3/lib/python3.13/site-packages/_pytest/threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-1228 (<lambda>)
+  
+  Traceback (most recent call last):
+    File "/home/ztflynn/miniconda3/lib/python3.13/threading.py", line 1043, in _bootstrap_inner
+      self.run()
+      ~~~~~~~~^^
+    File "/home/ztflynn/miniconda3/lib/python3.13/threading.py", line 994, in run
+      self._target(*self._args, **self._kwargs)
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 139, in <lambda>
+      thread = threading.Thread(target=lambda: result.setdefault("value", function(*args)))
+                                                                          ~~~~~~~~^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 91, in call
+      return parse_response(response)
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 103, in parse_response
+      version, status, _ = lines[0].split(" ", 2)
+      ^^^^^^^^^^^^^^^^^^
+  ValueError: not enough values to unpack (expected 3, got 1)
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+tests/test_lfm3_http_native.py::test_listener_closes_and_second_signal_exits[asan]
+  /home/ztflynn/miniconda3/lib/python3.13/site-packages/_pytest/threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-1236 (<lambda>)
+  
+  Traceback (most recent call last):
+    File "/home/ztflynn/miniconda3/lib/python3.13/threading.py", line 1043, in _bootstrap_inner
+      self.run()
+      ~~~~~~~~^^
+    File "/home/ztflynn/miniconda3/lib/python3.13/threading.py", line 994, in run
+      self._target(*self._args, **self._kwargs)
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 139, in <lambda>
+      thread = threading.Thread(target=lambda: result.setdefault("value", function(*args)))
+                                                                          ~~~~~~~~^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 91, in call
+      return parse_response(response)
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 103, in parse_response
+      version, status, _ = lines[0].split(" ", 2)
+      ^^^^^^^^^^^^^^^^^^
+  ValueError: not enough values to unpack (expected 3, got 1)
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+tests/test_lfm3_http_native.py::test_listener_closes_and_second_signal_exits[tsan]
+  /home/ztflynn/miniconda3/lib/python3.13/site-packages/_pytest/threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-1244 (<lambda>)
+  
+  Traceback (most recent call last):
+    File "/home/ztflynn/miniconda3/lib/python3.13/threading.py", line 1043, in _bootstrap_inner
+      self.run()
+      ~~~~~~~~^^
+    File "/home/ztflynn/miniconda3/lib/python3.13/threading.py", line 994, in run
+      self._target(*self._args, **self._kwargs)
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 139, in <lambda>
+      thread = threading.Thread(target=lambda: result.setdefault("value", function(*args)))
+                                                                          ~~~~~~~~^^^^^^^
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 91, in call
+      return parse_response(response)
+    File "/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/tests/test_lfm3_http_native.py", line 103, in parse_response
+      version, status, _ = lines[0].split(" ", 2)
+      ^^^^^^^^^^^^^^^^^^
+  ValueError: not enough values to unpack (expected 3, got 1)
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+492 passed, 2 skipped, 3 warnings in 2077.83s (0:34:37)

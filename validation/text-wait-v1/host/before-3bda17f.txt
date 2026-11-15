@@ -1,0 +1,8 @@
+FAILED tests/test_lfm3_server_text_wait.py::test_text_runs_between_speech_steps_instead_of_waiting_for_the_rows[plain]
+FAILED tests/test_lfm3_server_text_wait.py::test_the_engine_calls_alternate_speech_and_text_steps[plain]
+FAILED tests/test_lfm3_server_text_wait.py::test_a_long_text_generation_does_not_hold_back_new_speech[plain]
+FAILED tests/test_lfm3_server_text_wait.py::test_a_text_request_behind_long_rows_meets_its_deadline[plain]
+FAILED tests/test_lfm3_server_text_wait.py::test_cancel_reaches_a_sliced_generation_and_resets_its_cache[plain]
+FAILED tests/test_lfm3_server_text_wait.py::test_a_generation_past_its_deadline_is_cancelled_at_its_next_slice[plain]
+FAILED tests/test_lfm3_server_text_wait.py::test_an_engine_failure_in_a_text_slice_fails_the_service_closed[plain]
+7 failed, 3 passed, 20 deselected in 61.77s (0:01:01)

@@ -1,0 +1,159 @@
+{
+ "status": "passed",
+ "binaries_sha256": {
+  "liquid-lfm3-server": "610c8c1d9c9dcd498844742c5a563c09f6417a0d3439132a242a9baeb3ab2b86",
+  "liquid-lfm3-worker": "fb95efcf14cb10a041e5e4a974b1a0b23eaf4610fcfca2a0af261bf7df0b9732"
+ },
+ "sources_sha256": {
+  "check_lfm3_native_server.py": "abeb9b0804c4bf1ef95f864db36da58f4abcf6fba562e288fedb0cbd3b53e839",
+  "lfm3_server.py": "0bf92f4ff61bd7c79704b3ab7f1be711b4b4c928e67dd2e5836dab9da33cec87",
+  "lfm3_worker_client.py": "dcbfd5d7de36c2dd5768f98f39d0972a652cf66bed7c05be622030ea89727f17"
+ },
+ "startup_seconds": 0.9011481540001114,
+ "stage": "shutdown",
+ "control_text_sha256": "7ea05068d0a0a00304ea660b8e045f0b817c72605818902b96a76602150b7c73",
+ "bounded_admission_rounds": [
+  {
+   "round": 0,
+   "statuses": [
+    409,
+    409,
+    200,
+    409,
+    409,
+    409,
+    409,
+    200
+   ],
+   "post_contention_both_sessions_exact": true
+  },
+  {
+   "round": 1,
+   "statuses": [
+    409,
+    409,
+    409,
+    409,
+    200,
+    409,
+    409,
+    200
+   ],
+   "post_contention_both_sessions_exact": true
+  },
+  {
+   "round": 2,
+   "statuses": [
+    200,
+    409,
+    409,
+    409,
+    409,
+    409,
+    409,
+    200
+   ],
+   "post_contention_both_sessions_exact": true
+  }
+ ],
+ "cancellation_attempts": [
+  {
+   "delay_seconds": 0.25,
+   "cancel_status": 202,
+   "generated": 14,
+   "cancelled": true
+  }
+ ],
+ "partial_text": "Yes, reflective recursion is widely considered a core feature of human cognition.",
+ "batch_cancellation_attempts": [
+  {
+   "delay_seconds": 0.3,
+   "cancel_status": 202,
+   "generated": 13,
+   "cancelled": true
+  }
+ ],
+ "extreme_sampling": [
+  {
+   "sampling": {
+    "do_sample": true,
+    "temperature": 1e-300,
+    "seed": 1
+   },
+   "generated": 8
+  },
+  {
+   "sampling": {
+    "do_sample": true,
+    "temperature": 1000000.0,
+    "seed": 2
+   },
+   "generated": 8
+  },
+  {
+   "sampling": {
+    "do_sample": true,
+    "repetition_penalty": 1e+300,
+    "seed": 3
+   },
+   "generated": 8
+  },
+  {
+   "sampling": {
+    "do_sample": true,
+    "top_p": 1e-300,
+    "seed": 4
+   },
+   "generated": 8
+  },
+  {
+   "sampling": {
+    "do_sample": true,
+    "min_p": 1,
+    "seed": 5
+   },
+   "generated": 8
+  },
+  {
+   "sampling": {
+    "do_sample": true,
+    "top_k": 128000,
+    "seed": 6
+   },
+   "generated": 8
+  }
+ ],
+ "differential": {
+  "requests": 22,
+  "mismatches": [],
+  "statuses": [
+   200,
+   200,
+   429,
+   200,
+   400,
+   400,
+   200,
+   200,
+   200,
+   200,
+   200,
+   400,
+   200,
+   200,
+   409,
+   200,
+   404,
+   200,
+   200,
+   400,
+   200,
+   200
+  ]
+ },
+ "shutdown": {
+  "exit_status": 0,
+  "seconds": 0.21358246200179565,
+  "partial_tokens": 59
+ }
+}

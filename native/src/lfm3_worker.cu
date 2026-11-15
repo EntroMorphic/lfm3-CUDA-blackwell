@@ -33,11 +33,24 @@ std::string session_id(const lfm::Json& req) {
     throw std::runtime_error("invalid session ID");
   return id;
 }
+// A text generation between ops text_begin and its last text_step (validation/text-wait-v1): everything op
+// "generate"'s decode loop keeps on its stack, so the loop can stop after any token and resume with the same state.
+struct PendingText {
+  std::vector<int> generated;
+  int count=0,t=0,origin_rpc=0;
+  bool want_text=false,return_logits=false,trace_sampling=false;
+  size_t reused=0;
+  lfm::TextSamplingOptions options;
+  std::unique_ptr<lfm::TextSampler> sampler;
+  std::unique_ptr<lfm::text::SessionLedger::Lease> lease;
+  std::string sampling_trace;
+};
 struct Session {
   int capacity;
   std::unique_ptr<Runner> runner;
   std::vector<int> consumed;
   std::vector<float> last_scores;
+  std::unique_ptr<PendingText> pending;  // a sliced text generation in progress: every other op is refused
 };
 // Native text frontend, loaded on the first request that needs it (messages / return_text) and checked
 // against the verified token count.
@@ -90,7 +103,8 @@ void schema(const lfm::Json& request,const std::string& op) {
   for(const auto& [key,value]:*object) {
     if(common.count(key)) continue;
     if(op=="create" && key=="capacity") continue;
-    if(op=="generate" && generate.count(key)) continue;
+    if((op=="generate" || op=="text_begin") && generate.count(key)) continue;
+    if(op=="text_step" && (key=="tokens" || key=="cancel")) continue;
     if(op=="generate_batch" && (key=="op" || key=="rpc_id" || key=="lanes")) continue;
     if((op=="speech" || op=="speech_admit") && (key=="chunks" || key=="mode" || key=="max_new_tokens" || key=="seed" ||
                                                key=="chunked" || key=="audio" || key=="stream")) continue;
@@ -132,6 +146,7 @@ void generate_batch(const lfm::Json& request,int rpc_id,const std::string& direc
     auto found=sessions.find(lane.id);
     if(found==sessions.end()) throw std::runtime_error("unknown session");
     lane.session=&found->second;
+    if(lane.session->pending) throw std::runtime_error("session has a text generation in progress");
     lane.input=request_input(req,cfg.shape.vocabulary,text,lane.session->capacity,suppressed);
     lane.want_text=lfm::lfm3_text::wants_text(req);
     for(int token:lane.input) if(std::find(suppressed.begin(),suppressed.end(),token)!=suppressed.end())
@@ -400,13 +415,23 @@ class WorkerCore {
     if(op=="create") {
       int capacity=request.at("capacity").integer();lfm::text::scratch_rows(capacity);
       ledger.create(id,capacity);
-      try {sessions.emplace(id,Session{capacity,{},{},{}});}
+      try {sessions.emplace(id,Session{capacity,{},{},{},{}});}
       catch(...) {ledger.close(id);throw;}
       out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)<<"}\n"<<std::flush;return true;
     }
     auto found=sessions.find(id);
     if(found==sessions.end()) throw std::runtime_error("unknown session");
     auto& session=found->second;
+    // a sliced generation owns its session until its last text_step (the Service's lease serializes sessions too)
+    if(session.pending && op!="text_step") throw std::runtime_error("session has a text generation in progress");
+    if(op=="text_step") {
+      if(!session.pending) throw std::runtime_error("no text generation in progress");
+      const long long k=request.at("tokens").integer();
+      if(k<1) throw std::runtime_error("text_step tokens must be positive");
+      text_step(id,session,rpc_id,int(std::min<long long>(k,std::numeric_limits<int>::max())),
+                request.has("cancel") && request.at("cancel").boolean(),out);
+      return true;
+    }
     if(op=="inspect") {
       const auto snapshot=ledger.inspect(id);
       out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"capacity\":"<<snapshot.capacity<<",\"consumed_tokens\":"<<session.consumed.size()
@@ -425,22 +450,43 @@ class WorkerCore {
       ledger.reset(id);
       out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"reset\":true}\n"<<std::flush;return true;
     }
-    if(op!="generate") throw std::runtime_error("unknown operation");
+    if(op!="generate" && op!="text_begin") throw std::runtime_error("unknown operation");
+    // op generate is text_begin and one unbounded text_step in one call: the sliced path and the whole path are one
+    // code path, so a generation sliced among speech steps computes exactly what it computes alone
+    if(!text_begin(request,id,session,rpc_id,out)) return true;  // cancelled during prefill: its reply is written
+    if(op=="text_begin") {
+      out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)<<",\"begun\":true}\n"<<std::flush;
+      return true;
+    }
+    text_step(id,session,rpc_id,std::numeric_limits<int>::max(),false,out);
+  } catch(const std::exception& e) {
+    out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":false,\"error\":"<<quote(e.what())<<"}\n"<<std::flush;
+  }
+    return true;
+  }
+ private:
+  // op text_begin (and the start of op generate): everything before the decode loop, unchanged from op generate:
+  // the request's checks (all before any mutation), the sampler, the ledger lease and the prefill or reuse
+  // continuation. Leaves the loop's state in session.pending and returns true; or, cancelled during prefill, writes
+  // op generate's cancelled reply and returns false.
+  bool text_begin(const lfm::Json& request,const std::string& id,Session& session,int rpc_id,std::ostream& out) {
+    auto p=std::make_unique<PendingText>();
     const auto input=request_input(request,cfg.shape.vocabulary,text,session.capacity,suppressed);
-    const bool want_text=lfm::lfm3_text::wants_text(request);
+    p->want_text=lfm::lfm3_text::wants_text(request);
     for(int token:input) if(std::find(suppressed.begin(),suppressed.end(),token)!=suppressed.end())
       throw std::runtime_error("modality placeholder input is unsupported");
-    const int count=request.at("max_new_tokens").integer();
-    if(count<1) throw std::runtime_error("max_new_tokens must be positive");
-    lfm::text::require_budget(input.size(),count,session.capacity);
-    const bool return_logits=request.has("return_logits") && request.at("return_logits").boolean();
-    const bool trace_sampling=request.has("trace_sampling") && request.at("trace_sampling").boolean();
-    if(trace_sampling && (sampling_trace_root.empty() || count>32))
+    p->count=request.at("max_new_tokens").integer();
+    if(p->count<1) throw std::runtime_error("max_new_tokens must be positive");
+    lfm::text::require_budget(input.size(),p->count,session.capacity);
+    p->return_logits=request.has("return_logits") && request.at("return_logits").boolean();
+    p->trace_sampling=request.has("trace_sampling") && request.at("trace_sampling").boolean();
+    if(p->trace_sampling && (sampling_trace_root.empty() || p->count>32))
       throw std::runtime_error("sampling trace needs startup audit root and at most32 output tokens");
-    const auto options=sampling_options(request,cfg.shape.vocabulary,live);
-    lfm::TextSampler sampler(options);
-    auto lease=ledger.begin(id,lfm::text::SessionLedger::Tokens(input.begin(),input.end()),count);
-    std::vector<int> generated;
+    p->options=sampling_options(request,cfg.shape.vocabulary,live);
+    p->sampler=std::make_unique<lfm::TextSampler>(p->options);
+    p->origin_rpc=rpc_id;
+    p->lease=std::make_unique<lfm::text::SessionLedger::Lease>(
+        ledger.begin(id,lfm::text::SessionLedger::Tokens(input.begin(),input.end()),p->count));
     auto check_cancellation=[&] {
       if(cancellation.requested(rpc_id)) throw GenerationCancelled{};
     };
@@ -454,72 +500,100 @@ class WorkerCore {
         session.runner=std::make_unique<Runner>(directory,shape,weights);
       }
       auto& runner=*session.runner;
-      const bool reuse=!lease.plan().full_prefill;
-      const size_t reused=lease.plan().reuse_tokens;
-      if(reuse && (session.consumed.size()!=reused || runner.cursor!=int(reused)))
+      const bool reuse=!p->lease->plan().full_prefill;
+      p->reused=p->lease->plan().reuse_tokens;
+      if(reuse && (session.consumed.size()!=p->reused || runner.cursor!=int(p->reused)))
         throw std::runtime_error("session physical cache/ledger disagreement");
       if(!reuse) {runner.reset();session.consumed.clear();session.last_scores.clear();}
       if(!reuse) {
         session.last_scores=lfm::text::at_cancellation_boundary(check_cancellation,[&] {return runner.forward(input);});
         session.consumed=input;
-      } else for(size_t i=reused;i<input.size();++i) {
+      } else for(size_t i=p->reused;i<input.size();++i) {
         check_cancellation();
         session.last_scores=runner.forward({input[i]});session.consumed.push_back(input[i]);
       }
-      const auto sampling_trace=sampling_trace_root+"/"+std::to_string(rpc_id);
-      if(trace_sampling && !std::filesystem::create_directory(sampling_trace))
+      p->sampling_trace=sampling_trace_root+"/"+std::to_string(rpc_id);
+      if(p->trace_sampling && !std::filesystem::create_directory(p->sampling_trace))
         throw std::runtime_error("sampling trace request already exists");
-      for(int t=0;t<count;++t) {
+    } catch(const GenerationCancelled&) {
+      session.runner.reset();session.consumed.clear();session.last_scores.clear();p->lease->abort();
+      write_cancelled(out,rpc_id,id,*p);
+      return false;
+    } catch(...) {
+      session.runner.reset();session.consumed.clear();session.last_scores.clear();throw;
+    }
+    session.pending=std::move(p);
+    return true;
+  }
+  // op text_step (and the rest of op generate): up to k iterations of op generate's decode loop, unchanged (check
+  // cancellation, trace, sample, then one forward unless the token ends the generation). Unfinished: {"busy":true}.
+  // Finished: op generate's reply. `cancel` (the Service's cancellation between slices) or the pipe's cancellation
+  // of this call ends it as op generate's cancellation does: the cache reset and the cancelled reply.
+  void text_step(const std::string& id,Session& session,int rpc_id,int k,bool cancel,std::ostream& out) {
+    auto& p=*session.pending;
+    auto check_cancellation=[&] {
+      // the pipe first: its frame for this call is consumed even when the Service's flag already cancels
+      if(cancellation.requested(rpc_id) || cancel) throw GenerationCancelled{};
+    };
+    try {
+      auto& runner=*session.runner;
+      bool finished=false;
+      for(int n=0;n<k;++n) {
         check_cancellation();
-        if(trace_sampling) {
+        if(p.trace_sampling) {
 #ifdef LFM3_NATIVE_GEMM
-          write_logits_trace(sampling_trace+"/"+std::to_string(t),session.last_scores);
+          write_logits_trace(p.sampling_trace+"/"+std::to_string(p.t),session.last_scores);
 #else
           std::vector<bf16> trace_scores(session.last_scores.size());
           for(size_t i=0;i<trace_scores.size();++i) trace_scores[i]=__float2bfloat16_rn(session.last_scores[i]);
-          std::ofstream trace_file(sampling_trace+"/"+std::to_string(t)+".logits.bf16",std::ios::binary);
+          std::ofstream trace_file(p.sampling_trace+"/"+std::to_string(p.t)+".logits.bf16",std::ios::binary);
           trace_file.write(reinterpret_cast<const char*>(trace_scores.data()),trace_scores.size()*sizeof(bf16));
           if(!trace_file) throw std::runtime_error("sampling trace write failed");
 #endif
         }
-        int token=sampler.sample(session.last_scores.data(),size_t(live),generated,choice_suppressed);
-        generated.push_back(token);
-        if(std::find(stops.begin(),stops.end(),token)!=stops.end() || t==count-1) break;
+        int token=p.sampler->sample(session.last_scores.data(),size_t(live),p.generated,choice_suppressed);
+        p.generated.push_back(token);
+        if(std::find(stops.begin(),stops.end(),token)!=stops.end() || p.t==p.count-1) {finished=true;break;}
         session.last_scores=runner.forward({token});session.consumed.push_back(token);
+        ++p.t;
+      }
+      if(!finished) {
+        out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)<<",\"busy\":true}\n"<<std::flush;
+        return;
       }
       check_cancellation();
-      lease.commit(lfm::text::SessionLedger::Tokens(generated.begin(),generated.end()),
-                   lfm::text::SessionLedger::Tokens(session.consumed.begin(),session.consumed.end()));
-      out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)<<",\"generated_ids\":";print_ids(out,generated);
-      out<<",\"reused_tokens\":"<<reused<<",\"consumed_tokens\":"<<session.consumed.size()
-                <<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed
+      p.lease->commit(lfm::text::SessionLedger::Tokens(p.generated.begin(),p.generated.end()),
+                      lfm::text::SessionLedger::Tokens(session.consumed.begin(),session.consumed.end()));
+      out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)<<",\"generated_ids\":";print_ids(out,p.generated);
+      out<<",\"reused_tokens\":"<<p.reused<<",\"consumed_tokens\":"<<session.consumed.size()
+                <<",\"do_sample\":"<<(p.options.do_sample?"true":"false")<<",\"seed\":"<<p.options.seed
                 <<",\"live_token_count\":"<<live;  // the token-choice bound this generation used (G6)
-      if(want_text) out<<",\"text\":"<<lfm::lfm3_text::json_string(lfm::lfm3_text::generated_text(text.get(),generated,stops));
-      if(trace_sampling) out<<",\"sampling_trace\":"<<rpc_id;
-      if(return_logits) {
+      if(p.want_text) out<<",\"text\":"<<lfm::lfm3_text::json_string(lfm::lfm3_text::generated_text(text.get(),p.generated,stops));
+      if(p.trace_sampling) out<<",\"sampling_trace\":"<<p.origin_rpc;
+      if(p.return_logits) {
         out<<",\"last_logits\":[";
         for(size_t i=0;i<session.last_scores.size();++i) {if(i)out<<',';out<<session.last_scores[i];}
         out<<']';
       }
       out<<"}\n"<<std::flush;
+      session.pending.reset();
     } catch(const GenerationCancelled&) {
-      session.runner.reset();session.consumed.clear();session.last_scores.clear();lease.abort();
-      out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)
-               <<",\"cancelled\":true,\"cache_valid\":false,\"consumed_tokens\":0,\"reused_tokens\":0,\"generated_ids\":";
-      print_ids(out,generated);
-      out<<",\"do_sample\":"<<(options.do_sample?"true":"false")<<",\"seed\":"<<options.seed
-               <<",\"live_token_count\":"<<live;  // G6 bound, on cancelled results too
-      if(want_text) out<<",\"text\":"<<lfm::lfm3_text::json_string(lfm::lfm3_text::generated_text(text.get(),generated,stops));
-      out<<"}\n"<<std::flush;
+      const auto owned=std::move(session.pending);  // the session is free whatever the reply's writing does
+      session.runner.reset();session.consumed.clear();session.last_scores.clear();owned->lease->abort();
+      write_cancelled(out,rpc_id,id,*owned);
     } catch(...) {
-      session.runner.reset();session.consumed.clear();session.last_scores.clear();throw;
+      session.runner.reset();session.consumed.clear();session.last_scores.clear();session.pending.reset();throw;
     }
-  } catch(const std::exception& e) {
-    out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":false,\"error\":"<<quote(e.what())<<"}\n"<<std::flush;
   }
-    return true;
+  void write_cancelled(std::ostream& out,int rpc_id,const std::string& id,const PendingText& p) {
+    out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"session_id\":"<<quote(id)
+             <<",\"cancelled\":true,\"cache_valid\":false,\"consumed_tokens\":0,\"reused_tokens\":0,\"generated_ids\":";
+    print_ids(out,p.generated);
+    out<<",\"do_sample\":"<<(p.options.do_sample?"true":"false")<<",\"seed\":"<<p.options.seed
+             <<",\"live_token_count\":"<<live;  // G6 bound, on cancelled results too
+    if(p.want_text) out<<",\"text\":"<<lfm::lfm3_text::json_string(lfm::lfm3_text::generated_text(text.get(),p.generated,stops));
+    out<<"}\n"<<std::flush;
   }
- private:
   std::string directory,sampling_trace_root;
   lfm::text::CancellationReader cancellation;
   bool cancellation_enabled;

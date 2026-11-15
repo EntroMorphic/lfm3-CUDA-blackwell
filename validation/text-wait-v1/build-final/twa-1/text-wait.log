@@ -1,0 +1,19 @@
+alone 2.194
+rule2 arrival 0: 5.98 s status 200
+rule2 arrival 1: 5.95 s status 200
+rule2 arrival 2: 5.97 s status 200
+rule2 arrival 3: 5.97 s status 200
+rule2 arrival 4: 5.99 s status 200
+rule2 arrival 5: 5.98 s status 200
+rule2 arrival 6: 5.98 s status 200
+rule2 arrival 7: 5.97 s status 200
+rule2 arrival 8: 5.97 s status 200
+rule2 arrival 9: 5.98 s status 200
+rule3 0.567 False
+rule4 trial 0: first audio 0.6383693990064785
+rule4 trial 1: first audio 0.6409549519885331
+rule4 trial 2: first audio 0.6407796140410937
+rule4 trial 3: first audio 0.6353085450245999
+rule4 trial 4: first audio 0.6396709179971367
+deadline 200
+{"rule2": true, "rule3": false, "rule4": true, "deadline": true}

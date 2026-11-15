@@ -1,0 +1,4 @@
+========= ERROR SUMMARY: 3341 errors
+3328 =========     at lfm::lfm3::convolution7(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, __nv_bfloat16 *, int, int)+0x4d0
+3328 ========= Uninitialized __global__ memory read of size 2 bytes
+PASS 30

@@ -1,0 +1,6 @@
+pair 0: text 0.9979 one 0.9970 crowd 0.9990 identical True
+pair 1: text 0.9987 one 0.9996 crowd 0.9999 identical True
+pair 2: text 0.9983 one 0.9996 crowd 1.0004 identical True
+pair 3: text 0.9993 one 1.0008 crowd 1.0046 identical True
+pair 4: text 1.0010 one 1.0003 crowd 1.0011 identical True
+{"median_ratio": {"text": 0.9987267669457325, "one": 0.9996393163041501, "crowd": 1.0003544908859763}, "pass_": true}

@@ -1,0 +1,4 @@
+== soak 15:10:54
+{"pass_": true, "counts": {"unstreamed": 1938, "streamed": 2386, "dropped": 261, "text": 1451, "retries_429": 49234}, "statuses": {"200": 6036}, "differ": 0, "errors": 0, "memory_idle": {"server_rss": {"first_mib": 5400.0, "last_mib": 5408.6, "growth_mib": 8.6, "every_mib": [5400.0, 5400.7, 5409.3, 5409.1, 5408.8, 5408.8, 5408.6], "pass_": true}, "host_used_less_client": {"first_mib": 12092.1, "last_mib": 11803.5, "growth_mib": -288.6, "every_mib": [12092.1, 12190.9, 11942.4, 12218.4, 11770.6, 12230.0, 11803.5], "pass_": true}}, "client_load": {"base_median_mib": 245.5, "late_median_mib": 447.1, "growth_mib": 201.6, "pass_": false}, "crowd": {"unstreamed": 42, "streamed": 42}, "exit": 0}
+AUDIO SOAK PASS
+MEMDIAG DONE 17:26:59

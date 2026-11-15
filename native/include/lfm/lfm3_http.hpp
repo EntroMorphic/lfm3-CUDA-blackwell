@@ -24,6 +24,16 @@
 //  - After a fatal engine error, including an engine call longer than engine_timeout, the process
 //    keeps answering 503 as the Python server does, but keeps its GPU allocations until it exits (the
 //    engine is in-process; there is no worker to kill).
+//  - Text generation is sliced (validation/text-wait-v1): ops text_begin and text_step, interleaved one
+//    token per speech step while speech rows run, so text no longer waits for the speech batch to
+//    drain, and session operations run between speech steps. Every reply is the same as alone. Three
+//    behaviors differ from before:
+//    * a text generation that passes its deadline while running is cancelled at its next slice (the
+//      client's 504 is unchanged; its session's cache is reset instead of kept);
+//    * an active text generation has left the queue, as an admitted speech row has, so one more
+//      request is in flight at the same --queue-size;
+//    * generate_batch, and op speech without speech rows, still wait for the rows (and any text
+//      generation) to finish, and hold back later speech meanwhile.
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -429,9 +439,13 @@ struct Settings {
   double request_timeout = 330, socket_timeout = 10, session_idle_timeout = 300;
   // One engine call (lfm3_worker_client's per-RPC worker timeout): past it the service fails closed.
   double engine_timeout = 300;
+  // Tokens per text slice while no speech row runs (validation/text-wait-v1): new speech and session operations wait
+  // at most one slice (16 tokens: about 0.26 s on Thor); while rows run, a slice is one token.
+  int text_slice = 16;
   void validate() const {
     const auto in = [](long long v, long long lo, long long hi) { return v >= lo && v <= hi; };
-    if (!in(max_sessions, 1, 2) || !in(total_capacity, 2, 32768) || !in(queue_size, 1, 64) || !in(handlers, 1, 128))
+    if (!in(max_sessions, 1, 2) || !in(total_capacity, 2, 32768) || !in(queue_size, 1, 64) || !in(handlers, 1, 128) ||
+        !in(text_slice, 1, 4096))
       throw std::invalid_argument("invalid server settings");
     for (const double t : {request_timeout, socket_timeout, session_idle_timeout, engine_timeout})
       if (!std::isfinite(t) || !(t > 0 && t <= 86400)) throw std::invalid_argument("invalid timeout");
@@ -567,7 +581,11 @@ class Service {
   }
 
   // `body` is shared, not copied, and dropped as soon as the prompt is encoded.
-  std::string generate(std::shared_ptr<const Json> body) {
+  // `gone` (optional; polled about every 50 ms while the request waits): true when the client's connection is reset. The
+  // generation is then cancelled at its next slice, as /cancel would (its cache reset), and its reply goes nowhere
+  // (text-wait-v1 rule 6: before, it ran to its end for no one, its cache kept). A client that only half-closes keeps
+  // its request.
+  std::string generate(std::shared_ptr<const Json> body, const std::function<bool()>& gone = {}) {
     const auto deadline = Clock::now() + seconds(settings_.request_timeout);
     auto request = std::make_shared<Generation>(validate_generation(*body, body));
     body.reset();
@@ -581,24 +599,19 @@ class Service {
       release(sid, event);
       throw;
     }
-    auto run = [this, request, event, deadline] {
-      if (Clock::now() >= deadline) throw ApiError(504, "queue_deadline");
-      if (event->load()) {
-        const auto reset = rpc(Obj().str("op", "reset").str("session_id", request->sid));
-        if (!flag(reset, "reset") || !session_matches(reset, request->sid)) throw WorkerFailure("invalid cancellation reset reply");
-        return Obj().str("session_id", request->sid).str("text", "").ids("generated_ids", {}).num("consumed_tokens", 0)
-            .num("reused_tokens", 0).boolean("cancelled", true).str("finish_reason", "cancelled").boolean("cache_valid", false)
-            .boolean("do_sample", request->sampling.do_sample).num("seed", request->sampling.seed).boolean("gpu_batching", false)
-            .done();
-      }
-      const auto result = rpc(native_request(*request).str("op", "generate").str("session_id", request->sid),
-                              {{request->sid, event}});
-      auto response = generation_response(*request, result, *event, false);
-      const auto out = response.body.done();
-      if (out.size() > kMaxResponse) throw WorkerFailure("response exceeds limit");
-      return out;
-    };
-    return submit(run, [this, sid, event] { release(sid, event); }, nullptr, deadline);
+    // run by the engine owner as a kText job (text_begin, then text_cycle), not through `function`; waited on as submit
+    // waits, with the client's connection watched
+    auto [job, future] = enqueue(nullptr, [this, sid, event] { release(sid, event); }, nullptr, deadline, Kind::kText,
+                                 request, event);
+    for (;;) {
+      const auto tick = std::min(deadline, Clock::now() + std::chrono::milliseconds(50));
+      if (future.wait_until(tick) == std::future_status::ready) return future.get();
+      if (Clock::now() >= deadline) break;
+      if (gone && !event->load() && gone()) event->store(true);  // as /cancel: cancelled at its next slice
+    }
+    if (abandon(*job, future)) return future.get();
+    // Do not release a running generation lease or pretend cancellation.
+    throw ApiError(504, "request_deadline_outcome_unknown");
   }
 
   std::string generate_batch(std::shared_ptr<const Json> body) {
@@ -697,7 +710,7 @@ class Service {
       if (out.size() > kMaxResponse) throw WorkerFailure("response exceeds limit");
       return out;
     };
-    return submit(run, cleanup, nullptr, deadline);
+    return submit(run, cleanup, nullptr, deadline, Kind::kExclusive);
   }
 
   // Stops admission, fails every later request, cancels running generations at their next token
@@ -1025,13 +1038,23 @@ class Service {
     std::vector<int> generated;
     bool cancelled = false;
   };
+  // How the engine owner schedules a queued job (validation/text-wait-v1):
+  //   kShort      a session operation (create, reset, close): one short engine call, run between speech steps;
+  //   kText       a text generation: begun (prefill) between speech steps, then one token per speech step while speech
+  //               rows run (a long slice when none do); one text generation at a time, first in first out;
+  //   kExclusive  one whole engine call that waits for the running speech rows and text to finish, and holds back
+  //               later speech meanwhile (generate_batch; op "speech" without speech rows): the batch drains for it.
+  enum class Kind { kShort, kText, kExclusive };
   struct Job {
-    std::function<std::string()> function;
+    std::function<std::string()> function;  // kShort, kExclusive
     std::promise<std::string> promise;
     Clock::time_point deadline, arrived;
     std::function<void()> cleanup, discard;
     std::mutex completion;
     bool abandoned = false;
+    Kind kind = Kind::kShort;
+    std::shared_ptr<Generation> text;  // kText: the request
+    Event event;                       // kText: its cancellation
   };
   struct Active {
     std::uint64_t token = 0;
@@ -1104,7 +1127,7 @@ class Service {
                               {{"speech", event}}, false, kMaxSpeechResponse);
       return speech_response(*request, result);
     };
-    return submit(run, [] {}, nullptr, deadline);
+    return submit(run, [] {}, nullptr, deadline, Kind::kExclusive);
   }
 
   // POST /speech with "stream": true (validation/speech-stream-v1): the same request, its reply as events while the
@@ -1185,7 +1208,7 @@ class Service {
         state.check(result);
         return speech_response(*request, result);
       };
-      auto queued = enqueue(run, [] {}, nullptr, deadline);
+      auto queued = enqueue(run, [] {}, nullptr, deadline, Kind::kExclusive);
       future = std::move(queued.second);
       auto job = queued.first;
       abandon_now = [job, &future] { return abandon(*job, future); };
@@ -1518,10 +1541,14 @@ class Service {
     t.settled = true;
     t.promise.set_exception(std::make_exception_ptr(e));
   }
-  // Whether queued speech goes first: it arrived before the oldest waiting job (caller holds queue_lock_). Requests
-  // are served in arrival order between the two queues, so neither kind starves the other.
+  // Whether queued speech may be admitted (caller holds queue_lock_): unless an exclusive job (kExclusive) that
+  // arrived first waits in the queue, for which the rows drain. Session operations and text generations
+  // run between speech steps (validation/text-wait-v1), so they hold nothing back.
   bool speech_first() const {
-    return !speech_queue_.empty() && (queue_.empty() || speech_queue_.front()->arrived < queue_.front()->arrived);
+    if (speech_queue_.empty()) return false;
+    for (const auto& job : queue_)
+      if (job->kind == Kind::kExclusive) return speech_queue_.front()->arrived < job->arrived;
+    return true;
   }
   // One cycle of the speech batch (engine-owner thread): drop queued tickets nobody will read; admit queued tickets
   // into free rows while they arrived before any waiting job (a job that arrived first waits only for the running rows:
@@ -1618,9 +1645,11 @@ class Service {
   }
 
   std::string submit(std::function<std::string()> function, std::function<void()> cleanup, std::function<void()> discard,
-                     std::optional<Clock::time_point> when = std::nullopt) {
+                     std::optional<Clock::time_point> when = std::nullopt, Kind kind = Kind::kShort,
+                     std::shared_ptr<Generation> text = nullptr, Event event = nullptr) {
     const auto deadline = when ? *when : Clock::now() + seconds(settings_.request_timeout);
-    auto [job, future] = enqueue(std::move(function), std::move(cleanup), std::move(discard), deadline);
+    auto [job, future] = enqueue(std::move(function), std::move(cleanup), std::move(discard), deadline, kind,
+                                 std::move(text), std::move(event));
     if (future.wait_until(deadline) == std::future_status::ready) return future.get();
     if (abandon(*job, future)) return future.get();
     // Do not release a running generation lease or pretend cancellation.
@@ -1636,9 +1665,15 @@ class Service {
   std::pair<std::shared_ptr<Job>, std::future<std::string>> enqueue(std::function<std::string()> function,
                                                                     std::function<void()> cleanup,
                                                                     std::function<void()> discard,
-                                                                    Clock::time_point deadline) {
+                                                                    Clock::time_point deadline,
+                                                                    Kind kind = Kind::kShort,
+                                                                    std::shared_ptr<Generation> text = nullptr,
+                                                                    Event event = nullptr) {
     auto job = std::make_shared<Job>();
     job->function = std::move(function);
+    job->kind = kind;
+    job->text = std::move(text);
+    job->event = std::move(event);
     job->deadline = deadline;
     job->arrived = Clock::now();
     job->cleanup = cleanup;
@@ -1699,70 +1734,186 @@ class Service {
     for (const auto& sid : expired) close_allocation(sid);
   }
 
+  // The engine owner (validation/text-wait-v1). Each pass, in this order:
+  //   1. close idle sessions;
+  //   2. at most one queued job, the first in arrival order that can run: a session operation (kShort) at once; a text
+  //      generation (kText) when no other is active; an exclusive job (kExclusive) once no speech row and no text
+  //      generation is running (nothing behind it runs before it);
+  //   3. one speech cycle when rows run or queued speech may be admitted (speech_first);
+  //   4. one text slice when a text generation is active: one token while speech rows run, a long slice otherwise.
+  // Every engine call is still made by this thread, one at a time; a session's text and the speech batch share no
+  // engine state but the read-only weights, so the order of their calls changes no byte (TEXT_WAIT_DESIGN.md §2.D).
   void run() {
     for (;;) {
-      std::shared_ptr<Job> job;
       {
         std::unique_lock q(queue_lock_);
-        if (stopping_ && queue_.empty() && speech_queue_.empty() && running_.empty()) return;
+        if (stopping_ && queue_.empty() && speech_queue_.empty() && running_.empty() && !text_) return;
       }
       try { reap_idle(); }
       catch (...) { fatal(); }
+      std::shared_ptr<Job> job;
       bool speech = false;
       {
         std::unique_lock q(queue_lock_);
         queue_cv_.wait_for(q, std::chrono::milliseconds(50), [&] {
-          return !queue_.empty() || !speech_queue_.empty() || !running_.empty() || stopping_.load();
+          return !queue_.empty() || !speech_queue_.empty() || !running_.empty() || text_ || stopping_.load();
         });
-        // speech rows run on until they finish; queued speech is admitted in arrival order with the other jobs (a job
-        // that arrived first waits only for the running rows: the batch drains for it)
+        // the first job, in arrival order, that can run now: a text generation waiting for the active one does not hold
+        // back a later session operation (a session's lease already orders its own operations), but an exclusive job
+        // holds back everything behind it, so it cannot be starved
+        for (auto it = queue_.begin(); it != queue_.end(); ++it) {
+          const auto kind = (*it)->kind;
+          if (kind == Kind::kText && text_) continue;
+          if (kind == Kind::kExclusive && (!running_.empty() || text_ ||
+                                           (!speech_queue_.empty() && speech_queue_.front()->arrived < (*it)->arrived)))
+            break;  // the rows (and earlier speech) first: the batch drains for it
+          job = *it;
+          queue_.erase(it);
+          break;
+        }
         speech = !running_.empty() || speech_first();
-        if (!speech) {
-          if (queue_.empty()) continue;
-          job = queue_.front();
-          queue_.pop_front();
-        }
       }
-      if (speech) {
-        speech_cycle();
-        continue;
+      if (job) {
+        if (job->kind == Kind::kText) begin_text(job);
+        else run_job(job);
       }
-      std::string result;
-      try {
-        if (failed()) throw ApiError(503, "worker_unavailable");
-        if (Clock::now() >= job->deadline) throw ApiError(504, "queue_deadline");
-        result = job->function();
-      } catch (const ApiError&) {
+      if (speech) speech_cycle();
+      if (text_) text_cycle();
+    }
+  }
+
+  // A kShort or kExclusive job: its function, once.
+  void run_job(const std::shared_ptr<Job>& job) {
+    std::string result;
+    try {
+      if (failed()) throw ApiError(503, "worker_unavailable");
+      if (Clock::now() >= job->deadline) throw ApiError(504, "queue_deadline");
+      result = job->function();
+    } catch (const ApiError&) {
+      job->cleanup();
+      job->promise.set_exception(std::current_exception());
+      return;
+    } catch (...) {
+      fatal();
+      job->cleanup();
+      job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
+      return;
+    }
+    complete(job, std::move(result));
+  }
+
+  // Publish completion and observe abandonment atomically. Only this owner thread may release an abandoned native
+  // allocation.
+  void complete(const std::shared_ptr<Job>& job, std::string result) {
+    bool abandoned = false;
+    {
+      std::lock_guard g(job->completion);
+      const bool expired = job->abandoned || Clock::now() >= job->deadline;
+      abandoned = job->discard && expired;
+      if (expired) {
+        if (!abandoned) job->cleanup();
+        job->promise.set_exception(std::make_exception_ptr(ApiError(504, "request_deadline_outcome_unknown")));
+      } else {
         job->cleanup();
-        job->promise.set_exception(std::current_exception());
-        continue;
-      } catch (...) {
-        fatal();
-        job->cleanup();
-        job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
-        continue;
-      }
-      // Publish completion and observe abandonment atomically. Only this owner thread may release an
-      // abandoned native allocation.
-      bool abandoned = false;
-      {
-        std::lock_guard g(job->completion);
-        const bool expired = job->abandoned || Clock::now() >= job->deadline;
-        abandoned = job->discard && expired;
-        if (expired) {
-          if (!abandoned) job->cleanup();
-          job->promise.set_exception(std::make_exception_ptr(ApiError(504, "request_deadline_outcome_unknown")));
-        } else {
-          job->cleanup();
-          job->promise.set_value(std::move(result));
-        }
-      }
-      if (abandoned) {
-        try { job->discard(); }
-        catch (...) { fatal(); }
-        job->cleanup();
+        job->promise.set_value(std::move(result));
       }
     }
+    if (abandoned) {
+      try { job->discard(); }
+      catch (...) { fatal(); }
+      job->cleanup();
+    }
+  }
+
+  // A text generation's reply from the engine's final reply (op generate's, from text_begin or text_step).
+  std::string text_reply(const Job& job, const Json& result) {
+    auto response = generation_response(*job.text, result, *job.event, false);
+    auto out = response.body.done();
+    if (out.size() > kMaxResponse) throw WorkerFailure("response exceeds limit");
+    return out;
+  }
+
+  // A kText job leaves the queue: checks, then op text_begin (the prefill, one call). Cancelled before it starts,
+  // the session is reset instead, as before. A failure fails the service closed (any engine refusal does).
+  void begin_text(const std::shared_ptr<Job>& job) {
+    const auto& request = *job->text;
+    std::string result;
+    try {
+      if (failed()) throw ApiError(503, "worker_unavailable");
+      if (Clock::now() >= job->deadline) throw ApiError(504, "queue_deadline");
+      if (job->event->load()) {
+        const auto reset = rpc(Obj().str("op", "reset").str("session_id", request.sid));
+        if (!flag(reset, "reset") || !session_matches(reset, request.sid)) throw WorkerFailure("invalid cancellation reset reply");
+        result = Obj().str("session_id", request.sid).str("text", "").ids("generated_ids", {}).num("consumed_tokens", 0)
+            .num("reused_tokens", 0).boolean("cancelled", true).str("finish_reason", "cancelled").boolean("cache_valid", false)
+            .boolean("do_sample", request.sampling.do_sample).num("seed", request.sampling.seed).boolean("gpu_batching", false)
+            .done();
+      } else {
+        const auto reply = rpc(native_request(request).str("op", "text_begin").str("session_id", request.sid),
+                               {{request.sid, job->event}});
+        if (flag(reply, "begun")) {
+          if (!session_matches(reply, request.sid) || reply.has("generated_ids")) throw WorkerFailure("invalid text_begin reply");
+          text_ = job;
+          return;
+        }
+        result = text_reply(*job, reply);  // cancelled during its prefill: the generation's final reply
+      }
+    } catch (const ApiError&) {
+      job->cleanup();
+      job->promise.set_exception(std::current_exception());
+      return;
+    } catch (...) {
+      fatal();
+      job->cleanup();
+      job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
+      return;
+    }
+    complete(job, std::move(result));
+  }
+
+  // One slice of the active text generation: one token while speech rows run, settings_.text_slice otherwise. A client's
+  // cancellation, the job's deadline, its abandonment or shutdown cancels it at this slice (op generate's cancelled
+  // reply: the cache reset); /cancel can also reach a slice in progress through the pipe (its rpc's targets).
+  void text_cycle() {
+    const auto job = text_;
+    const auto& request = *job->text;
+    std::string result;
+    try {
+      // shutdown marks the service failed as it sets cancel_all_: the generation is still cancelled at this slice
+      // (its cancelled reply, as /cancel would give), while the engine is open; any other failure answers 503
+      if (failed() && !cancel_all_) throw ApiError(503, "worker_unavailable");
+      bool abandoned;
+      {
+        std::lock_guard g(job->completion);
+        abandoned = job->abandoned;
+      }
+      // the owner's own cancellations are requested as /cancel requests one (the event set first), so the cancelled
+      // reply is a solicited one (generation_response refuses any other)
+      if (cancel_all_ || abandoned || Clock::now() >= job->deadline) job->event->store(true);
+      const bool cancel = job->event->load();
+      const int tokens = running_.empty() ? settings_.text_slice : 1;
+      const auto reply = rpc(Obj().str("op", "text_step").str("session_id", request.sid).num("tokens", tokens)
+                                 .boolean("cancel", cancel),
+                             {{request.sid, job->event}});
+      if (flag(reply, "busy")) {
+        if (!session_matches(reply, request.sid) || reply.has("generated_ids")) throw WorkerFailure("invalid text_step reply");
+        return;
+      }
+      result = text_reply(*job, reply);
+    } catch (const ApiError&) {
+      text_.reset();
+      job->cleanup();
+      job->promise.set_exception(std::current_exception());
+      return;
+    } catch (...) {
+      text_.reset();
+      fatal();
+      job->cleanup();
+      job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
+      return;
+    }
+    text_.reset();
+    complete(job, std::move(result));
   }
 
   Backend& backend_;
@@ -1787,6 +1938,8 @@ class Service {
   // under queue_lock_ by that thread only), and shutdown's cancellation of them all
   std::deque<std::shared_ptr<Ticket>> speech_queue_;
   std::map<long long, std::shared_ptr<Ticket>> running_;
+  // the active text generation (engine-owner thread only; read under queue_lock_ by that thread only)
+  std::shared_ptr<Job> text_;
   std::atomic<long long> ticket_serial_{0};
   std::atomic<bool> cancel_all_{false};
   std::atomic<bool> in_call_{false}, timed_out_{false};
@@ -2025,6 +2178,11 @@ class Connection {
     // reader that is reading
     send_all(out, Clock::now() + std::chrono::seconds(60 + (out.size() >> 20)));
   }
+  // The client reset its connection (an unstreamed request's `gone`); a half-close (FIN only) is not a reset.
+  bool reset_by_peer() const {
+    pollfd p{fd_, POLLRDHUP, 0};
+    return ::poll(&p, 1, 0) > 0 && (p.revents & (POLLHUP | POLLERR)) != 0;
+  }
   // A streamed /speech reply: 200 and newline-delimited JSON, no Content-Length (HTTP/1.0: the body ends when the
   // connection closes). The status line goes out with the first event.
   void stream_speech(std::shared_ptr<const Json> parsed) {
@@ -2115,7 +2273,7 @@ class Connection {
       const Json& request = *parsed;
       std::string result;
       if (r.path == "/sessions") result = service_.create(request);
-      else if (r.path == "/generate") result = service_.generate(std::move(parsed));
+      else if (r.path == "/generate") result = service_.generate(std::move(parsed), [this] { return reset_by_peer(); });
       else if (r.path == "/generate_batch") result = service_.generate_batch(std::move(parsed));
       else if (r.path == "/speech") {
         // "stream" is checked as a field by validate_speech: only a literal true streams
@@ -2128,10 +2286,7 @@ class Connection {
           stream_speech(std::move(parsed));
           return;
         }
-        reply(200, service_.speech(std::move(parsed), [this] {
-                pollfd p{fd_, POLLRDHUP, 0};
-                return ::poll(&p, 1, 0) > 0 && (p.revents & (POLLHUP | POLLERR)) != 0;
-              }), kMaxSpeechResponse);
+        reply(200, service_.speech(std::move(parsed), [this] { return reset_by_peer(); }), kMaxSpeechResponse);
         return;
       }
       else {

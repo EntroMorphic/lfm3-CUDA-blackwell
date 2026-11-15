@@ -1,0 +1,219 @@
+{
+ "server_sha256": "610c8c1d9c9dcd498844742c5a563c09f6417a0d3439132a242a9baeb3ab2b86",
+ "seconds": 7200,
+ "clients": 12,
+ "text_share": 0.25,
+ "reference_server_exit": 0,
+ "worker_found": false,
+ "counts": {
+  "unstreamed": 1938,
+  "streamed": 2386,
+  "dropped": 261,
+  "text": 1451,
+  "retries_429": 49234
+ },
+ "statuses": {
+  "200": 6036
+ },
+ "differ": [],
+ "differ_count": 0,
+ "errors": [],
+ "error_count": 0,
+ "soak_seconds": 7329.8,
+ "memory_idle": {
+  "server_rss": {
+   "first_mib": 5400.0,
+   "last_mib": 5408.6,
+   "growth_mib": 8.6,
+   "every_mib": [
+    5400.0,
+    5400.7,
+    5409.3,
+    5409.1,
+    5408.8,
+    5408.8,
+    5408.6
+   ],
+   "pass_": true
+  },
+  "host_used_less_client": {
+   "first_mib": 12092.1,
+   "last_mib": 11803.5,
+   "growth_mib": -288.6,
+   "every_mib": [
+    12092.1,
+    12190.9,
+    11942.4,
+    12218.4,
+    11770.6,
+    12230.0,
+    11803.5
+   ],
+   "pass_": true
+  }
+ },
+ "memory_load": {
+  "server_rss": {
+   "base_median_mib": 5429.4,
+   "late_median_mib": 5457.1,
+   "growth_mib": 27.7,
+   "pass_": true
+  },
+  "host_used": {
+   "base_median_mib": 12051.3,
+   "late_median_mib": 12399.7,
+   "growth_mib": 348.4,
+   "pass_": false
+  },
+  "host_used_less_client": {
+   "base_median_mib": 11810.3,
+   "late_median_mib": 11951.6,
+   "growth_mib": 141.3,
+   "pass_": false
+  },
+  "client_rss": {
+   "base_median_mib": 245.5,
+   "late_median_mib": 447.1,
+   "growth_mib": 201.6,
+   "pass_": false
+  },
+  "client_rss_trimmed": {
+   "base_median_mib": 232.6,
+   "late_median_mib": 429.1,
+   "growth_mib": 196.5,
+   "pass_": false
+  }
+ },
+ "memory_endpoint": {
+  "server_rss": {
+   "early_max_mib": 5462.5,
+   "end_mib": 5408.6,
+   "overall_max_mib": 5570.7,
+   "pass_": true
+  },
+  "host_used": {
+   "early_max_mib": 12311.9,
+   "end_mib": 12207.9,
+   "overall_max_mib": 12623.2,
+   "pass_": true
+  },
+  "host_used_less_client": {
+   "early_max_mib": 12093.8,
+   "end_mib": 11804.3,
+   "overall_max_mib": 12222.9,
+   "pass_": true
+  },
+  "client_rss": {
+   "early_max_mib": 257.5,
+   "end_mib": 403.7,
+   "overall_max_mib": 488.6,
+   "pass_": false
+  },
+  "client_rss_trimmed": {
+   "early_max_mib": 237.0,
+   "end_mib": 403.7,
+   "overall_max_mib": 458.7,
+   "pass_": false
+  }
+ },
+ "checkpoints": [
+  {
+   "t": 300.0,
+   "drain_seconds": 78.0,
+   "server_rss": 5662351360.0,
+   "server_rss_spread_mib": 0.0,
+   "host_used": 12908142592.0,
+   "host_used_spread_mib": 4.0,
+   "client_rss": 228634624.0,
+   "client_rss_spread_mib": 0.0,
+   "host_used_less_client": 12679507968.0,
+   "host_used_less_client_spread_mib": 4.0
+  },
+  {
+   "t": 1503.1,
+   "drain_seconds": 111.2,
+   "server_rss": 5663023104.0,
+   "server_rss_spread_mib": 0.0,
+   "host_used": 13034422272.0,
+   "host_used_spread_mib": 0.0,
+   "client_rss": 251363328.0,
+   "client_rss_spread_mib": 0.0,
+   "host_used_less_client": 12783058944.0,
+   "host_used_less_client_spread_mib": 0.0
+  },
+  {
+   "t": 2704.3,
+   "drain_seconds": 65.6,
+   "server_rss": 5672017920.0,
+   "server_rss_spread_mib": 0.0,
+   "host_used": 12882909184.0,
+   "host_used_spread_mib": 502.9,
+   "client_rss": 359063552.0,
+   "client_rss_spread_mib": 2.5,
+   "host_used_less_client": 12522555392.0,
+   "host_used_less_client_spread_mib": 502.9
+  },
+  {
+   "t": 3905.0,
+   "drain_seconds": 75.6,
+   "server_rss": 5671849984.0,
+   "server_rss_spread_mib": 0.0,
+   "host_used": 13222211584.0,
+   "host_used_spread_mib": 10.1,
+   "client_rss": 410308608.0,
+   "client_rss_spread_mib": 4.1,
+   "host_used_less_client": 12811902976.0,
+   "host_used_less_client_spread_mib": 14.0
+  },
+  {
+   "t": 5100.6,
+   "drain_seconds": 73.2,
+   "server_rss": 5671514112.0,
+   "server_rss_spread_mib": 0.0,
+   "host_used": 12785934336.0,
+   "host_used_spread_mib": 2.9,
+   "client_rss": 443465728.0,
+   "client_rss_spread_mib": 3.9,
+   "host_used_less_client": 12342339584.0,
+   "host_used_less_client_spread_mib": 6.6
+  },
+  {
+   "t": 6303.9,
+   "drain_seconds": 94.0,
+   "server_rss": 5671505920.0,
+   "server_rss_spread_mib": 0.0,
+   "host_used": 13249802240.0,
+   "host_used_spread_mib": 541.1,
+   "client_rss": 425701376.0,
+   "client_rss_spread_mib": 32.4,
+   "host_used_less_client": 12824100864.0,
+   "host_used_less_client_spread_mib": 508.8
+  },
+  {
+   "t": 7202.9,
+   "drain_seconds": 106.8,
+   "server_rss": 5671374848.0,
+   "server_rss_spread_mib": 0.0,
+   "host_used": 12800524288.0,
+   "host_used_spread_mib": 505.6,
+   "client_rss": 423260160.0,
+   "client_rss_spread_mib": 40.9,
+   "host_used_less_client": 12376891392.0,
+   "host_used_less_client_spread_mib": 510.9
+  }
+ ],
+ "alive_throughout": true,
+ "crowd_after": {
+  "unstreamed": {
+   "identical": 42,
+   "differ": []
+  },
+  "streamed": {
+   "identical": 42,
+   "differ": []
+  }
+ },
+ "server_exit": 0,
+ "server_stderr": "",
+ "pass_": true
+}

@@ -3,7 +3,8 @@ ops speech_admit/speech_step) behind the harness's fake engine, on every build v
 
 The fake runs one chunk of every busy row per step, after --token-delay-ms (native/tests/lfm3_http_harness.cpp), so
 times show what ran together. Checked: requests in a batch get the replies they get alone; rows fill and refill from
-the queue; the queue's limit; a text job drains the batch and runs before later speech; one request cancelled or
+the queue; the queue's limit; a text job runs between speech steps and holds back no later speech (validation/text-wait-v1;
+before, the batch drained for it); one request cancelled or
 abandoned leaves the others; shutdown cancels every row and fails the queued; an engine failure fails them all; the
 single-request path (--speech-rows 0) still serves.
 """
@@ -58,7 +59,7 @@ def test_the_queue_has_a_limit(harness_binary):
     assert statuses == [200, 200, 429] and any(b == {"error": "queue_full"} for _, b in got)
 
 
-def test_a_text_job_drains_the_batch_and_runs_before_later_speech(harness_binary):
+def test_a_text_job_runs_between_speech_steps_and_holds_back_no_later_speech(harness_binary):
     with running(harness_binary, "--speech-rows", "2", "--token-delay-ms", "200") as h:
         status, created = h.call("POST", "/sessions", {"capacity": 512})
         assert status == 200
@@ -82,9 +83,9 @@ def test_a_text_job_drains_the_batch_and_runs_before_later_speech(harness_binary
         t3.start()
         for x in (t, t2, t3):
             x.join(60)
-        # the text job waits for the running rows (none is admitted beside them meanwhile), then runs before the
-        # speech that arrived after it
-        assert done["speech"] <= done["text"] <= done["later"], done
+        # validation/text-wait-v1: the text job runs between speech steps (one token each), so it ends before the
+        # 9-step speech; the later speech takes the free row meanwhile instead of waiting for a drain
+        assert done["text"] < done["speech"] and done["later"] < done["speech"], done
 
 
 def test_cancelling_one_stream_leaves_the_other(harness_binary):

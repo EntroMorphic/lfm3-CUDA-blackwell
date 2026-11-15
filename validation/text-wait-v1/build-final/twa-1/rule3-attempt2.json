@@ -1,0 +1,203 @@
+{
+ "server_sha256": "414c1a9c8253aaf6ab26dac014ea677d486d0b7b608ac46827b90d352f7ec65b",
+ "phases": {
+  "rule3": {
+   "load": [
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.6164166839444079
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5715933999745175
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5911227759788744
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.45844988099997863
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.455938880040776
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.45762878097593784
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.45677153597353026
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.8609716970240697
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.8749605260090902
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.8440011910279281
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5548133910051547
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5699117920012213
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5704617039882578
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.596920539974235
+    }
+   ],
+   "arrivals": [
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5919597299653105
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.556705389986746
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5650260089896619
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.6272108979756013
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5945111489854753
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5777122509898618
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5596137670218013
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.564754067978356
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5711884699994698
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.589346338994801
+    }
+   ],
+   "texts": [
+    {
+     "seconds": 6.057,
+     "status": 200
+    },
+    {
+     "seconds": 6.23,
+     "status": 200
+    },
+    {
+     "seconds": 6.083,
+     "status": 200
+    },
+    {
+     "seconds": 6.131,
+     "status": 200
+    }
+   ],
+   "first_audio_median": 0.574,
+   "pass_": true
+  }
+ },
+ "server_exit": 0,
+ "verdicts": {
+  "rule3": true
+ }
+}

@@ -1,0 +1,22 @@
+references done
+checkpoint t=300 s: drained 78.0 s, server RSS 5400.0 MiB, host less client 12092.1 MiB (spread 4.0)
+t=603 s: 523 requests, 0 differ, 0 errors
+t=1203 s: 1091 requests, 0 differ, 0 errors
+checkpoint t=1503 s: drained 111.2 s, server RSS 5400.7 MiB, host less client 12190.9 MiB (spread 0.0)
+t=1804 s: 1532 requests, 0 differ, 0 errors
+t=2404 s: 2032 requests, 0 differ, 0 errors
+checkpoint t=2704 s: drained 65.6 s, server RSS 5409.3 MiB, host less client 11942.4 MiB (spread 502.9)
+t=3004 s: 2517 requests, 0 differ, 0 errors
+t=3604 s: 3078 requests, 0 differ, 0 errors
+checkpoint t=3905 s: drained 75.6 s, server RSS 5409.1 MiB, host less client 12218.4 MiB (spread 14.0)
+t=4200 s: 3564 requests, 0 differ, 0 errors
+t=4800 s: 4130 requests, 0 differ, 0 errors
+checkpoint t=5101 s: drained 73.2 s, server RSS 5408.8 MiB, host less client 11770.6 MiB (spread 6.6)
+t=5403 s: 4576 requests, 0 differ, 0 errors
+t=6003 s: 5008 requests, 0 differ, 0 errors
+checkpoint t=6304 s: drained 94.0 s, server RSS 5408.8 MiB, host less client 12230.0 MiB (spread 508.8)
+t=6602 s: 5490 requests, 0 differ, 0 errors
+t=7202 s: 6024 requests, 0 differ, 0 errors
+checkpoint t=7203 s: drained 106.8 s, server RSS 5408.6 MiB, host less client 11803.5 MiB (spread 510.9)
+{"pass_": true, "counts": {"unstreamed": 1938, "streamed": 2386, "dropped": 261, "text": 1451, "retries_429": 49234}, "statuses": {"200": 6036}, "differ": 0, "errors": 0, "memory_idle": {"server_rss": {"first_mib": 5400.0, "last_mib": 5408.6, "growth_mib": 8.6, "every_mib": [5400.0, 5400.7, 5409.3, 5409.1, 5408.8, 5408.8, 5408.6], "pass_": true}, "host_used_less_client": {"first_mib": 12092.1, "last_mib": 11803.5, "growth_mib": -288.6, "every_mib": [12092.1, 12190.9, 11942.4, 12218.4, 11770.6, 12230.0, 11803.5], "pass_": true}}, "client_load": {"base_median_mib": 245.5, "late_median_mib": 447.1, "growth_mib": 201.6, "pass_": false}, "crowd": {"unstreamed": 42, "streamed": 42}, "exit": 0}
+AUDIO SOAK PASS

@@ -1,0 +1,23 @@
+== rule 1 over HTTP, normal 07:57:47
+text alone vs reference: identical
+text beside 8 streams: identical (streams still running at the end: 8; identical 8/8)
+crowd beside text: {'unstreamed': 42, 'streamed': 42} text sets: 26 differ: 0
+TEXT WAIT EXACT PASS
+== rule 1 over HTTP, blocking 08:24:25
+text alone vs reference: identical
+text beside 8 streams: identical (streams still running at the end: 8; identical 8/8)
+crowd beside text: {'unstreamed': 42, 'streamed': 42} text sets: 26 differ: 0
+TEXT WAIT EXACT PASS
+== timing rules 2, 3, 4, deadline 08:59:06
+{"rule2": true, "rule3": true, "rule4": true, "deadline": true}
+== rule 5 speed pairs 09:29:07
+{"median_ratio": {"text": 0.9987267669457325, "one": 0.9996393163041501, "crowd": 1.0003544908859763}, "pass_": true}
+== fuzz 09:36:10
+{"pass_": true, "valid": 375, "valid_differ": 0, "bad": [], "slow": [], "errors": [], "statuses": {"400": 1884, "None": 125, "429": 12, "404": 30, "200": 487, "401": 46, "413": 10, "501": 31}, "crowd_differ": [], "rss": {"server": {"early_max": 5444.4, "end": 5413.1, "overall_max": 5444.4}}, "exit": 0}
+AUDIO FUZZ PASS
+== soak, text share 0.25 09:48:51
+{"pass_": false, "counts": {"unstreamed": 2041, "streamed": 2477, "dropped": 277, "text": 1510, "retries_429": 30544}, "statuses": {"200": 6305}, "differ": 0, "errors": 0, "memory": {"server_rss": {"early_max_mib": 5478.9, "end_mib": 5468.6, "overall_max_mib": 5546.3, "pass_": true}, "host_used": {"early_max_mib": 12004.1, "end_mib": 12528.6, "overall_max_mib": 12548.5, "pass_": false}}, "crowd": {"unstreamed": 42, "streamed": 42}, "exit": 0}
+AUDIO SOAK FAIL
+== text gate 12:02:47
+text gate exit 0
+TEXTWAIT RERUN DONE 12:04:18

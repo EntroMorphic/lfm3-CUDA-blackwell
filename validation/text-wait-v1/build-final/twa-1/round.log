@@ -1,0 +1,17 @@
+== timing rules 2, 3, 4, deadline 12:40:44
+{"rule2": true, "rule3": false, "rule4": true, "deadline": true}
+== rule 5 speed pairs 13:10:40
+{"median_ratio": {"text": 1.0002900227718308, "one": 1.001699515145061, "crowd": 1.0011655958268986}, "pass_": true}
+== fuzz 13:17:45
+{"pass_": true, "valid": 375, "valid_differ": 0, "bad": [], "slow": [], "errors": [], "statuses": {"400": 1876, "None": 125, "429": 19, "404": 30, "200": 488, "401": 46, "413": 10, "501": 31}, "crowd_differ": [], "rss": {"server": {"early_max": 5438.2, "end": 5403.0, "overall_max": 5438.2}}, "exit": 0}
+AUDIO FUZZ PASS
+== soak, text share 0.25 13:30:22
+{"pass_": true, "counts": {"unstreamed": 2056, "streamed": 2489, "dropped": 279, "text": 1518, "retries_429": 29939}, "statuses": {"200": 6342}, "differ": 0, "errors": 0, "memory": {"server_rss": {"early_max_mib": 5568.6, "end_mib": 5492.3, "overall_max_mib": 5581.1, "pass_": true}, "host_used": {"early_max_mib": 14238.7, "end_mib": 14278.8, "overall_max_mib": 14540.0, "pass_": true}}, "crowd": {"unstreamed": 42, "streamed": 42}, "exit": 0}
+AUDIO SOAK PASS
+== sanitizers (rule 8) 15:44:08
+plain: exit 0, 30 PASS, 0 FAIL
+memcheck: exit 0, 222 s; ========= LEAK SUMMARY: 0 bytes leaked in 0 allocations ========= ERROR SUMMARY: 0 errors  30 PASS, 0 FAIL
+synccheck: exit 0, 65 s; ========= ERROR SUMMARY: 0 errors  30 PASS, 0 FAIL
+initcheck: exit 99, 260 s; ========= ERROR SUMMARY: 319488 errors ========= ERROR SUMMARY: 319438 errors were not printed. Use --print-limit option to adjust the number of printed errors  30 PASS, 0 FAIL
+racecheck: exit 0, 22772 s; ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)  30 PASS, 0 FAIL
+TEXTWAIT ROUND DONE 22:13:18

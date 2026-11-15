@@ -76,6 +76,15 @@ set_target_properties(liquid-native PROPERTIES
 )
 
 if(LIQUID_LFM3_OPS_TESTS)
+  # validation/text-wait-v1: sliced text generation against whole, alone and beside speech rows (the worker in-process,
+  # built as liquid-lfm3-server builds it).
+  add_executable(lfm3-text-slice-check EXCLUDE_FROM_ALL tests/lfm3_text_slice_check.cu src/safetensors.cpp)
+  target_include_directories(lfm3-text-slice-check PRIVATE include)
+  target_compile_features(lfm3-text-slice-check PRIVATE cxx_std_20 cuda_std_20)
+  target_compile_options(lfm3-text-slice-check PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
+  target_link_libraries(lfm3-text-slice-check PRIVATE CUDA::cudart Threads::Threads)
+  lfm3_engine_gemm(lfm3-text-slice-check)
+  set_target_properties(lfm3-text-slice-check PROPERTIES CUDA_ARCHITECTURES 110)
   add_executable(lfm3-decode-batch-probe EXCLUDE_FROM_ALL tests/lfm3_decode_batch_probe.cu src/safetensors.cpp)
   target_include_directories(lfm3-decode-batch-probe PRIVATE include)
   target_compile_features(lfm3-decode-batch-probe PRIVATE cxx_std_20 cuda_std_20)

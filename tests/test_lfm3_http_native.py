@@ -393,7 +393,8 @@ def test_idle_sessions_are_reaped(harness_binary):
         session(h)
 
 
-@pytest.mark.parametrize("operation", ["generate", "create", "reset", "generate_batch"])
+# text generation is ops text_begin and text_step since validation/text-wait-v1 (op generate is no longer sent)
+@pytest.mark.parametrize("operation", ["text_begin", "text_step", "create", "reset", "generate_batch"])
 def test_engine_failure_is_fatal(harness_binary, operation):
     fail_after = "2" if operation == "create" else "1"
     with running(harness_binary, "--fail-op", operation, "--fail-after", fail_after) as h:
@@ -402,7 +403,7 @@ def test_engine_failure_is_fatal(harness_binary, operation):
             assert h.call("POST", "/sessions", {"capacity": 64}) == (503, {"error": "worker_unavailable"})
         elif operation == "reset":
             assert h.call("POST", f"/sessions/{a}/reset", {}) == (503, {"error": "worker_unavailable"})
-        elif operation == "generate":
+        elif operation in ("text_begin", "text_step"):
             assert generate(h, a, 4) == (503, {"error": "worker_unavailable"})
         else:
             b = session(h)

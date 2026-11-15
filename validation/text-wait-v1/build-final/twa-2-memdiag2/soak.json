@@ -1,0 +1,105 @@
+{
+ "server_sha256": "610c8c1d9c9dcd498844742c5a563c09f6417a0d3439132a242a9baeb3ab2b86",
+ "seconds": 7200,
+ "clients": 12,
+ "text_share": 0.25,
+ "reference_server_exit": 0,
+ "worker_found": false,
+ "counts": {
+  "unstreamed": 2056,
+  "streamed": 2491,
+  "dropped": 278,
+  "text": 1518,
+  "retries_429": 36057
+ },
+ "statuses": {
+  "200": 6343
+ },
+ "differ": [],
+ "differ_count": 0,
+ "errors": [],
+ "error_count": 0,
+ "soak_seconds": 7260.3,
+ "memory": {
+  "server_rss": {
+   "base_median_mib": 5442.3,
+   "late_median_mib": 5454.1,
+   "growth_mib": 11.8,
+   "pass_": true
+  },
+  "host_used": {
+   "base_median_mib": 12125.4,
+   "late_median_mib": 12370.5,
+   "growth_mib": 245.1,
+   "pass_": false
+  },
+  "host_used_less_client": {
+   "base_median_mib": 11846.3,
+   "late_median_mib": 11922.0,
+   "growth_mib": 75.7,
+   "pass_": false
+  },
+  "client_rss": {
+   "base_median_mib": 286.2,
+   "late_median_mib": 449.9,
+   "growth_mib": 163.7,
+   "pass_": false
+  },
+  "client_rss_trimmed": {
+   "base_median_mib": 265.5,
+   "late_median_mib": 417.6,
+   "growth_mib": 152.1,
+   "pass_": false
+  }
+ },
+ "memory_endpoint": {
+  "server_rss": {
+   "early_max_mib": 5462.8,
+   "end_mib": 5505.3,
+   "overall_max_mib": 5549.2,
+   "pass_": true
+  },
+  "host_used": {
+   "early_max_mib": 12251.0,
+   "end_mib": 12455.1,
+   "overall_max_mib": 12566.3,
+   "pass_": false
+  },
+  "host_used_less_client": {
+   "early_max_mib": 11968.5,
+   "end_mib": 12007.8,
+   "overall_max_mib": 12113.2,
+   "pass_": true
+  },
+  "client_rss": {
+   "early_max_mib": 343.7,
+   "end_mib": 447.3,
+   "overall_max_mib": 530.5,
+   "pass_": false
+  },
+  "client_rss_trimmed": {
+   "early_max_mib": 314.8,
+   "end_mib": 427.2,
+   "overall_max_mib": 487.0,
+   "pass_": false
+  }
+ },
+ "memory_gated": [
+  "server_rss",
+  "host_used_less_client"
+ ],
+ "alive_throughout": true,
+ "crowd_after": {
+  "unstreamed": {
+   "identical": 42,
+   "differ": []
+  },
+  "streamed": {
+   "identical": 42,
+   "differ": []
+  }
+ },
+ "server_exit": 0,
+ "server_stderr": "",
+ "pass_": false
+}

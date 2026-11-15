@@ -1,0 +1,10 @@
+alone 2.335
+Traceback (most recent call last):
+  File "/workspace/liquid-CUDA/tools/check_lfm3_text_wait.py", line 255, in <module>
+    main(*sys.argv[1:])
+  File "/workspace/liquid-CUDA/tools/check_lfm3_text_wait.py", line 158, in main
+    streams = start_streams(server, long8, 5.0)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/liquid-CUDA/tools/check_lfm3_text_wait.py", line 128, in start_streams
+    raise RuntimeError("streams did not reach their audio before the text arrival")
+RuntimeError: streams did not reach their audio before the text arrival

@@ -1,0 +1,4 @@
+== soak 12:06:17
+t=1200 s: 1106 requests, 0 differ, 0 errors
+t=1800 s: 1588 requests, 0 differ, 0 errors
+MEMDIAG DONE 12:49:49

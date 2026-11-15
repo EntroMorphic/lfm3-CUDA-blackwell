@@ -1,0 +1,33 @@
+========= COMPUTE-SANITIZER
+PASS alone greedy k=1 (steps 16)
+PASS alone greedy k=3 (steps 6)
+PASS alone greedy k=16 (steps 1)
+PASS alone greedy k=unbounded (steps 1)
+PASS alone sampled k=1 (steps 16)
+PASS alone sampled k=3 (steps 6)
+PASS alone sampled k=16 (steps 1)
+PASS alone sampled k=unbounded (steps 1)
+PASS alone long k=1 (steps 40)
+PASS alone long k=3 (steps 14)
+PASS alone long k=16 (steps 3)
+PASS alone long k=unbounded (steps 1)
+PASS reuse happened (reused 38)
+PASS reuse k=1
+PASS reuse k=3
+PASS cancelled reply ({"rpc_id":193,"ok":true,"session_id":"slice-check-19","cancelled":true,"cache_valid":false,"consumed_tokens":0,"reused_tokens":0,"generated_ids":[41,117323,5711)
+PASS after cancellation equals fresh
+PASS speech alone twice is identical (the comparison is exact, timings aside)
+PASS speech row 1 carries a WAV
+PASS speech row 2 carries a WAV
+PASS speech row 3 carries a WAV
+PASS speech row 4 carries a WAV
+PASS speech rows finished (4 and 4)
+PASS speech row 1 with text equals alone
+PASS speech row 2 with text equals alone
+PASS speech row 3 with text equals alone
+PASS speech row 4 with text equals alone
+PASS both texts ran beside speech (2)
+PASS text greedy beside speech equals alone
+PASS text sampled beside speech equals alone
+TEXT SLICE CHECK PASS
+========= ERROR SUMMARY: 0 errors

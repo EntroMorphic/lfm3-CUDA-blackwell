@@ -1,0 +1,897 @@
+{
+ "server_sha256": "c2fe0ac7e8308eb3ab7ccdc8cbeaa7e01a099888ec8a989b6d3adb899952e7ca",
+ "phases": {
+  "alone": {
+   "seconds": [
+    2.348,
+    2.444,
+    2.403,
+    2.372,
+    2.317,
+    2.345,
+    2.386,
+    2.391,
+    2.267,
+    2.323
+   ],
+   "median": 2.36,
+   "statuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+   ],
+   "replies": [
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    },
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    },
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    },
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    },
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    },
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    },
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    },
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    },
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    },
+    {
+     "tokens": 128,
+     "ids_sha": "eeda0985f1441cab",
+     "error": null
+    }
+   ]
+  },
+  "rule2": {
+   "arrivals": [
+    {
+     "seconds": 158.762,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5379777319612913
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5388360679498874
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5396643379935995
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5284592810203321
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5403070889879018
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5170661780284718
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.49632948701037094
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.47360068903071806
+      }
+     ]
+    },
+    {
+     "seconds": 172.766,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6296449030051008
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6206455570063554
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5711921009933576
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6122784690232947
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6010727640241385
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5398625070229173
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6291445969836786
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6206665839999914
+      }
+     ]
+    },
+    {
+     "seconds": 178.106,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6027056219754741
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6126555660157464
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5942338469903916
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5287303799996153
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5830672439769842
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5624218720477074
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6027922239736654
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6111872749752365
+      }
+     ]
+    },
+    {
+     "seconds": 151.683,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6681819370132871
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6593460570438765
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5792399779893458
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6496611050097272
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.599800088966731
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6677853919682093
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6401301380246878
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6304985759779811
+      }
+     ]
+    },
+    {
+     "seconds": 159.517,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5097039029933512
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.49342148000141606
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5006641559884883
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.48267660301644355
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.43838076101383194
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5003737899824046
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5088538909913041
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.46047402295516804
+      }
+     ]
+    },
+    {
+     "seconds": 177.392,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6153858180041425
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6066739969537593
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5977796459919773
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5885996989673004
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6063977060257457
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.566969613020774
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6146352809737436
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5330031369812787
+      }
+     ]
+    },
+    {
+     "seconds": 151.453,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6776364429970272
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6690012529725209
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6603190529858693
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6691368559841067
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6184473289758898
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.6774560899939388
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5841202390147373
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.650266375974752
+      }
+     ]
+    },
+    {
+     "seconds": 160.562,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.517827544012107
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5090185760054737
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5005567790358327
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.50899575202493
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5177179040038027
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.4372861849842593
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.4694397820276208
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.490656525013037
+      }
+     ]
+    },
+    {
+     "seconds": 163.052,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5981710120104253
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5893722490291111
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.580624291964341
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5497611819882877
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5709146700100973
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5978703240398318
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.589090544031933
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5272405720315874
+      }
+     ]
+    },
+    {
+     "seconds": 172.802,
+     "status": 200,
+     "reply": {
+      "tokens": 128,
+      "ids_sha": "eeda0985f1441cab",
+      "error": null
+     },
+     "streams": [
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5913748660241254
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5827874899841845
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5827933329856023
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5912229759851471
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.511590919981245
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5729916619602591
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5326410949928686
+      },
+      {
+       "status": 200,
+       "done": true,
+       "stalls": 0,
+       "stalled_seconds": 0.0,
+       "first_audio": 0.5633321609930135
+      }
+     ]
+    }
+   ],
+   "median": 161.807,
+   "ratio": 68.565,
+   "max": 178.106,
+   "same_ids_as_alone": true,
+   "pass_": false
+  },
+  "rule3": {
+   "load": [
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.6290317910024896
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5998462270363234
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.5695203749928623
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.6295635359711014
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.8555594030185603
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.8564338989672251
+    },
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 0.8572865619789809
+    }
+   ],
+   "arrivals": [
+    {
+     "status": 200,
+     "done": true,
+     "stalls": 0,
+     "stalled_seconds": 0.0,
+     "first_audio": 16.64891918603098
+    }
+   ],
+   "texts": [
+    {
+     "seconds": 20.341,
+     "status": 200
+    }
+   ],
+   "first_audio_median": 16.649,
+   "pass_": false
+  },
+  "rule4": {
+   "trials": [
+    {
+     "first_audio": 42.993240872980095,
+     "speech_status": 200,
+     "speech_done": true,
+     "text_seconds": 44.68,
+     "text_status": 200,
+     "text_tokens": 2000
+    },
+    {
+     "first_audio": 42.45548378897365,
+     "speech_status": 200,
+     "speech_done": true,
+     "text_seconds": 44.114,
+     "text_status": 200,
+     "text_tokens": 2000
+    },
+    {
+     "first_audio": 44.84038843802409,
+     "speech_status": 200,
+     "speech_done": true,
+     "text_seconds": 46.518,
+     "text_status": 200,
+     "text_tokens": 2000
+    },
+    {
+     "first_audio": 45.78399652597727,
+     "speech_status": 200,
+     "speech_done": true,
+     "text_seconds": 47.458,
+     "text_status": 200,
+     "text_tokens": 2000
+    },
+    {
+     "first_audio": 42.32722598599503,
+     "speech_status": 200,
+     "speech_done": true,
+     "text_seconds": 44.024,
+     "text_status": 200,
+     "text_tokens": 2000
+    }
+   ],
+   "pass_": false
+  },
+  "deadline": {
+   "seconds": 20.001,
+   "status": 504,
+   "reply": {
+    "stage": "create",
+    "error": {
+     "error": "request_deadline_outcome_unknown"
+    }
+   },
+   "pass_": false
+  }
+ },
+ "server_exit": 0,
+ "deadline_server_exit": 0,
+ "verdicts": {
+  "rule2": false,
+  "rule3": false,
+  "rule4": false,
+  "deadline": false
+ }
+}

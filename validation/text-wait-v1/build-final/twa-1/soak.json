@@ -1,0 +1,51 @@
+{
+ "server_sha256": "414c1a9c8253aaf6ab26dac014ea677d486d0b7b608ac46827b90d352f7ec65b",
+ "seconds": 7200,
+ "clients": 12,
+ "text_share": 0.25,
+ "reference_server_exit": 0,
+ "worker_found": false,
+ "counts": {
+  "unstreamed": 2056,
+  "streamed": 2489,
+  "dropped": 279,
+  "text": 1518,
+  "retries_429": 29939
+ },
+ "statuses": {
+  "200": 6342
+ },
+ "differ": [],
+ "differ_count": 0,
+ "errors": [],
+ "error_count": 0,
+ "soak_seconds": 7276.4,
+ "memory": {
+  "server_rss": {
+   "early_max_mib": 5568.6,
+   "end_mib": 5492.3,
+   "overall_max_mib": 5581.1,
+   "pass_": true
+  },
+  "host_used": {
+   "early_max_mib": 14238.7,
+   "end_mib": 14278.8,
+   "overall_max_mib": 14540.0,
+   "pass_": true
+  }
+ },
+ "alive_throughout": true,
+ "crowd_after": {
+  "unstreamed": {
+   "identical": 42,
+   "differ": []
+  },
+  "streamed": {
+   "identical": 42,
+   "differ": []
+  }
+ },
+ "server_exit": 0,
+ "server_stderr": "",
+ "pass_": true
+}
