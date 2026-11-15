@@ -1,0 +1,3 @@
+e9831b41e508078b8f0ca895121824702ec6878c86ee1f5b326faca045444a6f  decode-aarch64/lfm3-image-decode-check
+d611de4b0bb02a95fa84e0effa437f4dfc3417b5a2e26347e526817f8c2c703a  decode-aarch64-asan/lfm3-image-decode-check
+c698c50bdcebbeae504f8939dfd8c161fbda3902d9e81948b6f9c9a20a765b64  decode-x86/lfm3-image-decode-check
