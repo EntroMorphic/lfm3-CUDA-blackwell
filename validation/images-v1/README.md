@@ -100,6 +100,20 @@ Asked which choices give the model the truest experience: "Proceed accordingly, 
   and "(A) ..." lines). The same requests and scoring go to both engines, so rule 3's comparison is unaffected by
   this choice; it only makes the accuracy mean what it says. The model card reports MMStar 55.67 (Liquid AI's own
   harness, not reproduced here).
+- **Rule 3's reference: HF BF16 on Thor's GPU, run twice, identical** (2026-11-14, 512 tokens for MMStar, 16 for
+  POPE; `run1`/`run2`, gzipped as `groundwork/hf-bench-run{1,2}.jsonl.gz`; scored by
+  `tools/score_lfm3_vision_bench.py`, which also does rule 3's paired bootstrap):
+  - **MMStar 59.27%** (889 of 1,500), above the card's 55.67. Parse rules: leading letter 822, last line 653, one
+    letter 8, "answer is" 2, option text 1, none 14. Of the 14 unanswered, 10 are still reasoning at 512 tokens
+    (geometry and number puzzles going round) and 4 name a diagram label that is not an option (E, F, H, I); 16
+    replies reach 512 tokens in all. Replies read (the 14, and a sample of last-line ones): coherent, reasoning then
+    the letter.
+  - **POPE accuracy 89.11, F1 89.00** (card 89.34): adversarial 86.40 / F1 86.63 / yes 51.7%; popular 88.80 / 88.72
+    / 49.3%; random 92.13 / 91.81 / 46.0%. Recall 88.13 on every split (the same 4,500 positive questions); every
+    reply parsed. Unchanged from the 64-token run, as expected (POPE's settings did not change).
+  - **The two runs agree on all 10,500 items: the same generated_ids, reply text and answer.** HF on Thor's GPU is
+    deterministic for these requests, so rule 3's native run is compared with one HF run, and any difference between
+    engines is the engines', not noise in the reference. Longest single request 11.2 s.
 
 - **The native decoder** (`native/src/image_decode.cpp`, `lfm/image_decode.hpp`; check `lfm3-image-decode-check`,
   built by `tools/build_image_decode_check.sh`): vendored libjpeg-turbo 3.2.0 and stb_image (PNG only), with the
