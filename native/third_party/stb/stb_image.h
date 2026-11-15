@@ -4202,6 +4202,7 @@ typedef struct
    stbi_uc *zbuffer, *zbuffer_end;
    int num_bits;
    int hit_zeof_once;
+   int zfake;  /* liquid-CUDA: zero bytes stbi__fill_bits added past the end of the data (for the Adler-32 check) */
    stbi__uint32 code_buffer;
 
    char *zout;
@@ -4229,6 +4230,7 @@ static void stbi__fill_bits(stbi__zbuf *z)
         z->zbuffer = z->zbuffer_end;  /* treat this as EOF so we fail. */
         return;
       }
+      if (stbi__zeof(z)) ++z->zfake;  /* liquid-CUDA: count the invented zero bytes */
       z->code_buffer |= (unsigned int) stbi__zget8(z) << z->num_bits;
       z->num_bits += 8;
    } while (z->num_bits <= 24);
@@ -4510,6 +4512,7 @@ static int stbi__parse_zlib(stbi__zbuf *a, int parse_header)
    a->num_bits = 0;
    a->code_buffer = 0;
    a->hit_zeof_once = 0;
+   a->zfake = 0;  /* liquid-CUDA */
    do {
       final = stbi__zreceive(a,1);
       type = stbi__zreceive(a,2);
@@ -4528,6 +4531,31 @@ static int stbi__parse_zlib(stbi__zbuf *a, int parse_header)
          if (!stbi__parse_huffman_block(a)) return 0;
       }
    } while (!final);
+   if (parse_header) {
+      /* liquid-CUDA: the zlib trailer's Adler-32 (RFC 1950) must be present in the real data and match the output.
+         Upstream stb does not check it, so damaged image data decoded silently. */
+      stbi__uint32 s1 = 1, s2 = 0, want = 0;
+      size_t i, n = (size_t) (a->zout - a->zout_start);
+      int k, real;
+      if (a->hit_zeof_once) return stbi__err("zlib truncated","Corrupt PNG");
+      a->code_buffer >>= (a->num_bits & 7);
+      a->num_bits -= (a->num_bits & 7);
+      real = a->num_bits / 8 - a->zfake;  /* real bytes still in the bit buffer; the invented ones sit above them */
+      if (real < 0) return stbi__err("zlib truncated","Corrupt PNG");
+      if ((size_t) real + (size_t) (a->zbuffer_end - a->zbuffer) < 4) return stbi__err("zlib truncated","Corrupt PNG");
+      for (k = 0; k < 4; ++k) {
+         stbi__uint32 b;
+         if (real > 0) { b = a->code_buffer & 255; a->code_buffer >>= 8; a->num_bits -= 8; --real; }
+         else b = *a->zbuffer++;
+         want = (want << 8) | b;
+      }
+      for (i = 0; i < n; ) {
+         size_t end = i + 5552 < n ? i + 5552 : n;
+         for (; i < end; ++i) { s1 += (stbi_uc) a->zout_start[i]; s2 += s1; }
+         s1 %= 65521; s2 %= 65521;
+      }
+      if (((s2 << 16) | s1) != want) return stbi__err("zlib checksum","Corrupt PNG");
+   }
    return 1;
 }
 

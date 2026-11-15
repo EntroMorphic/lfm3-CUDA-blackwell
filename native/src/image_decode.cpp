@@ -52,42 +52,112 @@ void check_pixels(std::uint64_t w, std::uint64_t h, const Limits& limits) {
 
 // ---------------------------------------------------------------- orientation (Pillow's getexif + exif_transpose)
 
-// The first value of tag 0x0112 in IFD0 of a TIFF block, or nullopt (Pillow's Exif.load on "Exif\0\0" + TIFF).
+// Tag 0x0112 of IFD0 in an EXIF block, read as Pillow 13.0.0 reads it (Image.Exif.load,
+// TiffImagePlugin.ImageFileDirectory_v2.load and _setitem, ImageOps.exif_transpose), checked against Pillow on a grid of
+// well-formed and malformed entries (tools/make_exif_orientation_grid.py). Pillow's rules are the TIFF specification
+// read leniently where the intent is clear, so they are kept:
+//   - up to two "Exif\0\0" prefixes are dropped; the header is II*\0, MM\0* or the swapped II\0* / MM*\0 (byte order
+//     from the first two bytes); IFD0 at the header's offset. (A header that is none of these makes Pillow raise and HF
+//     refuse the whole image; here the EXIF is ignored and the image shown: the pixels are not at fault. BigTIFF is
+//     treated the same way.)
+//   - entries in order; a tag already loaded is skipped; an unsupported type is skipped; data over 4 bytes lies at an
+//     offset: if the running total of such data exceeds the block, the entry is skipped, and if it runs past the end
+//     of the block, the reading stops there (entries already loaded stand); an entry with no data is skipped; an IFD
+//     cut short stops the reading.
+//   - the value: BYTE, UNDEFINED and ASCII give bytes or text, which match no orientation; the numeric types give
+//     their first value, which counts when it equals an integer (6.0, or a rational 12/2, are 6).
+// Returns the orientation (0 when the tag is present but matches none, which still blocks the XMP fallback), or
+// nullopt when the tag is absent.
 std::optional<int> tiff_orientation(const std::uint8_t* p, std::size_t n) {
-  if (starts_with(p, n, std::string_view("Exif\0\0", 6))) {
+  for (int k = 0; k < 2 && starts_with(p, n, std::string_view("Exif\0\0", 6)); ++k) {
     p += 6;
     n -= 6;
   }
   if (n < 8) return std::nullopt;
-  bool big;
-  if (p[0] == 'I' && p[1] == 'I' && p[2] == 42 && p[3] == 0) big = false;
-  else if (p[0] == 'M' && p[1] == 'M' && p[2] == 0 && p[3] == 42) big = true;
-  else return std::nullopt;
-  auto u16 = [&](std::size_t o) -> unsigned {
-    return big ? (unsigned(p[o]) << 8 | p[o + 1]) : (unsigned(p[o + 1]) << 8 | p[o]);
+  const bool big = p[0] == 'M' && p[1] == 'M';
+  const bool tiff = (p[0] == 'I' && p[1] == 'I' && ((p[2] == 42 && p[3] == 0) || (p[2] == 0 && p[3] == 42))) ||
+                    (big && ((p[2] == 0 && p[3] == 42) || (p[2] == 42 && p[3] == 0)));
+  if (!tiff) return std::nullopt;
+  auto u16 = [&](std::size_t o) -> std::uint32_t {
+    return big ? (std::uint32_t(p[o]) << 8 | p[o + 1]) : (std::uint32_t(p[o + 1]) << 8 | p[o]);
   };
   auto u32 = [&](std::size_t o) -> std::uint32_t {
     return big ? (std::uint32_t(p[o]) << 24 | std::uint32_t(p[o + 1]) << 16 | std::uint32_t(p[o + 2]) << 8 | p[o + 3])
                : (std::uint32_t(p[o + 3]) << 24 | std::uint32_t(p[o + 2]) << 16 | std::uint32_t(p[o + 1]) << 8 | p[o]);
   };
-  const std::uint32_t ifd = u32(4);
-  if (ifd < 8 || ifd > n || n - ifd < 2) return std::nullopt;
-  const unsigned count = u16(ifd);
-  for (unsigned i = 0; i < count; ++i) {
-    const std::size_t e = ifd + 2 + std::size_t(i) * 12;
-    if (e + 12 > n) return std::nullopt;
-    if (u16(e) != 0x0112) continue;
-    const unsigned type = u16(e + 2);
-    const std::uint32_t values = u32(e + 4);
-    if (values < 1) return std::nullopt;
+  auto unit = [](std::uint32_t type) -> int {  // Pillow's _load_dispatch sizes; 0: unsupported
     switch (type) {
-      case 1: case 7: return int(p[e + 8]);      // BYTE, UNDEFINED
-      case 3: return int(u16(e + 8));           // SHORT
-      case 4: return int(u32(e + 8));           // LONG
-      default: return std::nullopt;
+      case 1: case 2: case 6: case 7: return 1;
+      case 3: case 8: return 2;
+      case 4: case 9: case 11: case 13: return 4;
+      case 5: case 10: case 12: case 16: return 8;
+      default: return 0;
+    }
+  };
+  const std::size_t ifd = u32(4);
+  if (ifd > n || n - ifd < 2) return std::nullopt;
+  const std::uint32_t count = u16(ifd);
+  std::vector<bool> loaded(65536);  // tags already loaded (Pillow's _tagdata); constant time per entry
+  std::uint64_t total = 0;
+  const std::uint8_t* data = nullptr;
+  std::uint32_t data_type = 0;
+  for (std::uint32_t i = 0; i < count; ++i) {
+    const std::size_t e = ifd + 2 + std::size_t(i) * 12;
+    if (e + 12 > n) break;  // _ensure_read fails: the reading stops
+    const std::uint32_t tag = u16(e), type = u16(e + 2), values = u32(e + 4);
+    if (loaded[tag]) continue;
+    const int size1 = unit(type);
+    if (size1 == 0) continue;
+    const std::uint64_t size = std::uint64_t(values) * std::uint64_t(size1);
+    const std::uint8_t* d = p + e + 8;
+    if (size > 4) {
+      const std::uint64_t off = u32(e + 8);
+      total += size;
+      if (total > n) continue;                // "Tag data larger than file": skipped
+      if (off + size > n) break;              // _safe_read: "Truncated File Read", the reading stops
+      d = p + off;
+    }
+    if (size == 0) continue;
+    loaded[tag] = true;
+    if (tag == 0x0112) {
+      data = d;
+      data_type = type;
     }
   }
-  return std::nullopt;
+  if (!data) return std::nullopt;
+  auto integral = [](double v) -> int { return (v >= 1 && v <= 8 && v == double(int(v))) ? int(v) : 0; };
+  switch (data_type) {
+    case 1: case 2: case 7: return 0;  // bytes or text
+    case 3: return integral(u16(0 + std::size_t(data - p)));
+    case 4: case 13: return integral(u32(std::size_t(data - p)));
+    case 6: return integral(std::int8_t(data[0]));
+    case 8: return integral(std::int16_t(u16(std::size_t(data - p))));
+    case 9: return integral(std::int32_t(u32(std::size_t(data - p))));
+    case 11: {
+      const std::uint32_t b = u32(std::size_t(data - p));
+      float f;
+      std::memcpy(&f, &b, 4);
+      return integral(f);
+    }
+    case 12: case 16: {
+      const std::size_t o = std::size_t(data - p);
+      const std::uint64_t hi = u32(o), lo = u32(o + 4);
+      const std::uint64_t b = big ? (hi << 32 | lo) : (lo << 32 | hi);
+      if (data_type == 16) return b >= 1 && b <= 8 ? int(b) : 0;
+      double v;
+      std::memcpy(&v, &b, 8);
+      return integral(v);
+    }
+    case 5: case 10: {  // IFDRational: num / den, NaN when den is 0
+      const std::size_t o = std::size_t(data - p);
+      const std::int64_t num = data_type == 5 ? std::int64_t(u32(o)) : std::int64_t(std::int32_t(u32(o)));
+      const std::int64_t den = data_type == 5 ? std::int64_t(u32(o + 4)) : std::int64_t(std::int32_t(u32(o + 4)));
+      if (den == 0 || num % den != 0) return 0;
+      const std::int64_t v = num / den;
+      return v >= 1 && v <= 8 ? int(v) : 0;
+    }
+  }
+  return 0;
 }
 
 // Pillow's XMP fallback: the first match of tiff:Orientation(="|>)([0-9]).
@@ -182,39 +252,65 @@ void src_skip(j_decompress_ptr cinfo, long n) {
 }
 void src_term(j_decompress_ptr) {}
 
-// Pillow's JPEG plugin reads the markers itself before decoding: APP1 Exif and XMP, and SOF's precision and
-// component count (it refuses other than 8 bits and 1, 3 or 4 components).
-void jpeg_markers(const std::uint8_t* p, std::size_t n, Metadata& meta) {
-  std::size_t i = 2;
-  while (i + 4 <= n) {
-    if (p[i] != 0xFF) { ++i; continue; }
-    const std::uint8_t m = p[i + 1];
-    if (m == 0xFF) { ++i; continue; }
-    if (m == 0xD8 || (m >= 0xD0 && m <= 0xD7) || m == 0x01) { i += 2; continue; }
-    if (m == 0xDA || m == 0xD9) break;  // start of scan: Pillow's header parse stops here
-    const std::size_t len = std::size_t(p[i + 2]) << 8 | p[i + 3];
-    if (len < 2 || i + 2 + len > n) break;
-    const std::uint8_t* s = p + i + 4;
-    const std::size_t sn = len - 2;
-    if (m == 0xE1) {
-      if (starts_with(s, sn, std::string_view("Exif\0\0", 6))) {
-        if (!meta.has_exif) {
-          meta.exif.assign(s, s + sn);
-          meta.has_exif = true;
-        } else {
-          meta.exif.insert(meta.exif.end(), s + 6, s + sn);
-        }
-      } else if (starts_with(s, sn, std::string_view("http://ns.adobe.com/xap/1.0/\0", 29))) {
-        meta.xmp.assign(s + 29, s + sn);
-        meta.has_xmp = true;
+// The APP1 segments libjpeg itself read before the first scan (jpeg_save_markers), as Pillow keeps them: every
+// "Exif\0\0" segment concatenated (the first whole, later ones without their 6-byte header), and the last XMP packet.
+// Taken from libjpeg's parse rather than a separate scan, so a damaged file's orientation comes from the same reading
+// that gives its pixels (libjpeg resynchronises past a bad segment length as Pillow's marker loop does).
+void jpeg_saved_metadata(const jpeg_decompress_struct& cinfo, Metadata& meta) {
+  for (jpeg_saved_marker_ptr m = cinfo.marker_list; m; m = m->next) {
+    if (m->marker != JPEG_APP0 + 1) continue;
+    const std::uint8_t* s = m->data;
+    const std::size_t sn = m->data_length;
+    if (starts_with(s, sn, std::string_view("Exif\0\0", 6))) {
+      if (!meta.has_exif) {
+        meta.exif.assign(s, s + sn);
+        meta.has_exif = true;
+      } else {
+        meta.exif.insert(meta.exif.end(), s + 6, s + sn);
       }
+    } else if (starts_with(s, sn, std::string_view("http://ns.adobe.com/xap/1.0/\0", 29))) {
+      meta.xmp.assign(s + 29, s + sn);
+      meta.has_xmp = true;
     }
-    i += 2 + len;
   }
 }
 
+void jpeg_use_source(jpeg_decompress_struct& cinfo, SuspendingSource& src, const std::uint8_t* data, std::size_t size) {
+  src.pub.init_source = src_init;
+  src.pub.fill_input_buffer = src_fill;
+  src.pub.skip_input_data = src_skip;
+  src.pub.resync_to_restart = jpeg_resync_to_restart;
+  src.pub.term_source = src_term;
+  src.pub.next_input_byte = data;
+  src.pub.bytes_in_buffer = size;
+  cinfo.src = &src.pub;
+  jpeg_save_markers(&cinfo, JPEG_APP0 + 1, 0xFFFF);
+}
+
+// The orientation metadata alone (lfm::image::orientation): libjpeg's header read, nothing decoded.
+void jpeg_header_metadata(const std::uint8_t* data, std::size_t size, Metadata& meta) {
+  jpeg_decompress_struct cinfo{};
+  JpegError err{};
+  cinfo.err = jpeg_std_error(&err.pub);
+  err.pub.error_exit = jpeg_error_exit;
+  err.pub.output_message = jpeg_silent;
+  SuspendingSource src{};
+  if (setjmp(err.jump)) {
+    jpeg_destroy_decompress(&cinfo);
+    meta = Metadata{};
+    return;
+  }
+  jpeg_create_decompress(&cinfo);
+  jpeg_use_source(cinfo, src, data, size);
+  int ok;
+  do {
+    ok = jpeg_read_header(&cinfo, FALSE);
+  } while (ok == JPEG_HEADER_TABLES_ONLY);
+  if (ok == JPEG_HEADER_OK) jpeg_saved_metadata(cinfo, meta);
+  jpeg_destroy_decompress(&cinfo);
+}
+
 Rgb decode_jpeg(const std::uint8_t* data, std::size_t size, const Limits& limits, Metadata& meta) {
-  jpeg_markers(data, size, meta);
   jpeg_decompress_struct cinfo{};
   JpegError err{};
   cinfo.err = jpeg_std_error(&err.pub);
@@ -232,19 +328,13 @@ Rgb decode_jpeg(const std::uint8_t* data, std::size_t size, const Limits& limits
     fail("corrupt_image", std::string("JPEG: ") + message);
   }
   jpeg_create_decompress(&cinfo);
-  src.pub.init_source = src_init;
-  src.pub.fill_input_buffer = src_fill;
-  src.pub.skip_input_data = src_skip;
-  src.pub.resync_to_restart = jpeg_resync_to_restart;
-  src.pub.term_source = src_term;
-  src.pub.next_input_byte = data;
-  src.pub.bytes_in_buffer = size;
-  cinfo.src = &src.pub;
+  jpeg_use_source(cinfo, src, data, size);
 
   int ok;
   do {
     ok = jpeg_read_header(&cinfo, FALSE);
   } while (ok == JPEG_HEADER_TABLES_ONLY);
+  if (ok == JPEG_HEADER_OK) jpeg_saved_metadata(cinfo, meta);  // before the first scan, as Pillow reads them
   if (ok == JPEG_SUSPENDED) {
     refusal = "truncated_image";
     refusal_message = "JPEG: the file ends before its image header";
@@ -350,21 +440,83 @@ struct PngHeader {
   int depth = 0, color = 0;
 };
 
-PngHeader png_chunks(const std::uint8_t* p, std::size_t n, Metadata& meta) {
+// CRC-32 as PNG uses it (ISO 3309; polynomial 0xEDB88320, reflected).
+std::uint32_t crc32(const std::uint8_t* p, std::size_t n) {
+  static const auto table = [] {
+    std::array<std::uint32_t, 256> t{};
+    for (std::uint32_t i = 0; i < 256; ++i) {
+      std::uint32_t c = i;
+      for (int k = 0; k < 8; ++k) c = (c & 1) ? 0xEDB88320u ^ (c >> 1) : c >> 1;
+      t[i] = c;
+    }
+    return t;
+  }();
+  std::uint32_t c = 0xFFFFFFFFu;
+  for (std::size_t i = 0; i < n; ++i) c = table[(c ^ p[i]) & 0xFF] ^ (c >> 8);
+  return c ^ 0xFFFFFFFFu;
+}
+
+void put_chunk(Bytes& out, const char* type, const std::uint8_t* d, std::size_t len) {
+  const std::size_t at = out.size();
+  for (int k = 3; k >= 0; --k) out.push_back(std::uint8_t(len >> (8 * k)));
+  out.insert(out.end(), type, type + 4);
+  out.insert(out.end(), d, d + len);
+  const std::uint32_t c = crc32(out.data() + at + 4, len + 4);
+  for (int k = 3; k >= 0; --k) out.push_back(std::uint8_t(c >> (8 * k)));
+}
+
+bool letters(const std::uint8_t* t) {
+  for (int k = 0; k < 4; ++k)
+    if (!((t[k] >= 'A' && t[k] <= 'Z') || (t[k] >= 'a' && t[k] <= 'z'))) return false;
+  return true;
+}
+
+// Reads the chunks under the damage policy of validation/images-v1 (decision of 2026-11-15), collects the orientation
+// metadata, and, when `clean` is given, writes the PNG stb decodes: the signature, the pixel-defining chunks (IHDR,
+// PLTE, tRNS, IDAT) in file order, and IEND.
+//   - A complete chunk's CRC is checked: IHDR, PLTE or IDAT with a bad one is refused; any other chunk with a bad one
+//     is dropped (its metadata unused). IEND's is not needed (it carries nothing).
+//   - A chunk whose length runs past the end of the file: an IDAT keeps the rest of the file as its data (the zlib
+//     stream's Adler-32, checked by the patched stb, then vouches for the pixels); any other ends the reading. So does
+//     a chunk type that is not four letters (the chunk structure is lost there).
+//   - An unknown critical chunk is refused (the PNG specification). Anything after IEND is ignored.
+PngHeader png_chunks(const std::uint8_t* p, std::size_t n, Metadata& meta, Bytes* clean) {
   PngHeader h;
+  if (clean) clean->assign(p, p + 8);
   std::size_t i = 8;
   bool first = true;
-  while (i + 12 <= n) {
+  while (i + 8 <= n) {
     const std::uint32_t len = be32(p + i);
-    const std::string type(reinterpret_cast<const char*>(p + i + 4), 4);
-    if (len > n - i - 12) break;
+    const std::uint8_t* t = p + i + 4;
+    const std::string type(reinterpret_cast<const char*>(t), 4);
     const std::uint8_t* d = p + i + 8;
+    const std::size_t avail = n - i - 8;
     if (first && type == "CgBI") fail("unsupported_png", "PNG: Apple CgBI (\"iPhone\") PNGs are not supported");
-    if (type == "IHDR" && len >= 13) {
-      h.width = be32(d);
-      h.height = be32(d + 4);
-      h.depth = d[8];
-      h.color = d[9];
+    first = false;
+    if (!letters(t)) break;
+    if (std::uint64_t(len) + 4 > avail) {  // runs past the end of the file
+      if (type == "IDAT" && clean) put_chunk(*clean, "IDAT", d, avail);
+      break;
+    }
+    if (type == "IEND") break;
+    const bool crc_ok = crc32(t, std::size_t(len) + 4) == be32(d + len);
+    const bool critical = !(t[0] & 0x20);
+    if (type == "IHDR" || type == "PLTE" || type == "IDAT") {
+      if (!crc_ok) fail("corrupt_image", "PNG: the " + type + " chunk is damaged (its CRC does not match)");
+      if (type == "IHDR" && len >= 13) {
+        h.width = be32(d);
+        h.height = be32(d + 4);
+        h.depth = d[8];
+        h.color = d[9];
+      }
+      if (clean) put_chunk(*clean, type.c_str(), d, len);
+    } else if (critical) {
+      fail(crc_ok ? "unsupported_png" : "corrupt_image",
+           crc_ok ? "PNG: unknown critical chunk \"" + type + "\"" : "PNG: a critical chunk is damaged");
+    } else if (!crc_ok) {
+      // a damaged ancillary chunk: dropped, as libpng drops one by default
+    } else if (type == "tRNS") {
+      if (clean) put_chunk(*clean, "tRNS", d, len);
     } else if (type == "eXIf") {
       meta.exif.assign({'E', 'x', 'i', 'f', 0, 0});
       meta.exif.insert(meta.exif.end(), d, d + len);
@@ -398,35 +550,36 @@ PngHeader png_chunks(const std::uint8_t* p, std::size_t n, Metadata& meta) {
         }
       }
     }
-    first = false;
-    if (type == "IEND") break;
-    i += 12 + len;
+    i += 12 + std::size_t(len);
   }
+  if (clean) put_chunk(*clean, "IEND", nullptr, 0);
   return h;
 }
 
 Rgb decode_png(const std::uint8_t* data, std::size_t size, const Limits& limits, Metadata& meta) {
-  if (size > std::size_t(INT32_MAX)) fail("image_too_large", "PNG: file over 2 GiB");
-  const PngHeader h = png_chunks(data, size, meta);
+  Bytes clean;
+  const PngHeader h = png_chunks(data, size, meta, &clean);
   check_pixels(h.width, h.height, limits);
+  if (clean.size() > std::size_t(INT32_MAX)) fail("image_too_large", "PNG: image data over 2 GiB");
   int w = 0, ht = 0, n = 0;
   Rgb out;
-  if (h.depth == 16 && h.color == 0) {  // Pillow: I;16, then I16_RGB
-    stbi_us* g = stbi_load_16_from_memory(data, int(size), &w, &ht, &n, 1);
-    if (!g) fail("corrupt_image", std::string("PNG: ") + stbi_failure_reason());
+  // Always 4 components: stb expands gray to (g, g, g), as Pillow's L to RGB does, and the alpha is dropped. (The
+  // pinned stb refuses req_comp 0, a regression upstream fixed after it; see third_party/README.md.)
+  if (h.depth == 16) {
+    // Every 16-bit sample v becomes round(v / 257) = (v + 128) / 257 (v / 257 never falls on .5): the nearest 8-bit
+    // level. A deliberate departure from HF (Pillow saturates 16-bit gray to white and truncates the others to their
+    // high byte); validation/images-v1, decision of 2026-11-15.
+    stbi_us* px = stbi_load_16_from_memory(clean.data(), int(clean.size()), &w, &ht, &n, 4);
+    if (!px) fail("corrupt_image", std::string("PNG: ") + stbi_failure_reason());
     out.width = w;
     out.height = ht;
     out.pixels.resize(std::size_t(w) * ht * 3);
-    for (std::size_t i = 0; i < std::size_t(w) * ht; ++i) {
-      const std::uint8_t v = (g[i] >> 8) == 0 ? std::uint8_t(g[i] & 0xFF) : 255;
-      out.pixels[3 * i] = out.pixels[3 * i + 1] = out.pixels[3 * i + 2] = v;
-    }
-    stbi_image_free(g);
+    for (std::size_t i = 0; i < std::size_t(w) * ht; ++i)
+      for (int c = 0; c < 3; ++c) out.pixels[3 * i + c] = std::uint8_t((unsigned(px[4 * i + c]) + 128) / 257);
+    stbi_image_free(px);
     return out;
   }
-  // Always RGBA: stb expands gray to (g, g, g), as Pillow's L to RGB does, and the alpha is dropped. (The pinned
-  // stb refuses req_comp 0, a regression upstream fixed after it; see third_party/README.md.)
-  stbi_uc* px = stbi_load_from_memory(data, int(size), &w, &ht, &n, 4);
+  stbi_uc* px = stbi_load_from_memory(clean.data(), int(clean.size()), &w, &ht, &n, 4);
   if (!px) fail("corrupt_image", std::string("PNG: ") + stbi_failure_reason());
   out.width = w;
   out.height = ht;
@@ -442,8 +595,15 @@ Rgb decode_png(const std::uint8_t* data, std::size_t size, const Limits& limits,
 
 Metadata sniff_metadata(const std::uint8_t* data, std::size_t size) {
   Metadata meta;
-  if (starts_with(data, size, "\xFF\xD8\xFF")) jpeg_markers(data, size, meta);
-  else if (starts_with(data, size, "\x89PNG\r\n\x1A\n")) png_chunks(data, size, meta);
+  if (starts_with(data, size, "\xFF\xD8\xFF")) {
+    jpeg_header_metadata(data, size, meta);
+  } else if (starts_with(data, size, "\x89PNG\r\n\x1A\n")) {
+    try {
+      png_chunks(data, size, meta, nullptr);
+    } catch (const DecodeError&) {
+      return Metadata{};
+    }
+  }
   return meta;
 }
 

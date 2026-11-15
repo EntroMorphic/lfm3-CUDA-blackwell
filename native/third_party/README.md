@@ -23,8 +23,15 @@
      reads chunk data through it.
   2. `stbi__mad4sizes_valid` unguarded, as upstream 98a8f2a (2026-11-12) does: the pinned file does not compile with
      only PNG enabled (the PNG path calls it under a guard that excludes it).
+  3. Ours, not upstream's (2026-11-15, validation/images-v1, decision of that date): `stbi__parse_zlib` checks the
+     zlib trailer's Adler-32 (RFC 1950) when it parses a zlib header (every PNG but CgBI, which the engine refuses).
+     The four trailer bytes must be real data (a new `zfake` count of the zero bytes `stbi__fill_bits` invents past
+     the end; a stream that used `hit_zeof_once`'s padding is truncated), and the sum over the output must match.
+     Upstream checks neither the Adler-32 nor PNG CRCs, so damaged image data decoded silently into wrong pixels; the
+     CRCs are checked by the engine before stb sees the file (`image_decode.cpp`, `png_chunks`).
   The later upstream commits were read: the rest touch BMP, TGA, HDR, PNM, GIF, the info API and warnings, none
-  compiled here. sha256 after the patches: `8089b668482daac1a0ce505cb9c4f8245c1931621775270b3a2f225553522257`.
+  compiled here. sha256 after patches 1 and 2: `8089b668482daac1a0ce505cb9c4f8245c1931621775270b3a2f225553522257`;
+  after patch 3: `d49dac4db0ada8b5721439bd59cf310c17bb617d46895672197436d8c6fc5a65`.
 - Known in the pinned file, worked around rather than patched: `stbi_load*` refuses `req_comp = 0` (an upstream
   regression of 2026-10-28, reverted 2026-11-12); the engine always asks for 4 components and drops alpha.
 - Compiled with `STBI_ONLY_PNG` (every other format's decoder left out) and `STBI_NO_STDIO`.

@@ -84,7 +84,7 @@ Asked which choices give the model the truest experience: "Proceed accordingly, 
     clipped. 16-bit RGB and RGBA keep the high byte; 16-bit LA is opened as RGBA.
   - **A quirk that matters: 16-bit grayscale PNG.** Pillow opens it as `I;16`, and `I16_RGB` turns every value over
     255 into 255. A 16-bit grayscale photograph reaches the model almost white (the variant's mean is 254.8 of 255).
-    Matching HF here means showing the model a blank image; this is Tripp's call (below).
+    Matching HF here means showing the model a blank image; Tripp's call: decode it truly (the decision of 2026-11-15, below).
 - **The understanding benchmarks' scoring, fixed before any native run.** The first HF run (stopped at 1,156 items,
   `build/images-v1/hf-bench/stopped-run1-16tok.jsonl`) gave MMStar 16 new tokens and took the first standalone
   letter: 28% of replies were prose cut off before naming an option, and a reply starting "A man ..." scored as A.
@@ -125,7 +125,7 @@ Asked which choices give the model the truest experience: "Proceed accordingly, 
     images, the 10 dumped case images and the 47 variants, each RGB byte and size identical, every refusal matched.
     This includes CMYK, grayscale, progressive, restart markers, every EXIF orientation (both byte orders), XMP-only
     orientation in both forms, EXIF taking precedence over XMP, and every PNG kind (16-bit gray matched to HF's
-    saturation for now: the open question below).
+    saturation at the time; since changed, below).
   - **Red-team, hostile input** (`tools/make_image_mutants.py`, 4,000 files from the variants by seeded mutation:
     bit flips, overwrites, truncation, insertion, deletion, corrupted segment and chunk lengths, swaps, trailing
     garbage, zeroed runs), the native check built with ASan and UBSan on Thor: **0 sanitizer reports, no crash**.
@@ -141,14 +141,85 @@ Asked which choices give the model the truest experience: "Proceed accordingly, 
   - Not a rule as set (rule 1 covers valid images, rule 5 that refusals are clean); recorded as found. Closing it
     means porting Pillow's JPEG marker parse exactly, and for PNG replacing stb with a port of Pillow's PNG reader.
 
-## Open question for Tripp
-- **16-bit grayscale PNGs.** Match HF (the model sees almost white) or decode them correctly (the high byte, as
-  16-bit RGB already gets) and record the difference from HF as a deliberate one. Benchmarks are unaffected (all
-  JPEG); the native front end refuses nothing it can decode either way.
-- **Damaged files.** 98.3% of 4,000 hostile files already get HF's outcome; the 68 that do not are damaged files
-  where Pillow and the native decoder disagree on whether (or, for 7 JPEGs, which way up) to show them. Port Pillow's
-  JPEG marker parse and PNG reader for full parity, or accept and record the difference (valid images are identical
-  either way).
+## Decision (Tripp, 2026-11-15): the truest image, not the reference's
+Asked what the model would prefer on the two open questions (16-bit grayscale PNGs; damaged files), Tripp: "I would
+aim way higher than reference. I'd want the truest and best experience possible." The principle adopted: **match HF
+bit for bit wherever the model's training shaped its sight** (resize, normalization, patches: the model learned to see
+through those exact numbers), **and be correct wherever HF is simply wrong**. A damaged file is never shown as if it
+were the image; a file whose image is provably intact is shown.
+
+Set before any run of the changed decoder (designed on the first mutant set, seed 2026, whose 68 disagreements were
+read case by case; judged on a fresh one):
+- **16-bit PNG (every colour type): each sample v becomes round(v / 257)**, computed exactly as (v + 128) / 257 in
+  integers (v / 257 never falls on .5). Pillow saturates 16-bit gray to white and takes the high byte of 16-bit
+  RGB/RGBA/LA (off by up to one level); both are departures from HF, deliberate and recorded.
+- **PNG damage, as the format's own checks allow** (libpng's defaults where it has one):
+  1. Every complete chunk's CRC is checked. IHDR, PLTE or IDAT with a bad CRC: refused (`corrupt_image`). Any other
+     chunk with a bad CRC is dropped, its metadata unused (a damaged colour profile or EXIF does not cost the image).
+     IEND carries nothing; its CRC is not needed.
+  2. The zlib stream must end, and its Adler-32 must match, within the data; otherwise refused. (stb checks neither
+     CRCs nor Adler-32: patched for Adler-32, recorded in `third_party/README.md`.)
+  3. A chunk whose length runs past the end of the file: an IDAT keeps the rest of the file as its data (no CRC to
+     check; rule 2's Adler-32 then vouches for the pixels); any other chunk ends the reading there.
+  4. An unknown critical chunk is refused (the PNG specification: the decoder cannot know what it changes). Bytes
+     after IEND are ignored.
+- **JPEG damage:** JPEG has no checksums, so nothing can prove damage; libjpeg's own reading decides, as now (it
+  decodes damaged entropy data with warnings, as Pillow does; a file that ends early is refused). Orientation comes
+  from the APP1 segments libjpeg itself reads (`jpeg_save_markers`), the same parse that gives the pixels, not from a
+  separate scan of mine (which gave up at a damaged APP0 length where libjpeg and Pillow resynchronise).
+- **Verified by:**
+  - Rule 1 on the valid images: identical to HF on all 1,987 except the 16-bit PNG variants, which must equal an
+    independent pure-Python decoder (zlib, unfiltering, the rounding above).
+  - A fresh mutant set (`make_image_mutants.py`, seed 1115, 4,000 files): every PNG's outcome equals an independent
+    Python oracle of the policy above (CRCs and the zlib stream checked with Python's `zlib`); its pixels equal
+    Pillow's on a sanitised copy (bad ancillary chunks removed, an overrunning length cut to the file), or the
+    pure-Python decoder for 16-bit. Every JPEG's outcome equals HF's, any exception listed and explained. Built with
+    ASan and UBSan: 0 reports. The seed-2026 set is rerun too and its changes listed.
+
+### Results (2026-11-15)
+Records gzipped in `damage/`; tools `check_image_damage_policy.py` (the oracle), `make_png_integrity_cases.py`,
+`make_exif_orientation_grid.py`. Native check binaries on Thor (v4, the final code): plain `8403998c...`, ASan+UBSan
+`b249b400...`. (v4 differs from v3 only in the red-team fix below; every v4 output is byte-identical to v3's.)
+- **Red-team of the new code, one finding fixed:** the EXIF reader looked up already-loaded tags by linear search, up to
+  65,535 entries each, so a PNG with a large crafted eXIf chunk cost billions of comparisons. Now a 65,536-bit table;
+  a 65,535-tag eXIf reads in 7 ms.
+- **Valid images: identical to HF on 1,983 of 1,987 on Thor (and on x86); the 4 that differ are the 16-bit PNG
+  variants** (`png-l16`, `png-l16-low`, `png-rgb16`, `png-rgba16`), each equal to the oracle's pure-Python decode with
+  rounding. (`png-la16` is unchanged: its samples are exact multiples of 257, where rounding and the high byte agree.)
+  The 16-bit gray photograph the model used to see as white it now sees as the photograph.
+- **Fresh mutants (seed 1115, 4,000): every PNG equals the oracle (1,433 of 1,433: 177 shown, 1,256 refused); every
+  JPEG equals HF (2,567 of 2,567). ASan+UBSan: 0 reports, output identical to the plain build.** The first run of the
+  fresh set (v2) found one JPEG that did not (below); the v3 code fixed it and the whole set was rerun.
+- **Seed-2026 mutants (the design set): PNG 1,420 of 1,420 equal the oracle; JPEG 2,580 of 2,580 equal HF** (the 7
+  orientation disagreements are gone: 6 were a damaged APP0 length where my scan gave up and libjpeg resynchronises; the
+  7th, a damaged EXIF segment length, now reads as libjpeg and Pillow read it). Against the undamaged originals, PNG:
+  - **a wrong image shown: 0** (HF showed 8, the previous native decoder 33: silently corrupted pixels);
+  - **an image HF showed truly, now refused: 0**;
+  - **shown truly where HF refused: 7** (6 with a damaged colour-profile chunk, dropped; 1 whose damaged ancillary
+    chunk had made stb fail too);
+  - 24 whose last IDAT length runs past the file: shown, as HF shows them (the previous decoder refused 23 of them);
+  - 3 that the previous decoder showed "correctly" and are now refused: 2 are 16-bit gray (the old white-out hid the
+    damage) and 1 is 16-bit RGB damaged only in the low bytes the old high-byte reduction threw away; all three have
+    real bit flips that fail zlib. Not a loss of a provably intact image.
+- **Adler-32 patch, by construction** (`make_png_integrity_cases.py`: 40 PNGs with valid CRCs, the zlib stream cut by 1
+  to 8 bytes, its checksum flipped or zeroed, another stream's checksum, stored, fixed- and dynamic-Huffman blocks, 1-
+  and 7-byte IDAT splits, data after the stream; noise and smooth images, so both the stored and Huffman paths end the
+  stream): all 40 as required, on x86 and on Thor, ASan+UBSan clean.
+- **Incident: the orientation reader was wrong on malformed EXIF** (found by the fresh set, m02528: one byte made the
+  Orientation entry's count 513, so per TIFF its data lies at an offset, past the block's end; Pillow drops the tag; my
+  reader took the stale inline value and rotated). This was in the groundwork commit too. Replaced by a port of Pillow
+  13.0.0's IFD reading (`tiff_orientation`): first loaded tag wins, unsupported types skipped, out-of-line data
+  bounded and a truncated read stops the IFD, empty values skipped, numeric types give their first value when it
+  equals an integer (6.0 and 12/2 are 6), bytes and text match nothing yet block the XMP fallback. Pillow's rules are
+  the TIFF specification read leniently where intent is clear, so parity is also the truth here. Checked on a grid
+  (`make_exif_orientation_grid.py`, 275 files: 11 types x counts 0/1/2/513 x inline/offset/past-the-end x byte order
+  x XMP, plus 37 single cases) against Pillow 13.0.0 on Thor: **272 of 275 identical**. The 3 others are deliberate:
+  an EXIF block whose TIFF header is invalid makes Pillow raise. Read from its source and confirmed: for a PNG
+  (`s-png-exif-hdr-bad`) or a JPEG whose JFIF gives a DPI (`s-jfif-dpi-hdr-bad`), the first EXIF read is
+  exif_transpose's, so **HF refuses the image** ("not a TIFF file"); for a JPEG without a JFIF DPI, Pillow's guarded
+  early DPI read swallows the error and leaves the EXIF marked loaded, so the XMP fallback never runs (`s-hdr-bad-xmp`:
+  HF ignores XMP's 8). The native engine treats the unreadable EXIF as absent: the image is shown, oriented by XMP if
+  XMP says so. Neither HF behaviour is a choice anyone made; both are accidents of exception handling.
 
 ## Rules, set before any native run (draft)
 1. **Decoding and preprocessing match HF exactly.** Decoded pixels are bit-identical to PIL's (Thor's) on every JPEG
