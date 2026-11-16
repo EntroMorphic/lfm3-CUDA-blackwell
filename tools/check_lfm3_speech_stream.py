@@ -74,13 +74,14 @@ def cases(build, libri):
 
 
 class Server:
-    def __init__(self, binary, model, scratch):
+    def __init__(self, binary, model, scratch, extra=()):
         self.token = secrets.token_urlsafe(32)
         token_path = Path(scratch) / "stream-check.token"
         fd = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, "w") as f:
             f.write(self.token + "\n")
-        self.proc = subprocess.Popen([binary, "--experimental", model, "--token-file", str(token_path), "--port", "0"],
+        self.proc = subprocess.Popen([binary, "--experimental", model, "--token-file", str(token_path), "--port", "0",
+                                      *extra],
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         self.port = json.loads(self.proc.stdout.readline())["port"]
         token_path.unlink()

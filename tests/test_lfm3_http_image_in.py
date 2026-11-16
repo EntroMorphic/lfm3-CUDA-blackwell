@@ -210,3 +210,51 @@ def test_text_requests_keep_their_429_while_images_decode(harness_binary):
             assert status == 200, (status, reply)
         for status, reply in results[4:]:
             assert status == 200 or (status, reply) == (429, {"error": "frontend_busy"}), (status, reply)
+
+
+def _log_lines(path):
+    return path.read_text().split() if path.exists() else []
+
+
+def test_handed_over_pixels_are_exactly_the_engines_own(harness_binary, tmp_path):
+    # image-queue-v1 part 2: the handler thread decodes and preprocesses; the engine finds the pixel values instead
+    # of decoding again. The fake engine decodes anyway and refuses the request unless both are identical.
+    log = tmp_path / "images.log"
+    pictures = [image(640, 480, noise=True), image(300, 900, mode="RGB", fmt="JPEG", quality=90),
+                image(512, 512, mode="RGBA"), image(1024, 64, noise=True)]
+    with running(harness_binary, "--image-handoff", "on", "--image-log", str(log), "--image-cache-mb", "0") as h:
+        for p in pictures:
+            prompt_length(h, ask([p]))
+        prompt_length(h, ask(pictures[:2]))  # two images in one request, in order
+        results = _send_all(h, [ask([p]) for p in pictures])  # at once
+        assert all(st == 200 for st, _ in results), results
+    assert _log_lines(log) == ["handoff"] * 10
+
+
+def test_a_resent_image_skips_the_front_ends_decode_and_changes_nothing(harness_binary, tmp_path):
+    # image-cache-v1: the front end keeps each decoded image's token count under its full bytes. The same bytes again:
+    # no decode on the handler (so nothing handed over: the engine, here a fake without the GPU cache, decodes);
+    # one byte different: a different image, decoded again.
+    log = tmp_path / "images.log"
+    a = image(640, 480, noise=True)
+    raw = bytearray(base64.b64decode(a))
+    raw[-20] ^= 1  # inside the IEND chunk's CRC: the same picture's bytes but one, refused as corrupt
+    corrupt = base64.b64encode(bytes(raw)).decode()
+    b = image(641, 480, noise=True)
+    with running(harness_binary, "--image-handoff", "on", "--image-log", str(log)) as h:
+        first, n1 = prompt_length(h, ask([a]))
+        again, n2 = prompt_length(h, ask([a]))
+        assert n1 == n2 and first["text"] == again["text"]
+        prompt_length(h, ask([b]))
+        for _ in range(2):  # a refused image is never kept: refused again, the same way
+            assert h.call("POST", "/speech", ask([corrupt]))[0] == 400
+    assert _log_lines(log) == ["handoff", "decode", "handoff"]
+
+
+def test_image_cache_zero_keeps_nothing(harness_binary, tmp_path):
+    log = tmp_path / "images.log"
+    a = image(640, 480, noise=True)
+    with running(harness_binary, "--image-handoff", "on", "--image-log", str(log), "--image-cache-mb", "0") as h:
+        prompt_length(h, ask([a]))
+        prompt_length(h, ask([a]))
+    assert _log_lines(log) == ["handoff", "handoff"]

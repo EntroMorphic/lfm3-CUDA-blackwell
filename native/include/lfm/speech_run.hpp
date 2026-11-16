@@ -14,11 +14,14 @@
 #include <cmath>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace lfm3_speech {
+
+struct ImageRows;  // an image's encoder output on the GPU (src/lfm3_speech.cuh)
 
 struct ChunkInfo { size_t frames, slots; bool ended_by_eos; };
 
@@ -38,6 +41,11 @@ struct Options {
   // image input (#4): the images after the native front end (lfm/image_preprocess.hpp), one per <|image|> span of the
   // prompt in order (each span holds PixelValues::tokens placeholders); audio and image spans may interleave
   std::vector<lfm::image::PixelValues> images;
+  // validation/image-cache-v1: per image (empty: none of this), its key for the engine's image cache (the image part's
+  // base64 text; empty: not cached), and its encoder rows when the cache had them (null: encode). With rows, images[i]
+  // holds only its grid and tokens, no pixel values.
+  std::vector<std::string> image_keys;
+  std::vector<std::shared_ptr<const ImageRows>> image_rows;
   // long-form TTS by sentences (tools/lfm3_speech_chunked_hf.py): each sentence is its own request, and the codec
   // stream runs on across them: codec_continue skips the reset, codec_finalize = false keeps the stream's tail open
   bool codec_continue = false, codec_finalize = true;

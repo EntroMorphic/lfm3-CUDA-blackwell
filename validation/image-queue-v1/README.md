@@ -72,3 +72,16 @@ removes the first; the encode and prefill would still hold every row for ~0.6 s 
 steps is a separate design, not this round's).
 Found on the way, not yet explained: the image request itself returned its 32-token reply after **20.0 s** with the 7
 streams running (alone: ~1.3 s).
+
+## Part 2 implemented (2026-11-16), with image-cache-v1
+In process, the handler thread decodes and preprocesses each image (`Service::decode_images`, under the 2 slots) and
+leaves the pixel values in `lfm::image::shared_pixel_handoff()` (`lfm/image_handoff.hpp`, a `LeasedMap` keyed by
+the image part's full base64 text, held by the request until it ends); `WorkerCore::parse_speech` takes them from
+there instead of decoding (`Policy::image_handoff`, set by `liquid-lfm3-server`). A miss (the out-of-process worker; a
+front end that had the image's count cached and so decoded nothing) decodes on the engine thread, as before. The
+harness's fake engine checks every handed-over image against its own decode, byte for byte
+(`--image-handoff on --image-log`; tests in `tests/test_lfm3_http_image_in.py`). Found by the full host suite and fixed
+before commit: the refactor first left smart_resize's aspect-ratio refusal outside the refusal mapping (3 failures,
+one per build variant; `decode_image` now runs the count or preprocessing under it).
+Exactness through the server: image-cache-v1 rule 1's check runs the in-process server with the handoff on (32 of 32).
+Rule 2 (the stall with part 2) and rule 3 (memory) follow in a quiet window.

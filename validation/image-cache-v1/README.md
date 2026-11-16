@@ -56,3 +56,27 @@ At 4K each turn spends ~0.95 s between the request and the engine's prefill (the
 second decode and preprocessing) plus ~0.36 s of encode inside the prefill: far above the 100 ms bar. Texts were
 identical across conversations. The turn-1 times expose an intermittent 3-4 s prefill stall, investigated separately
 (`validation/prefill-stall-v1/`).
+
+## Implemented (2026-11-16), with image-queue-v1 part 2
+- `lfm/lru_bytes.hpp` (`LruBytes`, `LockedLruBytes`): least recently used under a byte budget, keys compared in full
+  by `std::map` (no hash anywhere, so rule 4's constant-hash build is moot: there is no hash to make constant);
+  `lfm/leased_map.hpp` (`LeasedMap`, the pattern of the audio round's `FeatureCache`) for part 2's handoff.
+- The front end (`Service::decode_images`): an image part's base64 text -> its token count; a hit skips the decode.
+- The engine (`WorkerCore::image_cache_`, `lfm3_speech::ImageCache`, engine thread only): the text -> the encoder's
+  rows on the GPU (`ImageRows`); `parse_speech` finds them (a hit: no decode, no encode; the request holds its own
+  reference, so an eviction cannot pull rows from a request in flight); the prefill copies them into the prompt's
+  span, or encodes and keeps them (only after a whole encode). `lfm3-speech` sets no cache: unchanged.
+- `--image-cache-mb` (default 512, 0 none) is each side's budget (the design said one budget for both; two caches in
+  two places, each bounded, is what was built: recorded). The engine's figures in the worker's `stats`
+  (`image_cache_entries`, `image_cache_bytes`, `image_cache_budget_bytes`).
+- Host tests: `tests/test_lru_bytes.py` (200 keys at random sizes never over budget; LRU order; same key keeps its
+  value; over-budget entries not kept; keys differing in their last byte distinct; evicted values live on for holders;
+  budget 0; ASan+UBSan and TSan); `tests/test_lfm3_http_image_in.py` (a re-sent image skips the front end's decode; one
+  byte different is decoded; a refused image is refused again; budget 0 keeps nothing).
+
+## Rule 1 results (2026-11-16): **PASS** (`rule1/`)
+`tools/check_lfm3_image_cache.py` on `vimg-srv-c1` (server `841aba10`, worker `e8258fef`; shared Thor, exactness):
+**32 of 32 identical**: each of the 11 stage-0 requests sent twice unstreamed then twice streamed (every send after
+the first a cache hit) equal to `lfm3-speech`'s text, cache on and off; the 11 at once, twice, on both; the
+three-turn conversations on cherry and two, twice each, the same on and off; the 8 listening-set requests
+(interleaved, 1,024 tokens) text and WAV identical on and off (the record keeps each WAV's sha256).

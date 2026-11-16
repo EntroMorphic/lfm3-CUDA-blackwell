@@ -10,6 +10,7 @@
 #ifdef LFM3_NATIVE_GEMM  // speech (#2) was validated only with the native GEMM; other builds refuse op "speech"
 #include "lfm3_batch.cuh"
 #include "lfm3_speech.cuh"
+#include "lfm/image_handoff.hpp"
 #endif
 #include <functional>
 #include <map>
@@ -378,6 +379,14 @@ class WorkerCore {
 #endif
     speech_rows_=rows;
   }
+  // validation/image-cache-v1: the engine's image cache budget in MiB (0, the default here: none; the in-process
+  // server sets its --image-cache-mb)
+  void set_image_cache_mb(int mb) {
+    if(mb<0 || mb>65536) throw std::runtime_error("image cache must be 0..65536 MiB");
+#ifdef LFM3_NATIVE_GEMM
+    image_cache_.set_budget(size_t(mb)<<20);
+#endif
+  }
 #endif
   // Streaming (op "speech" with "stream": true): set by the in-process server around a call; receives the call's
   // progress lines, in order, before its reply line. Unset (the standalone worker on pipes), stream requests are refused.
@@ -409,6 +418,8 @@ class WorkerCore {
        if(weights) out<<",\"cuda_free_bytes\":"<<free_bytes<<",\"cuda_total_bytes\":"<<total_bytes
                            <<",\"device_allocated_bytes\":"<<(total_bytes-free_bytes);
 #ifdef LFM3_NATIVE_GEMM
+       out<<",\"image_cache_entries\":"<<image_cache_.size()<<",\"image_cache_bytes\":"<<image_cache_.bytes()
+          <<",\"image_cache_budget_bytes\":"<<image_cache_.budget();
        // The worker's own engine buffers (LFM_ALLOCATION_METRICS=1 only): exact, unlike the device-wide numbers.
        if(lfm::allocation_metrics::enabled()) {
          const auto m=lfm::allocation_metrics::snapshot();
@@ -623,6 +634,9 @@ class WorkerCore {
   bool speech_ok=false,audio_in_ok=false,image_in_ok=false;
   int speech_rows_=8;  // rows of the concurrent speech batch (set_speech_rows, before its first use)
 #ifdef LFM3_NATIVE_GEMM
+  lfm3_speech::ImageCache image_cache_;  // validation/image-cache-v1: engine thread only (parse_speech, the prefill)
+#endif
+#ifdef LFM3_NATIVE_GEMM
   std::unique_ptr<Runner> speech_runner;
   std::unique_ptr<lfm3_speech::Session> speech_session;
   std::unique_ptr<lfm3_speech::Batch> speech_batch;
@@ -688,15 +702,33 @@ class WorkerCore {
       for(const auto& p:prompts) lfm3_speech::check_audio_spans(p,{});
     }
     std::vector<lfm::image::PixelValues> images;  // decoded, preprocessed and checked (spans included) likewise
+    std::vector<std::string> image_keys;  // validation/image-cache-v1: each image's cache key (empty: not cached)
+    std::vector<std::shared_ptr<const lfm3_speech::ImageRows>> image_rows;  // the cache's rows (null: encode)
     if(request.has("images")) {
       if(!image_in_ok) throw std::runtime_error("image input is not supported by this checkpoint");
       if(request.at("images").array().size()>kSpeechMaxImages) throw std::runtime_error("too many images");
       if(chunked) throw std::runtime_error("chunks cannot take image input");
       std::vector<size_t> image_tokens;
       lfm::image::Limits limits;limits.max_pixels=kSpeechMaxImagePixels;
+      const bool caching=image_cache_.budget()>0;
       for(const auto& a:request.at("images").array()) {
-        const std::string bytes=lfm::base64::decode(a.string());
-        images.push_back(lfm::image::preprocess(lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size(),limits)));
+        const std::string& key=a.string();
+        // validation/image-cache-v1: these exact bytes encoded before: their rows, no decode or encode
+        if(auto rows=caching?image_cache_.find(key):nullptr) {
+          lfm::image::PixelValues stub;
+          stub.grid_h=rows->grid_h;stub.grid_w=rows->grid_w;stub.tokens=rows->tokens;
+          stub.row_size=lfm3_vision::Encoder::kPatchDim;
+          images.push_back(std::move(stub));
+          image_rows.push_back(std::move(rows));
+        } else if(const auto pixels=lfm::image::shared_pixel_handoff().find(key)) {
+          images.push_back(*pixels);  // image-queue-v1 part 2: decoded by the in-process server's handler thread
+          image_rows.push_back(nullptr);
+        } else {
+          const std::string bytes=lfm::base64::decode(key);
+          images.push_back(lfm::image::preprocess(lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size(),limits)));
+          image_rows.push_back(nullptr);
+        }
+        image_keys.push_back(caching?key:std::string());
         image_tokens.push_back(size_t(images.back().tokens));
       }
       lfm3_speech::check_image_spans(prompts[0],image_tokens);
@@ -706,6 +738,7 @@ class WorkerCore {
     auto& o=job.o;
     o.mode=mode=="audio"?lfm::audio::Requested::Audio:mode=="text"?lfm::audio::Requested::Text:lfm::audio::Requested::Interleaved;
     o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);o.images=std::move(images);
+    o.image_keys=std::move(image_keys);o.image_rows=std::move(image_rows);
     return job;
   }
   // The streaming observers: progress lines, each prefixed with `tag` (e.g. "\"ticket\":7," for a batch row).
@@ -761,7 +794,10 @@ class WorkerCore {
 #else
     auto job=parse_speech(request);
     ensure_speech_runner();
-    if(!speech_session) speech_session=std::make_unique<lfm3_speech::Session>(*speech_runner,directory);
+    if(!speech_session) {
+      speech_session=std::make_unique<lfm3_speech::Session>(*speech_runner,directory);
+      speech_session->set_image_cache(&image_cache_);
+    }
     auto& o=job.o;
     o.cancelled=[&] {return cancellation_enabled && cancellation.requested(uint64_t(rpc_id));};
     if(job.stream) observe(o,"");
@@ -796,6 +832,7 @@ class WorkerCore {
     ensure_speech_runner();
     if(!speech_batch) {
       speech_batch=std::make_unique<lfm3_speech::Batch>(*speech_runner,directory,speech_rows_);
+      speech_batch->set_image_cache(&image_cache_);
       batch_rows.clear();batch_rows.resize(size_t(speech_rows_));
     }
     int row=-1;

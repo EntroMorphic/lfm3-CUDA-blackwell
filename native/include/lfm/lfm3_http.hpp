@@ -72,6 +72,8 @@
 #include "lfm/base64.hpp"
 #include "lfm/image_decode.hpp"
 #include "lfm/image_preprocess.hpp"
+#include "lfm/image_handoff.hpp"
+#include "lfm/lru_bytes.hpp"
 #include "lfm/lfm3_text.hpp"
 #include "lfm/speech_run.hpp"
 #include "lfm/speech_text.hpp"
@@ -477,10 +479,13 @@ struct Settings {
   // Tokens per text slice while no speech row runs (validation/text-wait-v1): new speech and session operations wait
   // at most one slice (16 tokens: about 0.26 s on Thor); while rows run, a slice is one token.
   int text_slice = 16;
+  // validation/image-cache-v1: the image caches' budget in MiB (each side's: the front end's token counts here, the
+  // engine's encoder rows on the GPU); 0: no caching
+  int image_cache_mb = 512;
   void validate() const {
     const auto in = [](long long v, long long lo, long long hi) { return v >= lo && v <= hi; };
     if (!in(max_sessions, 1, 2) || !in(total_capacity, 2, 32768) || !in(queue_size, 1, 64) || !in(handlers, 1, 128) ||
-        !in(text_slice, 1, 4096))
+        !in(text_slice, 1, 4096) || !in(image_cache_mb, 0, 65536))
       throw std::invalid_argument("invalid server settings");
     for (const double t : {request_timeout, socket_timeout, session_idle_timeout, engine_timeout})
       if (!std::isfinite(t) || !(t > 0 && t <= 86400)) throw std::invalid_argument("invalid timeout");
@@ -497,6 +502,9 @@ struct Policy {
   // Concurrent speech (validation/speech-batch-v1): the engine's speech batch rows (ops speech_admit/speech_step,
   // WorkerCore::speech_rows); 0: one /speech at a time through op "speech".
   int speech_rows = 0;
+  // validation/image-queue-v1 part 2: the engine runs in this process and finds a decoded image's pixel values in
+  // lfm::image::shared_pixel_handoff (the handler thread decodes and preprocesses; the engine does not again)
+  bool image_handoff = false;
 };
 
 inline std::chrono::nanoseconds seconds(double s) {
@@ -512,6 +520,7 @@ class Service {
   Service(Backend& backend, const lfm3_text::Tokenizer& tokenizer, Policy policy, Settings settings)
       : backend_(backend), tokenizer_(tokenizer), policy_(std::move(policy)), settings_(settings) {
     settings_.validate();
+    image_token_cache_.set_budget(size_t(settings_.image_cache_mb) << 20);
     owner_ = std::thread([this] {
       run();
       std::lock_guard g(done_lock_);
@@ -823,13 +832,19 @@ class Service {
     std::string images_json;         // image input (#4): the images (base64 JPEG/PNG) as the engine request carries them
     bool image_input = false;        // the messages hold image parts
     std::vector<int> image_tokens;   // each image part's token count, in prompt order (decode_images)
+    // each decoded image's pixel values left for the in-process engine, held until this request ends (image-queue-v1)
+    std::vector<lfm::LeasedMap<lfm::image::PixelValues>::Lease> image_leases;
     bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
     bool stream = false;             // the reply as events while the engine generates (speech_stream)
   };
   // Image input (#4): an image part's data (base64 of JPEG or PNG bytes) decoded as the engine will
   // (lfm/image_decode.hpp: bit-identical to HF's front end, validation/images-v1 rule 1) and its token count from
-  // smart_resize, preprocess's own count without the resize (lfm::image::tokens). Every refusal is an ApiError with its own code, before the engine sees the request.
-  static int image_tokens(const std::string& data) {
+  // smart_resize, preprocess's own count without the resize (lfm::image::tokens); or, for the in-process engine,
+  // preprocessed here and handed over (decode_images). Every refusal is an ApiError with its own code, before the engine sees the request.
+  // `then(rgb)` (the token count, or the preprocessing for the engine) runs under the same refusals: smart_resize's
+  // aspect-ratio refusal is one of them.
+  template <class F>
+  static auto decode_image(const std::string& data, F&& then) {
     std::string bytes;
     try {
       bytes = lfm::base64::decode(data);
@@ -839,8 +854,7 @@ class Service {
     try {
       lfm::image::Limits limits;
       limits.max_pixels = kSpeechMaxImagePixels;
-      const auto rgb = lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size(), limits);
-      return lfm::image::tokens(rgb);  // smart_resize's count: the resize is the engine's (image-queue-v1)
+      return then(lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size(), limits));
     } catch (const lfm::image::DecodeError& e) {
       // the decoder's code as the refusal: image_corrupt, image_truncated, image_too_large (413), image_aspect_ratio,
       // image_unsupported_format, image_unsupported_jpeg, image_unsupported_png
@@ -860,6 +874,12 @@ class Service {
     for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true, /*allow_image=*/true))
       for (const auto& part : m.parts) {
         if (!part.image) continue;
+        // image-cache-v1: these exact bytes were decoded before (and accepted: only a decoded image is kept): their
+        // count, with no decode; the engine finds the image's rows in its own cache, or decodes it again itself
+        if (const auto known = image_token_cache_.find(part.data)) {
+          s.image_tokens.push_back(*known);
+          continue;
+        }
         {
           std::unique_lock g(image_slots_lock_);
           for (;;) {
@@ -872,7 +892,7 @@ class Service {
           --image_slots_;
         }
         struct Slot {
-          Service& service;
+          Service& service;  // released by the destructor, however the decode ends
           ~Slot() {
             {
               std::lock_guard g(service.image_slots_lock_);
@@ -881,7 +901,19 @@ class Service {
             service.image_slots_cv_.notify_one();
           }
         } slot{*this};
-        s.image_tokens.push_back(image_tokens(part.data));
+        // refusals: each its own code, before the engine
+        int tokens;
+        if (policy_.image_handoff) {  // part 2: preprocessed here, found by the engine (lfm/image_handoff.hpp)
+          auto pixels = decode_image(part.data, [](const lfm::image::Rgb& rgb) {
+            return std::make_shared<const lfm::image::PixelValues>(lfm::image::preprocess(rgb));
+          });
+          tokens = pixels->tokens;
+          s.image_leases.push_back(lfm::image::shared_pixel_handoff().put(part.data, std::move(pixels)));
+        } else {
+          tokens = decode_image(part.data, [](const lfm::image::Rgb& rgb) { return lfm::image::tokens(rgb); });
+        }
+        s.image_tokens.push_back(tokens);
+        image_token_cache_.put(part.data, std::make_shared<const int>(tokens), sizeof(int));
       }
   }
   Speech validate_speech(const Json& item) const {
@@ -2053,6 +2085,7 @@ class Service {
   std::mutex image_slots_lock_;
   std::condition_variable image_slots_cv_;
   int image_slots_ = kImageDecodeSlots;
+  lfm::LockedLruBytes<int> image_token_cache_;  // image-cache-v1: an image part's base64 text -> its token count
   std::mutex queue_lock_;
   std::condition_variable queue_cv_;
   std::deque<std::shared_ptr<Job>> queue_;

@@ -43,6 +43,7 @@
 #include <optional>
 #include <sstream>
 #include <thread>
+#include <lfm/lru_bytes.hpp>
 
 namespace lfm3_speech {
 
@@ -138,8 +139,19 @@ struct CodecStream {
   CodecStream& operator=(const CodecStream&) = delete;
 };
 
+// validation/image-cache-v1: an image's encoder output on the GPU, as the engine's image cache keeps it.
+struct ImageRows {
+  int grid_h, grid_w, tokens;
+  Buffer<bf16> rows;  // tokens x hidden
+  ImageRows(int h, int w, int t, size_t n) : grid_h(h), grid_w(w), tokens(t), rows(n) {}
+};
+using ImageCache = lfm::LruBytes<ImageRows>;
+
 class Batch {
  public:
+  // The engine's image cache (null: none, as lfm3-speech runs): read by the request's parse, filled here after an
+  // encode; one thread (the engine's) uses both.
+  void set_image_cache(ImageCache* cache) { image_cache_ = cache; }
   Batch(Runner& runner, const std::string& model_dir, int rows)
       : model_dir_(model_dir), runner_(runner), rows_(rows), dec_(runner, rows), depth_(runner.weights, rows),
         logits_dev_(size_t(rows) * lfm::depth::kCodebooks * lfm::depth::kCodes),
@@ -186,10 +198,17 @@ class Batch {
         if (clip.empty()) throw std::runtime_error("speech: empty audio clip");
         clip_tokens.push_back(lfm::audio_features::tokens(clip.size()));
       }
-      for (const auto& im : o.images) {
+      if ((!o.image_keys.empty() && o.image_keys.size() != o.images.size()) ||
+          (!o.image_rows.empty() && o.image_rows.size() != o.images.size()))
+        throw std::runtime_error("speech: image keys or cached rows differ from the images");
+      for (size_t k = 0; k < o.images.size(); ++k) {
+        const auto& im = o.images[k];
+        const ImageRows* cached = k < o.image_rows.size() ? o.image_rows[k].get() : nullptr;
         if (im.grid_t != 1 || im.grid_h <= 0 || im.grid_w <= 0 || im.grid_h % 2 || im.grid_w % 2 ||
             im.row_size != lfm3_vision::Encoder::kPatchDim || im.tokens != im.grid_h * im.grid_w / 4 ||
-            im.values.size() != size_t(im.grid_h) * im.grid_w * size_t(im.row_size))
+            (cached ? !im.values.empty() || cached->tokens != im.tokens || cached->grid_h != im.grid_h ||
+                          cached->grid_w != im.grid_w
+                    : im.values.size() != size_t(im.grid_h) * im.grid_w * size_t(im.row_size)))
           throw std::runtime_error("speech: an image is not the front end's pixel values");
         image_tokens.push_back(size_t(im.tokens));
       }
@@ -200,7 +219,9 @@ class Batch {
     if (o.record_hidden && rows_ != 1) throw std::runtime_error("speech: record_hidden needs a batch of one");
     // the encoder (and its checkpoint contract) before any state changes
     if (!o.audio.empty() && !encoder_) encoder_ = std::make_unique<lfm3_audio_in::Encoder>(runner_.weights, model_dir_);
-    if (!o.images.empty() && !vision_) {
+    bool encode_images = false;
+    for (size_t k = 0; k < o.images.size(); ++k) encode_images |= k >= o.image_rows.size() || !o.image_rows[k];
+    if (encode_images && !vision_) {
       std::ifstream cf(model_dir_ + "/config.json");
       std::stringstream cs;
       cs << cf.rdbuf();
@@ -238,8 +259,24 @@ class Batch {
           at += size_t(encoder_->encode(mel, dst, o.record_audio ? &dump : nullptr));
           if (o.record_audio) w.res.audio_dumps.push_back(std::move(dump));
         } else {
-          const auto& im = o.images[image++];
-          at += size_t(vision_->encode(im.values.data(), im.grid_h, im.grid_w, dst));
+          const size_t k = image++;
+          const auto& im = o.images[k];
+          const size_t bytes = size_t(im.tokens) * runner_.s.hidden * sizeof(bf16);
+          if (k < o.image_rows.size() && o.image_rows[k]) {  // the cache's rows (validation/image-cache-v1)
+            cuda_check(cudaMemcpy(dst, o.image_rows[k]->rows.p, bytes, cudaMemcpyDeviceToDevice));
+            at += size_t(im.tokens);
+          } else {
+            const int n = vision_->encode(im.values.data(), im.grid_h, im.grid_w, dst);
+            if (n != im.tokens) throw std::runtime_error("speech: the encoder's rows differ from the image's tokens");
+            // kept for the next time the same bytes come (only after a whole encode; the rows are the encoder's own)
+            if (image_cache_ && k < o.image_keys.size() && !o.image_keys[k].empty() &&
+                o.image_keys[k].size() + bytes <= image_cache_->budget()) {
+              auto kept = std::make_shared<ImageRows>(im.grid_h, im.grid_w, n, size_t(n) * runner_.s.hidden);
+              cuda_check(cudaMemcpy(kept->rows.p, dst, bytes, cudaMemcpyDeviceToDevice));
+              image_cache_->put(o.image_keys[k], std::move(kept), bytes);
+            }
+            at += size_t(n);
+          }
         }
         while (i < prompt.size() && prompt[i] == id) ++i;
       }
@@ -511,6 +548,7 @@ class Batch {
   std::string model_dir_;
   std::unique_ptr<lfm3_audio_in::Encoder> encoder_;
   std::unique_ptr<lfm3_vision::Encoder> vision_;
+  ImageCache* image_cache_ = nullptr;
   std::unique_ptr<Buffer<bf16>> audio_rows_;
   size_t audio_capacity_ = 0;
   Runner& runner_;
@@ -530,6 +568,7 @@ class Batch {
 class Session {
  public:
   Session(Runner& runner, const std::string& model_dir) : batch_(runner, model_dir, 1) {}
+  void set_image_cache(ImageCache* cache) { batch_.set_image_cache(cache); }
 
   Result generate(std::vector<int> prompt, const Options& o) {
     batch_.admit(0, std::move(prompt), o);

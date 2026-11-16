@@ -4,7 +4,9 @@
 //
 //   liquid-lfm3-server --experimental MODEL_DIRECTORY [--token-file FILE] [--port N] [--request-timeout S]
 //                      [--socket-timeout S] [--session-idle-timeout S] [--engine-timeout S] [--total-capacity N]
-//                      [--max-sessions N] [--queue-size N] [--handlers N] [--speech-rows N]
+//                      [--max-sessions N] [--queue-size N] [--handlers N] [--speech-rows N] [--image-cache-mb N]
+// --image-cache-mb (0..65536, default 512; 0: none): validation/image-cache-v1's budget for each side's image cache (the
+// front end's token counts, the engine's encoder rows on the GPU), keyed by an image's full bytes
 // --speech-rows (1..16, the most validated; default 8): /speech requests generated at once in the engine's speech batch
 // (validation/speech-batch-v1); more wait in the queue (--queue-size of them). Without --handlers, the server takes
 // max(8, 2 x speech rows) handlers: at most half of them stream at once (Service::speech_stream), so every row can.
@@ -101,6 +103,7 @@ int main(int argc,char** argv) try {
     else if(option=="--queue-size") settings.queue_size=whole(option,value);
     else if(option=="--handlers") settings.handlers=whole(option,value);
     else if(option=="--speech-rows") speech_rows=whole(option,value);
+    else if(option=="--image-cache-mb") settings.image_cache_mb=whole(option,value);
     else throw std::runtime_error("unsupported option "+option);
   }
   std::string note;
@@ -120,6 +123,7 @@ int main(int argc,char** argv) try {
 
   CoreBackend backend(directory);
   backend.core().set_speech_rows(speech_rows);
+  backend.core().set_image_cache_mb(settings.image_cache_mb);
   lfm::http::Policy policy;
   policy.vocabulary=backend.core().vocabulary();
   policy.suppress=backend.core().suppressed_tokens();
@@ -128,6 +132,7 @@ int main(int argc,char** argv) try {
   policy.audio_input=backend.core().audio_input_supported();
   policy.image_input=backend.core().image_input_supported();
   policy.speech_rows=backend.core().speech_rows();
+  policy.image_handoff=true;  // the engine runs in this process (image-queue-v1 part 2)
   for(auto* ids:{&policy.suppress,&policy.stops}) {
     std::sort(ids->begin(),ids->end());ids->erase(std::unique(ids->begin(),ids->end()),ids->end());
   }
