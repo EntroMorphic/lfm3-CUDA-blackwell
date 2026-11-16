@@ -10,7 +10,7 @@ case $mode in
   *) echo "unknown mode $mode"; exit 2 ;;
 esac
 cd "$out"
-sha256sum $N/tests/lfm3_score.cu $N/src/lfm3_main.cu $N/src/safetensors.cpp $N/include/lfm/gemm.cuh > sources.sha256
+sha256sum $N/apps/lfm3_score.cu $N/src/lfm3_main.cu $N/src/safetensors.cpp $N/include/lfm/gemm.cuh > sources.sha256
 echo "$mode" > mode.txt
-nvcc -O3 --fmad=false -std=c++20 -arch=sm_110 "${flags[@]}" -I $N/include -o lfm3-score $N/tests/lfm3_score.cu $N/src/safetensors.cpp "${libs[@]}" > build.log 2>&1 || { grep -iE "error" build.log | head -10; exit 1; }
+nvcc -O3 --fmad=false -std=c++20 -arch=sm_110 "${flags[@]}" -I $N/include -o lfm3-score $N/apps/lfm3_score.cu $N/src/safetensors.cpp "${libs[@]}" > build.log 2>&1 || { grep -iE "error" build.log | head -10; exit 1; }
 echo "lfm3-score built sha256 $(sha256sum lfm3-score | cut -c1-16)"

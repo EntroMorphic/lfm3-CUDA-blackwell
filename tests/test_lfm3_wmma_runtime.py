@@ -17,7 +17,7 @@ def test_candidate_preserves_every_source_except_linear_dispatch(tmp_path):
         assert hashlib.sha256((ROOT/n).read_bytes()).hexdigest()==r['original_sha256']
         assert hashlib.sha256((output/n).read_bytes()).hexdigest()==r['candidate_sha256']
     header=(output/'native/tests/lfm3_wmma_runtime_generated.cuh').read_text()
-    probe=(ROOT/'native/tests/lfm3_wmma_policy_probe.cu').read_text()
+    probe=(ROOT/'native/probes/lfm3_wmma_policy_probe.cu').read_text()
     kernels=probe[probe.index('__global__ void wmma_partials('):probe.index('__global__ void wmma_consume(')]
     assert kernels in header and 'cudaMemset' not in header
     assert 'CUBLAS_COMPUTE_32F_PEDANTIC' not in header

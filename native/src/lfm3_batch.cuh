@@ -8,7 +8,7 @@
 //
 // Row independence (the batch gate): a row's tokens do not depend on which rows share its batch, or how many.
 // - Projections use lfm::gemm's wide (tensor-core) kernel at every row count; its per-element arithmetic does not
-//   depend on M (tests/lfm3_decode_gemm_bench.cu checks it bitwise). The serial runner's decode uses thin (M <= 8),
+//   depend on M (bench/lfm3_decode_gemm_bench.cu checks it bitwise). The serial runner's decode uses thin (M <= 8),
 //   so a row here is not bitwise the serial runner's decode; it is its own engine path, gated on its own.
 // - Norms run each row with the one-row block width (the serial decode's), not the row-count-dependent one.
 // - Attention is split-K over fixed 256-key splits relative to the row's first key, combined in split order: it
@@ -30,7 +30,7 @@ constexpr int kSplit = 256;   // keys per attention split
 constexpr int kGroupMax = 8;  // query heads per KV head supported by the attention kernel
 
 // Y = X W^T (+ FP32 output): the wide kernel whatever the row count, in the tile shape measured fastest for the
-// projection and row bucket (native/tests/lfm3_decode_tile_sweep.cu, Thor, distinct weights per instance). Every tile
+// projection and row bucket (native/bench/lfm3_decode_tile_sweep.cu, Thor, distinct weights per instance). Every tile
 // shape accumulates each output over the same k16 steps in the same order, so the choice never changes a value
 // (the sweep checks it bitwise); a tile's row count is at least the batch's, so weights are read once per step.
 namespace tiles {

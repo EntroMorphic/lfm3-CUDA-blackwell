@@ -13,7 +13,7 @@ minimal program. Full32K racecheck remains incomplete. Neither is resolved here.
 
 ## Program and controls
 
-`native/tests/lfm3_tma_store_probe.cu` links cudart and the CUDA driver, not cuBLAS.
+`native/probes/lfm3_tma_store_probe.cu` links cudart and the CUDA driver, not cuBLAS.
 It uses96 blocks,128 threads,12,288 FP32 words, no output initialization, and rank4
 dimensions[128,1,1,96], strides[512,512,512], box[128,1,1,1]. Shared writes precede
 an async-proxy fence and block barrier. One thread issues the tensor store,

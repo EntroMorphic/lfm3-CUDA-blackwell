@@ -20,7 +20,7 @@ from check_lfm3_cublas_modes import digest, environment, libraries, run_owned
 from lfm3_owned_process import owned_main
 
 WIDTH = 2048
-SOURCE = Path(__file__).resolve().parents[1] / 'native/tests/lfm3_projection_bedrock_probe.cu'
+SOURCE = Path(__file__).resolve().parents[1] / 'native/probes/lfm3_projection_bedrock_probe.cu'
 
 
 def bf16(value):

@@ -12,7 +12,7 @@ prompt='Hypothetically, might reflective recursion be a function of cognition?'
 mkdir -p "$output"
 native/build.sh
 nvcc -O3 -std=c++20 --default-stream per-thread -arch=sm_110 \
-  native/tools/roofline.cu -lcublas -o "$output/roofline"
+  native/bench/roofline.cu -lcublas -o "$output/roofline"
 
 for run in 1 2 3; do
   "$output/roofline" | tee "$output/roofline-$run.txt"

@@ -3,8 +3,8 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (ROOT / "native/tests/lfm3_projection_modes_probe.cu").read_text()
-GOLDEN = (ROOT / "native/tests/lfm3_projection_probe.cu").read_text()
+SOURCE = (ROOT / "native/probes/lfm3_projection_modes_probe.cu").read_text()
+GOLDEN = (ROOT / "native/probes/lfm3_projection_probe.cu").read_text()
 
 
 def test_cli_is_a_strict_whitelist_before_cuda():

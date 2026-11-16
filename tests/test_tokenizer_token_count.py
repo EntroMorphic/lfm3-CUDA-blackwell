@@ -3,7 +3,7 @@
 There is ONE implementation, lfm::tokenizer_token_count (native/include/lfm/model_config.hpp), used by
 liquid-lfm3, liquid-lfm3-worker and the sampling oracle; gates read the count back from those binaries
 rather than re-deriving it in Python, so no second implementation can disagree. These tests drive the
-real function through native/tests/tokenizer_count_probe.cpp.
+real function through native/probes/tokenizer_count_probe.cpp.
 """
 import json
 from pathlib import Path
@@ -22,7 +22,7 @@ def probe(tmp_path_factory):
         pytest.skip("g++ required")
     binary = tmp_path_factory.mktemp("tok") / "probe"
     subprocess.run(["g++", "-std=c++20", "-Wall", "-Wextra", "-Werror", "-I", str(ROOT / "native/include"),
-                    str(ROOT / "native/tests/tokenizer_count_probe.cpp"), "-o", str(binary)], check=True)
+                    str(ROOT / "native/probes/tokenizer_count_probe.cpp"), "-o", str(binary)], check=True)
     return binary
 
 

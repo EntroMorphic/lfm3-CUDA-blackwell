@@ -16,7 +16,7 @@ except ModuleNotFoundError:
 
 MODES = ("default", "pedantic", "default-algo")
 SHAPES = ((257, 2048), (1, 2048))
-SOURCE = Path(__file__).resolve().parents[1]/"native/tests/lfm3_projection_modes_probe.cu"
+SOURCE = Path(__file__).resolve().parents[1]/"native/probes/lfm3_projection_modes_probe.cu"
 
 
 def digest(path):

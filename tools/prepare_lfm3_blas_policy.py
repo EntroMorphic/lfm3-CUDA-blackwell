@@ -21,8 +21,8 @@ def prepare(root,output,policy):
     if output.exists() or output.is_symlink():raise FileExistsError(output)
     budget,disallow=POLICIES[policy]
     files=['native/src/lfm3_main.cu','native/src/lfm3_worker.cu','native/src/lfm3_decode_batch.cuh',
-           'native/src/safetensors.cpp','native/tests/lfm3_decode_batch_probe.cu',
-           'native/tests/lfm3_projection_bedrock_probe.cu','LICENSE','native/third_party/PYTORCH_LICENSE']
+           'native/src/safetensors.cpp','native/probes/lfm3_decode_batch_probe.cu',
+           'native/probes/lfm3_projection_bedrock_probe.cu','LICENSE','native/third_party/PYTORCH_LICENSE']
     for p in sorted(checked(root,'native/include').rglob('*')):
         checked(root,p.relative_to(root))
         if p.is_file() and p.suffix in ('.hpp','.cuh'):files.append(p.relative_to(root).as_posix())
@@ -35,7 +35,7 @@ def prepare(root,output,policy):
             if disallow:text=once(text,'cublasSetMathMode(blas, CUBLAS_DEFAULT_MATH)',
                                  'cublasSetMathMode(blas, CUBLAS_MATH_DISALLOW_REDUCED_PRECISION_REDUCTION)')
             modified=text.encode()
-        elif name=='native/tests/lfm3_projection_bedrock_probe.cu':
+        elif name=='native/probes/lfm3_projection_bedrock_probe.cu':
             text=once(original.decode(),'cublasSetWorkspace(handle,workspace,8519680)',
                       f'cublasSetWorkspace(handle,workspace,{budget})')
             if disallow:
@@ -48,8 +48,8 @@ def prepare(root,output,policy):
             modified=text.encode()
         generated[name]=modified
         records[name]=dict(original_sha256=digest(original),candidate_sha256=digest(modified),changed=modified!=original)
-    cmake=CMAKE.replace('lfm3_pedantic_diagnostic','lfm3_blas_policy_candidate')+'''diagnostic_target(lfm3-decode-batch-probe native/tests/lfm3_decode_batch_probe.cu)
-add_executable(lfm3-policy-probe native/tests/lfm3_projection_bedrock_probe.cu)
+    cmake=CMAKE.replace('lfm3_pedantic_diagnostic','lfm3_blas_policy_candidate')+'''diagnostic_target(lfm3-decode-batch-probe native/probes/lfm3_decode_batch_probe.cu)
+add_executable(lfm3-policy-probe native/probes/lfm3_projection_bedrock_probe.cu)
 target_compile_features(lfm3-policy-probe PRIVATE cuda_std_17)
 target_link_libraries(lfm3-policy-probe PRIVATE CUDA::cudart CUDA::cublas)
 set_target_properties(lfm3-policy-probe PROPERTIES CUDA_ARCHITECTURES 110)

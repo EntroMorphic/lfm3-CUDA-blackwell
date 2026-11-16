@@ -35,7 +35,7 @@ def test_bad_weights_are_not_silently_used(tmp_path,damage):
 
 
 def test_standalone_algorithm_probe_has_no_production_mutations():
-    source=(ROOT/'native/tests/lfm3_lt_policy_probe.cu').read_text()
+    source=(ROOT/'native/probes/lfm3_lt_policy_probe.cu').read_text()
     assert 'cudaMemset' not in source
     assert 'CUBLAS_COMPUTE_32F_PEDANTIC' not in source
     assert 'cublasLtMatmulAlgoCheck' in source and 'cublasLtMatmulAlgoGetIds' in source

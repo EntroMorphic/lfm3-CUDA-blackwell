@@ -26,7 +26,7 @@ def probe(tmp_path_factory):
     binary = tmp_path_factory.mktemp("lfm3") / "probe"
     subprocess.run(["g++", "-std=c++20", "-Wall", "-Wextra", "-Werror",
                     "-I", str(ROOT / "native/include"),
-                    str(ROOT / "native/tests/lfm3_config_probe.cpp"), "-o", str(binary)], check=True)
+                    str(ROOT / "native/probes/lfm3_config_probe.cpp"), "-o", str(binary)], check=True)
     return binary
 
 

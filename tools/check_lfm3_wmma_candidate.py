@@ -21,7 +21,7 @@ def main():
     def pin(path):pins[str(path)]=digest(path)
     def save():(a.output/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
     try:
-        for path in (a.binary,a.sanitizer,Path(__file__),Path(__file__).with_name('check_lfm3_lt_candidates.py'),Path(__file__).with_name('lfm3_owned_process.py'),Path(__file__).resolve().parents[1]/'native/tests/lfm3_wmma_policy_probe.cu'):pin(path)
+        for path in (a.binary,a.sanitizer,Path(__file__),Path(__file__).with_name('check_lfm3_lt_candidates.py'),Path(__file__).with_name('lfm3_owned_process.py'),Path(__file__).resolve().parents[1]/'native/probes/lfm3_wmma_policy_probe.cu'):pin(path)
         weight,meta=tensor(a.checkpoint,'model.language_model.layers.0.conv.in_proj.weight')
         if meta['shape']!=[6144,2048]:raise ValueError('weight shape differs')
         report['weight']=meta;wp=a.output/'weights.bf16';wp.write_bytes(weight);pin(wp)

@@ -15,7 +15,7 @@ def test_policy_changes_only_two_isolated_sources(tmp_path,policy):
     assert m['full_acceptance'] is False and m['goldens_may_change'] is False
     assert m['required_eager_checks']==6890
     changed={n for n,r in m['files'].items() if r['changed']}
-    assert changed=={'native/src/lfm3_main.cu','native/tests/lfm3_projection_bedrock_probe.cu'}
+    assert changed=={'native/src/lfm3_main.cu','native/probes/lfm3_projection_bedrock_probe.cu'}
     for n,r in m['files'].items():
         assert hashlib.sha256((ROOT/n).read_bytes()).hexdigest()==r['original_sha256']
         assert hashlib.sha256((out/n).read_bytes()).hexdigest()==r['candidate_sha256']

@@ -2,7 +2,7 @@
 
 This new checkpoint-free probe explores documented backend options without a
 driver install, runtime edit, output preinitialization, suppression, preload or
-unofficial flags. The golden `native/tests/lfm3_projection_probe.cu` is unchanged.
+unofficial flags. The golden `native/probes/lfm3_projection_probe.cu` is unchanged.
 The existing default produces 128 correct nonuniform samples but has downstream
 consumer initcheck reports under 2026.2/.3/.4. The 1x2048 internal split-K report
 is a separate failure, not evidence of the same consumer-tracking hypothesis.
@@ -54,7 +54,7 @@ The parent added an excluded diagnostic CMake target separately. Compile standal
 without running the resulting executable:
 
 ```sh
-/usr/local/cuda-13.5/bin/nvcc -std=c++17 -arch=sm_80 native/tests/lfm3_projection_modes_probe.cu -lcublas -o /tmp/user/1000/opencode/lfm3-projection-modes-probe
+/usr/local/cuda-13.5/bin/nvcc -std=c++17 -arch=sm_80 native/probes/lfm3_projection_modes_probe.cu -lcublas -o /tmp/user/1000/opencode/lfm3-projection-modes-probe
 python -m pytest -q -p no:cacheprovider tests/test_lfm3_projection_modes_contract.py
 ```
 

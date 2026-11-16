@@ -52,7 +52,7 @@ def main():
             report['failed_execution']=result;save();raise ValueError('bounded tool/application did not complete')
         return result
     try:
-        for path in (args.binary,args.sanitizer,Path(__file__),Path(__file__).with_name('lfm3_owned_process.py'),Path(__file__).resolve().parents[1]/'native/tests/lfm3_lt_policy_probe.cu'):pin(path)
+        for path in (args.binary,args.sanitizer,Path(__file__),Path(__file__).with_name('lfm3_owned_process.py'),Path(__file__).resolve().parents[1]/'native/probes/lfm3_lt_policy_probe.cu'):pin(path)
         ldd=shutil.which('ldd')
         if not ldd:raise ValueError('ldd unavailable')
         code,timed=run_owned([ldd,str(args.binary)],env,args.output/'ldd.log',10)

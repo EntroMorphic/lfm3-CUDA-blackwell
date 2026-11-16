@@ -68,7 +68,7 @@ def main():
         cases = [("230M", 32), ("350M", 32), ("350M", 64), ("1.2B-Instruct", 32), ("2.6B", 32)]
         for suffix, batch in cases:
             name = f"paired-{suffix}-b{batch}"
-            run(name, [sys.executable, str(root / "native/tools/benchmark_decode.py"),
+            run(name, [sys.executable, str(root / "tools/upstream/benchmark_decode.py"),
                 "--runtime", str(binary), "--baseline", str(binary), "--baseline-no-cuda-graph",
                 "--model", str(models / ("LFM2.5-" + suffix)), "--prompt-tokens",
                 str(historical / ("LFM2.5-" + suffix) / "prompt.tokens"),

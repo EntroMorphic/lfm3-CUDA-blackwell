@@ -14,7 +14,7 @@ same prompt, because greedy decoding then makes the expected output unique.
 
 Usage (inside the GPU container, where the runtime and model live):
 
-    python3 native/tools/coherency_test.py \
+    python3 tools/upstream/coherency_test.py \
         --runtime native/build/liquid-native \
         --model models/LFM2.5-350M/model.safetensors \
         --tokenizer models/LFM2.5-350M/tokenizer.json \
@@ -260,7 +260,7 @@ def structure(text):
 
 def compare_with_reference(args, work, native_tokens, sequences):
     """Compare the native answer with the Transformers reference answer."""
-    # native/tools/coherency_test.py -> repository root
+    # tools/upstream/coherency_test.py -> repository root
     script = Path(__file__).resolve().parents[2] / "scripts" / "reference_generate.py"
     # The runtime takes the checkpoint file; the Transformers reference wants
     # the directory, so it can find the tokenizer and the config beside it.

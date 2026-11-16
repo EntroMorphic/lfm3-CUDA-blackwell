@@ -9,7 +9,7 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = "native/src/lfm3_main.cu"
 BATCH = "native/src/lfm3_decode_batch.cuh"
-PROBE = "native/tests/lfm3_decode_batch_probe.cu"
+PROBE = "native/probes/lfm3_decode_batch_probe.cu"
 REPLACEMENTS = {
     MAIN: {"CUBLAS_COMPUTE_32F": ("CUBLAS_COMPUTE_32F_PEDANTIC", 3),
            "CUBLAS_GEMM_DEFAULT_TENSOR_OP": ("CUBLAS_GEMM_DEFAULT", 3),
@@ -87,7 +87,7 @@ def prepare(root, output, with_probe=True):
                              "original_sha256": digest(original),
                              "copied_sha256": digest(original),
                              "modified_sha256": digest(modified), "replacements": counts}
-    cmake = CMAKE + ("diagnostic_target(lfm3-decode-batch-probe native/tests/lfm3_decode_batch_probe.cu)\n"
+    cmake = CMAKE + ("diagnostic_target(lfm3-decode-batch-probe native/probes/lfm3_decode_batch_probe.cu)\n"
                      if with_probe else "")
     manifest = {"schema_version": 1, "diagnostic_only": True, "full_acceptance": False,
                 "status": "generated_not_built_or_validated", "source_origin": str(root),

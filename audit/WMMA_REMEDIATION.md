@@ -41,7 +41,7 @@ possible library algorithm or configuration.
 
 ## Native arithmetic and stores
 
-`native/tests/lfm3_wmma_policy_probe.cu` uses one warp per16x16 output tile, BF16
+`native/probes/lfm3_wmma_policy_probe.cu` uses one warp per16x16 output tile, BF16
 WMMA in16-element K steps, FP32 partial accumulators, an ordinary-store FP32
 scratch matrix, and a native reduction/materialization kernel. Shared-memory
 zero padding covers only input tails; scratch/output is never preinitialized.

@@ -99,5 +99,5 @@ def test_gate_runner_reports_identity_and_heartbeat():
 
 
 def test_probe_rejects_timings_above_dram_peak():
-    source = (ROOT / 'native' / 'tests' / 'lfm3_thin_v5_probe.cu').read_text()
+    source = (ROOT / 'native' / 'probes' / 'lfm3_thin_v5_probe.cu').read_text()
     assert 'bytes / t / 1e9 <= peak' in source and 'return exact && timing_valid ? 0 : 1;' in source

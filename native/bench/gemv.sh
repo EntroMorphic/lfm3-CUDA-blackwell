@@ -19,10 +19,10 @@ mkdir -p "$out"
 common=(-O3 -std=c++20 --expt-relaxed-constexpr -arch=sm_110 -I native/include)
 
 echo "== building =="
-nvcc "${common[@]}" native/tools/gemv_bench.cu -lcublas -o "$out/gemv_bench"
-nvcc "${common[@]}" native/tools/gemv_order.cu native/src/safetensors.cpp \
+nvcc "${common[@]}" native/bench/gemv_bench.cu -lcublas -o "$out/gemv_bench"
+nvcc "${common[@]}" native/probes/gemv_order.cu native/src/safetensors.cpp \
   -lcublas -o "$out/gemv_order"
-nvcc "${common[@]}" native/tools/gemv_concurrent.cu native/src/safetensors.cpp \
+nvcc "${common[@]}" native/bench/gemv_concurrent.cu native/src/safetensors.cpp \
   -lcublas -o "$out/gemv_concurrent"
 
 echo

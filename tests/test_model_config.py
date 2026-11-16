@@ -16,7 +16,7 @@ def probe(tmp_path_factory):
     binary = tmp_path_factory.mktemp("config") / "probe"
     subprocess.run(["g++", "-std=c++20", "-Wall", "-Wextra", "-Werror",
                     "-I", str(ROOT / "native/include"),
-                    str(ROOT / "native/tests/config_probe.cpp"), "-o", str(binary)], check=True)
+                    str(ROOT / "native/probes/config_probe.cpp"), "-o", str(binary)], check=True)
     return binary
 
 

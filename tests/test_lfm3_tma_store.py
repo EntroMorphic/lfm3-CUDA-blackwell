@@ -33,7 +33,7 @@ def test_incomplete_or_small_comparison_is_rejected(size):
 
 def test_probe_has_documented_fence_and_full_write_wait_not_initialization():
     import re
-    source=(ROOT/'native/tests/lfm3_tma_store_probe.cu').read_text()
+    source=(ROOT/'native/probes/lfm3_tma_store_probe.cu').read_text()
     assert 'cudaMemset' not in source and not re.search(r'\bcublas\w*\s*\(',source,re.I)
     assert '#include <cublas' not in source.lower()
     assert 'fence.proxy.async.shared::cta;' in source

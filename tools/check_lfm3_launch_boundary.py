@@ -114,7 +114,7 @@ def main():
         return d,record
     try:
         root=Path(__file__).resolve().parents[1]
-        for path in (args.observer,args.control,args.probe,Path(__file__),root/'tools/check_lfm3_projection_bedrock.py',root/'tools/check_lfm3_cublas_modes.py',root/'tools/lfm3_owned_process.py',root/'native/tests/lfm3_boundary_observer.cpp',root/'native/tests/lfm3_boundary_control.cu'):pin(path)
+        for path in (args.observer,args.control,args.probe,Path(__file__),root/'tools/check_lfm3_projection_bedrock.py',root/'tools/check_lfm3_cublas_modes.py',root/'tools/lfm3_owned_process.py',root/'native/probes/lfm3_boundary_observer.cpp',root/'native/probes/lfm3_boundary_control.cu'):pin(path)
         for path in args.sdk.glob('*.so'):pin(path)
         for path in (args.sdk/'include').glob('*.h'):pin(path)
         base=environment(args.library_dir,args.library_dir)

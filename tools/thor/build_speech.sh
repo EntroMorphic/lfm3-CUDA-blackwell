@@ -12,10 +12,10 @@ mkdir -p $W/liquid-CUDA/build/$tag
 docker run --rm --network none -v $W:/workspace $IMG bash -c "set -e; cd $C; N=/workspace/liquid-CUDA/native
   L=/workspace/liquid-CUDA/build/images-v1/decode-aarch64/ljt
   F='-O3 --fmad=false -std=c++20 -arch=sm_110 -I '\$N/include
-  (cd /workspace/liquid-CUDA && sha256sum native/src/lfm3_speech.cuh native/src/lfm3_batch.cuh native/src/lfm3_main.cu native/tests/lfm3_speech.cu native/include/lfm/audio_*.hpp native/include/lfm/audio_encoder.cuh native/include/lfm/wav.hpp native/include/lfm/base64.hpp native/include/lfm/fp32_ops.cuh native/include/lfm/safetensors_header.hpp native/include/lfm/speech_text.hpp native/include/lfm/speech_normalize.hpp native/include/lfm/speech_run.hpp native/include/lfm/lfm3_text.hpp native/include/lfm/codec.cuh native/include/lfm/depth.cuh native/include/lfm/vision_encoder.cuh native/include/lfm/image_*.hpp native/src/image_*.cpp) > sources.sha256
+  (cd /workspace/liquid-CUDA && sha256sum native/src/lfm3_speech.cuh native/src/lfm3_batch.cuh native/src/lfm3_main.cu native/apps/lfm3_speech.cu native/include/lfm/audio_*.hpp native/include/lfm/audio_encoder.cuh native/include/lfm/wav.hpp native/include/lfm/base64.hpp native/include/lfm/fp32_ops.cuh native/include/lfm/safetensors_header.hpp native/include/lfm/speech_text.hpp native/include/lfm/speech_normalize.hpp native/include/lfm/speech_run.hpp native/include/lfm/lfm3_text.hpp native/include/lfm/codec.cuh native/include/lfm/depth.cuh native/include/lfm/vision_encoder.cuh native/include/lfm/image_*.hpp native/src/image_*.cpp) > sources.sha256
   g++ -std=c++20 -O2 -Wall -Wextra -I \$N/include -I \$L/include -c \$N/src/image_decode.cpp -o image_decode.o > build-image.log 2>&1
   g++ -std=c++20 -O2 -Wall -Wextra -I \$N/include -c \$N/src/image_preprocess.cpp -o image_preprocess.o >> build-image.log 2>&1
-  nvcc \$F -DLFM3_NATIVE_GEMM -o lfm3-speech \$N/tests/lfm3_speech.cu \$N/src/safetensors.cpp image_decode.o image_preprocess.o \$L/lib/libjpeg.a > build-lfm3-speech.log 2>&1
+  nvcc \$F -DLFM3_NATIVE_GEMM -o lfm3-speech \$N/apps/lfm3_speech.cu \$N/src/safetensors.cpp image_decode.o image_preprocess.o \$L/lib/libjpeg.a > build-lfm3-speech.log 2>&1
   ! grep -iE ' error|warning' build-*.log; chown -R 1000:1000 ."
 readelf -d $W/liquid-CUDA/build/$tag/lfm3-speech | grep -q cublas && { echo "lfm3-speech links cuBLAS"; exit 1; }
 (cd $W/liquid-CUDA/build/$tag && sha256sum lfm3-speech)

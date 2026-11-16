@@ -43,7 +43,7 @@ discard. Do not call concurrently with serial forwards, resets, or other batches
 
 ## Standalone GPU probe
 
-`native/tests/lfm3_decode_batch_probe.cu` takes:
+`native/probes/lfm3_decode_batch_probe.cu` takes:
 
 ```text
 decode-batch-probe --experimental MODEL_DIRECTORY OUTPUT_DIR [scratch|sliding|softmax|tiled|upper] [normal|compact]

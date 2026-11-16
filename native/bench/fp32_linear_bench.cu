@@ -2,7 +2,7 @@
 // timed on the depth trunk's shapes at 8 frames (96 slot rows), and checked bit for bit against fp32::linear (each
 // output is the same sum in the same order whatever the shape: lanes' 8-wide slices of each 256-wide chunk of K, in
 // order, then the warp's reduction).
-//   nvcc -O3 --fmad=false -std=c++20 -arch=sm_110 -I native/include native/tests/fp32_linear_bench.cu -o fp32-linear-bench
+//   nvcc -O3 --fmad=false -std=c++20 -arch=sm_110 -I native/include native/bench/fp32_linear_bench.cu -o fp32-linear-bench
 #include <lfm/fp32_ops.cuh>
 
 #include <chrono>

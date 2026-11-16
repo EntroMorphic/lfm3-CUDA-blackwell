@@ -56,7 +56,7 @@ int main(){
 }
 ''')
     binary=d/'model'
-    subprocess.run([compiler,'-std=c++17','-pthread','-I',str(d),str(ROOT/'native/tests/lfm3_boundary_observer.cpp'),str(d/'model.cpp'),'-o',str(binary)],check=True,capture_output=True,text=True)
+    subprocess.run([compiler,'-std=c++17','-pthread','-I',str(d),str(ROOT/'native/probes/lfm3_boundary_observer.cpp'),str(d/'model.cpp'),'-o',str(binary)],check=True,capture_output=True,text=True)
     return binary
 
 
@@ -86,6 +86,6 @@ def test_observer_state_and_read_only_snapshots(model,tmp_path,mode,fault):
 
 def test_no_forbidden_cuda_calls_or_device_mutations_in_observer():
     import re
-    source=(ROOT/'native/tests/lfm3_boundary_observer.cpp').read_text()
+    source=(ROOT/'native/probes/lfm3_boundary_observer.cpp').read_text()
     assert not re.search(r'\b(?:cuda\w+|cu[A-Z]\w*|sanitizerMemset|sanitizerMemcpyHostToDeviceAsync|sanitizerPatch\w*)\s*\(',source)
     assert 'sanitizerMemcpyDeviceToHost(' in source

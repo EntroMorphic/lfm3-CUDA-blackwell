@@ -42,7 +42,7 @@ def main():
     def pin(path):pins[str(path)]=digest(path)
     def save():(a.output/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
     try:
-        for path in (a.binary,a.sanitizer,Path(__file__),Path(__file__).with_name('check_lfm3_candidate_sanitizers.py'),Path(__file__).with_name('lfm3_owned_process.py'),Path(__file__).resolve().parents[1]/'native/tests/lfm3_wmma_policy_probe.cu'):pin(path)
+        for path in (a.binary,a.sanitizer,Path(__file__),Path(__file__).with_name('check_lfm3_candidate_sanitizers.py'),Path(__file__).with_name('lfm3_owned_process.py'),Path(__file__).resolve().parents[1]/'native/probes/lfm3_wmma_policy_probe.cu'):pin(path)
         env=environment(a.library_dir,a.library_dir)
         for index,(m,n,k,splits) in enumerate(SHAPES):
             d=a.output/f'case-{index}';d.mkdir();left,right,expected=fixture(m,n,k)

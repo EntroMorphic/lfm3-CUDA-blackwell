@@ -5,7 +5,7 @@
 set -euo pipefail
 out=$1; ns=$2; prefix=$3; shift 3
 H=/workspace/liquid-CUDA/build/wmma-runtime-candidate-v4/native/tests/lfm3_wmma_runtime_generated.cuh
-SRC=/workspace/liquid-CUDA/native/tests/lfm3_thin_v5_probe.cu
+SRC=/workspace/liquid-CUDA/native/probes/lfm3_thin_v5_probe.cu
 cd "$out"
 sha256sum "$H" "$SRC" > sources.sha256
 for S in "$@"; do

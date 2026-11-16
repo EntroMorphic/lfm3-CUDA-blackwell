@@ -38,7 +38,7 @@ next target for both.
 1. **Profile (nsys, `build/profile-v1`)** of one decode per binary. In v4, `mma_thin_partials`
    takes 91% of GPU time (2,635 ms over warmup plus measured run), and `wmma_finish` takes 12 ms.
    Every decode shape streamed weights at 36–44 GB/s against cuBLAS's 150–206 GB/s.
-2. **Cold-cache probe** (`native/tests/lfm3_thin_v5_probe.cu`, `validation/thin-probe-v1`):
+2. **Cold-cache probe** (`native/probes/lfm3_thin_v5_probe.cu`, `validation/thin-probe-v1`):
    - Each candidate is compared bitwise with v4's frozen runtime header on 203 random-input cases
      (decode shapes, n = 1/2, tail geometry) and on the real layer-0 conv in_proj decode fixture.
    - Timing rotates through ≥ 2 GiB of weight copies. The first runs reused one copy and reported

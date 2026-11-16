@@ -47,7 +47,7 @@ python3 -c 'import json,sys; print(json.dumps(dict(build=sys.argv[1], keep_going
 (cd "$B/$build" && sha256sum $bins) > "$out/binaries.sha256" \
   || { echo "cannot hash binaries"; exit 1; }
 status parse-timing null
-g++ -std=c++20 -O2 -I $W/liquid-CUDA/native/include $W/liquid-CUDA/native/tests/tokenizer_count_probe.cpp -o "$out/tokcount" || { status parse-timing 1; exit 1; }
+g++ -std=c++20 -O2 -I $W/liquid-CUDA/native/include $W/liquid-CUDA/native/probes/tokenizer_count_probe.cpp -o "$out/tokcount" || { status parse-timing 1; exit 1; }
 for _ in 1 2 3; do
   r=$( { /usr/bin/time -f "%e s %M KB" "$out/tokcount" $W/models/LFM3-Omni-2B/tokenizer.json 128000; } 2>&1 ); echo "$r" >> "$out/parse-timing.log"
   [ "$(echo "$r" | head -1)" = 125033 ] || { status parse-timing 1; exit 1; }

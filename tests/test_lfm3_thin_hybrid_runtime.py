@@ -18,8 +18,8 @@ def test_hybrid_preserves_every_source_except_linear_dispatch(tmp_path):
         assert hashlib.sha256((ROOT/n).read_bytes()).hexdigest()==r['original_sha256']
         assert hashlib.sha256((output/n).read_bytes()).hexdigest()==r['candidate_sha256']
     header=(output/HEADER).read_text()
-    v4=(ROOT/'native/tests/lfm3_wmma_policy_probe.cu').read_text()
-    thin=(ROOT/'native/tests/lfm3_thin_v5_probe.cu').read_text()
+    v4=(ROOT/'native/probes/lfm3_wmma_policy_probe.cu').read_text()
+    thin=(ROOT/'native/probes/lfm3_thin_v5_probe.cu').read_text()
     assert v4[v4.index('__global__ void wmma_partials('):v4.index('__global__ void wmma_consume(')] in header
     assert thin[thin.index('namespace v5 {'):thin.index('#ifndef CANDIDATE')] in header
     # Probe-only harness code (sentinels, timing, cuBLAS comparison) never enters the runtime.
@@ -40,7 +40,7 @@ def test_hybrid_preserves_every_source_except_linear_dispatch(tmp_path):
 
 def test_v4_inputs_are_unchanged_by_hybrid(tmp_path):
     # The v4 evidence binds this probe source; the hybrid must read it, never alter it.
-    v4=ROOT/'native/tests/lfm3_wmma_policy_probe.cu'
+    v4=ROOT/'native/probes/lfm3_wmma_policy_probe.cu'
     assert hashlib.sha256(v4.read_bytes()).hexdigest().startswith('1c6ec2f0f9c781d1d3bb')
     prepare(ROOT,tmp_path/'mirror')
     assert hashlib.sha256(v4.read_bytes()).hexdigest().startswith('1c6ec2f0f9c781d1d3bb')

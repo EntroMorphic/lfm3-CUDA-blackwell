@@ -42,7 +42,7 @@ def main():
     def pin(path):path=Path(path).resolve();pins[str(path)]=digest(path)
     def save():(args.output/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
     try:
-        for path in (args.binary,args.sanitizer,Path(__file__),Path(__file__).resolve().parents[1]/'native/tests/lfm3_tma_store_probe.cu',Path(__file__).with_name('lfm3_owned_process.py'),Path(__file__).with_name('check_lfm3_cublas_modes.py')):pin(path)
+        for path in (args.binary,args.sanitizer,Path(__file__),Path(__file__).resolve().parents[1]/'native/probes/lfm3_tma_store_probe.cu',Path(__file__).with_name('lfm3_owned_process.py'),Path(__file__).with_name('check_lfm3_cublas_modes.py')):pin(path)
         env=dict(os.environ);env['LD_LIBRARY_PATH']=str(args.library_dir)+':'+env.get('LD_LIBRARY_PATH','')
         ldd=shutil.which('ldd')
         if not ldd:raise ValueError('ldd unavailable')

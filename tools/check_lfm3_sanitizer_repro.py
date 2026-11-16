@@ -13,14 +13,14 @@ BASELINE_SHA256 = "65c11b8f41e97cb6cd2e9b2fe54949269002700fa0d241eb92fddd9fec0b1
 BUILD_RECIPE = """cmake_minimum_required(VERSION 3.24)
 project(checkpoint_free_projection LANGUAGES CXX CUDA)
 find_package(CUDAToolkit REQUIRED)
-add_executable(lfm3-projection-probe native/tests/lfm3_projection_probe.cu)
+add_executable(lfm3-projection-probe native/probes/lfm3_projection_probe.cu)
 target_link_libraries(lfm3-projection-probe PRIVATE CUDA::cudart CUDA::cublas)
 set_target_properties(lfm3-projection-probe PROPERTIES CUDA_ARCHITECTURES 110)
 """
 
 
 def baseline_names():
-    names = ["native/tests/lfm3_projection_probe.cu", "tools/check_lfm3_initcheck_matrix.py",
+    names = ["native/probes/lfm3_projection_probe.cu", "tools/check_lfm3_initcheck_matrix.py",
              "tools/lfm3_owned_process.py"]
     names += [EVIDENCE + name for name in ("summary.json", "probe.ldd.log", "run.log",
               "sanitizer-13.4.92-download.json", "sanitizer-13.5.25-download.json")]

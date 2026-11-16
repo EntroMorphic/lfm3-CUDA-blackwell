@@ -18,7 +18,7 @@ The compiler image is pinned by digest (`sha256:3c2b5b8e…109052f`), never by t
 | `liquid-lfm3-server` | `native/src/lfm3_server.cu` | The loopback HTTP server: text sessions, `/speech` (speech in and out, streaming, concurrent rows) |
 | `liquid-lfm3-worker` | `native/src/lfm3_worker.cu` | The engine as a resident worker process (the server's engine, out of process) |
 | `liquid-lfm3` | `native/src/lfm3_main.cu` | The text engine CLI |
-| `lfm3-speech` | `native/tests/lfm3_speech.cu` | Text, audio and image in → text and speech out, one request or a batch; the reference CLI for the speech and image rounds |
+| `lfm3-speech` | `native/apps/lfm3_speech.cu` | Text, audio and image in → text and speech out, one request or a batch; the reference CLI for the speech and image rounds |
 | `liquid-codec`, `liquid-depth` | `native/src/codec_main.cu`, `depth_main.cu` | The audio codec and depth decoder alone, for their checks |
 
 ## With CMake (the server, worker and text engine)

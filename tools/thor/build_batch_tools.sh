@@ -11,8 +11,8 @@ docker run --rm --network none -v $W:/workspace $IMG bash -c "set -e; cd $C; N=/
   (cd /workspace/liquid-CUDA && sha256sum native/src/lfm3_batch.cuh native/src/lfm3_main.cu native/include/lfm/gemm.cuh native/tests/lfm3_batch*.cu native/tests/lfm3_gpu_select_check.cu native/tests/lfm3_decode_*.cu) > sources.sha256
   for t in lfm3_batch:lfm3-batch lfm3_batch_teacher:lfm3-batch-teacher lfm3_gpu_select_check:lfm3-gpu-select-check; do
     nvcc \$F -DLFM3_NATIVE_GEMM -o \${t#*:} \$N/tests/\${t%%:*}.cu \$N/src/safetensors.cpp > build-\${t#*:}.log 2>&1; done
-  nvcc \$F -o decode-gemm-bench \$N/tests/lfm3_decode_gemm_bench.cu > build-bench.log 2>&1
-  nvcc \$F -o tile-sweep \$N/tests/lfm3_decode_tile_sweep.cu > build-sweep.log 2>&1
+  nvcc \$F -o decode-gemm-bench \$N/bench/lfm3_decode_gemm_bench.cu > build-bench.log 2>&1
+  nvcc \$F -o tile-sweep \$N/bench/lfm3_decode_tile_sweep.cu > build-sweep.log 2>&1
   ! grep -iE ' error|warning' build-*.log; chown -R 1000:1000 ."
 for b in lfm3-batch lfm3-batch-teacher lfm3-gpu-select-check; do readelf -d $W/liquid-CUDA/build/$tag/$b | grep -q cublas && { echo "$b links cuBLAS"; exit 1; }; done
 (cd $W/liquid-CUDA/build/$tag && sha256sum lfm3-batch lfm3-batch-teacher lfm3-gpu-select-check decode-gemm-bench tile-sweep)
