@@ -419,6 +419,28 @@ On the final builds (`lfm3-speech` `vimg-a2` sha256 `1051402d...`; server and wo
   passed with no new failure (the 46 errors of a stale test harness since `f45591d` and one test needing the
   workstation's transformers to load this checkpoint are as before, and fixed or explained on the housekeeping branch).
 
+## Rule 4 results (2026-11-16): the reading, **no engine fault found**; Tripp's listening pending
+Read: the 11 stage-0 replies (above, "First look"), every benchmark item where the engines answer differently (105
+MMStar, 19 POPE), and 30 MMStar items drawn at random (`random.seed(1116)`); mechanical flags over all 10,500 replies.
+- Flags over all 10,500 (native / HF BF16): repetition loops 7 / 9, Chinese text in an English reply 5 / 5, 512-token
+  cap 17 / 16, unanswered 18 / 14. On MMStar the FP32 model hits the cap on 23 and leaves 23 unanswered: the long,
+  unconverging reasoning is the model's, and native sits between HF BF16 and FP32 (its capped items overlap FP32's
+  14 times, HF BF16's 12).
+- MMStar differences fall where reasoning is long: math 31, science 31, logical 24, instance reasoning 11, perception
+  8. The 8 perception items are borderline (contrast, sport, pier direction, counts of dressers, players, chairs, a
+  watch's color, a walker): native right on 2, HF on 3, neither on 3; the pier pair reasons word for word alike and
+  departs at the one word "West"/"East". Among the differing items native's reply hits the cap 10 times (one real
+  loop, val/1052; the rest geometry and algebra that does not converge), HF's 8; three native replies name a letter
+  that is not an option (E, F).
+- POPE: 19 differences, the same four images and questions recurring across the three splits; flips in both
+  directions (native yes where HF no 11 times, the reverse 8); yes-ratio 49.1% vs 49.0%.
+- Random sample: 20 of 30 replies identical, 18 of 30 right for each engine; native's replies coherent and specific to
+  the chart, diagram or photograph; its wrong answers the model's ordinary mistakes.
+- Speech (`outputs/images-listening-v1/`, 8 spoken descriptions, interleaved): all end on their own and describe the
+  image; checked against the pictures, the cherry blossoms' small bee is real, the band photo's drum reads "TAMAZ"
+  for TAMA and an acoustic guitar on a stand is called an electric one. Tripp's listening is the final gate and is
+  pending (2026-11-16: working remotely).
+
 ## Speed against HF (2026-11-16), method set before the run: reported, not gated
 Tripp: "make sure we are meeting or beating reference". Read here as: per request, native's end-to-end time is at
 most HF's; any request where it is not is reported with where the time goes. Nothing is changed on the result's
@@ -438,6 +460,29 @@ account without a plan brought to Tripp first.
 - Replies differ in length between the engines on some requests, so decode is also reported per token.
 - The largest images are cherry and mirror (4K photographs, 7,920 patches after the resize), timed warm in the same
   passes.
+
+### Results (2026-11-16): faster on typical images, **slower on 4K photographs**: the vision encoder (`speed/`)
+`tools/thor/vision_speed_round.sh vimg-a3 vspeed-v1`: Thor in MAXN with clocks locked, quiet, the power state
+unchanged from start to end. Medians of 3 passes, seconds (decode in milliseconds per token):
+| case (patches) | HF end to end | native end to end | HF / native | front end HF / native | image encode HF / native | HF first token / native prefill | decode ms/token HF / native |
+|---|---|---|---|---|---|---|---|
+| cherry (7,920) | 3.227 | 4.618 | **0.70** | 0.157 / 0.362 | 0.148 / 1.799 | 0.320 / 2.053 | 21.65 / 17.35 |
+| mirror (7,920) | 3.227 | 4.532 | **0.71** | 0.159 / 0.317 | 0.148 / 1.800 | 0.320 / 2.053 | 21.64 / 17.02 |
+| two (2,080) | 2.825 | 2.616 | 1.08 | 0.020 / 0.040 | 0.026 / 0.331 | 0.078 / 0.407 | 21.47 / 17.07 |
+| china (1,040) | 2.782 | 2.338 | 1.19 | 0.010 / 0.027 | 0.015 / 0.166 | 0.050 / 0.217 | 21.43 / 16.49 |
+| flower (1,040) | 1.734 | 1.659 | 1.05 | 0.011 / 0.026 | 0.015 / 0.165 | 0.051 / 0.218 | 21.45 / 18.14 |
+| gray (1,040) | 2.787 | 2.324 | 1.20 | 0.007 / 0.021 | 0.015 / 0.165 | 0.050 / 0.217 | 21.49 / 16.43 |
+| rgba (1,040) | 2.781 | 2.394 | 1.16 | 0.012 / 0.027 | 0.015 / 0.166 | 0.050 / 0.217 | 21.42 / 16.93 |
+| noise (1,200) | 1.735 | 1.553 | 1.12 | 0.010 / 0.028 | 0.016 / 0.191 | 0.052 / 0.243 | 21.44 / 16.43 |
+| small (256) | 2.172 | 2.013 | 1.08 | 0.006 / 0.015 | 0.009 / 0.046 | 0.036 / 0.077 | 20.88 / 16.28 |
+| tall (320) | 2.694 | 2.129 | 1.27 | 0.005 / 0.014 | 0.009 / 0.053 | 0.036 / 0.079 | 20.89 / 16.03 |
+| wide (352) | 2.689 | 2.136 | 1.26 | 0.005 / 0.016 | 0.009 / 0.058 | 0.037 / 0.084 | 20.85 / 16.04 |
+- Native's decode is 1.18-1.33x faster per token on every request, and its end to end is faster on 9 of 11.
+- **Not met: the two 4K photographs, 30% slower end to end.** The vision encoder: HF's runs BF16 on the tensor
+  cores; native's computes FP32 activations on the CUDA cores (the price of rule 2's accuracy, 3-11% of HF BF16's
+  error), 11-12x slower at every size; at 7,920 patches its 1.65 s extra outweighs the faster decode. The CPU front
+  end (decode and resize) is also about 2x HF's (0.36 s vs 0.16 s at 4K).
+- Nothing changed for this result; a plan goes to Tripp first (the method's condition).
 
 1. **Decoding and preprocessing match HF exactly.** Decoded pixels are bit-identical to PIL's (Thor's) on every JPEG
    and PNG case: the dumped images, the MMStar and POPE images, and progressive, 4:2:0, 4:2:2, 4:4:4, grayscale, CMYK

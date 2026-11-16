@@ -17,7 +17,8 @@ for p in warm p0 p1 p2; do for r in $B/$R/*.json; do n=$(basename $r .json); ech
 echo "== native $(date +%T)"
 $X $C/$T/lfm3-speech $M --batch $C/$O/native-list.txt > native.log 2>&1 || { echo "native FAILED"; tail -3 native.log; }
 echo "== HF $(date +%T)"
-$H /workspace/liquid-CUDA/tools/time_lfm3_vision_hf.py $M $C/$O/hf.jsonl 3 $C/$R/*.json > hf.log 2>&1 || { echo "HF FAILED"; tail -3 hf.log; }
+reqs=$(for r in $B/$R/*.json; do echo "$C/$R/$(basename $r)"; done)  # the container's paths, listed on the host
+$H /workspace/liquid-CUDA/tools/time_lfm3_vision_hf.py $M $C/$O/hf.jsonl 3 $reqs > hf.log 2>&1 || { echo "HF FAILED"; tail -3 hf.log; }
 bash $W/liquid-CUDA/tools/thor/power_state.sh power-end.json power-start.json > /dev/null || echo "VOID: power state changed"
 python3 - $B/$O <<'PY'
 import json, statistics, sys
