@@ -484,6 +484,30 @@ unchanged from start to end. Medians of 3 passes, seconds (decode in millisecond
   end (decode and resize) is also about 2x HF's (0.36 s vs 0.16 s at 4K).
 - Nothing changed for this result; a plan goes to Tripp first (the method's condition).
 
+### Where the encoder's time goes (2026-11-16): nsys, to the code (`speed/profile/`)
+Tripp asked whether the slowness is understood down to the code before any plan. `nsys` on `lfm3-vision-check`, the
+largest case (8,192 patches; two encodes, the second saving every stage; Thor quiet). Kernel time per encode is
+~1.86 s, the measured encode 1.87 s: launches and copies do not matter.
+| kernel | share | per encode | calls per encode |
+|---|---|---|---|
+| `lfm::fp32::kernels::linear_staged<16>` (every matrix multiply) | 60% | ~1,111 ms | 85 |
+| `lfm3_vision::kernels::attention` | 36% | ~676 ms (~113 ms a layer) | 6 |
+| everything else (SwiGLU, norms, spatial conv, rotary, GELU, gate, add) | 4% | ~70 ms | |
+- The multiplies: ~2.77 TFLOP per encode at ~2.5 TFLOPS, about 31% of Thor's FP32 CUDA-core peak (~8 TFLOPS).
+  `linear_staged` was written for the speech depth decoder's few rows: a block computes 16 rows, a warp's lanes
+  split K and reduce by shuffles (a matrix-vector design, for a bit-exact summation order). For 8,192 rows every
+  weight matrix is streamed from memory once per 16 rows, 512 times: `in_proj`'s 6.3 MB x 512 = ~3.2 GB, ~11.7 ms
+  at ~273 GB/s, against 13.1 ms measured. Bound by re-reading weights, not by arithmetic.
+- The attention: ~1.65 TFLOP per encode at ~2.4 TFLOPS (~30%). One query per thread, `q` and the accumulator (128
+  floats) and 32 scores in registers (low occupancy, 64-thread blocks); every FMA waits on its own shared-memory load
+  of the key or value (no reuse across keys in registers); each GQA key/value pair loaded once per head, twice.
+- Ceilings: the 4.4 TFLOP per encode at Thor's whole FP32 CUDA-core peak is 0.55 s, ~0.8 s at a realistic 70%: a
+  good FP32 kernel still cannot reach HF's 0.148 s (~30 TFLOPS on BF16 tensor cores), nor the ~0.4 s the 4K end to
+  end needs. The tensor cores are required.
+- Precision headroom: before the output's BF16 rounding, native's error at every stage is at most 2.6e-5; after it,
+  1.66e-3 (the rounding alone); HF BF16's is 1.5e-2 to 7.2e-2. The intermediate precision can drop a great deal and
+  the output's error still be the rounding's.
+
 1. **Decoding and preprocessing match HF exactly.** Decoded pixels are bit-identical to PIL's (Thor's) on every JPEG
    and PNG case: the dumped images, the MMStar and POPE images, and progressive, 4:2:0, 4:2:2, 4:4:4, grayscale, CMYK
    and EXIF-rotated JPEGs (all 8 orientations). HF's loader, checked (transformers 5.20.2, `image_utils.py:512-513`
