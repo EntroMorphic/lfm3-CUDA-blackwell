@@ -70,8 +70,10 @@ streaming rows, without the image 0.336 / 0.340 / 0.339 s, with a 4K photograph 
 and preprocessing the image again (~0.4 s), the encoder (~0.36 s) and the image prompt's prefill (~0.25 s). Part 2
 removes the first; the encode and prefill would still hold every row for ~0.6 s (interleaving prefill with decode
 steps is a separate design, not this round's).
-Found on the way, not yet explained: the image request itself returned its 32-token reply after **20.0 s** with the 7
-streams running (alone: ~1.3 s).
+Found on the way, then **retracted**: "the image request itself returned after 20.0 s" was the tool's error (it timed
+the request after waiting for the 7 streams to end; fixed). Measured directly (shared GPU, indicative): unstreamed with
+7 streams, 7.9 s on this server and 5.8 s with part 2 and the cache (a hit); the first image request after a server
+starts takes ~16 s before its first token (one-time initialization, to examine separately).
 
 ## Part 2 implemented (2026-11-16), with image-cache-v1
 In process, the handler thread decodes and preprocesses each image (`Service::decode_images`, under the 2 slots) and

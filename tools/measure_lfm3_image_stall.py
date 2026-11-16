@@ -44,6 +44,7 @@ def one_run(s, image_body):
     time.sleep(START_IMAGE)
     t_image = time.monotonic()
     image_result = s.post(image_body) if image_body else None
+    image_seconds = time.monotonic() - t_image if image_body else None  # the image request alone, not the streams
     for t in threads:
         t.join()
     gaps = []
@@ -56,7 +57,7 @@ def one_run(s, image_body):
         gaps.append(max((b - a for a, b in zip(seq, seq[1:])), default=None))
     return dict(worst_gap=max(g for g in gaps if g is not None), row_gaps=gaps,
                 image_status=image_result[0] if image_result else None,
-                image_seconds=time.monotonic() - t_image if image_body else None, started=t_image - t_start)
+                image_seconds=image_seconds, started=t_image - t_start)
 
 
 def main(server_bin, model, image_req, out_json, repeats=3):
