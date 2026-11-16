@@ -137,7 +137,7 @@ Only the listed output type of each shape is timed.
   `lfm::gemm` may stay faster there; S3 measures it.
 - Thor's clocks and shared GPU: no speed result until Tripp's quiet run.
 
-## Results (2026-11-16): correctness and sanitizers PASS for V1 and V2; V3 sanitizers PASS, its C1-C5 rerun on b4 pending; speed awaits Tripp's quiet round
+## Results (2026-11-16): C1-C5 and sanitizers PASS for V1, V2 and V3 (b4); S1 YES: V3 2.38x `lfm::gemm`, cuBLAS parity
 Code: `native/probes/tcgen05_gemm.cuh` (the kernels; notes 1-6 document every encoding), `tcgen05_gemm_probe.cu`
 (unit, peak, correct, sanitize, speed), `tcgen05_probe_engine_gemm.cu` (`lfm::gemm` built apart with `-arch=sm_110`,
 as the engine builds it). Build: `tools/thor/build_tcgen05_probe.sh` in the pinned image, 0 warnings, no spills in
@@ -160,7 +160,7 @@ kind.)
 | V1 | b2 (`31a14671...`), b3 (`3faa0e10...`) | 612/612, 612/612 | 612/612 cases |
 | V2 | b3 | 612/612 | 612/612 cases |
 | V3 | b3 (superseded, see the racecheck finding) | 612/612 | 612/612 cases |
-| V3 | b4 | **214/214 so far** (C1's integer data; stopped by SIGTERM at 13:29 for Tripp's quiet window); full rerun pending | 214/214 cases |
+| V3 | b4 (`cd1271c4...`) | **612/612** (rerun 14:53-15:04; a first run was stopped by SIGTERM at 13:29 for the quiet window after 214/214, `correct-v3-b4-interrupted.jsonl`) | 612/612 cases |
 V1's and V2's kernel (`gemm_1cta`) has the same SASS in b3 and b4 (7,476 lines compared), so their b3 records stand
 for b4.
 - **A finding beyond the rules:** every output element of every variant, FP32 and BF16, on all three data kinds, is
@@ -189,9 +189,21 @@ LM w1/w3 BF16 with int/normal data):
   kernel's ordinary stores; a clean report is not blindness. (Racecheck has no control: it does not model TMA, TMEM or
   the async proxy, so C1 and C4 attest the mbarrier pipeline; it did see the allocation race above.)
 
-**Peak and speed**: not measured. The GPU was shared all session (another engineer's benchmark at ~98% utilisation).
-One check, **indicative, contended, not a result** (`evidence/indicative-contended-b3/`): Peak 79 TFLOPS for both
-1-CTA and 2-CTA, yet V1 reached 85 TFLOPS on one shape in the same minutes, so the Peak run was itself slowed by the
-time-slicing; the rule-of-thumb early stop (Peak < 70) cannot be judged from it. Tripp's quiet round:
-`bash build/src-tcgen05/tools/thor/tcgen05_probe_speed.sh b4 tcgen05-speed-rN` for N = 1, 2, 3 (Peak, then 117 cases x
-{V1, V2, V3, lfm::gemm, cuBLAS}), then `tools/tcgen05_probe_speed_summary.py` on the three directories (S1-S3).
+**Peak and speed: S1 YES** (Tripp's quiet round, 2026-11-16 14:52-14:53, `tools/thor/tcgen05_probe_speed.sh b4
+tcgen05-speed-r{1,2,3}`; MAXN, GPU clocks locked at 1.575 GHz at the start and end of every round; binary b4;
+`evidence/speed-r{1,2,3}/`, `evidence/speed-summary.txt` from `tools/tcgen05_probe_speed_summary.py`):
+- **Peak** (`tcgen05.mma` alone): **258 TFLOPS**, 1-CTA and 2-CTA alike, in all three rounds: 4.5x the `mma.sync`
+  ceiling (56.7). The early-stop rule (< 70) does not apply.
+- Geometric-mean TFLOPS over the 39 cases at M >= 4096: V1 92.5, V2 99.8, **V3 106.8** (the fastest; it passes every
+  correctness rule on b4, below).
+- **S1: YES.** V3 is above 56.7 TFLOPS on 39 of 39 cases (in at least 2 of 3 rounds; its lowest, the projector's
+  4096 x 8192, ~80) and **2.38x** `lfm::gemm` (geometric mean; the rule asked 1.5x).
+- **S2: parity**, V3 at **0.98x** cuBLAS (geometric mean). cuBLAS's 105.8 TFLOPS, the number that started this, is
+  matched: V3 runs the LM's w1/w3 at 8,192 rows at 115.6 TFLOPS (cuBLAS 113.3 in the same rounds).
+- **S3:** V3 is faster than `lfm::gemm` on every shape at every M from **257** (ratios 1.29-3.30). At M <= 128 its
+  ratio is 0.97-2.23: never more than 3% slower (the projector shapes at M = 64 and 128 are level, both
+  weight-bandwidth bound). cuBLAS leads at M <= 128 on most shapes (not on the LM's w2 at M = 64 or the projector's at
+  M = 64).
+- Not the best everywhere: on the projector's 4096 x 8192 at M >= 4096, V1 (91) beats V3 (81); at M <= 128, V1/V2
+  beat V3 on most shapes. A per-shape choice is left to a later round.
+- The contended check of 13:00 (`evidence/indicative-contended-b3/`, Peak 79) was the GPU shared, as labelled.
