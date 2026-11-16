@@ -431,3 +431,18 @@ Records are in `amendment2/`:
   - The 22nd, `test_speech_text.py::test_every_validation_prompt_matches_hf_ids`, is **pre-existing**: it fails on the
     main checkout too. It is a known workstation limit (transformers 4.57.6 cannot load the checkpoint's remote
     code), confirmed by the coordinator, and unrelated to this round.
+
+### Amendment 2 GPU checks on Thor (2026-11-16; shared GPU, exactness only): in progress
+`lfm3-speech` `audio-fe-speech-a3` (sha256 `214a576c...`), server and worker `audio-fe-srv-a2` (`9dbf1add...`,
+`4af26a8d...`).
+- With `LFM3_AUDIO_FEATURES=exact-f2`:
+  - **the 9 edge cases:** 93 of 93 files identical to the recorded runs;
+  - **the 40 dumped clips:** 355 of 360 identical. The 5 that differ are the two clips whose features changed:
+    - 8455-210777-0002: only its mel file; the change does not reach the downsampler's output;
+    - 8555-292519-0007: mel, downsampler, encoder and feature files;
+    - both clips' tokens and replies are identical.
+  - **speech-e2e-v1:** 90 of 90 identical; **the split runs:** 90 of 90 identical.
+- **The driver was trimmed while running (SIGTERM to the two scripts only).** Its rule 5 pass would have repeated
+  e2e, split and both corpus runs under `dft`. Rule 5 needs only today's bytes for the features and the 360 + 93
+  files, and the repeat would have taken about 2.5 hours of a shared GPU. The 2,620-clip corpus pass (exact-f2)
+  continued; `tools/thor/audio_frontend_amend2_rest.sh` waits for it and runs the rest.
