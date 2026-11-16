@@ -3,6 +3,8 @@
 //   audio-input-tool b64 FILE...      -> {"ok":true,"hex":"..."} or {"ok":false,"error":"..."} (FILE holds the text)
 //   audio-input-tool mel WAV OUT.f32  -> writes lfm::audio_features::log_mel of the clip ([128][frames] float32) and
 //                                        prints {"frames":T,"tokens":N}
+//   audio-input-tool mel-threads WAV  -> log_mel at 1 to 12 threads and from 8 callers at once, each byte-identical to
+//                                        the 1-thread result (validation/audio-frontend-v1); {"ok":true,"frames":T}
 #include <lfm/audio_features.hpp>
 #include <lfm/base64.hpp>
 #include <lfm/wav.hpp>
@@ -11,6 +13,8 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <thread>
+#include <vector>
 
 namespace {
 std::string slurp(const char* path) {
@@ -26,8 +30,22 @@ std::string escape(const std::string& s) {
 }  // namespace
 
 int main(int argc, char** argv) try {
-  if (argc < 3) throw std::runtime_error("usage: audio-input-tool wav|b64 FILE... | mel WAV OUT.f32");
+  if (argc < 3) throw std::runtime_error("usage: audio-input-tool wav|b64 FILE... | mel WAV OUT.f32 | mel-threads WAV");
   const std::string mode = argv[1];
+  if (mode == "mel-threads") {
+    const auto a = lfm::wav::read(argv[2]);
+    const auto want = lfm::audio_features::log_mel(a.samples, 1);
+    for (int t = 2; t <= 12; ++t)
+      if (lfm::audio_features::log_mel(a.samples, t) != want) throw std::runtime_error("the thread count changed the features");
+    std::vector<std::vector<float>> got(8);
+    std::vector<std::thread> callers;
+    for (size_t i = 0; i < got.size(); ++i) callers.emplace_back([&a, &got, i] { got[i] = lfm::audio_features::log_mel(a.samples); });
+    for (auto& c : callers) c.join();
+    for (const auto& g : got)
+      if (g != want) throw std::runtime_error("concurrent calls changed the features");
+    std::cout << "{\"ok\":true,\"frames\":" << lfm::audio_features::frames(a.samples.size()) << "}\n";
+    return 0;
+  }
   if (mode == "mel") {
     const auto a = lfm::wav::read(argv[2]);
     const auto mel = lfm::audio_features::log_mel(a.samples);

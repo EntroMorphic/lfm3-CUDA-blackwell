@@ -12,6 +12,7 @@ through native/tests/audio_input_tool.cpp, built plain and with ASan+UBSan.
 """
 import base64
 import json
+import os
 import random
 import shutil
 import struct
@@ -22,7 +23,8 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-VARIANTS = {"plain": ("g++", ["-O2"]), "asan": ("g++", ["-O1", "-g", "-fsanitize=address,undefined", "-fno-sanitize-recover=all"])}
+VARIANTS = {"plain": ("g++", ["-O2"]), "asan": ("g++", ["-O1", "-g", "-fsanitize=address,undefined", "-fno-sanitize-recover=all"]),
+            "tsan": ("clang++", ["-O1", "-g", "-fsanitize=thread"])}  # the threaded front end (validation/audio-frontend-v1)
 
 
 @pytest.fixture(scope="module", params=sorted(VARIANTS))
@@ -36,8 +38,13 @@ def tool(tmp_path_factory, request):
     return binary
 
 
+def command(tool):
+    """The tool's command line; ThreadSanitizer needs ASLR off on this kernel (as in test_lfm3_http_native.py)."""
+    return (["setarch", os.uname().machine, "-R"] if tool.name.endswith("-tsan") else []) + [str(tool)]
+
+
 def run(tool, mode, paths):
-    r = subprocess.run([str(tool), mode, *map(str, paths)], capture_output=True, text=True, timeout=600)
+    r = subprocess.run([*command(tool), mode, *map(str, paths)], capture_output=True, text=True, timeout=600)
     assert r.returncode == 0, r.stderr
     return [json.loads(line) for line in r.stdout.splitlines()]
 
@@ -175,7 +182,7 @@ def test_features_match_fp64_reference(tool, tmp_path, samples):
     q = (s * 32767).astype("<i2")
     wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
     out = tmp_path / "mel.f32"
-    r = subprocess.run([str(tool), "mel", str(wav), str(out)], capture_output=True, text=True, check=True)
+    r = subprocess.run([*command(tool), "mel", str(wav), str(out)], capture_output=True, text=True, check=True)
     info = json.loads(r.stdout)
     ref = reference_log_mel(q.astype(np.float32) / 32768)
     assert info["frames"] == ref.shape[1] and info["tokens"] == -(-ref.shape[1] // 8)
@@ -183,6 +190,16 @@ def test_features_match_fp64_reference(tool, tmp_path, samples):
     # float32 window and filter values in the engine; the rest in double (validation/audio-in-v1: within 1.2e-4 of
     # FP64 on real speech, closer than HF's float32 arithmetic)
     assert np.abs(got - ref).max() < 2e-4, np.abs(got - ref).max()
+
+
+@pytest.mark.parametrize("samples", [1, 400, 16_000, 160_000])
+def test_features_do_not_depend_on_threads(tool, tmp_path, samples):
+    """log_mel at 1 to 12 threads and from 8 callers at once: byte-identical (validation/audio-frontend-v1 rule 1)."""
+    rng = np.random.default_rng(samples)
+    q = (np.clip(0.2 * rng.standard_normal(samples), -1, 1) * 32767).astype("<i2")
+    wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
+    (r,) = run(tool, "mel-threads", [wav])
+    assert r["ok"] and r["frames"] == run(tool, "mel", [wav, tmp_path / "m.f32"])[0]["frames"]
 
 
 def test_base64_encode_matches_python(tmp_path):

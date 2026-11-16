@@ -8,11 +8,23 @@
 // (x + 4) / 4. The spectrum and the mel products are computed in double here (HF: float32 FFT and matmul), so the
 // features agree with HF's to float rounding; the encoder reads them rounded to BF16.
 // Layout as HF's input_features for one clip: [128 mel][frames]. Host-only.
+//
+// Exactness (validation/audio-frontend-v1): the bytes are those this front end has produced since audio-in-v1, when
+// nvcc's host pass (GCC 13, -O3) fused its double arithmetic: the window as 0.5 - 0.5 cos in one rounding, each
+// DFT sum by fused multiply-adds in ascending n, the power as fma(re, re, im * im), and each mel sum by fused
+// multiply-adds in ascending bin. Those fusions are written here as std::fma, so the result no longer depends on
+// how a compiler contracts. Bins and frames are independent: the DFT runs across bins in vector lanes and across
+// frames in threads, each sum keeping its own order, so the bytes do not depend on the thread count either.
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <stdexcept>
+#include <system_error>
+#include <thread>
 #include <vector>
+
+// audio-mel-check and the tests use log_mel's thread count when this is defined
+#define LFM_AUDIO_FEATURES_THREADED 1
 
 namespace lfm::audio_features {
 
@@ -44,7 +56,7 @@ inline double mel_to_hz(double m) {
 inline std::vector<double> linspace(double start, double stop, int num) {
   std::vector<double> y(num);
   const double step = (stop - start) / (num - 1);
-  for (int i = 0; i < num; ++i) y[i] = start + i * step;
+  for (int i = 0; i < num; ++i) y[i] = std::fma(double(i), step, start);  // fused, as shipped
   y[num - 1] = stop;
   return y;
 }
@@ -70,48 +82,108 @@ inline const std::vector<float>& mel_filters() {
   return filters;
 }
 
-// The clip's features, [128][frames(n)] (row-major: mel-major, as HF's input_features[0]).
-inline std::vector<float> log_mel(const std::vector<float>& samples) {
+// Threads one clip's features use by default (validation/audio-frontend-v1: fixed before rule 2's measurement).
+inline constexpr int kMelThreads = 4;
+
+namespace detail {
+// torch.hann_window(400) (periodic), in float32
+inline const std::vector<float>& window() {
+  static const std::vector<float> w = [] {
+    std::vector<float> v(kFft);
+    for (int n = 0; n < kFft; ++n) v[n] = float(std::fma(-0.5, std::cos(2.0 * M_PI * n / kFft), 0.5));
+    return v;
+  }();
+  return w;
+}
+// The DFT's basis in the order the sums use it: [n][kBasisStride], bin k's value cos(2 pi (n k mod 400) / 400) (and
+// sin), the same doubles as the original's table lookups; bins past kBins are zeros (unused lanes).
+inline constexpr int kBasisStride = 204;
+struct Basis {
+  std::vector<double> cos, sin;
+};
+inline const Basis& basis() {
+  static const Basis b = [] {
+    std::vector<double> c(kFft), s(kFft);
+    for (int i = 0; i < kFft; ++i) c[i] = std::cos(2.0 * M_PI * i / kFft);
+    for (int i = 0; i < kFft; ++i) s[i] = std::sin(2.0 * M_PI * i / kFft);
+    Basis t{std::vector<double>(size_t(kFft) * kBasisStride, 0.0), std::vector<double>(size_t(kFft) * kBasisStride, 0.0)};
+    for (int n = 0; n < kFft; ++n)
+      for (int k = 0; k < kBins; ++k) {
+        const int i = (n * k) % kFft;
+        t.cos[size_t(n) * kBasisStride + k] = c[i];
+        t.sin[size_t(n) * kBasisStride + k] = s[i];
+      }
+    return t;
+  }();
+  return b;
+}
+// Frames [t0, t1) of the padded clip x into out ([128][T]). kBlock frames share one pass over the basis; for each
+// (frame, bin) the sum runs over n in ascending order, as the original's.
+inline void log_mel_frames(const float* x, size_t T, size_t t0, size_t t1, float* out) {
+  constexpr int kBlock = 4;
+  const auto& w = window();
+  const auto& b = basis();
+  const auto& filters = mel_filters();
+  alignas(64) double frame[kBlock][kFft], re[kBlock][kBasisStride], im[kBlock][kBasisStride], mel[kMels];
+  for (size_t tb = t0; tb < t1; tb += kBlock) {
+    const int nb = int(std::min<size_t>(kBlock, t1 - tb));
+    for (int j = 0; j < nb; ++j)
+      for (int n = 0; n < kFft; ++n) frame[j][n] = double(x[(tb + j) * kHop + n] * w[n]);  // the windowed float32 sample
+    for (int j = 0; j < nb; ++j)
+      for (int k = 0; k < kBasisStride; ++k) re[j][k] = im[j][k] = 0.0;
+    for (int n = 0; n < kFft; ++n) {
+      const double* c = b.cos.data() + size_t(n) * kBasisStride;
+      const double* s = b.sin.data() + size_t(n) * kBasisStride;
+      for (int j = 0; j < nb; ++j) {
+        const double f = frame[j][n], g = -f;
+        double* r = re[j];
+        double* q = im[j];
+        for (int k = 0; k < kBasisStride; ++k) {
+          r[k] = std::fma(f, c[k], r[k]);  // re += f cos, one rounding
+          q[k] = std::fma(g, s[k], q[k]);  // im -= f sin, one rounding
+        }
+      }
+    }
+    for (int j = 0; j < nb; ++j) {
+      for (int m = 0; m < kMels; ++m) mel[m] = 0.0;
+      for (int k = 0; k < kBins; ++k) {
+        const double power = std::fma(re[j][k], re[j][k], im[j][k] * im[j][k]);
+        const float* fk = filters.data() + size_t(k) * kMels;
+        for (int m = 0; m < kMels; ++m) mel[m] = std::fma(double(fk[m]), power, mel[m]);
+      }
+      const size_t t = tb + j;
+      for (int m = 0; m < kMels; ++m)
+        out[size_t(m) * T + t] = float((std::max(std::log10(mel[m]), kLogFloor) + kOffset) / kDivisor);
+    }
+  }
+}
+}  // namespace detail
+
+// The clip's features, [128][frames(n)] (row-major: mel-major, as HF's input_features[0]), computed on up to
+// `threads` threads (the calling thread included; at least 64 frames each). The result does not depend on `threads`.
+inline std::vector<float> log_mel(const std::vector<float>& samples, int threads = kMelThreads) {
   if (samples.empty()) throw std::runtime_error("audio features: empty clip");
+  if (threads < 1) throw std::runtime_error("audio features: threads < 1");
   const size_t T = frames(samples.size());
   std::vector<float> x(padded_length(samples.size()), 0.0f);
   std::copy(samples.begin(), samples.end(), x.begin());
-  // torch.hann_window(400) (periodic), in float32
-  static const std::vector<float> window = [] {
-    std::vector<float> w(kFft);
-    for (int n = 0; n < kFft; ++n) w[n] = float(0.5 - 0.5 * std::cos(2.0 * M_PI * n / kFft));
-    return w;
-  }();
-  static const std::vector<double> cosine = [] {
-    std::vector<double> c(kFft);
-    for (int i = 0; i < kFft; ++i) c[i] = std::cos(2.0 * M_PI * i / kFft);
-    return c;
-  }();
-  static const std::vector<double> sine = [] {
-    std::vector<double> s(kFft);
-    for (int i = 0; i < kFft; ++i) s[i] = std::sin(2.0 * M_PI * i / kFft);
-    return s;
-  }();
-  const auto& filters = mel_filters();
+  (void)detail::window(), (void)detail::basis(), (void)mel_filters();  // built before any worker starts
   std::vector<float> out(size_t(kMels) * T);
-  std::vector<double> frame(kFft), power(kBins), mel(kMels);
-  for (size_t t = 0; t < T; ++t) {
-    for (int n = 0; n < kFft; ++n) frame[n] = double(x[t * kHop + n] * window[n]);  // the windowed float32 sample
-    for (int k = 0; k < kBins; ++k) {
-      double re = 0, im = 0;
-      for (int n = 0, i = 0; n < kFft; ++n, i += k) {
-        if (i >= kFft) i -= kFft;
-        re += frame[n] * cosine[i];
-        im -= frame[n] * sine[i];
-      }
-      power[k] = re * re + im * im;
+  const size_t n = std::max<size_t>(1, std::min<size_t>(size_t(threads), T / 64));
+  const size_t per = (T + n - 1) / n;
+  std::vector<std::thread> workers;
+  workers.reserve(n - 1);  // before any thread starts: a throw here leaves nothing running
+  for (size_t i = 1; i < n; ++i) {
+    const size_t a = std::min(T, i * per), e = std::min(T, a + per);
+    if (a >= e) continue;
+    try {
+      workers.emplace_back(detail::log_mel_frames, x.data(), T, a, e, out.data());
+    } catch (const std::system_error&) {  // no thread to be had: this range on the calling thread (same bytes)
+      detail::log_mel_frames(x.data(), T, a, e, out.data());
     }
-    std::fill(mel.begin(), mel.end(), 0.0);
-    for (int k = 0; k < kBins; ++k)
-      for (int m = 0; m < kMels; ++m) mel[m] += double(filters[size_t(k) * kMels + m]) * power[k];
-    for (int m = 0; m < kMels; ++m)
-      out[size_t(m) * T + t] = float((std::max(std::log10(mel[m]), kLogFloor) + kOffset) / kDivisor);
   }
+  detail::log_mel_frames(x.data(), T, 0, std::min(T, per), out.data());
+  for (auto& w : workers) w.join();
   return out;
 }
 
