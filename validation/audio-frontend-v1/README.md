@@ -413,3 +413,10 @@ Records are in `amendment2/`:
   rule 2's quiet run decides between them. F2 is expected to win by a wide margin.
 - Host tests (`test_audio_input_host.py`; plain, ASan+UBSan, TSan): F1 and F2 equal at 1–12 threads and from 8 callers
   at once, and `__float128` builds and runs under clang's TSan.
+- **The whole host suite** (from a copy with the checkpoint beside it): 2,394 passed, 2 skipped, 22 failed, run while
+  the 12-thread audits loaded the workstation (load average 14 on 12 cores).
+  - 21 of the failures are wall-clock bounds in `test_speech_normalize.py`; the file passes in full on an idle
+    machine.
+  - The 22nd, `test_speech_text.py::test_every_validation_prompt_matches_hf_ids`, is **pre-existing**: it fails on the
+    main checkout too. It is a known workstation limit (transformers 4.57.6 cannot load the checkpoint's remote
+    code), confirmed by the coordinator, and unrelated to this round.
