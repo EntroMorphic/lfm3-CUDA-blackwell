@@ -55,7 +55,7 @@ nsys on it: the attention kernel 53% at ~14 TFLOPS (each block re-converts every
 store with bank conflicts, 4 warps); the GEMMs ~137 ms at ~40 TFLOPS; the split and combine passes ~91 ms;
 allocating and zeroing scratch per image ~58 ms. Changes, the mathematics unchanged:
 - The split multiply is one GEMM over a doubled K: A = [hi | lo] per row, B = [W | W] (built once, on first use: the
-  vision weights again, ~0.37 GB more GPU memory), FP32 out directly; a bias, the projector's only, added after.
+  vision weights again, ~0.37 GB more GPU memory; **corrected by the red-team below: 0.76 GB**, both halves), FP32 out directly; a bias, the projector's only, added after.
   (The design said a batch of 2 summed in FP32: same products, one accumulation.)
 - Attention: K and V split once per layer into BF16 buffers in the tiles' layouts (V transposed); 8 warps a block.
 - Scratch kept between images (~0.5 GB after the largest), no longer freed and re-zeroed each time.
@@ -87,3 +87,36 @@ of `tools/thor/vision_speed_round.sh` (MAXN, GPU clocks locked at 1.575 GHz in a
 - At 4K: image encode 0.364 s (HF 0.148), prefill with it 0.59 s (HF's first token 0.32), front end 0.32-0.42 s
   (HF 0.16), decode 16.3 ms/token (HF 21.7): native is ahead end to end on the faster decode. The encode, the language
   model's prefill and the CPU front end are still slower than HF's: the tcgen05 round and the GPU front end.
+
+## Red-team (2026-11-16): no wrong output found; two host-side fixes, one record corrected
+An independent review of 89d671c (a fresh reader given the code, not these results) and my own reading of the stage-0
+replies (`vimg-e2e-a4`: 3 of 11 identical to HF FP32's as before, the others drifting at the same near-tie points as
+images-v1's FP32 build, all coherent). Checked and found sound: partial key tiles and their masking (no row can see
+only masked keys), query rows past `n`, `cp.async` group ordering, the `ldmatrix` fragment layouts against m16n8k16,
+shared-memory and global alignment, launch grids, index overflow, stale scratch (every region read is written first in
+the same call), reallocation with work in flight, the GEMM contract, the bias, and the `kFp32` path. Found:
+1. **Memory held for good (record corrected, not changed):** the `[W | W]` cache is **0.76 GB** (189.3 M vision and
+   projector parameters, twice, BF16), not amendment 1's ~0.37 GB (one copy), plus the kept scratch (~0.6 GB after
+   the largest image): ~1.4 GB of Thor's 128 GB unified memory held after the first large image, by design
+   (amendment 1). A first image after a long text-only run allocates it inside that request; a failed allocation
+   throws before any state changes (the cache and scratch are assigned only after success). No test checks device
+   retention for images; image-queue-v1 rule 3 bounds host memory.
+2. **Fixed:** the attention's dynamic shared-memory opt-in was set once per process (a function-level `static`); a
+   function attribute belongs to a device, so an Encoder on a second device would have failed at launch (caught by
+   the error check at the end of the encode, not silently). Now set in each Encoder's constructor.
+   `lfm::gemm` has the same once-per-process pattern; it is the engine's shared code, outside this round (rule 6), and
+   Thor has one device: left as is, noted.
+3. **Fixed:** `lfm3-vision-check --repeat` accepted `3x` as 3 and negatives as 1; now an integer 0-1000 or refused
+   (`3x`, `-1`, `1001`, `abc` all exit 1).
+4. Not changed: `kX1`'s linear path hands the checkpoint's weights straight to `lfm::gemm`, which refuses (throws on)
+   weights not 16-byte aligned; `kX1` does not ship (rule 1), and this checkpoint is aligned (the x1 runs completed).
+
+The fixes are host code only: `cuobjdump -sass` of the remediated builds (`vspeed-a5`, `lfm3-speech` `vimg-a5`) is
+identical to `vspeed-a4`'s and `vimg-a4`'s (132,564 and 199,729 instruction lines), so rule 2's timings and rule 3's
+benchmark (run on `vimg-a4`) carry over. Re-verified on the new builds: rule 1 PASS, all 713 stage files of the 31
+images byte-identical to the validated run; memcheck (no leaks), initcheck and synccheck 0 errors on all three cases,
+outputs identical (racecheck: the device code is `vspeed-a4`'s, whose racecheck is rule 5's run); lfm3-speech's
+regression 36 of 36 identical; the audio-in replies 360 of 360 and 93 of 93, e2e 90
+of 90 and split 90 of 90 identical. The server and worker rebuilt from these sources (`vimg-srv-a3`: server
+`a29f808a`, worker `f66d3681`) carry rule 6's server checks; `liquid-lfm3` differs from `vimg-srv-a2`'s in 2 bytes
+only, nvcc's temporary file name in the symbol table (`tmpxft_000000af` against `..b0`).

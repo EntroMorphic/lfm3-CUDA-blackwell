@@ -507,6 +507,13 @@ class Encoder {
     for (const auto& t : vc.at("layer_types").array()) attention_.push_back(t.string() == "full_attention");
     // HF's inverse frequencies, as float32 arithmetic gives them: 1 / (theta ** (arange(0, 32, 2) / 32))
     for (int i = 0; i < 16; ++i) inv_freq_[i] = 1.0f / std::pow(float(theta_), float(2 * i) / 32.0f);
+    // the tensor-core attention's dynamic shared memory (above the 48 KB default), on the device this Encoder runs on
+    // (set per Encoder, not once per process: a function attribute belongs to the device it is set on)
+    if (cudaFuncSetAttribute(kernels::attention_tc<2>, cudaFuncAttributeMaxDynamicSharedMemorySize,
+                             kernels::tc_shared_bytes<2>()) != cudaSuccess ||
+        cudaFuncSetAttribute(kernels::attention_tc<1>, cudaFuncAttributeMaxDynamicSharedMemorySize,
+                             kernels::tc_shared_bytes<1>()) != cudaSuccess)
+      throw std::runtime_error("vision attention: cannot configure shared memory");
   }
 
   // Encodes one image (pixel_values: [N][1536], N = grid_h * grid_w, in merge-block order) into `out` (device,
@@ -666,12 +673,6 @@ class Encoder {
       if (scratch16_[i].n < each) scratch16_[i] = f::DeviceArray<bf16>(each);
     split_kv<<<dim3(npad / 64, kKvHeads), 256>>>(k, v, scratch16_[1].p, scratch16_[2].p, n, npad, kKvHeads, parts);
     const dim3 grid((n + kTcQueries - 1) / kTcQueries, kHeads);
-    static const bool configured =
-        cudaFuncSetAttribute(attention_tc<2>, cudaFuncAttributeMaxDynamicSharedMemorySize, tc_shared_bytes<2>()) ==
-            cudaSuccess &&
-        cudaFuncSetAttribute(attention_tc<1>, cudaFuncAttributeMaxDynamicSharedMemorySize, tc_shared_bytes<1>()) ==
-            cudaSuccess;
-    if (!configured) throw std::runtime_error("vision attention: cannot configure shared memory");
     if (parts == 2)
       attention_tc<2><<<grid, 32 * kTcWarps, tc_shared_bytes<2>()>>>(q, scratch16_[1].p, scratch16_[2].p, out, n, npad,
                                                                      kHeads, kKvHeads, 0.125f);

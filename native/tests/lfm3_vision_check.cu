@@ -93,8 +93,11 @@ int main(int argc, char** argv) {
       const std::string o = argv[i], v = argv[i + 1];
       if (o == "--linear") precision.linear = lfm3_vision::Precision::parse(v);
       else if (o == "--attention") precision.attention = lfm3_vision::Precision::parse(v);
-      else if (o == "--repeat") repeat = std::stoi(v);
-      else throw std::runtime_error("unknown option " + o);
+      else if (o == "--repeat") {
+        size_t used = 0;
+        repeat = std::stoi(v, &used);
+        if (used != v.size() || repeat < 0 || repeat > 1000) throw std::runtime_error("--repeat: an integer 0-1000");
+      } else throw std::runtime_error("unknown option " + o);
     }
     lfm3_vision::Encoder encoder(weights, root, precision);
     const Npy pv = read_npy(dir + "/pixel_values.npy"), grid = read_npy(dir + "/image_grid_thw.npy");
