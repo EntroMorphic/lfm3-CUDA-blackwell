@@ -34,3 +34,19 @@ Out of scope: the decoders themselves (bit-identical to HF; images-v1 rule 1), a
    text's 429 behavior byte-identical in `test_lfm3_http_native.py`.
 5. **Sanitizers and red-team** as for every server change: the HTTP host suite under TSan covers the new semaphore;
    one red-team pass for deadlines, cancellation while waiting, and a client that leaves.
+
+## Part 1 implemented (2026-11-16), before rule 0's run (part 2 waits on it)
+- `Service::decode_images` (`lfm3_http.hpp`): each image part decoded on the request's handler thread before
+  `frontend_call`, under `kImageDecodeSlots` = 2 waiting slots; the counts travel in `Speech::image_tokens` to
+  `encode_speech`. While waiting: 503 `worker_unavailable` when the server stops, 504 `frontend_deadline` past the
+  deadline, 499 `client_gone` when the client has gone (unstreamed: the connection's `gone`; streamed: a reset peer).
+- Not in the design, needed by rule 1: after decoding, an image request still meets `frontend_call`'s one-at-a-time
+  render and tokenize; two decodes finishing together would have the second refused 429. An image request therefore
+  waits for it too (`frontend_call(..., wait = true)`, a timed lock within its deadline); text keeps `try_lock` and
+  its 429, unchanged.
+- The front end counts an image's tokens with smart_resize alone (`lfm::image::tokens`, preprocess's own count), no
+  longer running the full resize the engine runs again: refusals still need the full decode, the resize did not.
+- Host tests (`tests/test_lfm3_http_image_in.py`, plain, ASan+UBSan, TSan): 11 simultaneous image requests all 200
+  with their prompts' lengths as when sent alone, a two-image request's order kept under concurrency, deadlines while
+  waiting 504 never 429, text's 429 kept while images decode. All HTTP host suites: 356 passed, 2 skipped (72 of the
+  image file's own). Rules 1-5 on Thor follow; rule 0 runs on the server built before this change (`vimg-srv-a3`).

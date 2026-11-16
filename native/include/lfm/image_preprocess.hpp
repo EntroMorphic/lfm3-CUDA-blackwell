@@ -47,4 +47,8 @@ struct PixelValues {
 
 PixelValues preprocess(const Rgb& image, const PreprocessConfig& config = {});
 
+// preprocess(image, config).tokens without the resize: smart_resize alone (refusing as it does). For the server's
+// front end, which needs only the count (validation/image-queue-v1).
+int tokens(const Rgb& image, const PreprocessConfig& config = {});
+
 }  // namespace lfm::image

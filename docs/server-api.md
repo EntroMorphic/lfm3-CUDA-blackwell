@@ -62,6 +62,9 @@ image takes 2,048 of the request's 4,096 tokens. A bad image is refused before t
 own error: `invalid_image_base64`, `image_corrupt`, `image_truncated`, `image_unsupported_format` (only JPEG and PNG),
 `image_unsupported_jpeg`, `image_unsupported_png`, `image_aspect_ratio` (over 200:1), `image_too_large` (413),
 `too_many_images`. Without a vision encoder for the checkpoint, image parts get 501 `image_input_unsupported`.
+Images are decoded two at a time across all requests; a request with images waits for its turn rather than being
+refused 429 `frontend_busy` as a text request meeting a busy front end is (504 `frontend_deadline` if its deadline
+passes while waiting; a request whose client has gone stops waiting, 499 `client_gone`).
 
 Reply: `text`, `audio_wav_base64` (24 kHz 16-bit mono WAV), `audio_seconds`, `frames`, `chunks`, `seed`, `cancelled`,
 `truncated`, `prefill_seconds`, `generate_seconds`.

@@ -176,6 +176,12 @@ Rgb resize_bicubic_aa(const Rgb& in, int out_width, int out_height) {
   return cur;
 }
 
+int tokens(const Rgb& image, const PreprocessConfig& cfg) {
+  const int factor = cfg.patch * cfg.merge;
+  const Size s = smart_resize(image.height, image.width, factor, cfg.min_pixels, cfg.max_pixels);
+  return (s.height / cfg.patch) * (s.width / cfg.patch) / (cfg.merge * cfg.merge);  // grid_t = 1, as preprocess
+}
+
 PixelValues preprocess(const Rgb& image, const PreprocessConfig& cfg) {
   const int factor = cfg.patch * cfg.merge;
   const Size s = smart_resize(image.height, image.width, factor, cfg.min_pixels, cfg.max_pixels);

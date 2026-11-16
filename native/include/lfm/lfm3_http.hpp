@@ -822,12 +822,13 @@ class Service {
     bool audio_input = false;        // the messages hold audio parts
     std::string images_json;         // image input (#4): the images (base64 JPEG/PNG) as the engine request carries them
     bool image_input = false;        // the messages hold image parts
+    std::vector<int> image_tokens;   // each image part's token count, in prompt order (decode_images)
     bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
     bool stream = false;             // the reply as events while the engine generates (speech_stream)
   };
-  // Image input (#4): an image part's data (base64 of JPEG or PNG bytes) decoded and preprocessed as the engine will
-  // (lfm/image_decode.hpp, lfm/image_preprocess.hpp: bit-identical to HF's front end, validation/images-v1 rule 1);
-  // its token count. Every refusal is an ApiError with its own code, before the engine sees the request.
+  // Image input (#4): an image part's data (base64 of JPEG or PNG bytes) decoded as the engine will
+  // (lfm/image_decode.hpp: bit-identical to HF's front end, validation/images-v1 rule 1) and its token count from
+  // smart_resize, preprocess's own count without the resize (lfm::image::tokens). Every refusal is an ApiError with its own code, before the engine sees the request.
   static int image_tokens(const std::string& data) {
     std::string bytes;
     try {
@@ -839,7 +840,7 @@ class Service {
       lfm::image::Limits limits;
       limits.max_pixels = kSpeechMaxImagePixels;
       const auto rgb = lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size(), limits);
-      return lfm::image::preprocess(rgb).tokens;
+      return lfm::image::tokens(rgb);  // smart_resize's count: the resize is the engine's (image-queue-v1)
     } catch (const lfm::image::DecodeError& e) {
       // the decoder's code as the refusal: image_corrupt, image_truncated, image_too_large (413), image_aspect_ratio,
       // image_unsupported_format, image_unsupported_jpeg, image_unsupported_png
@@ -848,6 +849,40 @@ class Service {
       if (code.size() > 6 && code.compare(code.size() - 6, 6, "_image") == 0) code.resize(code.size() - 6);
       throw ApiError(code == "too_large" ? 413 : 400, "image_" + code);
     }
+  }
+  // validation/image-queue-v1: each image part decoded and preprocessed on the request's own handler thread, before
+  // the front end, at most kImageDecodeSlots at a time (bounding memory: ~200 MB each at the 64-megapixel cap). A
+  // request waits for a slot within its deadline (504 frontend_deadline past it) instead of being refused, stops
+  // waiting when the server stops (503) or its client is gone (499 client_gone, a reply no one reads), and refuses a bad
+  // image with its own code as before. The images' order is encode_speech's (image input is never split).
+  void decode_images(Speech& s, Clock::time_point deadline, const std::function<bool()>& gone) {
+    if (!s.image_input) return;
+    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true, /*allow_image=*/true))
+      for (const auto& part : m.parts) {
+        if (!part.image) continue;
+        {
+          std::unique_lock g(image_slots_lock_);
+          for (;;) {
+            if (stopping_) throw ApiError(503, "worker_unavailable");
+            if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
+            if (gone && gone()) throw ApiError(499, "client_gone");
+            if (image_slots_ > 0) break;
+            image_slots_cv_.wait_until(g, std::min(deadline, Clock::now() + std::chrono::milliseconds(50)));
+          }
+          --image_slots_;
+        }
+        struct Slot {
+          Service& service;
+          ~Slot() {
+            {
+              std::lock_guard g(service.image_slots_lock_);
+              ++service.image_slots_;
+            }
+            service.image_slots_cv_.notify_one();
+          }
+        } slot{*this};
+        s.image_tokens.push_back(image_tokens(part.data));
+      }
   }
   Speech validate_speech(const Json& item) const {
     const auto& o = object_of(item);
@@ -933,11 +968,13 @@ class Service {
           s.audio_json += (clip_tokens.size() > 1 ? ",\"" : "\"") + part.data + "\"";  // checked base64: no escapes
           media.push_back({lfm3_text::kAudioToken, clip_tokens.back()});
         } else if (part.image) {
-          // decoded and preprocessed here, as the engine will: its token count, and every refusal before the engine
-          media.push_back({lfm3_text::kImageToken, size_t(image_tokens(part.data))});
+          // decoded and preprocessed before the front end (decode_images), as the engine will: its token count
+          if (image_count >= s.image_tokens.size()) throw std::logic_error("encode_speech: an image not decoded");
+          media.push_back({lfm3_text::kImageToken, size_t(s.image_tokens[image_count])});
           s.images_json += (++image_count > 1 ? ",\"" : "\"") + part.data + "\"";  // checked base64: no escapes
         }
       }
+    if (image_count != s.image_tokens.size()) throw std::logic_error("encode_speech: decoded images differ from parts");
     s.audio_json += "]";
     s.images_json += "]";
     if (clip_tokens.empty()) s.audio_json.clear();
@@ -1180,7 +1217,8 @@ class Service {
     if (request->audio_input && !policy_.audio_input) throw ApiError(501, "audio_input_unsupported");
     if (request->image_input && !policy_.image_input) throw ApiError(501, "image_input_unsupported");
     request->body = std::move(body);  // `messages` points into it until encode_speech drops it
-    frontend_call([&] { encode_speech(*request); }, deadline);
+    decode_images(*request, deadline, gone);
+    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input);
     if (policy_.speech_rows > 0) {
       auto t = std::make_shared<Ticket>();
       t->request = request, t->deadline = deadline;
@@ -1253,7 +1291,8 @@ class Service {
       ~Release() { --n; }
     } release{streams_};
     request->body = std::move(body);
-    frontend_call([&] { encode_speech(*request); }, deadline);
+    decode_images(*request, deadline, [&] { return sink.peer && sink.peer() == Peer::Reset; });
+    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input);
     auto lines = std::make_shared<Lines>();
     std::future<std::string> future;
     // past the deadline: true if the request goes on (it completed meanwhile, or, in the speech batch, was admitted: it
@@ -1456,12 +1495,14 @@ class Service {
   }
 
   // One serialized CPU frontend job at a time (lfm3_server.Service._frontend_call, wait=False):
-  // a second concurrent encode is refused rather than queued.
+  // a second concurrent encode is refused rather than queued. `wait` (image requests, validation/image-queue-v1: their
+  // images already decoded, only rendering and tokenizing is left) waits for it within the deadline instead.
   template <class F>
-  void frontend_call(F&& function, Clock::time_point deadline) {
+  void frontend_call(F&& function, Clock::time_point deadline, bool wait = false) {
     if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
-    std::unique_lock guard(frontend_lock_, std::try_to_lock);
-    if (!guard.owns_lock()) throw ApiError(429, "frontend_busy");
+    std::unique_lock guard(frontend_lock_, std::defer_lock);
+    if (wait ? !guard.try_lock_until(deadline) : !guard.try_lock())
+      throw wait ? ApiError(504, "frontend_deadline") : ApiError(429, "frontend_busy");
     if (stopping_) throw ApiError(503, "worker_unavailable");
     if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
     function();
@@ -2007,7 +2048,11 @@ class Service {
   std::map<std::string, Session> sessions_;
   bool failed_ = false, cleanup_failed_ = false;
   std::atomic<bool> stopping_{false};
-  std::mutex frontend_lock_;
+  std::timed_mutex frontend_lock_;
+  static constexpr int kImageDecodeSlots = 2;  // images decoded at once (decode_images)
+  std::mutex image_slots_lock_;
+  std::condition_variable image_slots_cv_;
+  int image_slots_ = kImageDecodeSlots;
   std::mutex queue_lock_;
   std::condition_variable queue_cv_;
   std::deque<std::shared_ptr<Job>> queue_;
@@ -2041,6 +2086,7 @@ inline const char* reason_phrase(int status) {
     case 404: return "Not Found"; case 408: return "Request Timeout"; case 409: return "Conflict";
     case 413: return "Request Entity Too Large"; case 414: return "Request-URI Too Long"; case 415: return "Unsupported Media Type";
     case 429: return "Too Many Requests"; case 431: return "Request Header Fields Too Large";
+    case 499: return "Client Closed Request";
     case 500: return "Internal Server Error"; case 501: return "Not Implemented"; case 503: return "Service Unavailable";
     case 504: return "Gateway Timeout"; case 505: return "HTTP Version Not Supported";
     default: return "Unknown";

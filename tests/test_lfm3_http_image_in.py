@@ -11,6 +11,7 @@ one token per 32 x 32 block. Every build variant of the harness runs (plain, ASa
 import base64
 import io
 import random
+import threading
 
 import pytest
 
@@ -157,3 +158,55 @@ def test_no_vision_encoder_is_501_and_speech_still_serves(harness_binary):
         status, reply = h.call("POST", "/speech", dict(messages=[{"role": "user", "content": "Read this aloud."}],
                                                         mode="audio", max_new_tokens=64))
         assert status == 200 and reply["cancelled"] is False
+
+
+def _send_all(h, bodies):
+    results = [None] * len(bodies)
+    def run(i):
+        results[i] = h.call("POST", "/speech", bodies[i])
+    threads = [threading.Thread(target=run, args=(i,)) for i in range(len(bodies))]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(120)
+    return results
+
+
+def test_simultaneous_image_requests_wait_their_turn_instead_of_429(harness_binary):
+    # validation/image-queue-v1 rule 1: images decode on the handlers, two at a time, and a request waits for its turn
+    # (images-v1 found 8 of 11 simultaneous image requests refused 429 frontend_busy)
+    pictures = [image(1024 + 32 * i, 1024, noise=True) for i in range(4)]
+    with running(harness_binary, "--queue-size", "32", "--handlers", "16") as h:  # as the server with 8 rows
+        alone = [prompt_length(h, ask([p]))[1] for p in pictures]
+        results = _send_all(h, [ask([pictures[i % 4]]) for i in range(11)])
+        for i, (status, reply) in enumerate(results):
+            assert status == 200 and reply["cancelled"] is False, (i, status, reply)
+            assert reply["chunks"][0]["frames"] == alone[i % 4]
+        # a request of two images, simultaneous with others, keeps its images in order
+        both = prompt_length(h, ask(pictures[:2]))[1]
+        results = _send_all(h, [ask(pictures[:2])] + [ask([pictures[3]])] * 4)
+        assert results[0][0] == 200 and results[0][1]["chunks"][0]["frames"] == both
+
+
+def test_image_requests_past_their_deadline_while_waiting_are_504_never_429(harness_binary):
+    big = image(1448, 1448, noise=True)
+    with running(harness_binary, "--request-timeout", "1", "--queue-size", "32", "--handlers", "16") as h:
+        results = _send_all(h, [ask([big])] * 8)
+        for status, reply in results:
+            # served, or past the deadline waiting to decode (frontend_deadline) or queued (queue_deadline): never 429
+            assert (status == 200 and reply["cancelled"] is False) or \
+                (status, reply) in ((504, {"error": "frontend_deadline"}), (504, {"error": "queue_deadline"})), (status, reply)
+        prompt_length(h, ask([image(256, 256)]))  # and the server serves on
+
+
+def test_text_requests_keep_their_429_while_images_decode(harness_binary):
+    # text's admission is unchanged (rule 4): a text request meeting a busy front end is refused 429 frontend_busy or
+    # served, never made to wait
+    pictures = [image(1448, 1448, noise=True)] * 4
+    tts = dict(messages=[{"role": "user", "content": "Read this aloud."}], mode="audio", max_new_tokens=64)
+    with running(harness_binary, "--queue-size", "32", "--handlers", "16") as h:
+        results = _send_all(h, [ask([p]) for p in pictures] + [tts] * 6)
+        for status, reply in results[:4]:
+            assert status == 200, (status, reply)
+        for status, reply in results[4:]:
+            assert status == 200 or (status, reply) == (429, {"error": "frontend_busy"}), (status, reply)
