@@ -120,3 +120,35 @@ regression 36 of 36 identical; the audio-in replies 360 of 360 and 93 of 93, e2e
 of 90 and split 90 of 90 identical. The server and worker rebuilt from these sources (`vimg-srv-a3`: server
 `a29f808a`, worker `f66d3681`) carry rule 6's server checks; `liquid-lfm3` differs from `vimg-srv-a2`'s in 2 bytes
 only, nvcc's temporary file name in the symbol table (`tmpxft_000000af` against `..b0`).
+
+## Rule 3 results (2026-11-16): **PASS** (`bench/`)
+The full benchmarks on `lfm3-speech` `vimg-a4` (`tools/thor/vision_bench_native.sh vimg-a4 vbench-a2`, 10,500 items, 8
+concurrent rows, 07:47-13:25; scored by `tools/score_lfm3_vision_bench.py` and
+`tools/score_lfm3_vision_fp32_agreement.py`):
+- **MMStar against FP32: native agrees on 95.67% of items**, HF BF16 on 93.87% (+1.80 points, 95% CI [+0.60, +3.00];
+  the bar: >= 93.87%). images-v1's FP32-path native agreed on 94.80%: the split path is closer to FP32 still. Replies
+  identical to FP32's: 1,249 (HF BF16 1,169). Accuracy 59.13% (HF BF16 59.27%, FP32 59.07%).
+- **POPE**: accuracy 89.06 against HF BF16's 89.11, -0.06 points, 95% CI [-0.13, +0.02] (bar: lower bound >= -0.5);
+  8,987 of 9,000 replies identical to HF's.
+
+## Rule 4 results (2026-11-16): **no engine fault** (`bench/changed.json.gz`; stage-0 in the red-team section)
+I read all 97 items whose answer changed from images-v1's native run (`vbench-a1`): 89 MMStar, 8 POPE; 32 wrong to
+right, 29 right to wrong. On the 89 MMStar items the new build agrees with FP32 47 times, images-v1's 34. The changes
+are what images-v1's reading found: borderline items and fluent reasoning that drifts either way at a near tie
+(geometry, food webs, counting, chart reading); POPE's 8 are three images flipping together across the three splits.
+One reply loops on one sentence until its 512 tokens run out (`mmstar/val/1298`, "Try ACK = ..."). MMStar's
+unanswered items rose to 25 (images-v1 native 18, HF BF16 14), toward FP32's own 23: 17 of the 25 are FP32's
+unanswered items too (13 for images-v1's native and for HF), 18 of them stopped by the 512-token limit (FP32: 15). The
+model in FP32 runs out of tokens on these long problems; an engine closer to FP32 does too.
+
+## Rule 5 results (2026-11-16): **PASS** (`sanitizers/`)
+`tools/thor/vision_sanitizers.sh` on `vspeed-a4` (`lfm3-vision-check` sha256 in `vspeed-a4.binary.sha256`): memcheck
+(leak check), initcheck, synccheck and racecheck on the small, two-image and largest (8,192 patches) cases: 0 errors,
+0 hazards, 0 bytes leaked, every output byte-identical to the plain run (racecheck at the largest: 6,464 s). The
+red-team's build (`vspeed-a5`, identical device code) passed memcheck, initcheck and synccheck again
+(`redteam-a5.log`).
+
+## Rule 6, so far (2026-11-16)
+lfm3-speech's regression 36 of 36, audio-in replies 360 of 360 and 93 of 93, e2e 90 of 90 and split 90 of 90
+identical, on `vimg-a4` and again on `vimg-a5`. The server checks run on a quiet machine
+(`tools/thor/quiet_session_v1.sh` step 5, `vimg-a5` with server `vimg-srv-a3`).

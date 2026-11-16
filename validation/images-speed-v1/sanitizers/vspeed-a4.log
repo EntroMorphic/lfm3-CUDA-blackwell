@@ -1,0 +1,16 @@
+plain small: exit 0
+plain two: exit 0
+plain max: exit 0
+memcheck small: exit 0, 2 s; ========= LEAK SUMMARY: 0 bytes leaked in 0 allocations ========= ERROR SUMMARY: 0 errors ; outputs identical
+memcheck two: exit 0, 7 s; ========= LEAK SUMMARY: 0 bytes leaked in 0 allocations ========= ERROR SUMMARY: 0 errors ; outputs identical
+memcheck max: exit 0, 26 s; ========= LEAK SUMMARY: 0 bytes leaked in 0 allocations ========= ERROR SUMMARY: 0 errors ; outputs identical
+initcheck small: exit 0, 4 s; ========= ERROR SUMMARY: 0 errors ; outputs identical
+initcheck two: exit 0, 12 s; ========= ERROR SUMMARY: 0 errors ; outputs identical
+initcheck max: exit 0, 30 s; ========= ERROR SUMMARY: 0 errors ; outputs identical
+synccheck small: exit 0, 2 s; ========= ERROR SUMMARY: 0 errors ; outputs identical
+synccheck two: exit 0, 7 s; ========= ERROR SUMMARY: 0 errors ; outputs identical
+synccheck max: exit 0, 8 s; ========= ERROR SUMMARY: 0 errors ; outputs identical
+racecheck small: exit 0, 341 s; ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings) ; outputs identical
+racecheck two: exit 0, 1568 s; ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings) ; outputs identical
+racecheck max: exit 0, 6464 s; ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings) ; outputs identical
+VISION SANITIZERS DONE
