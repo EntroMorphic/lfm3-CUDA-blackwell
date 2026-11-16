@@ -13,13 +13,19 @@ mkdir -p $B/$O/native && cd $B/$O
 busy=$(pgrep -af "[l]fm3-speech|[l]iquid-lfm3|[c]ompute-sanitizer|[r]un_lfm3|[c]heck_lfm3" | head -3)
 [ -n "$busy" ] && { echo "NOT QUIET: $busy"; exit 1; }
 bash $W/liquid-CUDA/tools/thor/power_state.sh power-start.json > /dev/null || { echo "FAIL power (not MAXN)"; exit 1; }
+# what the power check cannot see (images-speed-v1 rule 2's v2 round): rail power, temperatures and per-core CPU load
+# through the round (tegrastats without root: no memory clock), and the busiest processes at the start and the end
+ps -eo pid,pcpu,pmem,etime,comm --sort=-pcpu | head -15 > ps-start.txt
+tegrastats --interval 500 > tegrastats.log 2>&1 & TG=$!
 for p in warm p0 p1 p2; do for r in $B/$R/*.json; do n=$(basename $r .json); echo "$C/$R/$n.json $C/$O/native/$p-$n"; done; done > native-list.txt
 echo "== native $(date +%T)"
 $X $C/$T/lfm3-speech $M --batch $C/$O/native-list.txt > native.log 2>&1 || { echo "native FAILED"; tail -3 native.log; }
 echo "== HF $(date +%T)"
 reqs=$(for r in $B/$R/*.json; do echo "$C/$R/$(basename $r)"; done)  # the container's paths, listed on the host
 $H /workspace/liquid-CUDA/tools/time_lfm3_vision_hf.py $M $C/$O/hf.jsonl 3 $reqs > hf.log 2>&1 || { echo "HF FAILED"; tail -3 hf.log; }
+kill -TERM $TG 2>/dev/null; ps -eo pid,pcpu,pmem,etime,comm --sort=-pcpu | head -15 > ps-end.txt
 bash $W/liquid-CUDA/tools/thor/power_state.sh power-end.json power-start.json > /dev/null || echo "VOID: power state changed"
+python3 $W/liquid-CUDA/tools/tegrastats_summary.py tegrastats.log > tegrastats-summary.json || echo "tegrastats summary FAILED"
 python3 - $B/$O <<'PY'
 import json, statistics, sys
 from pathlib import Path
