@@ -46,6 +46,24 @@ int main(int argc, char** argv) try {
     std::cout << "{\"ok\":true,\"frames\":" << lfm::audio_features::frames(a.samples.size()) << "}\n";
     return 0;
   }
+  if (mode == "exact-threads") {  // amendment 2: F1 and F2 the same floats at 1 to 12 threads and from 8 callers
+    using lfm::audio_features::Transform;
+    const auto a = lfm::wav::read(argv[2]);
+    const auto want = lfm::audio_features::log_mel(a.samples, 1, Transform::kExactF2);
+    for (int t = 1; t <= 12; ++t)
+      if (lfm::audio_features::log_mel(a.samples, t, Transform::kExactF1) != want ||
+          lfm::audio_features::log_mel(a.samples, t, Transform::kExactF2) != want)
+        throw std::runtime_error("F1, F2 or the thread count changed the features");
+    std::vector<std::vector<float>> got(8);
+    std::vector<std::thread> callers;
+    for (size_t i = 0; i < got.size(); ++i)
+      callers.emplace_back([&a, &got, i] { got[i] = lfm::audio_features::log_mel(a.samples, 4, i % 2 ? Transform::kExactF1 : Transform::kExactF2); });
+    for (auto& c : callers) c.join();
+    for (const auto& g : got)
+      if (g != want) throw std::runtime_error("concurrent calls changed the features");
+    std::cout << "{\"ok\":true,\"frames\":" << lfm::audio_features::frames(a.samples.size()) << "}\n";
+    return 0;
+  }
   if (mode == "mel") {
     const auto a = lfm::wav::read(argv[2]);
     const auto mel = lfm::audio_features::log_mel(a.samples);

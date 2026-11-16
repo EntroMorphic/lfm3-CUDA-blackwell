@@ -202,6 +202,17 @@ def test_features_do_not_depend_on_threads(tool, tmp_path, samples):
     assert r["ok"] and r["frames"] == run(tool, "mel", [wav, tmp_path / "m.f32"])[0]["frames"]
 
 
+@pytest.mark.parametrize("samples", [1, 400, 16_000, 160_000])
+def test_correctly_rounded_features_agree_across_paths_and_threads(tool, tmp_path, samples):
+    """Amendment 2: F1 (double FFT) and F2 (compensated FFT) give the same floats at 1 to 12 threads and from 8
+    callers at once (each output their common correct rounding; validated against a quad reference on Thor and x86)."""
+    rng = np.random.default_rng(samples + 7)
+    q = (np.clip(0.2 * rng.standard_normal(samples), -1, 1) * 32767).astype("<i2")
+    wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
+    (r,) = run(tool, "exact-threads", [wav])
+    assert r["ok"]
+
+
 def test_base64_encode_matches_python(tmp_path):
     """lfm::base64::encode (the worker's WAV and streamed-audio encoder) against Python's, and through the strict
     decoder back to the bytes."""

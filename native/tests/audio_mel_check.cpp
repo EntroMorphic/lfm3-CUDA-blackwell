@@ -6,7 +6,8 @@
 //   reference: equal size and equal bytes, else the first differing float and the largest absolute difference.
 //   --repeat R: log_mel runs R times per clip and every run must equal the first (the tool fails otherwise).
 //   --threads N: log_mel's thread count (the threaded front end only; the original takes none and N must be 1).
-//   --transform dft|fft: the spectrum by the direct sums (the default) or the FFT (amendment 1; the threaded front end only).
+//   --transform dft|fft|f1|f2: the direct sums (default), amendment 1's FFT, or amendment 2's correctly rounded
+//   front end (F1 double FFT, F2 compensated); the threaded front end only. f1/f2 also report their quad recomputes.
 // Built from the original header it produces the reference (the bytes the engine has shipped since audio-in-v1).
 // OUT.json: counts, the differing clips, and the clips' FNV-1a hashes in list order.
 #include <lfm/audio_features.hpp>
@@ -25,8 +26,10 @@ namespace {
 std::string transform = "dft";
 std::vector<float> features(const std::vector<float>& samples, int threads) {
 #ifdef LFM_AUDIO_FEATURES_THREADED
-  return lfm::audio_features::log_mel(samples, threads, transform == "fft" ? lfm::audio_features::Transform::kFft
-                                                                         : lfm::audio_features::Transform::kDft);
+  using lfm::audio_features::Transform;
+  const Transform t = transform == "fft" ? Transform::kFft : transform == "f1" ? Transform::kExactF1
+                      : transform == "f2" ? Transform::kExactF2 : Transform::kDft;
+  return lfm::audio_features::log_mel(samples, threads, t);
 #else
   if (threads != 1 || transform != "dft") throw std::runtime_error("this build's log_mel is the original: --threads 1, --transform dft only");
   return lfm::audio_features::log_mel(samples);
@@ -66,7 +69,8 @@ int main(int argc, char** argv) try {
     else if (a == "--write" || a == "--compare") mode = a, dir = value();
     else rest.push_back(a);
   }
-  if (transform != "dft" && transform != "fft") throw std::runtime_error("--transform: dft or fft");
+  if (transform != "dft" && transform != "fft" && transform != "f1" && transform != "f2")
+    throw std::runtime_error("--transform: dft, fft, f1 or f2");
   if (mode.empty() || rest.size() != 2 || threads < 1 || threads > 64 || repeat < 1 || repeat > 100)
     throw std::runtime_error(
         "usage: audio-mel-check [--threads N] [--repeat R] (--write DIR | --compare DIR) LIST OUT.json");
@@ -119,10 +123,17 @@ int main(int argc, char** argv) try {
                  first, worst);
   }
   std::ofstream out(rest[1]);
+  unsigned long long fast = 0, quad = 0, undecided = 0;
+#ifdef LFM_AUDIO_FEATURES_THREADED
+  fast = lfm::audio_features::exact_stats().fast, quad = lfm::audio_features::exact_stats().quad;
+  undecided = lfm::audio_features::exact_stats().undecided;
+#endif
   out << "{\"mode\":\"" << mode.substr(2) << "\",\"transform\":\"" << transform << "\",\"threads\":" << threads << ",\"repeat\":" << repeat
       << ",\"clips\":" << clips << ",\"identical\":" << identical << ",\"differ\":[" << differ.str()
-      << "],\"fnv1a\":{" << hashes.str() << "}}\n";
-  std::fprintf(stderr, "%s: %zu clips, %zu identical, threads %d\n", mode.c_str() + 2, clips, identical, threads);
+      << "],\"exact_outputs\":{\"fast\":" << fast << ",\"quad\":" << quad << ",\"undecided\":" << undecided
+      << "},\"fnv1a\":{" << hashes.str() << "}}\n";
+  std::fprintf(stderr, "%s: %zu clips, %zu identical, threads %d; exact outputs: %llu fast, %llu quad, %llu undecided\n",
+               mode.c_str() + 2, clips, identical, threads, fast, quad, undecided);
   return (out && identical == clips) ? 0 : 1;
 } catch (const std::exception& e) {
   std::fprintf(stderr, "audio-mel-check: %s\n", e.what());
