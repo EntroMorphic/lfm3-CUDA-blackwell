@@ -23,6 +23,7 @@
 // prefilled by the Runner, then loaded into the row) and leaves when it finishes (take). Session, the single-request
 // API, is a batch of one: one code path.
 #include <lfm/audio_encoder.cuh>
+#include <lfm/vision_encoder.cuh>
 #include <lfm/audio_modes.hpp>
 #include <lfm/speech_run.hpp>
 #include <lfm/audio_sampling.hpp>
@@ -37,8 +38,10 @@
 #include <deque>
 #include <exception>
 #include <functional>
+#include <fstream>
 #include <mutex>
 #include <optional>
+#include <sstream>
 #include <thread>
 
 namespace lfm3_speech {
@@ -163,30 +166,47 @@ class Batch {
   }
 
   // Starts `prompt` on the free row r: refused before any state changes (as Session::generate refused: an empty prompt;
-  // an image, video or speech-output placeholder; <|audio|> spans that are not exactly the clips'; continuing a codec
-  // stream the row's previous request did not leave open), then the prefill and the load into the row.
+  // a video or speech-output placeholder; <|audio|> spans that are not exactly the clips', <|image|> spans that are not
+  // exactly the images'; continuing a codec stream the row's previous request did not leave open), then the prefill
+  // (the media encoded in prompt order and injected in place of their placeholders) and the load into the row.
   void admit(int r, std::vector<int> prompt, const Options& o) {
     using namespace lfm::audio;
     if (r < 0 || r >= rows_ || row_[size_t(r)].busy) throw std::runtime_error("speech: admit to a busy or invalid row");
     Row& w = row_[size_t(r)];
     if (prompt.empty()) throw std::runtime_error("speech: empty prompt");
     const int audio_token = ModeTokens{}.placeholders[0];
+    const int image_token = kImageToken;
     for (int id : prompt)
       for (int p : ModeTokens{}.placeholders)
-        if (id == p && p != audio_token)
-          throw std::runtime_error("speech: image, video or speech-output placeholder in the prompt (not supported as input)");
+        if (id == p && p != audio_token && p != image_token)
+          throw std::runtime_error("speech: video or speech-output placeholder in the prompt (not supported as input)");
     {
-      std::vector<size_t> clip_tokens;
+      std::vector<size_t> clip_tokens, image_tokens;
       for (const auto& clip : o.audio) {
         if (clip.empty()) throw std::runtime_error("speech: empty audio clip");
         clip_tokens.push_back(lfm::audio_features::tokens(clip.size()));
       }
+      for (const auto& im : o.images) {
+        if (im.grid_t != 1 || im.grid_h <= 0 || im.grid_w <= 0 || im.grid_h % 2 || im.grid_w % 2 ||
+            im.row_size != lfm3_vision::Encoder::kPatchDim || im.tokens != im.grid_h * im.grid_w / 4 ||
+            im.values.size() != size_t(im.grid_h) * im.grid_w * size_t(im.row_size))
+          throw std::runtime_error("speech: an image is not the front end's pixel values");
+        image_tokens.push_back(size_t(im.tokens));
+      }
       check_audio_spans(prompt, clip_tokens);
+      check_image_spans(prompt, image_tokens);
     }
     if (o.codec_continue && !w.stream_open) throw std::runtime_error("speech: no open codec stream to continue");
     if (o.record_hidden && rows_ != 1) throw std::runtime_error("speech: record_hidden needs a batch of one");
     // the encoder (and its checkpoint contract) before any state changes
     if (!o.audio.empty() && !encoder_) encoder_ = std::make_unique<lfm3_audio_in::Encoder>(runner_.weights, model_dir_);
+    if (!o.images.empty() && !vision_) {
+      std::ifstream cf(model_dir_ + "/config.json");
+      std::stringstream cs;
+      cs << cf.rdbuf();
+      if (!cf) throw std::runtime_error("speech: cannot read " + model_dir_ + "/config.json");
+      vision_ = std::make_unique<lfm3_vision::Encoder>(runner_.weights, lfm::Json::parse(cs.str()));
+    }
     w.stream_open = false;
     w.res = Result();
     lfm::audio::ModeOptions mo;
@@ -197,25 +217,37 @@ class Batch {
     w.res.prompt = prompt;
     const auto t0 = Clock::now();
     runner_.reset();
-    if (o.audio.empty()) {
+    if (o.audio.empty() && o.images.empty()) {
       runner_.forward(prompt);
     } else {
       const auto e0 = Clock::now();
       size_t total = 0;
       for (const auto& clip : o.audio) total += lfm::audio_features::tokens(clip.size());
+      for (const auto& im : o.images) total += size_t(im.tokens);
       if (audio_capacity_ < total)
         audio_rows_ = std::make_unique<Buffer<bf16>>(total * size_t(runner_.s.hidden)), audio_capacity_ = total;
-      size_t at = 0;
-      for (const auto& clip : o.audio) {
-        lfm::audio_features::Dump dump;
-        const auto mel = lfm::audio_features::log_mel(clip);
-        at += size_t(encoder_->encode(mel, audio_rows_->p + at * runner_.s.hidden, o.record_audio ? &dump : nullptr));
-        if (o.record_audio) w.res.audio_dumps.push_back(std::move(dump));
+      // each span's medium, in prompt order (the spans were checked above: one span per clip and per image)
+      size_t at = 0, clip = 0, image = 0;
+      for (size_t i = 0; i < prompt.size();) {
+        const int id = prompt[i];
+        if (id != audio_token && id != image_token) { ++i; continue; }
+        bf16* dst = audio_rows_->p + at * runner_.s.hidden;
+        if (id == audio_token) {
+          lfm::audio_features::Dump dump;
+          const auto mel = lfm::audio_features::log_mel(o.audio[clip++]);
+          at += size_t(encoder_->encode(mel, dst, o.record_audio ? &dump : nullptr));
+          if (o.record_audio) w.res.audio_dumps.push_back(std::move(dump));
+        } else {
+          const auto& im = o.images[image++];
+          at += size_t(vision_->encode(im.values.data(), im.grid_h, im.grid_w, dst));
+        }
+        while (i < prompt.size() && prompt[i] == id) ++i;
       }
-      if (at != total) throw std::runtime_error("speech: encoded audio rows differ from the placeholders");  // unreachable
+      if (at != total || clip != o.audio.size() || image != o.images.size())  // unreachable
+        throw std::runtime_error("speech: encoded media rows differ from the placeholders");
       cuda_check(cudaDeviceSynchronize());
       w.res.encode_seconds = secs(e0);
-      runner_.forward(prompt, audio_rows_->p, audio_token);
+      runner_.forward(prompt, audio_rows_->p, std::vector<int>{audio_token, image_token});
     }
     dec_.load(r);
     try {  // the row is active in the decoder from here: a throw must not leave it decoding (audio-assurance-v1)
@@ -478,6 +510,7 @@ class Batch {
 
   std::string model_dir_;
   std::unique_ptr<lfm3_audio_in::Encoder> encoder_;
+  std::unique_ptr<lfm3_vision::Encoder> vision_;
   std::unique_ptr<Buffer<bf16>> audio_rows_;
   size_t audio_capacity_ = 0;
   Runner& runner_;

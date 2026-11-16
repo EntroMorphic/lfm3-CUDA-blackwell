@@ -1,0 +1,24 @@
+{
+ "items": 1500,
+ "agreement": {
+  "hf_bf16": 93.86666666666666,
+  "native": 94.8
+ },
+ "difference_points": 0.9333333333333371,
+ "ci95": [
+  -0.3333333333333333,
+  2.2
+ ],
+ "native_only_agrees": 54,
+ "hf_bf16_only_agrees": 40,
+ "hf_bf16_identical_replies": 1169,
+ "hf_bf16_median_first_difference": 28,
+ "native_identical_replies": 1256,
+ "native_median_first_difference": 40,
+ "accuracy": {
+  "fp32": 59.06666666666667,
+  "hf_bf16": 59.266666666666666,
+  "native": 58.93333333333333
+ },
+ "passed": true
+}

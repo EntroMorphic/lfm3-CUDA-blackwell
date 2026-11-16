@@ -20,6 +20,8 @@ import time
 
 import pytest
 
+from native_image_build import image_link_args, libjpeg_dir
+
 ROOT = Path(__file__).resolve().parents[1]
 CHECKPOINT = ROOT.parent / "models" / "LFM3-Omni-2B"
 pytestmark = pytest.mark.skipif(not (CHECKPOINT / "tokenizer.json").exists() or sys.platform != "linux",
@@ -46,8 +48,10 @@ def servers(tmp_path_factory):
     python = lfm3_server.LocalHTTPServer(("127.0.0.1", 0), Stub(), TOKEN)
     thread = threading.Thread(target=python.serve_forever, daemon=True)
     thread.start()
-    binary = tmp_path_factory.mktemp("framing") / "harness"
-    subprocess.run(["g++", "-std=c++20", "-O1", "-I", str(ROOT / "native/include"), str(ROOT / "native/tests/lfm3_http_harness.cpp"),
+    work = tmp_path_factory.mktemp("framing")
+    binary = work / "harness"
+    subprocess.run(["g++", "-std=c++20", "-O1", "-I", str(ROOT / "native/include"), "-I", str(libjpeg_dir() / "include"),
+                    str(ROOT / "native/tests/lfm3_http_harness.cpp"), *image_link_args("g++", [], work),
                     "-pthread", "-o", str(binary)], check=True)
     native = subprocess.Popen([str(binary), str(CHECKPOINT), "--socket-timeout", "2", "--total-capacity", "32"],
                               stdout=subprocess.PIPE, env=dict(os.environ, LFM3_SERVER_TOKEN=TOKEN))

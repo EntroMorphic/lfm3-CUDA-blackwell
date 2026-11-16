@@ -53,7 +53,7 @@ __global__ void embed(const bf16* weights, const int* ids, bf16* out, int rows, 
 }
 // Vector-4 schedule from ATen Reduce.cuh; retained PyTorch license applies.
 // Match the reduction's row-count-dependent block width, not just its formula.
-// Audio input (#3): row rows[j] of `hidden` becomes row j of `source` (an encoded clip's projected features).
+// Audio and image input (#3, #4): row rows[j] of `hidden` becomes row j of `source` (encoded media's projected features).
 __global__ void inject_rows(const bf16* source, const int* rows, bf16* hidden, int count, int width) {
   const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i < size_t(count) * width) hidden[size_t(rows[i / width]) * width + i % width] = source[i];
@@ -538,6 +538,12 @@ class Runner {
   // `injected` (device, [count][hidden]): the input embeddings of the rows holding `placeholder`, in order, in place of
   // the placeholder's own embedding row (audio input; HF's masked_scatter of the audio features). Prefill only.
   std::vector<float> forward(const std::vector<int>& input, const bf16* injected = nullptr, int placeholder = -1) {
+    return forward(input, injected, std::vector<int>{placeholder});
+  }
+  // Several placeholders (audio and image input together): the rows holding any of them, in prompt order, take the
+  // rows of `injected` in that order; the media's features stacked as the prompt orders them (HF scatters each
+  // modality's features into its own placeholders; with each modality's features in prompt order, the same rows).
+  std::vector<float> forward(const std::vector<int>& input, const bf16* injected, const std::vector<int>& placeholders) {
     const int rows = input.size();
     if (rows < 1 || rows > s.context-cursor || (cursor && rows != 1))
       throw std::runtime_error("only empty-cache prefill or single-token decode within capacity is supported");
@@ -550,7 +556,7 @@ class Runner {
     if(injected) {
       if(cursor) throw std::runtime_error("injected input embeddings are a prefill-only input");
       std::vector<int> at;
-      for(int t=0;t<rows;++t) if(input[t]==placeholder) at.push_back(t);
+      for(int t=0;t<rows;++t) if(std::find(placeholders.begin(),placeholders.end(),input[t])!=placeholders.end()) at.push_back(t);
       if(at.empty()) throw std::runtime_error("injected input embeddings without placeholders");
       if(!injected_rows || injected_capacity<at.size())
         injected_rows=std::make_unique<Buffer<int>>(at.size()), injected_capacity=at.size();

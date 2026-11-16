@@ -1,0 +1,159 @@
+"""Host tests for image input on POST /speech (#4; native/include/lfm/lfm3_http.hpp) behind the harness's fake engine.
+
+The Service decodes and preprocesses each image part as the engine will (lfm/image_decode.hpp, image_preprocess.hpp:
+HF's front end, bit for bit, validation/images-v1 rule 1) to expand its <|image|> to the image's token count, and
+refuses a bad image with its own error code before the engine sees the request. The fake answers op "speech" as
+WorkerCore does: it decodes each image again and checks the prompt's <|image|> spans against them
+(lfm3_speech::check_image_spans), and reports the prompt length as "frames", so these tests see the prompt built.
+Token counts follow HF's smart_resize: both sides to multiples of 32, the pixel count kept within 65,536..2,097,152,
+one token per 32 x 32 block. Every build variant of the harness runs (plain, ASan+UBSan, TSan).
+"""
+import base64
+import io
+import random
+
+import pytest
+
+PIL = pytest.importorskip("PIL")
+from PIL import Image  # noqa: E402
+
+from test_lfm3_http_audio_in import wav  # noqa: E402
+from test_lfm3_http_native import harness_binary, running  # noqa: E402,F401  (fixture)
+
+
+def image(width, height, mode="RGB", fmt="PNG", noise=False, **save):
+    if noise:
+        rng = random.Random(width * 7919 + height)
+        im = Image.frombytes("RGB", (width, height), rng.randbytes(width * height * 3))
+    else:
+        im = Image.new(mode, (width, height), (90, 140, 200) if mode == "RGB" else 120)
+    buf = io.BytesIO()
+    im.save(buf, fmt, **save)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def ask(images, text="What is in the image?", mode="text", system="Describe the provided image.", max_new_tokens=64,
+        audio=(), **extra):
+    content = [{"type": "audio", "audio": a} for a in audio] + [{"type": "image", "image": i} for i in images]
+    if text:
+        content.append({"type": "text", "text": text})
+    messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": content}]
+    return dict(messages=messages, mode=mode, max_new_tokens=max_new_tokens, **extra)
+
+
+def prompt_length(h, body):
+    status, reply = h.call("POST", "/speech", body)
+    assert status == 200 and reply["cancelled"] is False, (status, reply)
+    assert len(reply["chunks"]) == 1
+    return reply, reply["chunks"][0]["frames"]
+
+
+def test_each_image_expands_to_its_token_count(harness_binary):
+    with running(harness_binary) as h:
+        _, small = prompt_length(h, ask([image(256, 256)]))     # 65,536 pixels: 8 x 8 = 64 tokens
+        _, mid = prompt_length(h, ask([image(512, 512)]))       # 16 x 16 = 256 tokens
+        _, wide = prompt_length(h, ask([image(1024, 512)]))     # 32 x 16 = 512 tokens
+        _, full = prompt_length(h, ask([image(2048, 1024)]))    # the most pixels: 64 x 32 = 2,048 tokens
+        assert (mid - small, wide - small, full - small) == (192, 448, 1984)
+        _, tiny = prompt_length(h, ask([image(16, 16)]))        # scaled up to the minimum: 64 tokens
+        assert tiny == small
+        # a second image adds its tokens and its own <|vision_start|>, <|vision_end|>
+        _, two = prompt_length(h, ask([image(256, 256), image(512, 512)]))
+        assert two - small == 256 + 2
+
+
+def test_formats_and_modes_give_the_same_tokens(harness_binary):
+    with running(harness_binary) as h:
+        _, png = prompt_length(h, ask([image(640, 480)]))
+        for other in (image(640, 480, fmt="JPEG", quality=90), image(640, 480, mode="L"),
+                      image(640, 480, mode="RGBA"), image(640, 480, mode="L", fmt="JPEG")):
+            _, n = prompt_length(h, ask([other]))
+            assert n == png
+
+
+def test_images_and_audio_in_one_prompt_in_either_order(harness_binary):
+    with running(harness_binary) as h:
+        _, image_only = prompt_length(h, ask([image(512, 512)]))
+        _, both = prompt_length(h, ask([image(512, 512)], audio=[wav(1.0)]))
+        assert both > image_only
+        # audio after the image: the same parts, the other order
+        body = ask([image(512, 512)])
+        body["messages"][-1]["content"].insert(1, {"type": "audio", "audio": wav(1.0)})
+        _, reordered = prompt_length(h, body)
+        assert reordered == both
+
+
+def test_spoken_and_interleaved_replies(harness_binary):
+    with running(harness_binary) as h:
+        text, _ = prompt_length(h, ask([image(512, 512)]))
+        reply, _ = prompt_length(h, ask([image(512, 512)], mode="interleaved"))
+        assert reply["mode"] == "interleaved" and reply["split"] is False and reply["text"] == text["text"]
+        # audio mode with an image is not split by default (split is for text input)
+        reply, _ = prompt_length(h, ask([image(512, 512)], mode="audio", system="Respond with audio."))
+        assert reply["mode"] == "audio" and reply["split"] is False
+
+
+def test_a_full_resolution_photo_fits_the_speech_body(harness_binary):
+    # Tripp, 2026-11-15: /speech takes up to 16 MiB so a phone photo can be sent as it is; ~6.3 MB of noise PNG is
+    # ~8.4 MB of base64, over the 4 MiB every other request keeps
+    big = image(1448, 1448, noise=True)
+    assert len(big) > 8_000_000
+    with running(harness_binary) as h:
+        reply, n = prompt_length(h, ask([big]))
+        assert n > 2000
+        # a /speech body over 4 MiB without an image is still refused, as before images
+        status, body = h.call("POST", "/speech", ask([], text="x" * 10, audio=[wav(1.0)],
+                                                     system="Respond." + " " * 4_300_000))
+        assert status == 413 and body == {"error": "body_limit"}, (status, body)
+        # and the server keeps serving
+        prompt_length(h, ask([image(256, 256)]))
+
+
+@pytest.mark.parametrize("make, status, code", [
+    (lambda: ask(["iVBORw0K!!!!"]), 400, "invalid_image_base64"),                   # not base64
+    (lambda: ask(["QUJD"]), 400, "image_unsupported_format"),                       # base64 of "ABC"
+    (lambda: ask([image(640, 480, fmt="GIF")]), 400, "image_unsupported_format"),   # GIF: not JPEG or PNG
+    (lambda: ask([image(640, 480, fmt="JPEG")[:400]]), 400, "image_truncated"),     # a JPEG cut short
+    (lambda: ask([image(2010, 10)]), 400, "image_aspect_ratio"),                     # aspect ratio over 200
+    (lambda: ask([image(8193, 8193, mode="L")]), 413, "image_too_large"),           # over 64 megapixels decoded
+    (lambda: ask([image(64, 64)] * 17), 400, "too_many_images"),                    # 16 images at most
+])
+def test_image_refusals_have_their_own_code_and_leave_the_server_serving(harness_binary, make, status, code):
+    bad = make()
+    with running(harness_binary) as h:
+        got, body = h.call("POST", "/speech", bad)
+        assert (got, body) == (status, {"error": code}), (got, body)
+        prompt_length(h, ask([image(256, 256)]))
+
+
+@pytest.mark.parametrize("make", [
+    lambda: ask([""]),                                                     # empty image string
+    lambda: ask([image(512, 512)], split=True, mode="audio"),              # image input is not split
+    lambda: dict(messages=[{"role": "user", "content": "Hi."},
+                           {"role": "assistant", "content": [{"type": "image", "image": image(64, 64)}]},
+                           {"role": "user", "content": "Again."}], mode="text", max_new_tokens=16),  # assistant image
+    lambda: dict(messages=[{"role": "system", "content": [{"type": "image", "image": image(64, 64)}]},
+                           {"role": "user", "content": "Hi."}], mode="text", max_new_tokens=16),  # system image
+    lambda: dict(messages=[{"role": "user", "content": [{"type": "image", "image": image(64, 64), "x": 1}]}],
+                 mode="text", max_new_tokens=16),                          # extra key in the part
+    lambda: dict(messages=[{"role": "user", "content": [{"type": "image", "image": 7}]}], mode="text",
+                 max_new_tokens=16),                                       # image not a string
+    lambda: dict(messages=[{"role": "user", "content": "look <|image|> here"}], mode="text",
+                 max_new_tokens=16),                                       # a placeholder typed as text
+    lambda: ask([image(2048, 1024), image(2048, 1024)], max_new_tokens=64),  # 4,100+ prompt tokens: over capacity
+])
+def test_request_refusals_leave_the_server_serving(harness_binary, make):
+    bad = make()
+    with running(harness_binary) as h:
+        status, body = h.call("POST", "/speech", bad)
+        assert status == 400 and body == {"error": "invalid_request"}, (status, body)
+        prompt_length(h, ask([image(256, 256)]))
+
+
+def test_no_vision_encoder_is_501_and_speech_still_serves(harness_binary):
+    with running(harness_binary, "--image-input", "off") as h:
+        status, reply = h.call("POST", "/speech", ask([image(256, 256)]))
+        assert status == 501 and reply == {"error": "image_input_unsupported"}, (status, reply)
+        status, reply = h.call("POST", "/speech", dict(messages=[{"role": "user", "content": "Read this aloud."}],
+                                                        mode="audio", max_new_tokens=64))
+        assert status == 200 and reply["cancelled"] is False

@@ -345,6 +345,80 @@ the answers: which engine is closer to the model computed in FP32.
 - Rule 3's MMStar failure stays recorded whatever 3b shows. If 3b fails, the next step is reading the differing items
   (rule 4) for an engine fault before anything else.
 
+### Rule 3b results (2026-11-15): **PASS**
+HF FP32 on Thor's GPU, all 1,500 MMStar items (`bench/hf-fp32-mmstar.jsonl.gz`; transformers 5.20.2, torch 2.10.0
+cu130, SDPA, dtype float32 in the run's environment row), scored by `tools/score_lfm3_vision_fp32_agreement.py`
+(`bench/rule3b.json`):
+| against FP32 | HF BF16 | native |
+|---|---|---|
+| answers agreeing (the pass measure) | 93.87% | **94.80%** |
+| items only this engine agrees on | 40 | 54 |
+| replies identical to FP32's, token for token | 1,169 | 1,256 |
+| median token of the first departure from FP32 | 28 | 40 |
+| MMStar accuracy (FP32's own: 59.07%) | 59.27% | 58.93% |
+- Native minus HF BF16 agreement: +0.93 points, 95% CI [-0.33, +2.20]. Native's answers are closer to the model
+  computed in FP32 than HF's BF16 GPU path is, as rule 2 found for the encoder's features; the two accuracies sit on
+  either side of FP32's, within the noise of 1,500 items.
+
+## Image input in the engine and the server (2026-11-15)
+- `Runner::forward(input, injected, placeholders)`: the rows holding any of the placeholders (audio and image), in
+  prompt order, take the injected rows in that order; the same kernel and row selection as before for audio alone.
+- `lfm3_speech` (`src/lfm3_speech.cuh`, `lfm/speech_run.hpp`): `Options::images` (the front end's pixel values);
+  admit checks the image spans (`check_image_spans`, beside `check_audio_spans`, sharing `check_spans`), builds the
+  vision encoder on first use, and encodes clips and images into one buffer in prompt order before the prefill.
+  `lfm3-speech` takes image parts in messages, or `"images"` with prompt_ids, and `record_image` writes the pixel
+  values.
+- `liquid-lfm3-server` (`lfm/lfm3_http.hpp`, `src/lfm3_worker.cu`): `/speech` takes `{"type": "image", "image":
+  base64 JPEG or PNG}` in user messages. Tripp (2026-11-15): a /speech body may be 16 MiB, so a full-resolution photo
+  can be sent as it is; a body over 4 MiB without an image part is still a 413, so audio and text requests keep their
+  limits. The Service decodes and preprocesses each image (its token count, and every refusal before the engine:
+  `invalid_image_base64`, `image_corrupt`, `image_truncated`, `image_unsupported_format`, `image_unsupported_jpeg`,
+  `image_unsupported_png`, `image_aspect_ratio`, `image_too_large` (413), `too_many_images`); the engine decodes them
+  again from the same bytes. A decoded image may hold 64 megapixels (a 48-megapixel photo fits); Pillow allows 179M,
+  which would let one request take over half a gigabyte to decode: a recorded departure from HF. At most 16 images a
+  request. The worker reports `image_input_supported` from the vision encoder's contract checked against the
+  safetensors header (`Encoder::check_contract` now takes a lookup, as the audio encoder's does); without it, image
+  parts get 501 `image_input_unsupported`.
+- Builds: CMake builds the vendored libjpeg-turbo from its tarball (hash-checked, no network) and the image front end
+  at -O2, as validated; `tools/build_libjpeg_turbo.sh` for host builds and tests.
+- First look, before the benchmark (`e2e/`): the 11 stage-0 conversations through `lfm3-speech` (text mode, 128
+  tokens): prompts equal HF's and pixel_values byte-identical to HF's on all 11; replies token-identical to HF BF16's
+  (GPU) on cherry, flower, noise and wide. Against HF FP32's replies (6 cases recorded): native identical on cherry,
+  flower, small and two, where HF BF16 departs after 9 and 66 characters on small and two; on gray and china native
+  agrees as long as or longer than HF BF16. On pure noise and the tiny or strip-shaped images the model writes
+  invented encyclopedia entries in HF too (identical openings on noise and wide): the model's behavior, not the
+  engine's.
+- Through the server (`tools/check_lfm3_image_server.py`, `rule6/vimg-srv-check/`): the 11 conversations sent as a
+  client would (image bytes in base64), unstreamed, streamed, and all at once: every reply byte-identical to
+  `lfm3-speech`'s. **Finding:** sent all at once, 8 of the 11 were first refused `429 frontend_busy` (up to 15 times
+  before a retry got in): the Service's front end takes one encode at a time, and decoding an image holds it long
+  enough that simultaneous image clients must retry. Correct, not graceful; recorded for a follow-up.
+
+## Rule 5 results (2026-11-15): refusals, at the server and at the engine's span check
+- HTTP (`tests/test_lfm3_http_image_in.py`, plain, ASan+UBSan and TSan builds of the harness, whose fake engine
+  decodes and checks spans as the worker does): not base64, not an image, GIF, a truncated JPEG, aspect ratio over 200,
+  over 64 megapixels, 17 images, an empty image string, image input with split, images in assistant and system turns,
+  an extra key in the part, a non-string image, `<|image|>` typed as text, and two full-size images over the 4,096
+  capacity: each refused with its own code (or `invalid_request` for the malformed request) and the server keeps
+  serving; with no vision encoder, 501 and speech still serves. 21 tests, 63 runs, all pass.
+- The engine's span check (`native/tests/media_spans_check.cpp`, plain and ASan+UBSan): 19 cases for audio and
+  images together: counts, more or fewer spans than media, missing start or end markers, spans at the prompt's edges,
+  media swapped; the audio messages unchanged. All pass. (Neither span check had a direct test before.)
+- Not separately tested: a zero-size image (the decoders refuse it as corrupt; no case was built).
+
+## Rule 6 results (2026-11-15): **PASS** (`rule6/`)
+On the final builds (`lfm3-speech` `vimg-a2` sha256 `1051402d...`; server and worker `vimg-srv-a1`, server
+`80116e9b...`, worker `bd9762ba...`), Thor quiet for the timing-sensitive checks:
+- lfm3-speech's regression: 36 of 36 outputs bit-identical, every refusal with its message unchanged.
+- Audio in: the 40 dumped clips, 360 of 360 files (encoder stages included) identical; edge cases 93 of 93; e2e 90 of
+  90 and split 90 of 90 identical.
+- Concurrent engine exactness: 41 of 41 identical to the validated reference.
+- Through the server: batch server, streaming, audio in and TTS checks all PASS (repeat and text control identical);
+  the text gate passed with control sha256 `7ea05068...`.
+- Host suites: every HTTP test file on plain, ASan+UBSan and TSan builds, 618 passed; the full host suite 2,320
+  passed with no new failure (the 46 errors of a stale test harness since `f45591d` and one test needing the
+  workstation's transformers to load this checkpoint are as before, and fixed or explained on the housekeeping branch).
+
 ## Rules, set before any native run (draft)
 1. **Decoding and preprocessing match HF exactly.** Decoded pixels are bit-identical to PIL's (Thor's) on every JPEG
    and PNG case: the dumped images, the MMStar and POPE images, and progressive, 4:2:0, 4:2:2, 4:4:4, grayscale, CMYK

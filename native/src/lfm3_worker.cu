@@ -107,7 +107,7 @@ void schema(const lfm::Json& request,const std::string& op) {
     if(op=="text_step" && (key=="tokens" || key=="cancel")) continue;
     if(op=="generate_batch" && (key=="op" || key=="rpc_id" || key=="lanes")) continue;
     if((op=="speech" || op=="speech_admit") && (key=="chunks" || key=="mode" || key=="max_new_tokens" || key=="seed" ||
-                                               key=="chunked" || key=="audio" || key=="stream")) continue;
+                                               key=="chunked" || key=="audio" || key=="images" || key=="stream")) continue;
     if(op=="speech_admit" && key=="ticket") continue;
     if(op=="speech_step" && key=="cancel") continue;
     throw std::runtime_error("unsupported request field: "+key);
@@ -336,6 +336,18 @@ class WorkerCore {
           audio_in_ok=true;
         } catch(const std::exception&) {audio_in_ok=false;}
       }
+      // Image input (#4): likewise the vision encoder's contract, from the header alone.
+      if(speech_ok && model.at("image_token_id").integer()==lfm3_speech::kImageToken) {
+        try {
+          const auto table=lfm::safetensors_header::read(directory+"/model.safetensors");
+          lfm3_vision::Encoder::check_contract(model,[&](const std::string& name) -> std::optional<lfm::safetensors_header::Entry> {
+            const auto it=table.find(name);
+            if(it==table.end()) return std::nullopt;
+            return it->second;
+          });
+          image_in_ok=true;
+        } catch(const std::exception&) {image_in_ok=false;}
+      }
     }
 #endif
   }
@@ -355,6 +367,8 @@ class WorkerCore {
   bool speech_supported() const {return speech_ok;}
   // Whether op "speech" takes audio input (speech_supported, and the audio encoder's contract holds).
   bool audio_input_supported() const {return audio_in_ok;}
+  // Whether op "speech" takes images (speech_supported, and the vision encoder's contract holds).
+  bool image_input_supported() const {return image_in_ok;}
   // Concurrent speech: the batch's rows (ops speech_admit/speech_step); 0 when speech is unsupported.
   int speech_rows() const {return speech_ok?speech_rows_:0;}
   void set_speech_rows(int rows) {
@@ -604,7 +618,9 @@ class WorkerCore {
   // default engine timeout (validation/speech-server-v1: ~40 frames/s measured with locked clocks, ~34 assumed).
   static constexpr size_t kSpeechStepBudget=6144;
   static constexpr size_t kSpeechMaxClips=64;  // audio clips per request (lfm::http::kSpeechMaxClips, lfm3-speech)
-  bool speech_ok=false,audio_in_ok=false;
+  static constexpr size_t kSpeechMaxImages=16;  // images per request (lfm::http::kSpeechMaxImages)
+  static constexpr std::uint64_t kSpeechMaxImagePixels=64ull*1024*1024;  // lfm::http::kSpeechMaxImagePixels
+  bool speech_ok=false,audio_in_ok=false,image_in_ok=false;
   int speech_rows_=8;  // rows of the concurrent speech batch (set_speech_rows, before its first use)
 #ifdef LFM3_NATIVE_GEMM
   std::unique_ptr<Runner> speech_runner;
@@ -619,6 +635,7 @@ class WorkerCore {
 #endif
   // {"op":"speech","chunks":[[ids..],..],"mode":"audio"|"interleaved"|"text","max_new_tokens":N,"seed":S,"chunked":B,
   //  "audio":[base64 16 kHz mono WAV, ..] (audio input, #3: one clip per <|audio|> span of the single prompt),
+  //  "images":[base64 JPEG or PNG, ..] (image input, #4: one image per <|image|> span of the single prompt, in order),
   //  "stream":B (in-process only, through `progress`)}
   // -> {"ok":true,"cancelled":false,"truncated":B,"slots":[..],"chunks":[{"frames","slots","ended_by_eos"}],"frames",
   //     "samples","audio_seconds","prefill_seconds","generate_seconds","wav_base64"}   (cancelled: only "cancelled")
@@ -670,9 +687,25 @@ class WorkerCore {
     } else {
       for(const auto& p:prompts) lfm3_speech::check_audio_spans(p,{});
     }
+    std::vector<lfm::image::PixelValues> images;  // decoded, preprocessed and checked (spans included) likewise
+    if(request.has("images")) {
+      if(!image_in_ok) throw std::runtime_error("image input is not supported by this checkpoint");
+      if(request.at("images").array().size()>kSpeechMaxImages) throw std::runtime_error("too many images");
+      if(chunked) throw std::runtime_error("chunks cannot take image input");
+      std::vector<size_t> image_tokens;
+      lfm::image::Limits limits;limits.max_pixels=kSpeechMaxImagePixels;
+      for(const auto& a:request.at("images").array()) {
+        const std::string bytes=lfm::base64::decode(a.string());
+        images.push_back(lfm::image::preprocess(lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size(),limits)));
+        image_tokens.push_back(size_t(images.back().tokens));
+      }
+      lfm3_speech::check_image_spans(prompts[0],image_tokens);
+    } else {
+      for(const auto& p:prompts) lfm3_speech::check_image_spans(p,{});
+    }
     auto& o=job.o;
     o.mode=mode=="audio"?lfm::audio::Requested::Audio:mode=="text"?lfm::audio::Requested::Text:lfm::audio::Requested::Interleaved;
-    o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);
+    o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);o.images=std::move(images);
     return job;
   }
   // The streaming observers: progress lines, each prefixed with `tag` (e.g. "\"ticket\":7," for a batch row).
@@ -714,6 +747,7 @@ class WorkerCore {
 #endif
   // {"op":"speech","chunks":[[ids..],..],"mode":"audio"|"interleaved"|"text","max_new_tokens":N,"seed":S,"chunked":B,
   //  "audio":[base64 16 kHz mono WAV, ..] (audio input, #3: one clip per <|audio|> span of the single prompt),
+  //  "images":[base64 JPEG or PNG, ..] (image input, #4: one image per <|image|> span of the single prompt, in order),
   //  "stream":B (in-process only, through `progress`)}
   // -> {"ok":true,"cancelled":false,"truncated":B,"slots":[..],"chunks":[{"frames","slots","ended_by_eos"}],"frames",
   //     "samples","audio_seconds","prefill_seconds","generate_seconds","wav_base64"}   (cancelled: only "cancelled")

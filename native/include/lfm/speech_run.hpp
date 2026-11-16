@@ -8,6 +8,7 @@
 #include <lfm/wav.hpp>
 #include <lfm/audio_modes.hpp>
 #include <lfm/audio_sampling.hpp>
+#include <lfm/image_preprocess.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -34,6 +35,9 @@ struct Options {
   // lfm::audio_features::tokens(samples) placeholders); record_audio keeps every clip's stages in Result::audio_dumps
   std::vector<std::vector<float>> audio;
   bool record_audio = false;
+  // image input (#4): the images after the native front end (lfm/image_preprocess.hpp), one per <|image|> span of the
+  // prompt in order (each span holds PixelValues::tokens placeholders); audio and image spans may interleave
+  std::vector<lfm::image::PixelValues> images;
   // long-form TTS by sentences (tools/lfm3_speech_chunked_hf.py): each sentence is its own request, and the codec
   // stream runs on across them: codec_continue skips the reset, codec_finalize = false keeps the stream's tail open
   bool codec_continue = false, codec_finalize = true;
@@ -68,24 +72,38 @@ struct Result {
   double lm_step_seconds = 0, text_pick_seconds = 0, depth_seconds = 0, sample_host_seconds = 0, codec_seconds = 0;
 };
 
+// Media input (#3, #4): the prompt's `token` placeholders must be exactly the media's spans, in order: medium k is
+// <|vision_start|>, counts[k] `token`, <|vision_end|> (the processor's expansion); no other `token`. `tag`, `medium`
+// and `media` name the placeholder, one medium and the media in the refusals.
+inline void check_spans(const std::vector<int>& prompt, int token, const std::vector<size_t>& counts,
+                        const std::string& tag, const std::string& medium, const std::string& media) {
+  const int start = 125009, end = 125010;  // vision_start/end
+  size_t k = 0;
+  for (size_t i = 0; i < prompt.size();) {
+    if (prompt[i] != token) { ++i; continue; }
+    size_t j = i;
+    while (j < prompt.size() && prompt[j] == token) ++j;
+    if (k >= counts.size()) throw std::runtime_error("speech: more " + tag + " spans than " + media);
+    if (j - i != counts[k])
+      throw std::runtime_error("speech: " + medium + " " + std::to_string(k) + " needs " + std::to_string(counts[k]) +
+                               " placeholders, the prompt has " + std::to_string(j - i));
+    if (i == 0 || prompt[i - 1] != start || j >= prompt.size() || prompt[j] != end)
+      throw std::runtime_error("speech: an " + tag + " span must be wrapped in <|vision_start|> and <|vision_end|>");
+    ++k, i = j;
+  }
+  if (k != counts.size()) throw std::runtime_error("speech: fewer " + tag + " spans than " + media);
+}
+
 // Audio input (#3): the prompt's <|audio|> placeholders must be exactly the clips' spans, in order: clip k is
 // <|vision_start|>, clip_tokens[k] <|audio|>, <|vision_end|> (the processor's expansion); no other <|audio|>.
 inline void check_audio_spans(const std::vector<int>& prompt, const std::vector<size_t>& clip_tokens) {
-  const int audio_token = lfm::audio::ModeTokens{}.placeholders[0], start = 125009, end = 125010;  // vision_start/end
-  size_t clip = 0;
-  for (size_t i = 0; i < prompt.size();) {
-    if (prompt[i] != audio_token) { ++i; continue; }
-    size_t j = i;
-    while (j < prompt.size() && prompt[j] == audio_token) ++j;
-    if (clip >= clip_tokens.size()) throw std::runtime_error("speech: more <|audio|> spans than audio clips");
-    if (j - i != clip_tokens[clip])
-      throw std::runtime_error("speech: audio clip " + std::to_string(clip) + " needs " + std::to_string(clip_tokens[clip]) +
-                               " placeholders, the prompt has " + std::to_string(j - i));
-    if (i == 0 || prompt[i - 1] != start || j >= prompt.size() || prompt[j] != end)
-      throw std::runtime_error("speech: an <|audio|> span must be wrapped in <|vision_start|> and <|vision_end|>");
-    ++clip, i = j;
-  }
-  if (clip != clip_tokens.size()) throw std::runtime_error("speech: fewer <|audio|> spans than audio clips");
+  check_spans(prompt, lfm::audio::ModeTokens{}.placeholders[0], clip_tokens, "<|audio|>", "audio clip", "audio clips");
+}
+
+// Image input (#4): the same for <|image|> and the images (PixelValues::tokens each).
+inline constexpr int kImageToken = 125030;
+inline void check_image_spans(const std::vector<int>& prompt, const std::vector<size_t>& image_tokens) {
+  check_spans(prompt, kImageToken, image_tokens, "<|image|>", "image", "images");
 }
 
 // A clip as the server carries it (base64 WAV) -> its 16 kHz mono samples; refuses anything else.
@@ -118,6 +136,7 @@ class ChunkRun {
     if (prompts_.empty()) throw std::runtime_error("speech: no prompt");
     if (chunked && (!o_.forced_tokens.empty() || !o_.forced_frames.empty())) throw std::runtime_error("chunks cannot be forced");
     if (chunked && !o_.audio.empty()) throw std::runtime_error("chunks cannot take audio input");
+    if (chunked && !o_.images.empty()) throw std::runtime_error("chunks cannot take image input");
   }
   bool next(const std::vector<int>*& prompt, Options& o) {
     if (complete_) return false;

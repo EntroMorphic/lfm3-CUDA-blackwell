@@ -20,6 +20,8 @@ import time
 
 import pytest
 
+from native_image_build import image_link_args, libjpeg_dir
+
 ROOT = Path(__file__).resolve().parents[1]
 CHECKPOINT = ROOT.parent / "models" / "LFM3-Omni-2B"
 pytestmark = pytest.mark.skipif(not (CHECKPOINT / "tokenizer.json").exists() or sys.platform != "linux",
@@ -42,10 +44,12 @@ def harness_binary(tmp_path_factory, request):
     compiler, flags = VARIANTS[request.param]
     if not shutil.which(compiler):
         pytest.skip(f"{compiler} required")
-    out = tmp_path_factory.mktemp("http") / f"harness-{request.param}"
+    work = tmp_path_factory.mktemp("http")
+    out = work / f"harness-{request.param}"
+    images = image_link_args(compiler, flags, work)  # the image front end, for image parts (#4)
     subprocess.run([compiler, "-std=c++20", "-O1", "-g", "-Wall", "-Wextra", "-Werror", "-pedantic", *flags,
-                    "-I", str(ROOT / "native/include"), str(ROOT / "native/tests/lfm3_http_harness.cpp"), "-pthread",
-                    "-o", str(out)], check=True)
+                    "-I", str(ROOT / "native/include"), "-I", str(libjpeg_dir() / "include"),
+                    str(ROOT / "native/tests/lfm3_http_harness.cpp"), *images, "-pthread", "-o", str(out)], check=True)
     return out
 
 

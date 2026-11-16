@@ -85,6 +85,24 @@ class FakeEngine final : public lfm::http::Backend {
     } else {
       for (const auto& p : prompts) lfm3_speech::check_audio_spans(p, {});
     }
+    // image input (#4), as WorkerCore checks it: each image decoded and preprocessed, the spans matching the images
+    if (request.has("images")) {
+      if (!image_input_) throw std::runtime_error("image input is not supported by this checkpoint");
+      if (request.at("images").array().size() > 16) throw std::runtime_error("too many images");
+      if (chunked) throw std::runtime_error("chunks cannot take image input");
+      std::vector<size_t> image_tokens;
+      lfm::image::Limits limits;
+      limits.max_pixels = lfm::http::kSpeechMaxImagePixels;
+      for (const auto& a : request.at("images").array()) {
+        const std::string bytes = lfm::base64::decode(a.string());
+        const auto pv = lfm::image::preprocess(
+            lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size(), limits));
+        image_tokens.push_back(size_t(pv.tokens));
+      }
+      lfm3_speech::check_image_spans(prompts[0], image_tokens);
+    } else {
+      for (const auto& p : prompts) lfm3_speech::check_image_spans(p, {});
+    }
     f.truncated = speech_truncate_ > 0 && size_t(speech_truncate_) < f.lengths.size();
     if (f.truncated) f.lengths.resize(size_t(speech_truncate_));
     return f;
@@ -369,6 +387,7 @@ class FakeEngine final : public lfm::http::Backend {
   std::vector<FakeRow> rows_;  // --speech-rows
   int admitted_ = 0, max_busy_ = 0;
   std::ofstream trace_;  // --trace-ops FILE
+  bool image_input_ = true;  // --image-input: WorkerCore::image_input_supported
   bool audio_input_ = true;  // --audio-input: WorkerCore::audio_input_supported  // --speech-truncate K: answer only the first K chunks, as a request the step budget cut
  private:
   int fail_after_, fail_count_ = 0;
@@ -391,6 +410,7 @@ int main(int argc, char** argv) try {
   std::string token_path;
   bool speech = true;  // --speech off: the engine reports no speech support (a text-only checkpoint or build)
   bool audio_input = true;  // --audio-input off: speech without audio input (no encoder for the checkpoint)
+  bool image_input = true;  // --image-input off: speech without image input (no vision encoder for the checkpoint)
   int speech_truncate = 0;
   std::string stream_fault;
   int stream_piece_bytes = 4, speech_rows = 2;
@@ -404,6 +424,7 @@ int main(int argc, char** argv) try {
     else if (o == "--fail-op") fail_op = v;
     else if (o == "--speech") speech = v == "on";
     else if (o == "--audio-input") audio_input = v == "on";
+    else if (o == "--image-input") image_input = v == "on";
     else if (o == "--speech-truncate") speech_truncate = std::stoi(v);
     else if (o == "--speech-stream-fault") stream_fault = v;
     else if (o == "--speech-stream-piece-bytes") stream_piece_bytes = std::stoi(v);
@@ -437,6 +458,7 @@ int main(int argc, char** argv) try {
   policy.vocabulary = config.shape.vocabulary;
   policy.speech = speech;
   policy.audio_input = speech && audio_input;
+  policy.image_input = speech && image_input;
   policy.speech_rows = speech ? speech_rows : 0;
   policy.stops = config.eos;
   for (auto name : {"audio_token_id", "audio_out_token_id", "image_token_id", "video_token_id", "mixed_start_token_id", "audio_start_token_id"})
@@ -453,6 +475,7 @@ int main(int argc, char** argv) try {
   engine.stream_piece_bytes_ = stream_piece_bytes;
   engine.rows_.assign(size_t(std::max(0, speech_rows)), {});
   engine.audio_input_ = speech && audio_input;
+  engine.image_input_ = speech && image_input;
   if (!trace_ops.empty()) {
     engine.trace_.open(trace_ops);
     if (!engine.trace_) throw std::runtime_error("cannot open --trace-ops file");

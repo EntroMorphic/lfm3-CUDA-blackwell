@@ -18,6 +18,29 @@ function(lfm3_engine_gemm target)
   endif()
 endfunction()
 
+# Image input (#4, validation/images-v1): the vendored libjpeg-turbo 3.2.0, built here from its release tarball
+# (hash-checked, no network), and the image front end, compiled at -O2 as its bit-exactness against HF was validated.
+include(ExternalProject)
+set(LFM_LJT_PREFIX ${CMAKE_BINARY_DIR}/libjpeg-turbo)
+ExternalProject_Add(libjpeg_turbo_build
+  URL ${CMAKE_CURRENT_SOURCE_DIR}/third_party/libjpeg-turbo/libjpeg-turbo-3.2.0.tar.gz
+  URL_HASH SHA256=6f30092cef9fb839779646608f4ee14ae3cbac989c47fa05e841b0841f09878e
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  INSTALL_DIR ${LFM_LJT_PREFIX}
+  CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_INSTALL_LIBDIR=lib
+             -DENABLE_SHARED=OFF -DENABLE_STATIC=ON -DWITH_TURBOJPEG=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+  BUILD_BYPRODUCTS ${LFM_LJT_PREFIX}/lib/libjpeg.a)
+file(MAKE_DIRECTORY ${LFM_LJT_PREFIX}/include)
+add_library(lfm_jpeg STATIC IMPORTED)
+set_target_properties(lfm_jpeg PROPERTIES IMPORTED_LOCATION ${LFM_LJT_PREFIX}/lib/libjpeg.a
+                      INTERFACE_INCLUDE_DIRECTORIES ${LFM_LJT_PREFIX}/include)
+add_dependencies(lfm_jpeg libjpeg_turbo_build)
+add_library(lfm_image STATIC src/image_decode.cpp src/image_preprocess.cpp)
+target_include_directories(lfm_image PUBLIC include)
+target_compile_features(lfm_image PUBLIC cxx_std_20)
+target_compile_options(lfm_image PRIVATE -O2)
+target_link_libraries(lfm_image PUBLIC lfm_jpeg)
+
 add_executable(liquid-lfm3 src/lfm3_main.cu src/safetensors.cpp)
 target_include_directories(liquid-lfm3 PRIVATE include)
 target_compile_features(liquid-lfm3 PRIVATE cxx_std_20 cuda_std_20)
@@ -30,7 +53,7 @@ add_executable(liquid-lfm3-worker src/lfm3_worker.cu src/safetensors.cpp)
 target_include_directories(liquid-lfm3-worker PRIVATE include)
 target_compile_features(liquid-lfm3-worker PRIVATE cxx_std_20 cuda_std_20)
 target_compile_options(liquid-lfm3-worker PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
-target_link_libraries(liquid-lfm3-worker PRIVATE CUDA::cudart)
+target_link_libraries(liquid-lfm3-worker PRIVATE CUDA::cudart lfm_image)
 lfm3_engine_gemm(liquid-lfm3-worker)
 set_target_properties(liquid-lfm3-worker PROPERTIES CUDA_ARCHITECTURES 110)
 
@@ -39,7 +62,7 @@ add_executable(liquid-lfm3-server src/lfm3_server.cu src/safetensors.cpp)
 target_include_directories(liquid-lfm3-server PRIVATE include)
 target_compile_features(liquid-lfm3-server PRIVATE cxx_std_20 cuda_std_20)
 target_compile_options(liquid-lfm3-server PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
-target_link_libraries(liquid-lfm3-server PRIVATE CUDA::cudart Threads::Threads)
+target_link_libraries(liquid-lfm3-server PRIVATE CUDA::cudart Threads::Threads lfm_image)
 lfm3_engine_gemm(liquid-lfm3-server)
 set_target_properties(liquid-lfm3-server PROPERTIES CUDA_ARCHITECTURES 110)
 
@@ -82,7 +105,7 @@ if(LIQUID_LFM3_OPS_TESTS)
   target_include_directories(lfm3-text-slice-check PRIVATE include)
   target_compile_features(lfm3-text-slice-check PRIVATE cxx_std_20 cuda_std_20)
   target_compile_options(lfm3-text-slice-check PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --fmad=false>)
-  target_link_libraries(lfm3-text-slice-check PRIVATE CUDA::cudart Threads::Threads)
+  target_link_libraries(lfm3-text-slice-check PRIVATE CUDA::cudart Threads::Threads lfm_image)
   lfm3_engine_gemm(lfm3-text-slice-check)
   set_target_properties(lfm3-text-slice-check PROPERTIES CUDA_ARCHITECTURES 110)
   add_executable(lfm3-decode-batch-probe EXCLUDE_FROM_ALL tests/lfm3_decode_batch_probe.cu src/safetensors.cpp)

@@ -69,6 +69,9 @@
 #include <thread>
 #include <vector>
 
+#include "lfm/base64.hpp"
+#include "lfm/image_decode.hpp"
+#include "lfm/image_preprocess.hpp"
 #include "lfm/lfm3_text.hpp"
 #include "lfm/speech_run.hpp"
 #include "lfm/speech_text.hpp"
@@ -98,6 +101,38 @@ inline constexpr int kAudioOutToken = 125032;
 // bounds the frontend's work and memory for any request (audio-assurance-v1 red-team: a 2 MB text took 60 GB)
 inline constexpr size_t kSpeechMaxTextBytes = 64 * 1024;
 inline constexpr size_t kSpeechMaxClips = 64;  // audio clips per /speech request (WorkerCore::kSpeechMaxClips)
+// Image input (#4, validation/images-v1): images travel base64 in the JSON (JPEG or PNG bytes), so a /speech body may
+// be up to kMaxSpeechBody (Tripp, 2026-11-15: a full-resolution phone photo or two, sent as they are); every other
+// endpoint keeps kMaxBody. The engine request frame carries the same bytes, so it gets the same room plus the prompts.
+// A decoded image may hold at most kSpeechMaxImagePixels (a 48-megapixel photo fits; Pillow allows 179M, which would
+// let one request take over half a gigabyte to decode): larger is refused as image_too_large. A request's images
+// share its 4,096-token prompt (a full-size image is 2,048 tokens), so kSpeechMaxImages only bounds tiny ones.
+inline constexpr size_t kMaxSpeechBody = 16 * 1024 * 1024;
+inline constexpr size_t kMaxSpeechFrame = kMaxSpeechBody + 1024 * 1024;
+inline constexpr size_t kSpeechMaxImages = 16;  // images per /speech request (WorkerCore::kSpeechMaxImages)
+inline constexpr std::uint64_t kSpeechMaxImagePixels = 64ull * 1024 * 1024;
+
+// Whether a /speech body's messages hold an image part ({"type": "image", ...} in a content list): only such a body
+// may exceed kMaxBody. A shape check only; validate_speech checks the messages themselves.
+inline bool has_image_part(const Json& request) {
+  const auto* o = std::get_if<Json::Object>(&request.value);
+  if (!o || !o->count("messages")) return false;
+  const auto* list = std::get_if<Json::Array>(&o->at("messages").value);
+  if (!list) return false;
+  for (const auto& m : *list) {
+    const auto* mo = std::get_if<Json::Object>(&m.value);
+    if (!mo || !mo->count("content")) continue;
+    const auto* parts = std::get_if<Json::Array>(&mo->at("content").value);
+    if (!parts) continue;
+    for (const auto& part : *parts) {
+      const auto* po = std::get_if<Json::Object>(&part.value);
+      if (!po || !po->count("type")) continue;
+      const auto* type = std::get_if<std::string>(&po->at("type").value);
+      if (type && *type == "image") return true;
+    }
+  }
+  return false;
+}
 
 // An HTTP-visible refusal: status and error code, exactly as lfm3_server.APIError.
 struct ApiError : std::exception {
@@ -458,6 +493,7 @@ struct Policy {
   std::vector<int> suppress, stops;
   bool speech = false;  // the engine can run op "speech" (WorkerCore::speech_supported); /speech is refused otherwise
   bool audio_input = false;  // op "speech" takes audio (WorkerCore::audio_input_supported); audio parts get 501 otherwise
+  bool image_input = false;  // op "speech" takes images (WorkerCore::image_input_supported); image parts get 501 otherwise
   // Concurrent speech (validation/speech-batch-v1): the engine's speech batch rows (ops speech_admit/speech_step,
   // WorkerCore::speech_rows); 0: one /speech at a time through op "speech".
   int speech_rows = 0;
@@ -784,9 +820,35 @@ class Service {
     std::string chunks_json;         // the prompts as the engine request carries them
     std::string audio_json;          // audio input (#3): the clips (base64 WAV) as the engine request carries them
     bool audio_input = false;        // the messages hold audio parts
+    std::string images_json;         // image input (#4): the images (base64 JPEG/PNG) as the engine request carries them
+    bool image_input = false;        // the messages hold image parts
     bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
     bool stream = false;             // the reply as events while the engine generates (speech_stream)
   };
+  // Image input (#4): an image part's data (base64 of JPEG or PNG bytes) decoded and preprocessed as the engine will
+  // (lfm/image_decode.hpp, lfm/image_preprocess.hpp: bit-identical to HF's front end, validation/images-v1 rule 1);
+  // its token count. Every refusal is an ApiError with its own code, before the engine sees the request.
+  static int image_tokens(const std::string& data) {
+    std::string bytes;
+    try {
+      bytes = lfm::base64::decode(data);
+    } catch (const std::exception&) {
+      throw ApiError(400, "invalid_image_base64");
+    }
+    try {
+      lfm::image::Limits limits;
+      limits.max_pixels = kSpeechMaxImagePixels;
+      const auto rgb = lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size(), limits);
+      return lfm::image::preprocess(rgb).tokens;
+    } catch (const lfm::image::DecodeError& e) {
+      // the decoder's code as the refusal: image_corrupt, image_truncated, image_too_large (413), image_aspect_ratio,
+      // image_unsupported_format, image_unsupported_jpeg, image_unsupported_png
+      std::string code = e.code;
+      if (code.rfind("image_", 0) == 0) code = code.substr(6);
+      if (code.size() > 6 && code.compare(code.size() - 6, 6, "_image") == 0) code.resize(code.size() - 6);
+      throw ApiError(code == "too_large" ? 413 : 400, "image_" + code);
+    }
+  }
   Speech validate_speech(const Json& item) const {
     const auto& o = object_of(item);
     static const std::set<std::string> allowed = {"messages", "mode", "max_new_tokens", "seed", "split", "normalize",
@@ -805,14 +867,14 @@ class Service {
     if (!std::holds_alternative<Json::Array>(o.at("messages").value)) throw std::invalid_argument("messages must be a list");
     s.messages = &o.at("messages");
     bool audio_input = false;
-    size_t clips = 0;
+    size_t clips = 0, images = 0;
     // The normalizer is American English only (speech_normalize.hpp): it applies by default when there is no system
     // prompt or a system prompt names American or British English (the model card's TTS prompt), and is refused for
     // any other system prompt (audio-assurance-v1 rule 10: "Tengo 3 gatos" must not become "Tengo three gatos").
     bool has_system = false, english = false;
     size_t text_bytes = 0;
-    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true)) {
-      for (const auto& part : m.parts) clips += part.audio;
+    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true, /*allow_image=*/true)) {
+      for (const auto& part : m.parts) clips += part.audio, images += part.image;
       text_bytes += m.content.size() + m.thinking.size();
       for (const auto& part : m.parts) text_bytes += part.text.size();
       if (text_bytes > kSpeechMaxTextBytes) throw std::invalid_argument("speech text exceeds its byte limit");
@@ -825,15 +887,18 @@ class Service {
     const bool normalizable = !has_system || english;
     audio_input = s.audio_input = clips > 0;
     if (clips > kSpeechMaxClips) throw std::invalid_argument("too many audio clips");
+    s.image_input = images > 0;
+    if (images > kSpeechMaxImages) throw ApiError(400, "too_many_images");
     if (o.count("split")) {
       const auto* b = std::get_if<bool>(&o.at("split").value);
       if (!b) throw std::invalid_argument("split must be a boolean");
       s.split = *b;
     } else {
-      s.split = s.mode == "audio" && !audio_input;
+      s.split = s.mode == "audio" && !audio_input && !s.image_input;
     }
     if (s.split && s.mode != "audio") throw std::invalid_argument("split is for audio mode");
     if (s.split && audio_input) throw std::invalid_argument("split is for text input; audio input is not split");
+    if (s.split && s.image_input) throw std::invalid_argument("split is for text input; image input is not split");
     if (o.count("normalize")) {
       const auto* b = std::get_if<bool>(&o.at("normalize").value);
       if (!b) throw std::invalid_argument("normalize must be a boolean");
@@ -854,18 +919,29 @@ class Service {
   // Audio input (#3): each user audio part (base64 16 kHz mono WAV) renders as the template's single <|audio|>, then
   // expands to its clip's encoder token count (lfm3_text::expand_audio); the clips go to the engine as given.
   void encode_speech(Speech& s) const {
-    auto messages = lfm3_text::parse_messages(*s.messages, /*allow_audio=*/!s.split);
+    auto messages = lfm3_text::parse_messages(*s.messages, /*allow_audio=*/!s.split, /*allow_image=*/!s.split);
     if (s.normalize) speech_text::normalize_user_text(messages);
     std::vector<size_t> clip_tokens;
+    std::vector<lfm3_text::MediaTokens> media;  // every part's medium in prompt order (with images: expand_media)
+    size_t image_count = 0;
     s.audio_json = "[";
+    s.images_json = "[";
     for (const auto& m : messages)
       for (const auto& part : m.parts) {
-        if (!part.audio) continue;
-        clip_tokens.push_back(lfm::audio_features::tokens(lfm3_speech::clip_from_base64(part.data).size()));
-        s.audio_json += (clip_tokens.size() > 1 ? ",\"" : "\"") + part.data + "\"";  // checked base64: no escapes
+        if (part.audio) {
+          clip_tokens.push_back(lfm::audio_features::tokens(lfm3_speech::clip_from_base64(part.data).size()));
+          s.audio_json += (clip_tokens.size() > 1 ? ",\"" : "\"") + part.data + "\"";  // checked base64: no escapes
+          media.push_back({lfm3_text::kAudioToken, clip_tokens.back()});
+        } else if (part.image) {
+          // decoded and preprocessed here, as the engine will: its token count, and every refusal before the engine
+          media.push_back({lfm3_text::kImageToken, size_t(image_tokens(part.data))});
+          s.images_json += (++image_count > 1 ? ",\"" : "\"") + part.data + "\"";  // checked base64: no escapes
+        }
       }
     s.audio_json += "]";
+    s.images_json += "]";
     if (clip_tokens.empty()) s.audio_json.clear();
+    if (!image_count) s.images_json.clear();
     const auto chats = s.split ? speech_text::sentence_requests(messages)
                                : std::vector<std::vector<lfm3_text::Message>>{messages};
     if (chats.size() > kSpeechMaxChunks) throw std::invalid_argument("speech request has too many sentences");
@@ -874,11 +950,13 @@ class Service {
       auto ids = lfm3_text::encode_messages(tokenizer_, chat, kSpeechCapacity, s.count);
       for (const int id : ids) {
         if (id < 0 || id >= policy_.vocabulary) throw std::invalid_argument("input_ids out of range");
-        // the audio placeholder comes only from audio parts (text cannot hold it); expand_audio counts them
-        if (id != lfm3_text::kAudioToken && std::binary_search(policy_.suppress.begin(), policy_.suppress.end(), id))
+        // the audio and image placeholders come only from their parts (text cannot hold them); the expansion counts them
+        if (id != lfm3_text::kAudioToken && id != lfm3_text::kImageToken &&
+            std::binary_search(policy_.suppress.begin(), policy_.suppress.end(), id))
           throw std::invalid_argument("multimodal placeholder input is unsupported");
       }
-      if (!clip_tokens.empty()) ids = lfm3_text::expand_audio(ids, clip_tokens, kSpeechCapacity, s.count);
+      if (image_count) ids = lfm3_text::expand_media(ids, media, kSpeechCapacity, s.count);
+      else if (!clip_tokens.empty()) ids = lfm3_text::expand_audio(ids, clip_tokens, kSpeechCapacity, s.count);
       tokens += ids.size();
       if (tokens > kSpeechMaxPromptTokens) throw std::invalid_argument("speech request has too many prompt tokens");
       s.prompts.push_back(std::move(ids));
@@ -892,7 +970,7 @@ class Service {
       s.chunks_json += "]";
     }
     s.chunks_json += "]";
-    if (s.chunks_json.size() + s.audio_json.size() + 256 > kMaxBody)
+    if (s.chunks_json.size() + s.audio_json.size() + s.images_json.size() + 256 > kMaxSpeechFrame)
       throw std::invalid_argument("speech request exceeds the engine frame");
     s.messages = nullptr;
     s.body.reset();
@@ -1100,6 +1178,7 @@ class Service {
     const auto deadline = Clock::now() + seconds(settings_.request_timeout);
     auto request = std::make_shared<Speech>(validate_speech(*body));
     if (request->audio_input && !policy_.audio_input) throw ApiError(501, "audio_input_unsupported");
+    if (request->image_input && !policy_.image_input) throw ApiError(501, "image_input_unsupported");
     request->body = std::move(body);  // `messages` points into it until encode_speech drops it
     frontend_call([&] { encode_speech(*request); }, deadline);
     if (policy_.speech_rows > 0) {
@@ -1123,8 +1202,9 @@ class Service {
       frame.str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
           .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split);
       if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
+      if (!request->images_json.empty()) frame.raw("images", request->images_json);
       const auto result = rpc(std::move(frame),
-                              {{"speech", event}}, false, kMaxSpeechResponse);
+                              {{"speech", event}}, false, kMaxSpeechResponse, nullptr, kMaxSpeechFrame);
       return speech_response(*request, result);
     };
     return submit(run, [] {}, nullptr, deadline, Kind::kExclusive);
@@ -1162,6 +1242,7 @@ class Service {
     auto request = std::make_shared<Speech>(validate_speech(*body));
     if (!request->stream) throw std::logic_error("speech_stream without stream");
     if (request->audio_input && !policy_.audio_input) throw ApiError(501, "audio_input_unsupported");
+    if (request->image_input && !policy_.image_input) throw ApiError(501, "image_input_unsupported");
     // the cap after validation: a malformed request is a 400 whatever the load, never a retryable 429
     if (streams_.fetch_add(1) >= std::max(1, settings_.handlers / 2)) {
       --streams_;
@@ -1204,7 +1285,8 @@ class Service {
             .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split)
             .boolean("stream", true);
         if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
-        const auto result = rpc(std::move(frame), {{key, event}}, false, kMaxBody, &progress);
+        if (!request->images_json.empty()) frame.raw("images", request->images_json);
+        const auto result = rpc(std::move(frame), {{key, event}}, false, kMaxBody, &progress, kMaxSpeechFrame);
         state.check(result);
         return speech_response(*request, result);
       };
@@ -1434,12 +1516,12 @@ class Service {
 
   // lfm3_worker_client.WorkerClient.call + Service._rpc: owner thread only. Any failure is fatal.
   Json rpc(Obj request, std::vector<std::pair<std::string, Event>> targets = {}, bool batch = false,
-           size_t max_reply = kMaxBody, const Backend::Progress* progress = nullptr) {
+           size_t max_reply = kMaxBody, const Backend::Progress* progress = nullptr, size_t max_request = kMaxBody) {
     if (backend_closed_) throw WorkerFailure("worker closed");
     if (sequence_ >= 2147483647) throw WorkerFailure("RPC sequence exhausted; restart required");
     const std::uint64_t id = ++sequence_;
     const auto line = request.num("rpc_id", (long long)id).done();
-    if (line.size() + 1 > kMaxBody) throw WorkerFailure("request frame exceeds limit");
+    if (line.size() + 1 > max_request) throw WorkerFailure("request frame exceeds limit");
     {
       std::lock_guard g(active_lock_);
       active_.clear();
@@ -1590,10 +1672,11 @@ class Service {
         frame.str("op", "speech_admit").num("ticket", t->id).raw("chunks", r.chunks_json).str("mode", r.mode)
             .num("max_new_tokens", r.count).num("seed", r.seed).boolean("chunked", r.split).boolean("stream", r.stream);
         if (!r.audio_json.empty()) frame.raw("audio", r.audio_json);
+        if (!r.images_json.empty()) frame.raw("images", r.images_json);
         if (r.stream) t->state = std::make_unique<StreamState>(*this, r, t->lines);
         running_[t->id] = t;  // before the call: a failure fails it with the rest
         const Backend::Progress none = [](const std::string&) { throw WorkerFailure("unexpected speech progress"); };
-        const auto reply = rpc(std::move(frame), {}, false, kMaxBody, &none);
+        const auto reply = rpc(std::move(frame), {}, false, kMaxBody, &none, kMaxSpeechFrame);
         if (!reply.has("ticket") || reply.at("ticket").integer() != t->id) throw WorkerFailure("invalid speech admit reply");
       }
       if (running_.empty()) return;
@@ -2240,7 +2323,9 @@ class Connection {
       for (const char c : length_text) if (c < '0' || c > '9') digits = false;
       if (!digits) throw ApiError(400, "invalid_content_length");
       const size_t length = std::stoul(length_text);
-      if (length < 1 || length > kMaxBody) throw ApiError(413, "body_limit");
+      // /speech may carry images (kMaxSpeechBody); a /speech body over kMaxBody without an image part is refused below,
+      // once parsed, so audio and text requests keep the limit they had
+      if (length < 1 || length > (r.path == "/speech" ? kMaxSpeechBody : kMaxBody)) throw ApiError(413, "body_limit");
       const auto types = r.all("content-type");
       if (types.size() != 1 || lower(types[0]) != "application/json") throw ApiError(415, "application_json_required");
       const auto deadline = Clock::now() + seconds(service_.settings().socket_timeout);
@@ -2276,6 +2361,7 @@ class Connection {
       else if (r.path == "/generate") result = service_.generate(std::move(parsed), [this] { return reset_by_peer(); });
       else if (r.path == "/generate_batch") result = service_.generate_batch(std::move(parsed));
       else if (r.path == "/speech") {
+        if (length > kMaxBody && !has_image_part(request)) throw ApiError(413, "body_limit");
         // "stream" is checked as a field by validate_speech: only a literal true streams
         bool stream = false;
         if (const auto* o = std::get_if<Json::Object>(&request.value)) {

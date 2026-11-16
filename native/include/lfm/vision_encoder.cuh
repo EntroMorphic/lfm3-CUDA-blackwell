@@ -22,9 +22,12 @@
 #include <lfm/fp32_ops.cuh>
 #include <lfm/model_config.hpp>
 #include <lfm/safetensors.hpp>
+#include <lfm/safetensors_header.hpp>
 
 #include <cmath>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -185,7 +188,10 @@ class Encoder {
 
   // The architecture this code implements, checked against config.json's root and the tensor table; throws on any
   // difference, so a checkpoint the encoder cannot run is known before any request.
-  static void check_contract(const lfm::Json& root, const lfm::Safetensors& weights) {
+  // `lookup`: a tensor's dtype and shape by name (nullopt: absent), from the loaded weights or from the safetensors
+  // header alone (WorkerCore at startup: whether image input is supported, before any weights load).
+  static void check_contract(const lfm::Json& root,
+                             const std::function<std::optional<lfm::safetensors_header::Entry>(const std::string&)>& lookup) {
     const auto& vc = root.at("vision_config");
     auto need = [](bool ok, const char* what) { if (!ok) throw std::runtime_error(std::string("vision encoder: ") + what); };
     need(vc.at("hidden_size").integer() == kWidth && vc.at("intermediate_size").integer() == kMlp &&
@@ -202,9 +208,9 @@ class Encoder {
     const auto& types = vc.at("layer_types").array();
     need(types.size() == size_t(kLayers), "layer_types length");
     auto check = [&](const std::string& name, std::vector<int64_t> shape) {
-      if (!weights.has(name)) throw std::runtime_error("vision encoder: missing " + name);
-      const auto& t = weights.at(name);
-      if (t.dtype != "BF16" || t.shape != shape) throw std::runtime_error("vision encoder weight contract: " + name);
+      const auto t = lookup(name);
+      if (!t) throw std::runtime_error("vision encoder: missing " + name);
+      if (t->dtype != "BF16" || t->shape != shape) throw std::runtime_error("vision encoder weight contract: " + name);
     };
     const std::string V = "model.vision_tower.";
     check(V + "patchifier.weight", {kWidth, kPatchDim});
@@ -234,7 +240,11 @@ class Encoder {
   }
 
   Encoder(std::shared_ptr<lfm::Safetensors> weights, const lfm::Json& root) : weights_(std::move(weights)) {
-    check_contract(root, *weights_);
+    check_contract(root, [&](const std::string& name) -> std::optional<lfm::safetensors_header::Entry> {
+      if (!weights_->has(name)) return std::nullopt;
+      const auto& t = weights_->at(name);
+      return lfm::safetensors_header::Entry{t.dtype, t.shape};
+    });
     const auto& vc = root.at("vision_config");
     eps_ = float(vc.at("norm_eps").number());
     theta_ = vc.at("rope_parameters").at("rope_theta").number();

@@ -34,10 +34,16 @@
 // prompt_ids in order (tools/lfm3_audio_in_hf.py writes such requests); or, with messages, user content parts
 // {"type": "audio", "audio": WAV path}, rendered and expanded natively. Not with chunks or split. "record_audio": true
 // also writes OUT_STEM.audioK.{mel,down,encoded,features}.f32, clip K's stages (lfm/audio_encoder.cuh).
+// Image input (#4): "images": [image paths] (PNG or JPEG, read by the native front end: lfm/image_decode.hpp then
+// lfm/image_preprocess.hpp), one per <|image|> span of prompt_ids in order; or, with messages, user content parts
+// {"type": "image", "image": path}, expanded natively (audio and image parts may interleave). Not with chunks or split.
+// "record_image": true also writes OUT_STEM.imageK.pixel_values.f32, image K's front-end output ([rows][1536]).
 #define LFM3_RUNTIME_ONLY 1
 #include "../src/lfm3_main.cu"
 #include "../src/lfm3_batch.cuh"
 #include "../src/lfm3_speech.cuh"
+#include <lfm/image_decode.hpp>
+#include <lfm/image_preprocess.hpp>
 #include <lfm/speech_text.hpp>
 #include <lfm/wav.hpp>
 
@@ -76,7 +82,7 @@ struct Job {
   std::vector<std::vector<int>> prompts;
   std::vector<std::string> chunk_texts;
   std::shared_ptr<const lfm::lfm3_text::Tokenizer> text_tokenizer;
-  bool chunked = false;
+  bool chunked = false, record_image = false;
   int capacity = 4096;
 };
 void write_outputs(const Job& job, const lfm3_speech::Result& r, const std::vector<lfm3_speech::ChunkInfo>& chunk_info);
@@ -101,23 +107,28 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
         if (const auto* o = std::get_if<lfm::Json::Object>(&m.value); o && o->count("content"))
           if (const auto* parts = std::get_if<lfm::Json::Array>(&o->at("content").value))
             for (const auto& part : *parts)
-              if (const auto* po = std::get_if<lfm::Json::Object>(&part.value); po && po->count("audio"))
-                if (const auto* a = std::get_if<std::string>(&po->at("audio").value)) inputs.push_back(*a);
+              if (const auto* po = std::get_if<lfm::Json::Object>(&part.value))
+                for (const char* key : {"audio", "image"})
+                  if (po->count(key))
+                    if (const auto* a = std::get_if<std::string>(&po->at(key).value)) inputs.push_back(*a);
+  if (req.has("images"))
+    for (auto& path : req.at("images").array()) inputs.push_back(path.string());
   for (const char* ext : outputs)
     for (const auto& in : inputs)
       if (std::filesystem::weakly_canonical(stem + ext) == std::filesystem::weakly_canonical(in))
         throw std::runtime_error("an input (" + in + ") is one of OUT_STEM's outputs; use another stem");
   for (const char* ext : outputs) std::filesystem::remove(stem + ext);
-  for (int k = 0; k < 64; ++k)
-    for (const char* part : {"mel", "down", "encoded", "features"}) {
-      const std::string out = stem + ".audio" + std::to_string(k) + "." + part + ".f32";
-      for (const auto& in : inputs)
-        if (std::filesystem::weakly_canonical(out) == std::filesystem::weakly_canonical(in))
-          throw std::runtime_error("an input (" + in + ") is one of OUT_STEM's outputs; use another stem");
-    }
-  for (int k = 0; k < 64; ++k)
+  std::vector<std::string> media_outputs;
+  for (int k = 0; k < 64; ++k) {
     for (const char* part : {"mel", "down", "encoded", "features"})
-      std::filesystem::remove(stem + ".audio" + std::to_string(k) + "." + part + ".f32");
+      media_outputs.push_back(stem + ".audio" + std::to_string(k) + "." + part + ".f32");
+    media_outputs.push_back(stem + ".image" + std::to_string(k) + ".pixel_values.f32");
+  }
+  for (const auto& out : media_outputs)
+    for (const auto& in : inputs)
+      if (std::filesystem::weakly_canonical(out) == std::filesystem::weakly_canonical(in))
+        throw std::runtime_error("an input (" + in + ") is one of OUT_STEM's outputs; use another stem");
+  for (const auto& out : media_outputs) std::filesystem::remove(out);
   const int capacity = req.has("capacity") ? req.at("capacity").integer() : 4096;
   if (m.capacity != capacity) {
     // --concurrent: the runner is shared by every job prepared so far; a job of another capacity is refused before it
@@ -139,6 +150,7 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
   o.seed = req.has("seed") ? uint64_t(req.at("seed").integer()) : 0;
   o.record_hidden = req.has("record_hidden") && req.at("record_hidden").boolean();
   o.record_audio = req.has("record_audio") && req.at("record_audio").boolean();
+  job.record_image = req.has("record_image") && req.at("record_image").boolean();
   auto read_clips = [&](const std::vector<std::string>& paths) {
     if (paths.size() > 64) throw std::runtime_error("at most 64 audio clips");
     for (const auto& path : paths) {
@@ -149,11 +161,26 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
       o.audio.push_back(std::move(a.samples));
     }
   };
+  auto read_image = [&](const std::string& path) {
+    if (o.images.size() >= 64) throw std::runtime_error("at most 64 images");
+    std::ifstream f(path, std::ios::binary);
+    if (!f) throw std::runtime_error("cannot read " + path);
+    const std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    try {
+      o.images.push_back(lfm::image::preprocess(lfm::image::load_rgb(bytes.data(), bytes.size())));
+    } catch (const std::exception& e) {
+      throw std::runtime_error(path + ": " + e.what());
+    }
+  };
   if (req.has("audio")) {
     if (req.has("messages")) throw std::runtime_error("with messages, audio clips are the messages' audio parts");
     std::vector<std::string> paths;
     for (auto& path : req.at("audio").array()) paths.push_back(path.string());
     read_clips(paths);
+  }
+  if (req.has("images")) {
+    if (req.has("messages")) throw std::runtime_error("with messages, images are the messages' image parts");
+    for (auto& path : req.at("images").array()) read_image(path.string());
   }
   if (req.has("forced_tokens")) for (auto& x : req.at("forced_tokens").array()) o.forced_tokens.push_back(x.integer());
   if (req.has("forced_frames"))
@@ -182,7 +209,7 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
     const std::shared_ptr<const lfm::lfm3_text::Tokenizer> tok =
         lfm::lfm3_text::load_checked(path, lfm::tokenizer_token_count(path, cfg.shape.vocabulary));
     text_tokenizer = tok;
-    auto messages = lfm::lfm3_text::parse_messages(req.at("messages"), /*allow_audio=*/!split);
+    auto messages = lfm::lfm3_text::parse_messages(req.at("messages"), /*allow_audio=*/!split, /*allow_image=*/!split);
     if (normalize) lfm::speech_text::normalize_user_text(messages);
     std::vector<std::string> paths;  // audio parts: WAV paths
     for (const auto& m : messages)
@@ -191,11 +218,24 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
     read_clips(paths);
     std::vector<size_t> clip_tokens;
     for (const auto& clip : o.audio) clip_tokens.push_back(lfm::audio_features::tokens(clip.size()));
+    // with images, every part's medium in prompt order (expand_media); audio alone stays expand_audio's
+    std::vector<lfm::lfm3_text::MediaTokens> media;
+    size_t clip_at = 0;
+    for (const auto& m : messages)
+      for (const auto& part : m.parts)
+        if (part.audio) {
+          media.push_back({lfm::lfm3_text::kAudioToken, clip_tokens.at(clip_at++)});
+        } else if (part.image) {
+          read_image(part.data);
+          media.push_back({lfm::lfm3_text::kImageToken, size_t(o.images.back().tokens)});
+        }
     const auto chats = split ? lfm::speech_text::sentence_requests(messages)
                              : std::vector<std::vector<lfm::lfm3_text::Message>>{messages};
     for (const auto& c : chats) {
       prompts.push_back(lfm::lfm3_text::encode_messages(*tok, c, capacity, o.max_new_tokens));
-      if (!clip_tokens.empty())
+      if (!o.images.empty())
+        prompts.back() = lfm::lfm3_text::expand_media(prompts.back(), media, capacity, o.max_new_tokens);
+      else if (!clip_tokens.empty())
         prompts.back() = lfm::lfm3_text::expand_audio(prompts.back(), clip_tokens, capacity, o.max_new_tokens);
       if (split) chunk_texts.push_back(c.back().content);
     }
@@ -258,6 +298,10 @@ void write_outputs(const Job& job, const lfm3_speech::Result& r, const std::vect
     write_raw(a + "encoded.f32", d.encoded.data(), d.encoded.size());
     write_raw(a + "features.f32", d.features.data(), d.features.size());
   }
+  if (job.record_image)
+    for (size_t k = 0; k < o.images.size(); ++k)
+      write_raw(stem + ".image" + std::to_string(k) + ".pixel_values.f32", o.images[k].values.data(),
+                o.images[k].values.size());
   std::ofstream f(stem + ".json");
   f << "{\"mode\":" << lfm::lfm3_text::json_string(mode) << ",\"prompt\":";
   print_ids(f, r.prompt);
