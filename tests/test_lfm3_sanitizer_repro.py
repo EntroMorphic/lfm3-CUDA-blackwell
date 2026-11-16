@@ -69,6 +69,7 @@ def test_no_arbitrary_repo_attachments_copied(tmp_path):
     root = tmp_path / "repo"
     root.mkdir()
     for name in repro.baseline_names() + list(repro.EXTRAS[1:]):
+        name = repro.REPO_PATH.get(name, name)  # the repository's layout, not the packet's
         destination = root / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(REPO / name, destination)
