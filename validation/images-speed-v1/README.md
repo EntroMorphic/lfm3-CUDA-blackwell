@@ -45,3 +45,17 @@ separate, later round.)
 6. **Nothing else changes**: lfm3-speech's regression (36 outputs), the audio-in replies (360 + 93 files), e2e and
    split (90 + 90), and the server checks (batch, stream, audio in, TTS, text gate with control `7ea05068...`) all
    identical; images through the server identical to lfm3-speech; the host suites pass.
+
+## Amendment 1 (2026-11-16), before rule 1's run: how the split runs, from two profiles
+A first build (`vspeed-a1`), one image (china) and the largest case only, no rule run: every mode combination on
+china (`--linear`, `--attention`): fp32/fp32 byte-identical to images-v1; x2/x2 0.028 of HF BF16's error, cosine
+0.9999983 (fp32's, to the output's rounding), 0.047 s against 0.165 s; any x1 part fails rule 1's thresholds on its
+own (x2/x1 0.214, x1/x2 0.297, x1/x1 0.396). At 8,192 patches x2/x2 took 0.685 s (fp32: 1.87 s), not yet enough.
+nsys on it: the attention kernel 53% at ~14 TFLOPS (each block re-converts every key and value from FP32, a transposed
+store with bank conflicts, 4 warps); the GEMMs ~137 ms at ~40 TFLOPS; the split and combine passes ~91 ms;
+allocating and zeroing scratch per image ~58 ms. Changes, the mathematics unchanged:
+- The split multiply is one GEMM over a doubled K: A = [hi | lo] per row, B = [W | W] (built once, on first use: the
+  vision weights again, ~0.37 GB more GPU memory), FP32 out directly; a bias, the projector's only, added after.
+  (The design said a batch of 2 summed in FP32: same products, one accumulation.)
+- Attention: K and V split once per layer into BF16 buffers in the tiles' layouts (V transposed); 8 warps a block.
+- Scratch kept between images (~0.5 GB after the largest), no longer freed and re-zeroed each time.
