@@ -1,0 +1,15 @@
+    PID %CPU %MEM     ELAPSED COMMAND
+ 202483  3.4  0.0    01:08:51 kworker/u28:0-devfreq_wq
+ 123581  3.4  0.0    01:41:08 kworker/u28:2-ext4-rsv-conversion
+  80105  2.0  0.3    07:23:53 claude
+   3397  1.8  0.3  1-16:18:33 gnome-shell
+   1834  1.8  0.0  1-16:18:48 nv_queue
+   1821  0.9  0.0  1-16:18:48 nvidia-modeset/kthread_q
+ 126604  0.4  0.0    01:30:44 kworker/4:4-events
+ 234073  0.3  0.0       33:02 kworker/10:1-pm
+   3197  0.1  0.0  1-16:18:34 Xorg
+ 208969  0.1  0.0    01:01:42 TreeLauncherSub
+  49513  0.1  0.0    21:34:27 (udev-worker)
+   1903  0.0  0.0  1-16:18:48 disp_eng_share_thread
+    368  0.0  0.0  1-16:18:53 systemd-udevd
+   4768  0.0  0.0  1-16:18:26 gnome-terminal-

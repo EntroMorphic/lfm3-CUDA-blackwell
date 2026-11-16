@@ -43,3 +43,16 @@ each, then encoded, ~0.36 s (images-speed-v1). HF re-encodes too. This round kee
    end's mutex); text and audio requests untouched.
 6. **Sanitizers and red-team**: compute-sanitizer memcheck on the engine with hits, misses and evictions; one red-team
    pass (eviction while a request is using an entry, cancellation mid-encode, the worker restarting).
+
+## Rule 0 results (2026-11-16): **proceed** (`rule0/`)
+`tools/measure_lfm3_image_turns.py`, quiet session 1, server `vimg-srv-a3`, 4 conversations (the first warm-up), medians:
+| request | turn | end to end | first text | engine prefill (decode + preprocess + encode + prefill) |
+|---|---|---|---|---|
+| cherry (4K) | 1 | 5.93 | 4.82 | 3.87 (bimodal: 0.62, 3.87, 0.59, 4.05: the prefill stall, below) |
+| cherry | 2 | 2.53 | 1.60 | 0.65 |
+| cherry | 3 | 2.72 | 1.61 | 0.66 |
+| two (two small images) | 1-3 | 1.32-1.34 | 0.23-0.25 | 0.14-0.15 |
+At 4K each turn spends ~0.95 s between the request and the engine's prefill (the server's decode and the engine's
+second decode and preprocessing) plus ~0.36 s of encode inside the prefill: far above the 100 ms bar. Texts were
+identical across conversations. The turn-1 times expose an intermittent 3-4 s prefill stall, investigated separately
+(`validation/prefill-stall-v1/`).

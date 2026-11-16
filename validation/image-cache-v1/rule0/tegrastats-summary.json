@@ -1,0 +1,34 @@
+{
+ "samples": 459,
+ "rails_mw": {
+  "VDD_GPU": {
+   "median": 20171,
+   "max": 48609
+  },
+  "VDD_CPU_SOC_MSS": {
+   "median": 18581,
+   "max": 20171
+  },
+  "VIN_SYS_5V0": {
+   "median": 16508,
+   "max": 19141
+  },
+  "VIN": {
+   "median": 66074,
+   "max": 117922
+  }
+ },
+ "temps_max_c": {
+  "cpu": 63.718,
+  "tj": 66.687,
+  "soc012": 64.218,
+  "soc345": 65.25
+ },
+ "cpu_load_pct": {
+  "median": 5.642857142857143,
+  "max": 17.857142857142858
+ },
+ "cpu_mhz_seen": [
+  2601
+ ]
+}

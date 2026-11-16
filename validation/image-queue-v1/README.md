@@ -60,3 +60,15 @@ so 11 arrivals overflow 4 waiting places, as 11 text requests would. My rule ask
 the queue size, and named the queue's refusal 503 where it is 429 `queue_full`: both errors mine, recorded.
 What the rule meant (no refusal by the front end): the same probe at `--queue-size 16`: **11 of 11 served, no 429**
 on the new server; **6 of 11** on the server before the change (`vimg-srv-a3`), five refused `frontend_busy`.
+
+## Rule 0 results (2026-11-16): stall **1.06 s** > 50 ms: part 2 proceeds (`rule0/`)
+`tools/measure_lfm3_image_stall.py` on the server before part 1 (`vimg-srv-a3`), quiet session 2 (the first attempt,
+session 1, failed in the tool: its 7 streams met text's 429 `frontend_busy` and did not retry; fixed and recorded,
+commit "measure_lfm3_image_stall.py: the streaming rows retry 429"). Three paired runs: the longest gap between audio events on the 7
+streaming rows, without the image 0.336 / 0.340 / 0.339 s, with a 4K photograph admitted 1.429 / 1.397 / 1.393 s:
+**+1.06 s** (median), every row but one (that row, by then, between chunks). The engine-owner thread's share: decoding
+and preprocessing the image again (~0.4 s), the encoder (~0.36 s) and the image prompt's prefill (~0.25 s). Part 2
+removes the first; the encode and prefill would still hold every row for ~0.6 s (interleaving prefill with decode
+steps is a separate design, not this round's).
+Found on the way, not yet explained: the image request itself returned its 32-token reply after **20.0 s** with the 7
+streams running (alone: ~1.3 s).
