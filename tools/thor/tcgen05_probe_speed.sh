@@ -6,7 +6,8 @@
 # Usage (Thor host): tcgen05_probe_speed.sh BUILD_TAG OUT_TAG        e.g. b3 tcgen05-speed-r1
 set -uo pipefail
 T=${1:?BUILD_TAG}; O=${2:?OUT_TAG}
-W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
+# The workspace is fixed (not derived from this script's path: it is run from the build/src-tcgen05 copy).
+W=${LFM3_WORKSPACE:-$HOME/Projects/000-research/lfm3-omni-2B}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
 X="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 P=$C/tcgen05-$T/tcgen05-gemm-probe
 mkdir -p $B/$O && cd $B/$O
