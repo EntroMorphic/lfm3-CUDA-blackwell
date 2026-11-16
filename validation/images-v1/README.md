@@ -262,6 +262,53 @@ PyTorch sources ported from (v2.10.0, raw.githubusercontent.com): `UpSampleKerne
   not chased; worth an upstream report.
 - **ASan+UBSan** on the noise sweep and the cases: 0 reports, output identical to the plain build.
 
+## Rule 2's held-out images (2026-11-15), chosen before they were run
+The 20 MMStar images: `random.Random(2026).sample` of the 1,430 distinct MMStar image paths of
+`data/vision-bench/manifest.jsonl`, sorted; named mm01..mm20 in sample order. HF's FP32 and BF16 stages dumped on CPU
+by `tools/dump_lfm3_vision_reference.py --images` (transformers 5.20.2, Thor's container), one image per case. The 11
+stage-0 cases were run first (all passed); these 20 were not looked at before their run.
+
+## Rule 2 results (2026-11-15): **PASS on all 31 images**
+`native/include/lfm/vision_encoder.cuh` (FP32 activations over the stored BF16 weights, lfm/fp32_ops.cuh; the output
+rounded to BF16 for the language model), checked by `native/tests/lfm3_vision_check.cu` on HF's own pixel_values and
+compared stage by stage by `tools/compare_lfm3_vision_stages.py` (records gzipped in `vision/compare/`: each case's comparison and stage shapes).
+| | ratio (native / HF BF16 relative L2 to FP32) | native rel. error | HF BF16 rel. error | min token cosine, native | min token cosine, HF BF16 |
+|---|---|---|---|---|---|
+| 11 stage-0 cases | 0.028 - 0.076 | 1.65e-3 - 1.67e-3 | 2.2e-2 - 5.9e-2 | >= 0.9999983 | 0.633 - 0.992 |
+| 20 held-out MMStar images | 0.023 - 0.112 | 1.65e-3 - 1.67e-3 | 1.5e-2 - 7.2e-2 | >= 0.9999983 | 0.630 - 0.999 |
+- The native error at the features is the BF16 rounding of the output and nothing else: before it, at every stage of
+  every image (patchifier, 14 layers, projector), the native relative error to HF FP32 is at most 2.6e-5. HF's BF16
+  run drifts through the layers (layer 13's minimum token cosine 0.51 on china): the loud-token effect stage 0 found,
+  which FP32 activations avoid, as stage 0 predicted.
+- The rotary tables equal HF's to a relative 1.5e-8 (the angle is the model's float32 angle; FP64 trigonometry).
+- First run, no fix needed. Encode time (decode loop not involved; the encoder alone, Thor, one image, not yet
+  optimised): 0.05 s at 256 patches, 0.17 s at 1,040, 1.8 s at 7,920 (the 4K photographs), the full attention's
+  O(n^2) dominating at that size.
+
+## Rule 7 results (2026-11-15): **PASS**
+`tools/thor/vision_sanitizers.sh`: Compute Sanitizer 13.5.25 on `lfm3-vision-check` (built with `-lineinfo`), three
+cases: small (held-out mm01, 288 patches), two (stage-0 `two`: two images in one prompt, 2,080 patches) and max (a
+2048 x 1024 noise image, 8,192 patches: the most HF's processor gives one image). Records gzipped in
+`vision/sanitizers/` (each run's log, and the script's summary with the byte comparison of outputs).
+| Tool | small | two | max |
+|---|---|---|---|
+| memcheck (leak check on) | 0 errors, 0 bytes leaked | 0 errors, 0 bytes leaked | 0 errors, 0 bytes leaked |
+| initcheck | 0 errors | 0 errors | 0 errors |
+| synccheck | 0 errors | 0 errors | 0 errors |
+| racecheck | 0 hazards | 0 hazards | 0 hazards |
+- Every sanitizer run's outputs (every stage, every image) are byte-identical to the plain run's.
+- Racecheck's cost: 12,254 s for the max image's encode (plain: 1.87 s), 7 hours for the case's two encodes. Run
+  alongside exactness work only, as the timing rule allows.
+
+## The prompt path (2026-11-15): **31 of 31 prompts equal HF's**
+Image parts in the native chat front end (`lfm/lfm3_text.hpp`): `parse_messages(..., allow_image)` takes
+`{"type": "image", "image": string}` in user messages only; the template renders each as
+`<|vision_start|><|image|><|vision_end|>`, and `expand_media` widens each placeholder to its image's token count
+(grid / 4, from the native front end) and each audio placeholder to its clip's, in prompt order. Checked by
+`native/tests/image_prompt_check.cpp` (cases from `tools/image_prompt_cases.py`) against the `input_ids` HF's
+processor gave the same conversations: the 11 stage-0 cases (one and two images, system prompts, text after the image)
+and the 20 held-out images, all 31 identical (x86 build).
+
 ## Rules, set before any native run (draft)
 1. **Decoding and preprocessing match HF exactly.** Decoded pixels are bit-identical to PIL's (Thor's) on every JPEG
    and PNG case: the dumped images, the MMStar and POPE images, and progressive, 4:2:0, 4:2:2, 4:4:4, grayscale, CMYK

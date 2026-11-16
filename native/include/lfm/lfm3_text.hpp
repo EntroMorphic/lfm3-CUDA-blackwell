@@ -556,8 +556,9 @@ inline std::string python_strip(std::string_view s) {
 
 // A text part, or (audio input, parse_messages with allow_audio) an audio clip: `data` holds the part's "audio"
 // string (the caller's reference to the clip: a path, or base64 WAV bytes) and the part renders as the template's
-// <|vision_start|><|audio|><|vision_end|>.
-struct ContentPart { std::string text; bool audio = false; std::string data; };
+// <|vision_start|><|audio|><|vision_end|>; or (image input, allow_image) an image: `data` holds the part's "image"
+// string (a path, or base64 JPEG/PNG bytes) and the part renders as <|vision_start|><|image|><|vision_end|>.
+struct ContentPart { std::string text; bool audio = false; std::string data; bool image = false; };
 struct Message {
   std::string role;
   bool content_is_list = false;
@@ -585,7 +586,8 @@ inline bool has_reserved(std::string_view s) {
 
 // Validation of tools/lfm3_text_frontend.py validate_messages, on the JSON form of the messages.
 // allow_audio (speech input, #3): a user message's content list may also hold {type: "audio", audio: string} parts.
-inline std::vector<Message> parse_messages(const Json& j, bool allow_audio = false) {
+// allow_image (image input, #4): likewise {type: "image", image: string} parts.
+inline std::vector<Message> parse_messages(const Json& j, bool allow_audio = false, bool allow_image = false) {
   const auto bad = [](const std::string& why) { throw std::runtime_error("lfm3 chat: " + why); };
   const auto* list = std::get_if<Json::Array>(&j.value);
   if (!list || list->empty() || list->size() > kMaxMessages) bad("messages must contain 1..4096 messages");
@@ -639,6 +641,16 @@ inline std::vector<Message> parse_messages(const Json& j, bool allow_audio = fal
           joined.clear();
           continue;
         }
+        if (allow_image && po && po->size() == 2 && type != po->end() && po->count("image") &&
+            std::holds_alternative<std::string>(type->second.value) && type->second.string() == "image") {
+          if (m.role != "user") bad("image parts are supported in user messages only");
+          const auto* data = std::get_if<std::string>(&po->at("image").value);
+          if (!data || data->empty()) bad("an image part's image must be a nonempty string");
+          m.parts.push_back({std::string(), false, *data, true});
+          text(Json{joined}, "joined content");  // as for audio: the span separates the text on either side
+          joined.clear();
+          continue;
+        }
         if (!po || po->size() != 2 || type == po->end() || !po->count("text") ||
             !std::holds_alternative<std::string>(type->second.value) || type->second.string() != "text")
           bad("content parts must be text-only {type: text, text: string}");
@@ -679,7 +691,9 @@ inline std::string render_chat(const std::vector<Message>& all) {
   const auto parse_content = [](const Message& m) {
     if (!m.content_is_list) return m.content;
     std::string s;
-    for (const auto& p : m.parts) s += p.audio ? std::string("<|vision_start|><|audio|><|vision_end|>") : p.text;
+    for (const auto& p : m.parts)
+      s += p.audio ? std::string("<|vision_start|><|audio|><|vision_end|>")
+                   : p.image ? std::string("<|vision_start|><|image|><|vision_end|>") : p.text;
     return s;
   };
   std::string out = "<|startoftext|>";
@@ -788,6 +802,33 @@ inline std::vector<int> expand_audio(const std::vector<int>& ids, const std::vec
   }
   if (out.size() <= size_t(capacity) && clip != clip_tokens.size())
     throw std::runtime_error("lfm3 chat: fewer <|audio|> placeholders than clips");
+  if (out.size() + static_cast<size_t>(max_new_tokens) > static_cast<size_t>(capacity))
+    throw std::runtime_error("lfm3 chat: prompt (" + std::to_string(out.size()) + "+) + output (" +
+                             std::to_string(max_new_tokens) + ") exceeds capacity (" + std::to_string(capacity) + ")");
+  return out;
+}
+
+// Audio and image input together: each placeholder (<|audio|> or <|image|>, as the template renders them, one per part)
+// expanded to its media's token count, the media in prompt order (`media`: the placeholder each expects and its count;
+// an image's count is its grid_h * grid_w / 4, lfm::image::PixelValues::tokens); then the capacity check of
+// encode_messages. A prompt with audio only is expand_audio's, which this does not replace.
+inline constexpr int kImageToken = 125030;  // <|image|>
+struct MediaTokens { int placeholder = 0; size_t tokens = 0; };
+inline std::vector<int> expand_media(const std::vector<int>& ids, const std::vector<MediaTokens>& media, int capacity,
+                                     int max_new_tokens) {
+  std::vector<int> out;
+  size_t at = 0;
+  for (int id : ids) {
+    if (id != kAudioToken && id != kImageToken) { out.push_back(id); continue; }
+    if (at >= media.size()) throw std::runtime_error("lfm3 chat: more media placeholders than media");
+    if (media[at].placeholder != id) throw std::runtime_error("lfm3 chat: media out of order with their placeholders");
+    if (media[at].tokens == 0) throw std::runtime_error("lfm3 chat: media without tokens");
+    if (media[at].tokens > size_t(capacity)) throw std::runtime_error("lfm3 chat: media exceeds capacity");
+    out.insert(out.end(), media[at++].tokens, id);
+    if (out.size() > size_t(capacity)) break;  // refused below
+  }
+  if (out.size() <= size_t(capacity) && at != media.size())
+    throw std::runtime_error("lfm3 chat: fewer media placeholders than media");
   if (out.size() + static_cast<size_t>(max_new_tokens) > static_cast<size_t>(capacity))
     throw std::runtime_error("lfm3 chat: prompt (" + std::to_string(out.size()) + "+) + output (" +
                              std::to_string(max_new_tokens) + ") exceeds capacity (" + std::to_string(capacity) + ")");

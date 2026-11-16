@@ -14,6 +14,9 @@ Runs once in float32 (the gold reference) and once in bfloat16 (what HF runs on 
 measured against the distance between the two). Needs transformers 5.20.2 (the model card asks for >= 5.20.2) and
 torchvision.
 Usage: dump_lfm3_vision_reference.py MODEL_DIR OUT_DIR [GEN_TOKENS]
+       dump_lfm3_vision_reference.py MODEL_DIR OUT_DIR --images NAME=PATH...
+         (held-out images, validation/images-v1 rule 2: the vision stages only, no generation, FP32 then BF16; each
+         image loaded as HF's load_image loads it, one image per case, the DESCRIBE prompt)
 """
 import hashlib
 import json
@@ -60,8 +63,12 @@ def make_images(dst):
     return out
 
 
-def cases(images):
+def cases(images, held_out=False):
     """(name, conversation, generate end to end?)"""
+    if held_out:
+        return [(name, [{"role": "system", "content": DESCRIBE},
+                        {"role": "user", "content": [{"type": "image", "image": str(p)}]}], False)
+                for name, p in images.items()]
     def one(img, system=DESCRIBE, text=None):
         content = [{"type": "image", "image": str(images[img])}]
         if text:
@@ -141,7 +148,7 @@ def save(arr_dir, name, value, manifest):
                           sha256=hashlib.sha256(p.read_bytes()).hexdigest())
 
 
-def run(model_dir, out_dir, dtype, gen_tokens, images, processor):
+def run(model_dir, out_dir, dtype, gen_tokens, images, processor, held_out=False):
     from transformers import AutoModelForMultimodalLM
     t0 = time.monotonic()
     model = AutoModelForMultimodalLM.from_pretrained(model_dir, dtype=dtype, device_map="cpu",
@@ -149,7 +156,7 @@ def run(model_dir, out_dir, dtype, gen_tokens, images, processor):
     load_s = time.monotonic() - t0
     rec = Recorder(model)
     summary = dict(dtype=str(dtype), load_seconds=load_s, cases={})
-    for name, conv, e2e in cases(images):
+    for name, conv, e2e in cases(images, held_out):
         d = out_dir / str(dtype).split(".")[-1] / name
         d.mkdir(parents=True, exist_ok=True)
         inputs = processor.apply_chat_template(conv, add_generation_prompt=True, tokenize=True, return_dict=True,
@@ -190,12 +197,17 @@ def run(model_dir, out_dir, dtype, gen_tokens, images, processor):
     return summary
 
 
-def main(model_dir, out_dir, gen_tokens=128):
+def main(model_dir, out_dir, gen_tokens=128, *named):
     import torchvision
     import transformers
     from transformers import AutoProcessor
     out = Path(out_dir)
-    images = make_images(out / "images")
+    held_out = gen_tokens == "--images"
+    if held_out:
+        images = {n: Path(p) for n, p in (a.split("=", 1) for a in named)}
+        gen_tokens = 0
+    else:
+        images = make_images(out / "images")
     processor = AutoProcessor.from_pretrained(model_dir, trust_remote_code=True)
     torch.set_num_threads(torch.get_num_threads())
     report = dict(versions=dict(transformers=transformers.__version__, torch=torch.__version__,
@@ -205,12 +217,12 @@ def main(model_dir, out_dir, gen_tokens=128):
                                   sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for n, p in images.items()},
                   runs=[])
     for dtype in (torch.float32, torch.bfloat16):
-        report["runs"].append(run(model_dir, out, dtype, int(gen_tokens), images, processor))
+        report["runs"].append(run(model_dir, out, dtype, int(gen_tokens), images, processor, held_out))
         (out / "report.json").write_text(json.dumps(report, indent=1))
     print("DONE")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (3, 4):
+    if len(sys.argv) not in (3, 4) and not (len(sys.argv) > 4 and sys.argv[3] == "--images"):
         sys.exit(__doc__)
     main(*sys.argv[1:])
