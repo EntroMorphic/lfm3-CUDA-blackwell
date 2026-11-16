@@ -16,7 +16,9 @@ than 3 words, where it is the article); else exactly one option's text (2 charac
 answer. POPE, the
 first "yes" or "no" word. No answer is wrong. The rule that matched is recorded. Per item, written as one JSONL row: the prompt's token count, the generated ids, the reply, the parsed answer,
 correct, and seconds. Rows already in OUT_JSONL are skipped (resume). The first row records the environment.
-Usage: run_lfm3_vision_bench_hf.py MODEL_DIR BENCH_DIR OUT_JSONL [LIMIT_PER_SPLIT]
+Usage: run_lfm3_vision_bench_hf.py MODEL_DIR BENCH_DIR OUT_JSONL [LIMIT_PER_SPLIT] [--dtype float32] [--benchmark NAME]
+  --dtype float32: the model and pixel values in FP32 instead of BF16 (rule 3b's reference); default bfloat16.
+  --benchmark NAME: only that benchmark's items (mmstar or pope); default both.
 """
 import json
 import platform
@@ -81,7 +83,7 @@ def key(row):
     return f"{row['benchmark']}/{row['split']}/{row['id']}"
 
 
-def main(model_dir, bench_dir, out_jsonl, limit=None):
+def main(model_dir, bench_dir, out_jsonl, limit=None, dtype_name="bfloat16", benchmark=None):
     import PIL
     import torch
     import torchvision
@@ -90,6 +92,9 @@ def main(model_dir, bench_dir, out_jsonl, limit=None):
 
     bench, out = Path(bench_dir), Path(out_jsonl)
     rows = [json.loads(l) for l in (bench / "manifest.jsonl").read_text().splitlines()]
+    if benchmark:
+        rows = [r for r in rows if r["benchmark"] == benchmark]
+    dtype = {"bfloat16": torch.bfloat16, "float32": torch.float32}[dtype_name]
     if limit:
         per, kept = {}, []
         for r in rows:
@@ -104,11 +109,11 @@ def main(model_dir, bench_dir, out_jsonl, limit=None):
             done.add(json.loads(line)["key"])
     processor = AutoProcessor.from_pretrained(model_dir, trust_remote_code=True)
     t0 = time.monotonic()
-    model = AutoModelForMultimodalLM.from_pretrained(model_dir, dtype=torch.bfloat16, device_map="cuda",
+    model = AutoModelForMultimodalLM.from_pretrained(model_dir, dtype=dtype, device_map="cuda",
                                                      attn_implementation="sdpa", trust_remote_code=True).eval()
     env = dict(machine=platform.machine(), transformers=transformers.__version__, torch=torch.__version__,
                torchvision=torchvision.__version__, pillow=PIL.__version__, cuda=torch.version.cuda,
-               device=torch.cuda.get_device_name(), dtype="bfloat16", attn="sdpa", max_new_tokens=MAX_NEW,
+               device=torch.cuda.get_device_name(), dtype=dtype_name, attn="sdpa", max_new_tokens=MAX_NEW,
                load_seconds=round(time.monotonic() - t0, 1), prompts=dict(mmstar=MMSTAR, pope=POPE))
     with out.open("a") as f:
         if not done:
@@ -121,7 +126,7 @@ def main(model_dir, bench_dir, out_jsonl, limit=None):
             t = time.monotonic()
             inputs = processor.apply_chat_template(conv, add_generation_prompt=True, tokenize=True, return_dict=True,
                                                    return_tensors="pt").to("cuda")
-            inputs["pixel_values"] = inputs["pixel_values"].to(torch.bfloat16)
+            inputs["pixel_values"] = inputs["pixel_values"].to(dtype)
             with torch.no_grad():
                 gen = model.generate(**inputs, max_new_tokens=MAX_NEW[row["benchmark"]], generation_mode="text",
                                      do_sample=False)
@@ -141,6 +146,15 @@ def main(model_dir, bench_dir, out_jsonl, limit=None):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (4, 5):
+    args, opts = [], {}
+    argv = sys.argv[1:]
+    while argv:
+        a = argv.pop(0)
+        if a in ("--dtype", "--benchmark") and argv:
+            opts[a[2:]] = argv.pop(0)
+        else:
+            args.append(a)
+    if len(args) not in (3, 4) or opts.get("dtype", "bfloat16") not in ("bfloat16", "float32") \
+            or opts.get("benchmark") not in (None, "mmstar", "pope"):
         sys.exit(__doc__)
-    main(*sys.argv[1:])
+    main(*args, dtype_name=opts.get("dtype", "bfloat16"), benchmark=opts.get("benchmark"))

@@ -309,6 +309,42 @@ Image parts in the native chat front end (`lfm/lfm3_text.hpp`): `parse_messages(
 processor gave the same conversations: the 11 stage-0 cases (one and two images, system prompts, text after the image)
 and the 20 held-out images, all 31 identical (x86 build).
 
+## Rule 3 results (2026-11-15): POPE **PASS**; MMStar **FAIL** as written
+Native: `lfm3-speech` build `vimg-a1` (sha256 `846db2ac...`), every item of both benchmarks through
+`tools/lfm3_vision_bench_native.py` (the same requests as HF's: no system turn, the image then the question with the
+lmms-eval instruction, greedy, text mode, 512 or 16 new tokens), `--concurrent 8` in slices of 300 (concurrent rows
+are bit-identical to lone runs: 40 of 40 items checked first). HF: rule 3's reference run (`020f6aa`). Scored by
+`tools/score_lfm3_vision_bench.py` (paired bootstrap, 10,000 resamples, seed 0). Records gzipped in `bench/`.
+| | HF BF16 | native | difference (points) | 95% CI | rule (lower bound >= -0.5) |
+|---|---|---|---|---|---|
+| MMStar, 1,500 items | 59.27% (14 unanswered) | 58.93% (18 unanswered) | -0.33 | [-1.40, +0.73] | **FAIL** |
+| POPE, 9,000 items (acc / F1) | 89.11 / 89.00 | 89.06 / 88.95 | -0.06 | [-0.16, +0.03] | PASS |
+- POPE: 8,981 of 9,000 replies identical; per split, adversarial 86.23 vs 86.40 (F1 86.48 vs 86.63), popular and
+  random identical (88.80 / 92.13); yes-ratio 49.1% vs 49.0%.
+- MMStar: 1,395 answers the same, 1,156 replies identical. Of the 69 items where exactly one engine is right, HF is
+  right on 37 and native on 32 (two-sided sign test p = 0.63: no evidence of a difference). 344 replies differ, the
+  median first difference at token 29 (24 at the first token): MMStar replies reason at length, so tiny numerical
+  differences reword them.
+- Why the rule failed: with 1,500 items and about 70 discordant ones, the interval is about +/-1.07 points wide, so its
+  lower bound reaches -0.5 only if native beats HF by about 0.6 points. An engine exactly as good as HF fails this rule
+  most of the time. The rule was mine, and it was mis-sized for MMStar; it stands as failed. POPE's one-word answers
+  give an interval ten times tighter.
+
+## Rule 3b (Tripp, 2026-11-15), set before its run: MMStar answers against the model's own FP32 answers
+Rule 3 asked whether native is as good as HF BF16 on a benchmark too small to tell. Rule 3b asks rule 2's question of
+the answers: which engine is closer to the model computed in FP32.
+- Reference: HF (transformers 5.20.2, Thor's container), the model and pixel values in **FP32** on Thor's GPU
+  (SDPA), greedy, over all 1,500 MMStar items with exactly rule 3's requests:
+  `tools/run_lfm3_vision_bench_hf.py ... --dtype float32 --benchmark mmstar`.
+- Measure (`tools/score_lfm3_vision_fp32_agreement.py`): an engine agrees on an item when its parsed answer equals
+  FP32's (unanswered counts as the answer "none"). Engines: HF BF16 (rule 3's run) and native (rule 3's run); no new
+  native or BF16 run.
+- **Pass: native's agreement with FP32 >= HF BF16's.** Reported beside it, not gating: the paired-bootstrap 95%
+  interval of the difference, the replies identical to FP32's, the median first token where each departs from FP32,
+  and the three accuracies.
+- Rule 3's MMStar failure stays recorded whatever 3b shows. If 3b fails, the next step is reading the differing items
+  (rule 4) for an engine fault before anything else.
+
 ## Rules, set before any native run (draft)
 1. **Decoding and preprocessing match HF exactly.** Decoded pixels are bit-identical to PIL's (Thor's) on every JPEG
    and PNG case: the dumped images, the MMStar and POPE images, and progressive, 4:2:0, 4:2:2, 4:4:4, grayscale, CMYK
