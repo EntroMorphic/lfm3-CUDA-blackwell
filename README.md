@@ -80,7 +80,7 @@ follows the same discipline ([docs/validation.md](docs/validation.md)):
 | Path | Contents |
 |---|---|
 | [`native/`](native/) | The engine: headers (`include/lfm/`), executables (`src/`), native tests and probes, vendored third-party code |
-| [`tools/`](tools/) | Python and shell tooling: HF reference runners, comparison and gate scripts, Thor job scripts |
+| [`tools/`](tools/) | Python and shell tooling: HF reference runners, comparison and gate scripts, Thor job scripts ([catalog](tools/README.md)) |
 | [`tests/`](tests/) | Host-only test suite (no GPU needed) |
 | [`validation/`](validation/) | One directory per validation round: rules, results and compressed records |
 | [`audit/`](audit/) | Engineering notes from the text-serving bring-up |

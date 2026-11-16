@@ -9,3 +9,4 @@
 | [../validation/README.md](../validation/README.md) | Index of every validation round |
 | [../audit/](../audit/) | Engineering notes from the text-serving bring-up (forward pass, sanitizers, batching, cancellation, soak) |
 | [provenance/](provenance/) | The snapshot this engine started from, and the first checkpoint inventory |
+| [moved-paths.md](moved-paths.md) | Old paths cited by records, mapped to where the files are now |
