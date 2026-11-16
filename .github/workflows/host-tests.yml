@@ -1,0 +1,55 @@
+name: host tests
+
+# The host-only suite: the text front end, HTTP layer, schedulers, image and audio front ends, sampling oracles and
+# the gates' own logic, built with g++ where they are C++. No GPU and no weights: the HTTP and front-end tests need only
+# the checkpoint's small public files (configuration, tokenizer, chat template), fetched at the pinned revision and
+# checked against their recorded sha256. Tests that need weights, datasets or reference stacks skip.
+# GPU validation runs on the target machine (docs/validation.md).
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: host-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CHECKPOINT_REPO: LiquidAI/LFM3-Omni-2B
+  CHECKPOINT_REVISION: 21d75123f86c1f7ffb4bef1ea202710c4e7ebe67
+
+jobs:
+  host:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install test dependencies
+        run: python -m pip install pytest numpy scipy pillow
+      - name: Fetch the checkpoint's small files (no weights)
+        # The tests find the checkpoint next to the repository: ../models/LFM3-Omni-2B
+        run: |
+          set -euo pipefail
+          dest="$GITHUB_WORKSPACE/../models/LFM3-Omni-2B"
+          mkdir -p "$dest"
+          while read -r sha file; do
+            curl -fsSL --retry 3 -o "$dest/$file" \
+              "https://huggingface.co/$CHECKPOINT_REPO/resolve/$CHECKPOINT_REVISION/$file"
+            echo "$sha  $dest/$file" | sha256sum -c -
+          done <<'EOF'
+          17e3792551ef56b37e85bbd1e6e968f70dc5b4b14c96f1339d0be85e0ba46875 config.json
+          41927bd314d17d7d7fadb44e10cd0919f7b71528d7741596d8cbd15c6945ec44 tokenizer.json
+          ee4860abad5b84284f816d2812fc23a7477ce827ed6b4708af9a02c68ed00c7c tokenizer_config.json
+          ea74cc1d14319ed436dc0f37632893004d436913113e7605267f2b01694d65e4 chat_template.jinja
+          5f069cac2df137d9ac81bdd7aee88d48052a3897f9761cc9ba2f357f93405b85 generation_config.json
+          EOF
+      - name: Host test suite
+        env:
+          PYTHONPATH: tests
+        run: python -m pytest tests audit/test_host_contracts.py -q -rfE

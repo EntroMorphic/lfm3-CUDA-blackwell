@@ -41,6 +41,9 @@ VARIANTS = {"plain": ("g++", []), "asan": ("g++", ["-fsanitize=address,undefined
 
 @pytest.fixture(scope="module", params=list(VARIANTS))
 def harness_binary(tmp_path_factory, request):
+    # the modules that import this fixture do not inherit this module's pytestmark, so the fixture skips itself
+    if not (CHECKPOINT / "tokenizer.json").exists() or not (CHECKPOINT / "config.json").exists() or sys.platform != "linux":
+        pytest.skip("Linux and the checkpoint (config.json, tokenizer.json) required")
     compiler, flags = VARIANTS[request.param]
     if not shutil.which(compiler):
         pytest.skip(f"{compiler} required")

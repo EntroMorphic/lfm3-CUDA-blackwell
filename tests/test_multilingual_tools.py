@@ -118,7 +118,7 @@ def test_too_few_eligible_ids_is_an_error(tmp_path):
 
 
 def test_scoring_metrics():
-    from transformers.models.whisper.english_normalizer import BasicTextNormalizer
+    BasicTextNormalizer = pytest.importorskip("transformers.models.whisper.english_normalizer").BasicTextNormalizer
     basic = BasicTextNormalizer()
     e, n, metric, _, _ = mlscore.errors("zh", "我有三只猫。", "我有三只狗", basic=basic)
     assert (e, n, metric) == (1, 5, "cer")

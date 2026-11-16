@@ -71,6 +71,6 @@ def test_truncated_header(tmp_path):
 
 def test_actual_checkpoint_inventory():
     path = ROOT.parent / "models/LFM3-Omni-2B"
-    if not path.exists():
-        pytest.skip("local checkpoint not available")
+    if not (path / "model.safetensors").exists():  # CI has the small files only (.github/workflows/host-tests.yml)
+        pytest.skip("local checkpoint weights not available")
     assert inventory.inspect(path)["validated_text_tensors"] == 286
