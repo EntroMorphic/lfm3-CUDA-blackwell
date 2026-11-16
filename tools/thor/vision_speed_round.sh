@@ -14,9 +14,11 @@ busy=$(pgrep -af "[l]fm3-speech|[l]iquid-lfm3|[c]ompute-sanitizer|[r]un_lfm3|[c]
 [ -n "$busy" ] && { echo "NOT QUIET: $busy"; exit 1; }
 bash $W/liquid-CUDA/tools/thor/power_state.sh power-start.json > /dev/null || { echo "FAIL power (not MAXN)"; exit 1; }
 # what the power check cannot see (images-speed-v1 rule 2's v2 round): rail power, temperatures and per-core CPU load
-# through the round (tegrastats without root: no memory clock), and the busiest processes at the start and the end
+# through the round (with root: the memory clock and GPU load too), and the busiest processes at the start and the end
 ps -eo pid,pcpu,pmem,etime,comm --sort=-pcpu | head -15 > ps-start.txt
-tegrastats --interval 500 > tegrastats.log 2>&1 & TG=$!
+# as root when allowed (sudoers: tegrastats only, 2026-11-16): the memory clock (EMC) and GPU load appear only then
+if sudo -n -l /usr/bin/tegrastats > /dev/null 2>&1; then TGCMD="sudo -n /usr/bin/tegrastats"; else TGCMD=tegrastats; fi
+$TGCMD --interval 500 > tegrastats.log 2>&1 & TG=$!
 for p in warm p0 p1 p2; do for r in $B/$R/*.json; do n=$(basename $r .json); echo "$C/$R/$n.json $C/$O/native/$p-$n"; done; done > native-list.txt
 echo "== native $(date +%T)"
 $X $C/$T/lfm3-speech $M --batch $C/$O/native-list.txt > native.log 2>&1 || { echo "native FAILED"; tail -3 native.log; }
