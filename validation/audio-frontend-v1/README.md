@@ -181,6 +181,28 @@ Host suites: `tests/test_audio_input_host.py`, 58 passed in its plain, ASan+UBSa
 `log_mel`, before the rebase), on cut-1, the two-clip request, 1089-134686-0000 and the 90-second recording, every
 stage dumped, 16 tokens:
 - the plain run's stage files equal the recorded runs' (cut-1: 4; two-clip: 8; 1089-134686-0000: 4);
-- memcheck: 0 errors, 0 bytes leaked, outputs identical;
-- initcheck: 0 errors, outputs identical;
-- synccheck and racecheck: running.
+- memcheck: 0 errors, 0 bytes leaked, outputs identical (157 s);
+- initcheck: 0 errors, outputs identical (112 s);
+- synccheck: 0 errors, outputs identical (98 s);
+- racecheck: **stopped, not passed.** It ran 12:30–13:31 and was stopped by SIGTERM (Tripp's quiet window began
+  early, at 13:25) after 22 output files, with no result. It reruns from the start on the final build after the
+  window. A defunct `TreeLauncherSub` (the sanitizer's launcher, exited) was left in lfm3-profile-v1's process table.
+
+## Rule 4 and 6, the lfm3-speech part (rebased build `audio-fe-speech-a2`, sha256 `c51c9e6a...`; `audio-fe-r4/`)
+`tools/thor/audio_frontend_rule4.sh`, exactness only (shared GPU):
+- the 40 dumped clips: 360 of 360 output files identical to audioin-v2's (stages and tokens);
+- the 9 edge cases: 93 of 93 identical;
+- speech-e2e-v1: 90 of 90 identical; the split long-form runs: 90 of 90 identical;
+- the corpus alone (2,620): **stopped, not run to the end.** Started 13:25, stopped by SIGTERM at 13:31 for the quiet
+  window, with no comparison made. The 8-row corpus run never started. Both rerun after the window.
+
+## Host suites (workstation)
+With the server change: `tests/test_lfm3_http_audio_in.py` 75 passed (plain, ASan+UBSan, TSan), including 4 new
+tests:
+- 12 audio requests at once, each with its prompt as alone, a two-clip request and the same clip in two requests;
+- deadlines while waiting give 504, never 429;
+- text keeps its 429;
+- the engine computing the features itself (`--audio-features engine`).
+
+The whole host suite, run from the worktree: 2,158 passed, 235 skipped. The skips are suites that look for the
+checkpoint beside the repository, which a worktree lacks; a rerun from a copy that has it is under way.
