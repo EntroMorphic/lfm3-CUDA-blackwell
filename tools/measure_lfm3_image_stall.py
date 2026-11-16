@@ -32,7 +32,12 @@ def one_run(s, image_body):
     results = [None] * ROWS
     t_start = time.monotonic()
     def stream(i):
-        results[i] = s.stream(dict(body, seed=i))
+        # text admission refuses a second request meeting the busy front end (429 frontend_busy): retry, as a client
+        for _ in range(200):
+            results[i] = s.stream(dict(body, seed=i))
+            if results[i][0] != 429:
+                return
+            time.sleep(0.05)
     threads = [threading.Thread(target=stream, args=(i,)) for i in range(ROWS)]
     for t in threads:
         t.start()
