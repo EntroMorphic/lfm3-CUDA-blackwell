@@ -6,6 +6,7 @@
 //   reference: equal size and equal bytes, else the first differing float and the largest absolute difference.
 //   --repeat R: log_mel runs R times per clip and every run must equal the first (the tool fails otherwise).
 //   --threads N: log_mel's thread count (the threaded front end only; the original takes none and N must be 1).
+//   --transform dft|fft: the spectrum by the direct sums (the default) or the FFT (amendment 1; the threaded front end only).
 // Built from the original header it produces the reference (the bytes the engine has shipped since audio-in-v1).
 // OUT.json: counts, the differing clips, and the clips' FNV-1a hashes in list order.
 #include <lfm/audio_features.hpp>
@@ -21,11 +22,13 @@
 #include <vector>
 
 namespace {
+std::string transform = "dft";
 std::vector<float> features(const std::vector<float>& samples, int threads) {
 #ifdef LFM_AUDIO_FEATURES_THREADED
-  return lfm::audio_features::log_mel(samples, threads);
+  return lfm::audio_features::log_mel(samples, threads, transform == "fft" ? lfm::audio_features::Transform::kFft
+                                                                         : lfm::audio_features::Transform::kDft);
 #else
-  if (threads != 1) throw std::runtime_error("this build's log_mel is single-threaded: --threads 1 only");
+  if (threads != 1 || transform != "dft") throw std::runtime_error("this build's log_mel is the original: --threads 1, --transform dft only");
   return lfm::audio_features::log_mel(samples);
 #endif
 }
@@ -58,10 +61,12 @@ int main(int argc, char** argv) try {
       return argv[++i];
     };
     if (a == "--threads") threads = std::stoi(value());
+    else if (a == "--transform") transform = value();
     else if (a == "--repeat") repeat = std::stoi(value());
     else if (a == "--write" || a == "--compare") mode = a, dir = value();
     else rest.push_back(a);
   }
+  if (transform != "dft" && transform != "fft") throw std::runtime_error("--transform: dft or fft");
   if (mode.empty() || rest.size() != 2 || threads < 1 || threads > 64 || repeat < 1 || repeat > 100)
     throw std::runtime_error(
         "usage: audio-mel-check [--threads N] [--repeat R] (--write DIR | --compare DIR) LIST OUT.json");
@@ -114,7 +119,7 @@ int main(int argc, char** argv) try {
                  first, worst);
   }
   std::ofstream out(rest[1]);
-  out << "{\"mode\":\"" << mode.substr(2) << "\",\"threads\":" << threads << ",\"repeat\":" << repeat
+  out << "{\"mode\":\"" << mode.substr(2) << "\",\"transform\":\"" << transform << "\",\"threads\":" << threads << ",\"repeat\":" << repeat
       << ",\"clips\":" << clips << ",\"identical\":" << identical << ",\"differ\":[" << differ.str()
       << "],\"fnv1a\":{" << hashes.str() << "}}\n";
   std::fprintf(stderr, "%s: %zu clips, %zu identical, threads %d\n", mode.c_str() + 2, clips, identical, threads);

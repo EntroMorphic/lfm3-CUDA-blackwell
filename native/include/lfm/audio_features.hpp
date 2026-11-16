@@ -88,6 +88,10 @@ inline const std::vector<float>& mel_filters() {
 
 // Threads one clip's features use by default (validation/audio-frontend-v1: fixed before rule 2's measurement).
 inline constexpr int kMelThreads = 4;
+// The spectrum by the direct sums (kDft: rule 1's bytes) or the FFT (amendment 1). The default stays kDft until the
+// FFT passes amended rule 1.
+enum class Transform { kDft, kFft };
+inline constexpr Transform kDefaultTransform = Transform::kDft;
 
 namespace detail {
 // torch.hann_window(400) (periodic), in float32
@@ -121,30 +125,103 @@ inline const Basis& basis() {
   }();
   return b;
 }
-// Frames [t0, t1) of the padded clip x into out ([128][T]). kBlock frames share one pass over the basis; for each
-// (frame, bin) the sum runs over n in ascending order, as the original's.
-inline void log_mel_frames(const float* x, size_t T, size_t t0, size_t t1, float* out) {
+// ---- the FFT (validation/audio-frontend-v1 amendment 1): the same transform as the direct sums, in double, by mixed
+// radix (400 = 4 * 4 * 5 * 5, decimation in time). Its twiddles are the DFT's own table doubles: W^t = cos t - i sin t,
+// t in 400ths of a turn. Every multiply-add is an explicit std::fma (and every other product feeds no addition), so
+// the result does not depend on how a compiler contracts. It differs from the direct sums by about 1e-16 relative.
+struct Complex {
+  double re, im;
+};
+inline const std::vector<double>& turn_cos() {
+  static const std::vector<double> c = [] {
+    std::vector<double> v(kFft);
+    for (int i = 0; i < kFft; ++i) v[i] = std::cos(2.0 * M_PI * i / kFft);
+    return v;
+  }();
+  return c;
+}
+inline const std::vector<double>& turn_sin() {
+  static const std::vector<double> s = [] {
+    std::vector<double> v(kFft);
+    for (int i = 0; i < kFft; ++i) v[i] = std::sin(2.0 * M_PI * i / kFft);
+    return v;
+  }();
+  return s;
+}
+// a * W^t, W = exp(-2 pi i / 400)
+inline Complex twiddle(Complex a, int t) {
+  const double c = turn_cos()[size_t(t)], s = turn_sin()[size_t(t)];
+  // (re + i im)(c - i s) = (re c + im s) + i (im c - re s)
+  return {std::fma(a.re, c, a.im * s), std::fma(a.im, c, -(a.re * s))};
+}
+// out[0..n) = DFT_n of in[0], in[stride], ..., in[(n - 1) stride]; n = 400 / (the product of the radices before it)
+inline void fft(const Complex* in, int stride, int n, Complex* out) {
+  if (n == 1) {
+    out[0] = in[0];
+    return;
+  }
+  const int r = n % 4 == 0 ? 4 : 5;  // 400 -> 4, 100 -> 4, 25 -> 5, 5 -> 5
+  const int m = n / r;
+  for (int j = 0; j < r; ++j) fft(in + size_t(j) * stride, stride * r, m, out + size_t(j) * m);
+  const int unit = kFft / n;  // W_n = W^unit
+  Complex t[5];
+  for (int k = 0; k < m; ++k) {
+    for (int j = 0; j < r; ++j) t[j] = j == 0 || k == 0 ? out[size_t(j) * m + k] : twiddle(out[size_t(j) * m + k], j * k * unit);
+    if (r == 4) {  // multiplications by -i are exact
+      const Complex a0{t[0].re + t[2].re, t[0].im + t[2].im}, a1{t[0].re - t[2].re, t[0].im - t[2].im};
+      const Complex b0{t[1].re + t[3].re, t[1].im + t[3].im}, b1{t[1].re - t[3].re, t[1].im - t[3].im};
+      out[k] = {a0.re + b0.re, a0.im + b0.im};
+      out[size_t(m) + k] = {a1.re + b1.im, a1.im - b1.re};
+      out[size_t(2) * m + k] = {a0.re - b0.re, a0.im - b0.im};
+      out[size_t(3) * m + k] = {a1.re - b1.im, a1.im + b1.re};
+    } else {  // radix 5: X_q = sum_j t_j W5^(j q), W5 = W^80, as fused complex multiply-adds in ascending j
+      for (int q = 0; q < 5; ++q) {
+        double re = t[0].re, im = t[0].im;
+        for (int j = 1; j < 5; ++j) {
+          const int e = (j * q % 5) * (kFft / 5);
+          const double c = turn_cos()[size_t(e)], s = turn_sin()[size_t(e)];
+          re = std::fma(t[j].re, c, std::fma(t[j].im, s, re));
+          im = std::fma(t[j].im, c, std::fma(-t[j].re, s, im));
+        }
+        out[size_t(q) * m + k] = {re, im};
+      }
+    }
+  }
+}
+// Frames [t0, t1) of the padded clip x into out ([128][T]).
+// kDft: kBlock frames share one pass over the basis; for each (frame, bin) the sum runs over n in ascending order, as
+// the original's. kFft: each frame by fft(). Then, the same for both: the power, the mel sums and the log.
+inline void log_mel_frames(const float* x, size_t T, size_t t0, size_t t1, float* out, Transform transform) {
   constexpr int kBlock = 4;
   const auto& w = window();
   const auto& b = basis();
   const auto& filters = mel_filters();
   alignas(64) double frame[kBlock][kFft], re[kBlock][kBasisStride], im[kBlock][kBasisStride], mel[kMels];
+  Complex zin[kFft], zout[kFft];
   for (size_t tb = t0; tb < t1; tb += kBlock) {
     const int nb = int(std::min<size_t>(kBlock, t1 - tb));
     for (int j = 0; j < nb; ++j)
       for (int n = 0; n < kFft; ++n) frame[j][n] = double(x[(tb + j) * kHop + n] * w[n]);  // the windowed float32 sample
-    for (int j = 0; j < nb; ++j)
-      for (int k = 0; k < kBasisStride; ++k) re[j][k] = im[j][k] = 0.0;
-    for (int n = 0; n < kFft; ++n) {
-      const double* c = b.cos.data() + size_t(n) * kBasisStride;
-      const double* s = b.sin.data() + size_t(n) * kBasisStride;
+    if (transform == Transform::kFft) {
       for (int j = 0; j < nb; ++j) {
-        const double f = frame[j][n], g = -f;
-        double* r = re[j];
-        double* q = im[j];
-        for (int k = 0; k < kBasisStride; ++k) {
-          r[k] = std::fma(f, c[k], r[k]);  // re += f cos, one rounding
-          q[k] = std::fma(g, s[k], q[k]);  // im -= f sin, one rounding
+        for (int n = 0; n < kFft; ++n) zin[n] = {frame[j][n], 0.0};
+        fft(zin, 1, kFft, zout);
+        for (int k = 0; k < kBins; ++k) re[j][k] = zout[k].re, im[j][k] = zout[k].im;
+      }
+    } else {
+      for (int j = 0; j < nb; ++j)
+        for (int k = 0; k < kBasisStride; ++k) re[j][k] = im[j][k] = 0.0;
+      for (int n = 0; n < kFft; ++n) {
+        const double* c = b.cos.data() + size_t(n) * kBasisStride;
+        const double* s = b.sin.data() + size_t(n) * kBasisStride;
+        for (int j = 0; j < nb; ++j) {
+          const double f = frame[j][n], g = -f;
+          double* r = re[j];
+          double* q = im[j];
+          for (int k = 0; k < kBasisStride; ++k) {
+            r[k] = std::fma(f, c[k], r[k]);  // re += f cos, one rounding
+            q[k] = std::fma(g, s[k], q[k]);  // im -= f sin, one rounding
+          }
         }
       }
     }
@@ -165,13 +242,14 @@ inline void log_mel_frames(const float* x, size_t T, size_t t0, size_t t1, float
 
 // The clip's features, [128][frames(n)] (row-major: mel-major, as HF's input_features[0]), computed on up to
 // `threads` threads (the calling thread included; at least 64 frames each). The result does not depend on `threads`.
-inline std::vector<float> log_mel(const std::vector<float>& samples, int threads = kMelThreads) {
+inline std::vector<float> log_mel(const std::vector<float>& samples, int threads = kMelThreads,
+                                  Transform transform = kDefaultTransform) {
   if (samples.empty()) throw std::runtime_error("audio features: empty clip");
   if (threads < 1) throw std::runtime_error("audio features: threads < 1");
   const size_t T = frames(samples.size());
   std::vector<float> x(padded_length(samples.size()), 0.0f);
   std::copy(samples.begin(), samples.end(), x.begin());
-  (void)detail::window(), (void)detail::basis(), (void)mel_filters();  // built before any worker starts
+  (void)detail::window(), (void)detail::basis(), (void)detail::turn_cos(), (void)detail::turn_sin(), (void)mel_filters();  // built before any worker starts
   std::vector<float> out(size_t(kMels) * T);
   const size_t n = std::max<size_t>(1, std::min<size_t>(size_t(threads), T / 64));
   const size_t per = (T + n - 1) / n;
@@ -181,12 +259,12 @@ inline std::vector<float> log_mel(const std::vector<float>& samples, int threads
     const size_t a = std::min(T, i * per), e = std::min(T, a + per);
     if (a >= e) continue;
     try {
-      workers.emplace_back(detail::log_mel_frames, x.data(), T, a, e, out.data());
+      workers.emplace_back(detail::log_mel_frames, x.data(), T, a, e, out.data(), transform);
     } catch (const std::system_error&) {  // no thread to be had: this range on the calling thread (same bytes)
-      detail::log_mel_frames(x.data(), T, a, e, out.data());
+      detail::log_mel_frames(x.data(), T, a, e, out.data(), transform);
     }
   }
-  detail::log_mel_frames(x.data(), T, 0, std::min(T, per), out.data());
+  detail::log_mel_frames(x.data(), T, 0, std::min(T, per), out.data(), transform);
   for (auto& w : workers) w.join();
   return out;
 }

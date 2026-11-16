@@ -264,3 +264,39 @@ as HF's): audio-speed-v1's design, under new rules. That is noted here and not s
 
 Rules 3 (stall), 5 (sanitizers), 6 (nothing else changes) and 7 (red-team) stand as written. The handler-thread move
 stands.
+
+## Amended rule 1 results (2026-11-16, workstation x86): **FAIL**; the direct DFT (option a1) ships
+The FFT (`detail::fft`, mixed radix 4·4·5·5 in double, explicit `std::fma`, the DFT's table twiddles) behind
+`Transform::kFft`. The default stays `kDft`. Refactoring the shared power/mel/log tail left the DFT path unchanged:
+2,620 of 2,620 byte-identical to the reference again.
+- **Byte comparison**, `audio-mel-check --transform fft` against the current path's bytes (rule 1's reference):
+  - the 9 edge cases: 12 of 12 clips identical;
+  - the 40 dumped clips: 38 of 40;
+  - the 2,620: 2,584 identical; 37 floats differ in 36 clips (largest difference 6e-8, one float step);
+  - every other float of the 253 million is identical.
+- **The audit**, `native/tests/audio_mel_audit.cpp`: x86 `__float128` with libquadmath; exact quad twiddles; the same
+  float32 windowed samples and filters. Over the 37 distinct floats that differ (`amendment1/audit.jsonl`, 40 lines:
+  three of them are in clips that are both among the 40 and among the 2,620):
+  - the FFT's float is at least as close to the quad reference on **16**, and **farther on 21**: amended rule 1 fails;
+  - most are rounding ties, where neither path is truer: the median reference lies 1.2e-5 of a float step from the
+    midpoint between the two floats;
+  - a few are near-zero outputs, where cancellation (in weak bins, and in `log10(mel) + 4`) makes both paths miss by
+    up to 1.3 float steps;
+  - the FFT's 1e-16 does not move outputs toward the truth; it re-rolls ties.
+- **Outcome, by the amendment:** the direct DFT, which passed rule 1, ships. The FFT stays in the tree as the audited
+  candidate, not the default, so this record can be reproduced.
+- **Speed seen while checking** (workstation, not quiet, indicative only): the whole 2,620-clip check at 12 threads
+  took 13.6 s with the FFT against 32 s with the DFT.
+
+**Amended rule 2 with the DFT, expected before the quiet run.** Rule 0's front end alone was 0.104, 0.349 and 0.898 s
+on one thread. Even a perfect 4-thread split leaves about 0.026, 0.087 and 0.22 s, on top of the encoder and prefill
+(about 0.07 and 0.30 s at 10.4 and 90 s), against HF's 0.051, 0.072 and 0.141 s. Amended rule 2 cannot pass with the
+DFT. Options for Tripp, none started:
+1. Features correctly rounded, as truly as the quad reference: a double-double (or compensated) transform, mel sum and
+   `log10`. It would differ from the current bytes wherever they are off, but always toward the truth, which the
+   amended audit counts as a pass. It is slower than a plain double FFT and likely still far faster than the DFT.
+2. The same DFT on the GPU in FP64 (`__fma_rn`), `log10` on the host. Byte-identical by construction, about 0.5 ms
+   per second of audio at the 65 GFLOP/s measured (indicative). It takes GPU time from the decode it is meant to
+   unblock.
+3. A rule change on ties (Tripp's call), e.g. accept a difference whose reference lies within a stated fraction of a
+   float step of the midpoint. It would not cover the near-zero outputs where both paths miss by over half a step.
