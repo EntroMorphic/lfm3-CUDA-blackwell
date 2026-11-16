@@ -70,6 +70,7 @@ commit messages and by other records, so they do not move. The method is describ
 | [audio-in-v1](audio-in-v1/) | 3 audio in: speech input on LFM3-Omni-2B, natively |
 | [audio-assurance-v1](audio-assurance-v1/) | Audio in and out: assurance before images |
 | [audio-speed-v1](audio-speed-v1/) | The audio encoder on the tensor cores (rules set; rule 0 first) |
+| [audio-frontend-v1](audio-frontend-v1/) | The audio front end fast and off the engine thread, its bytes unchanged (rules set) |
 
 ## Images in
 

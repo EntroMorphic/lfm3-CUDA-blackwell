@@ -115,3 +115,24 @@ Out of scope: the host log-mel front end (`lfm/audio_features.hpp`), the languag
    - the host suites pass.
 
 Failures are recorded here, not discarded. Every speed figure is labeled encode-only, decode loop or end to end.
+
+## Before rule 0 (2026-11-16): the harness, and two clip lengths corrected
+No rule changes. Rule 0's clips were mislabeled above. Their lengths from `build/audioin-v2/cases.json`:
+- 4446-2275-0004 is 2.11 s, not about 2.5 s;
+- 1089-134686-0000 is 10.4 s, not 10.8 s, and is longer than typical. The test-clean median is 5.79 s, so the clip
+  nearest the median (121-127105-0007) is added and reported. The go/stop test stays at 10.4 s and 35 s as written.
+- The longest clip is 4507-16021-0047 (34.96 s).
+
+The harness:
+- `native/tests/audio_encoder_bench.cu` (build: `tools/thor/build_audio_bench.sh`);
+- `tools/time_lfm3_audio_hf.py`;
+- `tools/thor/audio_speed_rule0.sh BENCH_TAG SPEECH_TAG OUT_TAG`: the bench, lfm3-speech, HF and host nsys, a
+  summary with the go/stop verdict.
+
+Built as `audio-bench-a1` (sha256 `274af23b...`). Checked functionally, not timed:
+- the bench's `log_mel` equals the recorded audioin-v2 dump of 4446-2275-0004 byte for byte;
+- the HF tool ran one pass on that clip.
+
+A single smoke run (idle but shared GPU; **not** a measurement) showed the encoder at 15.8 ms on the 2.1 s clip. That
+is more than the estimate above, so fixed per-clip costs (13 scratch allocations, zeroed and freed per clip) may weigh
+at short lengths. Rule 0's run decides.
