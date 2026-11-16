@@ -83,6 +83,7 @@ struct Job {
   std::vector<std::string> chunk_texts;
   std::shared_ptr<const lfm::lfm3_text::Tokenizer> text_tokenizer;
   bool chunked = false, record_image = false;
+  double front_end_seconds = 0;  // image input: reading, decoding and preprocessing the images (CPU)
   int capacity = 4096;
 };
 void write_outputs(const Job& job, const lfm3_speech::Result& r, const std::vector<lfm3_speech::ChunkInfo>& chunk_info);
@@ -163,6 +164,7 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
   };
   auto read_image = [&](const std::string& path) {
     if (o.images.size() >= 64) throw std::runtime_error("at most 64 images");
+    const auto t0 = std::chrono::steady_clock::now();
     std::ifstream f(path, std::ios::binary);
     if (!f) throw std::runtime_error("cannot read " + path);
     const std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
@@ -171,6 +173,7 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
     } catch (const std::exception& e) {
       throw std::runtime_error(path + ": " + e.what());
     }
+    job.front_end_seconds += std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
   };
   if (req.has("audio")) {
     if (req.has("messages")) throw std::runtime_error("with messages, audio clips are the messages' audio parts");
@@ -332,6 +335,7 @@ void write_outputs(const Job& job, const lfm3_speech::Result& r, const std::vect
   f << ",\"frames\":" << r.frames.size() << ",\"raw_frames\":" << r.raw_frames.size() << ",\"samples\":" << r.wav.size()
     << ",\"audio_seconds\":" << r.wav.size() / 24000.0 << ",\"decode_steps\":" << r.decode_steps
     << ",\"encode_seconds\":" << r.encode_seconds << ",\"prefill_seconds\":" << r.prefill_seconds << ",\"generate_seconds\":" << r.generate_seconds
+    << (o.images.empty() ? std::string() : ",\"front_end_seconds\":" + std::to_string(job.front_end_seconds))
     << ",\"lm_step_seconds\":" << r.lm_step_seconds << ",\"text_pick_seconds\":" << r.text_pick_seconds
     << ",\"depth_seconds\":" << r.depth_seconds << ",\"sample_host_seconds\":" << r.sample_host_seconds
     << ",\"codec_seconds\":" << r.codec_seconds

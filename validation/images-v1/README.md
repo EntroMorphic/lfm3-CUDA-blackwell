@@ -419,7 +419,26 @@ On the final builds (`lfm3-speech` `vimg-a2` sha256 `1051402d...`; server and wo
   passed with no new failure (the 46 errors of a stale test harness since `f45591d` and one test needing the
   workstation's transformers to load this checkpoint are as before, and fixed or explained on the housekeeping branch).
 
-## Rules, set before any native run (draft)
+## Speed against HF (2026-11-16), method set before the run: reported, not gated
+Tripp: "make sure we are meeting or beating reference". Read here as: per request, native's end-to-end time is at
+most HF's; any request where it is not is reported with where the time goes. Nothing is changed on the result's
+account without a plan brought to Tripp first.
+- Machine: Thor in MAXN, quiet (no other GPU or CPU job), `tools/thor/power_state.sh` at the start and the end (the
+  round is void if the state changes).
+- Requests: the 11 stage-0 conversations (`tools/thor/vision_e2e_round.sh`'s: text mode, greedy, 128 new tokens), one
+  at a time. Each engine: one untimed pass over all 11, then 3 timed passes; per request, the median of the 3.
+- HF (`tools/time_lfm3_vision_hf.py`): BF16 on the GPU, SDPA, transformers 5.20.2, rule 3's reference
+  configuration. Front end: the processor call (image loading, resize, patchify, tokenizing; CPU). Image encode alone:
+  `get_image_features`, a separate synchronized call. Time to first token: `generate` with a streamer, from the call
+  to the first new token (image encode, prefill, first pick). Decode: first new token to the last. End to end: front
+  end + generate.
+- Native (`lfm3-speech --batch`, the server's engine path): front end (`front_end_seconds`: image decode and
+  preprocess, CPU), image encode (`encode_seconds`), prefill including the encode (`prefill_seconds`), decode loop
+  (`generate_seconds`). End to end: front end + prefill + decode.
+- Replies differ in length between the engines on some requests, so decode is also reported per token.
+- The largest images are cherry and mirror (4K photographs, 7,920 patches after the resize), timed warm in the same
+  passes.
+
 1. **Decoding and preprocessing match HF exactly.** Decoded pixels are bit-identical to PIL's (Thor's) on every JPEG
    and PNG case: the dumped images, the MMStar and POPE images, and progressive, 4:2:0, 4:2:2, 4:4:4, grayscale, CMYK
    and EXIF-rotated JPEGs (all 8 orientations). HF's loader, checked (transformers 5.20.2, `image_utils.py:512-513`

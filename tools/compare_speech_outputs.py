@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-TIMINGS = {"encode_seconds", "prefill_seconds", "generate_seconds", "lm_step_seconds", "text_pick_seconds",
+TIMINGS = {"encode_seconds", "front_end_seconds", "prefill_seconds", "generate_seconds", "lm_step_seconds", "text_pick_seconds",
            "depth_seconds", "sample_host_seconds", "codec_seconds", "real_time_factor", "real_time_factor_end_to_end"}
 
 
