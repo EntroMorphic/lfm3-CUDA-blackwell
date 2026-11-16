@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run from the Thor project copy. Does not alter the running sandbox/image.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../../.."  # the repository root (these scripts lived there until the 2026-11 reorganization)
 ROOT="$(dirname "$PWD")"
 SANITIZER="${SANITIZER:-$PWD/build/cuda-13.0.88-sanitizer}"
 PREFIX="${PREFIX:-remediated-v2025_3_1-cpu-oracle}"

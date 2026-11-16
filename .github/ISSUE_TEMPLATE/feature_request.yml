@@ -1,0 +1,15 @@
+name: Capability or change
+description: Propose a new capability or a change in behavior
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should the engine do
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How would we know it is right
+      description: The reference to compare against and what would count as a pass (see docs/validation.md).

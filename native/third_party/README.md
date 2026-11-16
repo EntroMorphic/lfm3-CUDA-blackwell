@@ -39,3 +39,10 @@
 
 ## PyTorch (`PYTORCH_LICENSE`)
 - Earlier rounds; see the file.
+
+## Pillow (`PILLOW_LICENSE`)
+- Why: validation/images-v1, decision of 2026-11-15. The EXIF orientation reading in `src/image_decode.cpp`
+  (`tiff_orientation` and the XMP fallback) reproduces Pillow 13.0.0's rules (`Image.Exif.load`,
+  `TiffImagePlugin.ImageFileDirectory_v2`, `ImageOps.exif_transpose`), written from reading that code, so the engine
+  orients images exactly as HF's loader does.
+- License: MIT-CMU (the PIL/Pillow notice, copied from Pillow's `LICENSE`).

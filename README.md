@@ -1,135 +1,97 @@
-# LFM3 native CUDA development
+# liquid-CUDA
 
-## Full text-serving work in progress
+A native C++/CUDA inference engine for [Liquid AI's LFM3-Omni-2B](https://huggingface.co/LiquidAI), built to run
+every modality of the model in a single binary on an NVIDIA Jetson AGX Thor (Blackwell, `sm_110`) — at the same or
+better quality than the Hugging Face reference implementation.
 
-The tokenizer-only CLI now supports explicit textual histories and seeded native
-sampling. An opt-in tiled native path passes fixed 32K combined-context numerical
-checks against Transformers SDPA; short-context exact checks remain separate.
-The resident worker passes finite persistent-KV isolation and 32K budget gates.
-The authenticated loopback HTTP service also passes finite native and admission
-gates. Cooperative token-boundary cancellation and a finite host-resource soak
-also pass. Explicit fixed-two-lane worker/HTTP GPU batching now passes integrated
-serial/logit/cancellation/32K and authenticated smoke gates; it does not automatically
-coalesce independent requests. See `audit/GROUPED_SERVING.md`.
-An extended grouped resource soak passes610 cycles over600 measured seconds.
-This is **not yet full-serving acceptance**: complete sanitizer gates remain
-unresolved, and subsequent runtime candidates need fresh hash-matched validation. See
-[`audit/ACCEPTANCE.md`](audit/ACCEPTANCE.md) for the consolidated current gate ledger
-(1209 host tests, exact eager-context4096, numerical32K and balanced benchmark).
-Production initcheck, unexcluded synccheck and complete32K racecheck remain open. See
-[`audit/TEXT_SERVING_ROADMAP.md`](audit/TEXT_SERVING_ROADMAP.md) for current evidence
-and deliberately unclaimed features. Historical milestone details follow.
+No Python, PyTorch or cuBLAS at run time: the tokenizer, chat template, image and audio front ends, encoders, language
+model, depth decoder and audio codec are all native, served behind a loopback HTTP server, `liquid-lfm3-server`.
 
-Independent source snapshot of the existing Liquid Blackwell inference engine.
-The original repository is not modified. This copy includes native source, native
-tests/tools, the MIT license, and the original CPU configuration tests; it does
-not include weights, build artifacts, the Python CLI, or experimental evidence.
+> **Status: research software.** Everything below is measured on one machine (a Jetson AGX Thor) against
+> pinned Hugging Face references; see [Validation](#how-it-is-validated). It is not a general-purpose serving stack.
 
-`SOURCE_SNAPSHOT.json` records source paths, hashes, revision, and the dirty
-working-tree status at copy time. The snapshot includes the source's current
-uncommitted changes; it is not a clean upstream release. Upstream correctness
-limitations still apply.
+## What works
 
-## Current milestone
+| Modality | In | Out | Evidence |
+|---|---|---|---|
+| Text | ✅ | ✅ | Greedy tokens identical to Transformers eager on the fixtures; per-token NLL 12.8–14.4% closer to an FP32 model than HF SDPA's at every length tested, 256 to 32K tokens ([g4-gates-v2](validation/g4-gates-v2/)); native tokenizer and chat template bit-exact ([g2-text-v1](validation/g2-text-v1/)) |
+| Speech | ✅ | ✅ | ASR WER 2.59% vs HF's 2.61% on LibriSpeech test-clean ([audio-in-v1](validation/audio-in-v1/)); text-to-speech matches HF by ear and beats it on long-form text ([speech-e2e-v1](validation/speech-e2e-v1/), [speech-long-form-v1](validation/speech-long-form-v1/)) |
+| Images | 🚧 | — | Decoding and preprocessing bit-identical to HF on 1,982 images; vision encoder more accurate than HF BF16 on all 31 test images; benchmark parity in progress ([images-v1](validation/images-v1/)) |
+| Video | — | — | Not started |
 
-**Experimental text forward/generation is now implemented separately in
-`liquid-lfm3`.** Four real-checkpoint cases pass 6,890 bitwise activation/logit
-comparisons against Transformers eager, plus greedy generation and cache-reset
-checks. A checked text launcher is available in `tools/lfm3_chat.py`. The expanded
-context suite also passes bitwise logits through the 4096-token limit, including
-sliding-window transitions, final-slot decode and exact reset. Native tokenizer
-parity and full integrated initcheck acceptance remain outstanding; the latter
-has a reproduced cuBLAS/tool tracking blocker, not a credited pass.
-The current combined host suite has 327 passing tests. See
-[audit/ACCEPTANCE.md](audit/ACCEPTANCE.md) for findings, fixes and evidence limits.
-See [audit/FORWARD.md](audit/FORWARD.md) and `validation/forward-final/`.
-The preserved `liquid-native` runtime still rejects LFM3; its guard is unchanged.
+Serving: concurrent speech requests batched on the GPU, each byte-identical to its reply alone
+([speech-batch-v1](validation/speech-batch-v1/)); streamed speech ([speech-stream-v1](validation/speech-stream-v1/));
+text served alongside speech without waiting for it ([text-wait-v1](validation/text-wait-v1/)).
 
-The earlier isolated-operator milestone established:
+Text decode throughput on Thor (decode loop, greedy, [batch-decode-v1](validation/batch-decode-v1/)):
 
-- CPU configuration parsing for standalone LFM3 and the LFM3-Omni text backbone.
-- Per-layer operator kind, RoPE theta/partial rotation, sliding window, attention
-  gates, sandwich norms, checkpoint namespace, and actual SwiGLU width.
-- Host-only safetensors text inventory validation.
-- Isolated native CUDA operators for partial/per-type RoPE, head gating, sandwich
-  RMSNorm/residual, width-7 convolution, and full/sliding decode attention.
-- Explicit rejection of native LFM3 execution before weight allocation. Metadata
-  support is **not** a working LFM3 forward pass.
+| Batch | 1 | 8 | 32 | 64 |
+|---|---:|---:|---:|---:|
+| tokens/s | 62 | 487 | 1,754 | 3,224 |
 
-Run from this directory:
+## Requirements
+
+- NVIDIA Jetson AGX Thor (`sm_110`), JetPack 7 / CUDA 13. Other Blackwell parts may work but are untested.
+- Docker, for the pinned build and reference containers ([docs/building.md](docs/building.md)).
+- The [LFM3-Omni-2B](https://huggingface.co/LiquidAI) checkpoint (safetensors). Weights are not included in this
+  repository and are subject to Liquid AI's license.
+
+## Quick start
+
+Build (on Thor, in the pinned compiler image — see [docs/building.md](docs/building.md) for the image and flags):
 
 ```bash
-PYTHONPATH=tests python3 -m pytest tests audit/test_host_contracts.py -q
-python3 tools/inspect_checkpoint.py ../models/LFM3-Omni-2B
+cmake -S native -B build/native -DLIQUID_LFM3_NATIVE_GEMM=ON
+cmake --build build/native --target liquid-lfm3-server -j4
 ```
 
-The inspector strictly validates JSON, configuration, all serialized tensor types
-and byte spans (including other modalities), plus expected text names/shapes/BF16
-dtype. It does not hash payloads or establish numerical parity. No model copies are needed.
-
-## Next milestones
-
-1. Expand operator coverage to real checkpoint activations and longer contexts;
-   retain separate tests for the reference/eager and optimized numerical policies.
-2. Wire LFM3 tensor mappings and buffer allocation into the forward pass; preserve
-   LFM2 behavior. Do not remove the execution guard until these paths are complete.
-3. Compare teacher-forced states/logits against the pinned Transformers model.
-   Include sequence lengths around 256, cache reset, prefill/decode, batch isolation,
-   and the Omni wrapper's text-mode token suppression and stopping behavior.
-4. Validate free-running generation, then benchmark matched batch-1 workloads.
-5. Add multimodal components separately; no full native Omni support is claimed.
-
-## Thor operator validation
-
-The copied native executable and optional operator bridge both compile successfully
-on Thor with CUDA 13.0.88. After red-team remediation, three seeds (42, 43, 2026)
-pass 145 isolated GPU checks each. Separate suites cover 336 exact convolution
-checks and 48 input/stream boundary checks. The host suite has 110 passing tests,
-including the five originally failing review cases. Raw reports are in `validation/`.
-
-These are bounded fixtures, not a promise of exact model parity. Attention remains
-tolerance-tested against eager BF16 semantics; this does not establish parity with
-SDPA or a complete model. Original pre-remediation results are retained and are
-historical, not evidence for the current binary. See `audit/REMEDIATION.md` for scope
-and sanitizer results.
-
-Coverage includes global/partial RoPE positions through 32767; head gates; norms;
-convolution decode/cache/reset and each path's own checkpoint reference;
-per-row GQA positions around the 256-token boundary; and exact exclusion of future
-tokens and out-of-window values. The attention prototype supports contiguous full
-causal caches up to 4096 slots, not ring buffers or optimized prefill. It is an
-operator bring-up kernel, not a production attention implementation.
-
-### Numerical and interface contracts
-
-- `conv7_prefill` accepts contiguous `[B,T,3,D]` projections and an empty logical
-  cache; it overwrites the entire `[B,D,7]` state and uses the checkpoint's sequential
-  prefill reduction. Padding, packed documents and incremental prefill are unsupported.
-- `conv7` accepts `[B,3,D]` and uses the pinned Triton decode's 8-wide tree reduction.
-  Under cancellation, checkpoint prefill and decode themselves can differ; we test
-  each against its own reference instead of demanding a false cross-path equality.
-- Python callers must use `tools/lfm3_bridge.py`, not private raw ctypes symbols.
-  It enforces dtype, shape, contiguous layout, devices, writable non-aliasing,
-  integer/scalar/launch bounds, and positions. The synchronous correctness harness
-  establishes input-producer readiness and synchronizes the caller's stream.
-  Concurrent mutations are forbidden and CUDA graph capture is explicitly rejected.
-- The C ABI independently checks pointers, launch geometry, and position ranges.
-  Raw pointers cannot encode tensor shapes/strides/allocation extents; the checked
-  wrapper is mandatory. Neither interface is a production integration boundary.
-
-Reproduce on Thor from the project copy:
+Run the server (loopback only; a bearer token is created on first start at `~/.config/liquid-lfm3/token`):
 
 ```bash
-bash build-ops-thor.sh
-docker exec \
-  -e TRITON_PTXAS_PATH=/workspace/tools/ptxas \
-  -e TRITON_PTXAS_BLACKWELL_PATH=/workspace/tools/ptxas \
-  lfm3-omni-dev python /workspace/liquid-CUDA/tools/check_lfm3_ops.py \
-  --library /workspace/liquid-CUDA/build/liblfm3_ops.so \
-  --checkpoint /workspace/models/LFM3-Omni-2B \
-  --seed 42 --output /workspace/liquid-CUDA/build/operator-parity-seed-42.json
+build/native/liquid-lfm3-server --experimental /path/to/LFM3-Omni-2B --port 8080
 ```
 
-Native builds use `native/CMakeLists.txt` (CUDA 13, sm_110, C++20 and PCRE2).
-`-DLIQUID_LFM3_OPS_TESTS=ON` adds the test bridge. The execution guard remains:
-the model forward pass has not yet been integrated or validated.
+Ask for speech:
+
+```bash
+TOKEN=$(cat ~/.config/liquid-lfm3/token)
+curl -s localhost:8080/speech -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"Tell me about the moon."}],"mode":"interleaved","max_new_tokens":512}' \
+  | python3 -c 'import sys,json,base64; r=json.load(sys.stdin); print(r["text"]); open("reply.wav","wb").write(base64.b64decode(r["audio_wav_base64"]))'
+```
+
+The full API — sessions, text generation, speech in and out, streaming — is in [docs/server-api.md](docs/server-api.md).
+
+## How it is validated
+
+Every capability is added as a *round* with its own directory under [`validation/`](validation/), and every round
+follows the same discipline ([docs/validation.md](docs/validation.md)):
+
+1. **Rules before data.** Pass/fail rules are written and committed before the first native run.
+2. **Exactness where it is possible, measured bounds where it is not.** Integer and fixed-point stages must be
+   bit-identical to the reference; floating-point stages must be at least as close to an FP32 reference as HF's own
+   BF16 GPU path is.
+3. **Coherency is a gate.** Real generations are read (and listened to) end to end after every engine change.
+4. **Nothing else changes.** Each round re-runs the earlier rounds' outputs and requires them byte-identical.
+5. **Red-team, remediate, verify** — then commit. Failures are recorded, not erased.
+
+## Repository layout
+
+| Path | Contents |
+|---|---|
+| [`native/`](native/) | The engine: headers (`include/lfm/`), executables (`src/`), native tests and probes, vendored third-party code |
+| [`tools/`](tools/) | Python and shell tooling: HF reference runners, comparison and gate scripts, Thor job scripts |
+| [`tests/`](tests/) | Host-only test suite (no GPU needed) |
+| [`validation/`](validation/) | One directory per validation round: rules, results and compressed records |
+| [`audit/`](audit/) | Engineering notes from the text-serving bring-up |
+| [`docs/`](docs/) | Architecture, building, server API, validation method |
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Notable changes are listed in
+[CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+MIT — see [LICENSE](LICENSE). Vendored and ported third-party code keeps its own license; see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Model weights are not part of this repository.

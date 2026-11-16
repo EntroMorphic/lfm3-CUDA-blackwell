@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Integrated native path with fail-closed library tracking controls.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../../.."  # the repository root (these scripts lived there until the 2026-11 reorganization)
 PROJECT="$(dirname "$PWD")"
 GATES="${GATES:?Set GATES to a completed correctness evidence directory}"
 OUT="${OUT:?Set OUT to a fresh evidence directory relative to this repo}"

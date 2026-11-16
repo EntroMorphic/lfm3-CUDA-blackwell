@@ -87,7 +87,7 @@ results and the final disposition are in `audit/ACCEPTANCE.md`.
 ## Reproduction on Thor
 
 ```bash
-bash build-forward-thor.sh
+bash tools/thor/legacy/build-forward-thor.sh
 docker exec \
   -e TRITON_PTXAS_PATH=/workspace/tools/ptxas \
   -e TRITON_PTXAS_BLACKWELL_PATH=/workspace/tools/ptxas \
@@ -98,7 +98,7 @@ docker exec \
 ```
 
 Choose a fresh output directory; the suite refuses to replace existing evidence.
-`run-forward-sanitizers-thor.sh` runs the integrated path. Its synccheck run
+`tools/thor/legacy/run-forward-sanitizers-thor.sh` runs the integrated path. Its synccheck run
 explicitly excludes NVIDIA NVJET kernels because of the documented instrumentation
 failure; custom kernels remain instrumented. Other tool runs do not use exclusions.
 This limitation must accompany any sanitizer claim for the integrated executable.

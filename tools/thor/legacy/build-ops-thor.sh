@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../../.."  # the repository root (these scripts lived there until the 2026-11 reorganization)
 mkdir -p build
 docker run --rm --runtime=nvidia --gpus all \
   --user "$(id -u):$(id -g)" \
