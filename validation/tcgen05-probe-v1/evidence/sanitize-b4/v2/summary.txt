@@ -1,0 +1,8 @@
+plain rc=0
+memcheck rc=0 outputs_compared=15 outputs_differing=0 :: ========= LEAK SUMMARY: 0 bytes leaked in 0 allocations ========= ERROR SUMMARY: 0 errors 
+racecheck rc=0 outputs_compared=15 outputs_differing=0 :: ========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings) 
+synccheck rc=0 outputs_compared=15 outputs_differing=0 :: ========= ERROR SUMMARY: 0 errors 
+initcheck rc=0 outputs_compared=15 outputs_differing=0 :: ========= ERROR SUMMARY: 0 errors 
+control unwritten (initcheck) rc=86 control DETECTED :: ========= ERROR SUMMARY: 128 errors ========= ERROR SUMMARY: 28 errors were not printed. Use --print-limit option to adjust the number of printed errors 
+control oob (memcheck) rc=86 control DETECTED :: ========= ERROR SUMMARY: 5 errors 
+done

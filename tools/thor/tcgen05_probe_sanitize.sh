@@ -34,4 +34,17 @@ for tool in memcheck racecheck synccheck initcheck; do
   done
   echo "$tool rc=$rc outputs_compared=$compared outputs_differing=$differ :: $summary" >> "$host_out/summary.txt"
 done
+# Positive controls (the same binary and kernels; must be REPORTED): initcheck on a C row the probe never writes,
+# memcheck on the probe writing one row past C's allocation. Without them a clean report could mean the tool saw nothing.
+for ctl in "initcheck unwritten" "memcheck oob"; do
+  set -- $ctl; tool=$1; kind=$2
+  mkdir -p "$host_out/control-$kind"
+  run "$CS" --tool "$tool" --error-exitcode 86 --log-file "$out/control-$kind/sanitizer.log" \
+    "$probe" sanitize "$variant" "$out/control-$kind" --m 100 --data int --control "$kind" --timeout-ms 600000 \
+    > "$host_out/control-$kind/stdout.jsonl" 2> "$host_out/control-$kind/stderr.log"
+  rc=$?
+  summary=$(grep -E "ERROR SUMMARY" "$host_out/control-$kind/sanitizer.log" | tr '\n' ' ')
+  verdict=$([[ $rc == 86 ]] && echo "control DETECTED" || echo "control NOT DETECTED")
+  echo "control $kind ($tool) rc=$rc $verdict :: $summary" >> "$host_out/summary.txt"
+done
 echo done >> "$host_out/summary.txt"

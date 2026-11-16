@@ -136,3 +136,62 @@ Only the listed output type of each shape is timed.
 - Small M (64-1000) is bandwidth- or occupancy-bound (M = 64 fills half a 128-row MMA, few tiles for 20 SMs):
   `lfm::gemm` may stay faster there; S3 measures it.
 - Thor's clocks and shared GPU: no speed result until Tripp's quiet run.
+
+## Results (2026-11-16): correctness and sanitizers PASS for V1 and V2; V3 sanitizers PASS, its C1-C5 rerun on b4 pending; speed awaits Tripp's quiet round
+Code: `native/probes/tcgen05_gemm.cuh` (the kernels; notes 1-6 document every encoding), `tcgen05_gemm_probe.cu`
+(unit, peak, correct, sanitize, speed), `tcgen05_probe_engine_gemm.cu` (`lfm::gemm` built apart with `-arch=sm_110`,
+as the engine builds it). Build: `tools/thor/build_tcgen05_probe.sh` in the pinned image, 0 warnings, no spills in
+the probe's kernels (`lfm::gemm`'s decode `thin_k128<3>` spills 16 bytes, as it does in the engine; not used here).
+Final binary **b4** (`cd1271c4...`); `evidence/` holds the records, `sources.sha256` the source hashes per build.
+
+**Build-up unit tests** (`evidence/unit-b4.jsonl`, also passed on b1-b3): bit-exact on the first build, no encoding
+needed a second try.
+- TMA with `SWIZZLE_128B` writes exactly `sw128_offset` (note 1), rows past the tensor zero-filled (72 of 128 in).
+- One `tcgen05.mma` 128 x 256 x 16 and one K = 64 stage, operands placed by threads in the documented layout,
+  instruction descriptor `0x08400490`: 0 mismatches in 32,768 outputs each.
+- 2-CTA: one 256 x 256 x 16 MMA across a CTA pair and one K = 64 stage, descriptor `0x10400490`: 0 mismatches in 65,536.
+
+**C1-C5** (`tools/thor/tcgen05_probe_correct.sh`, summarised by `tools/tcgen05_probe_summary.py`): 612 cases per
+variant: C1's integer data on all 13 shapes x 9 M x 2 output types (234), C2's normal data the same (234), and C2's
+split data on the 8 vision shapes (144); each probe output run 5 times. (The design's "234 cases" counted one data
+kind.)
+| variant | build | cases passing C1-C5 | every element bitwise equal to `lfm::gemm` |
+|---|---|---|---|
+| V1 | b2 (`31a14671...`), b3 (`3faa0e10...`) | 612/612, 612/612 | 612/612 cases |
+| V2 | b3 | 612/612 | 612/612 cases |
+| V3 | b3 (superseded, see the racecheck finding) | 612/612 | 612/612 cases |
+| V3 | b4 | **214/214 so far** (C1's integer data; stopped by SIGTERM at 13:29 for Tripp's quiet window); full rerun pending | 214/214 cases |
+V1's and V2's kernel (`gemm_1cta`) has the same SASS in b3 and b4 (7,476 lines compared), so their b3 records stand
+for b4.
+- **A finding beyond the rules:** every output element of every variant, FP32 and BF16, on all three data kinds, is
+  **bitwise identical** to `lfm::gemm`'s (`mma.sync` m16n8k16). The FP32 accumulation of `tcgen05.mma` over K = 16
+  steps in increasing K gives the same bits as `mma.sync`'s over the same K order on this hardware. C2's ratios are
+  therefore exactly 1.0 (max and mean), and the probe inherits `lfm::gemm`'s accuracy record unchanged. A later
+  integration could be judged bitwise against the engine's current path, not by perplexity.
+- C3: no element left unwritten, no guard byte changed; C4: no run differed; C5: no trap, no launch error.
+- C2's reference: GPU FP64 on every element; its CPU long-double check on 4,096 samples per case agreed within
+  1e-12 x S everywhere (the rule wrote "relative"; S = sum |a b| is the scale used, since the result itself can be 0).
+
+**Sanitizers** (`tools/thor/tcgen05_probe_sanitize.sh`, compute-sanitizer 2026.4.0 from the 13.5.25 archive; all three
+variants, not only the final one; 15 cases each: M in {100, 257, 1000}, vision w2 FP32 with int/normal/split data,
+LM w1/w3 BF16 with int/normal data):
+- b3: **two failures, both recorded.** (1) memcheck reported 1 error in every variant: a 4-byte leak, the host-mapped
+  watchdog flag never freed (harness, not kernel). (2) **racecheck reported 15 hazards in V3**: a race in the 2-CTA
+  TMEM allocation. Its SASS (`UTCATOMSWS.2CTA`, then a remote `SYNCS.ARRIVE` and `STAS` into the peer CTA) touches the
+  peer's reserved shared memory, and the kernel allocated before any cluster barrier, so the leader could reach the
+  peer before the peer had initialised it (the write is reported at a PC before the kernel's entry). C1-C5 did not
+  catch it (612/612): a real ordering bug found only by the sanitizer. Fixed in b4: a cluster barrier before every
+  2-CTA allocation (`gemm_2cta`, the 2-CTA unit test and peak kernels; note 6), and the flag freed.
+- b4: memcheck (leak check), racecheck, synccheck, initcheck: **0 errors** for V1, V2 and V3; all 45 outputs
+  byte-identical to the plain run.
+- **Positive controls** (added in b4, same kernels): initcheck on a C row the probe never writes reports it (128
+  errors); memcheck on the probe writing one row past C's allocation reports it (5 errors). The tools see this
+  kernel's ordinary stores; a clean report is not blindness. (Racecheck has no control: it does not model TMA, TMEM or
+  the async proxy, so C1 and C4 attest the mbarrier pipeline; it did see the allocation race above.)
+
+**Peak and speed**: not measured. The GPU was shared all session (another engineer's benchmark at ~98% utilisation).
+One check, **indicative, contended, not a result** (`evidence/indicative-contended-b3/`): Peak 79 TFLOPS for both
+1-CTA and 2-CTA, yet V1 reached 85 TFLOPS on one shape in the same minutes, so the Peak run was itself slowed by the
+time-slicing; the rule-of-thumb early stop (Peak < 70) cannot be judged from it. Tripp's quiet round:
+`bash build/src-tcgen05/tools/thor/tcgen05_probe_speed.sh b4 tcgen05-speed-rN` for N = 1, 2, 3 (Peak, then 117 cases x
+{V1, V2, V3, lfm::gemm, cuBLAS}), then `tools/tcgen05_probe_speed_summary.py` on the three directories (S1-S3).

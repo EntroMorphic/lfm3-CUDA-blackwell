@@ -1,0 +1,603 @@
+========= COMPUTE-SANITIZER
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e000 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e020 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e040 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e060 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e080 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e0a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e0c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e0e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e100 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e120 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e140 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e160 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e180 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e1a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e1c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e1e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e200 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e220 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e240 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e260 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e280 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e2a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e2c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e2e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e300 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e320 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e340 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e360 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e380 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e3a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e3c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e3e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e400 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e420 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e440 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e460 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e480 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e4a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e4c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e4e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e500 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e520 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e540 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e560 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e580 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e5a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e5c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e5e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e600 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e620 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e640 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e660 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e680 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e6a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e6c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e6e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e700 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e720 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e740 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e760 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e780 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e7a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e7c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e7e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e800 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e820 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e840 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e860 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e880 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e8a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e8c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e8e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e900 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e920 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e940 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e960 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e980 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e9a0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e9c0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375e9e0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ea00 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ea20 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ea40 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ea60 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ea80 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375eaa0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375eac0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375eae0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375eb00 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375eb20 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375eb40 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375eb60 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375eb80 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375eba0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ebc0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ebe0 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ec00 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ec20 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ec40 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= Host API memory access error at host access to 0x1c436fa000 of size 413696 bytes
+=========     Uninitialized access to 0x1c4375ec60 on access by cudaMemcpy source
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: std::vector<unsigned char, std::allocator<unsigned char> > download<unsigned char>(void const*, unsigned long) [0x145f7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde33] in tcgen05-gemm-probe
+========= 
+========= ERROR SUMMARY: 128 errors
+========= ERROR SUMMARY: 28 errors were not printed. Use --print-limit option to adjust the number of printed errors

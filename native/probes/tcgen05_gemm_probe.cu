@@ -264,6 +264,7 @@ unit_mma_pair(const bf16* A, const bf16* B, float* D, int ksteps, tc05::Watchdog
   }
   fence_proxy_async_smem();
   if (threadIdx.x == 0) { mbar_init(smem_u32(&bar), 1); fence_mbar_init(); }
+  cluster_sync();  // the peer started before the pair allocation (tcgen05_gemm.cuh, note 6)
   if (warp == 0) { tmem_alloc_pair(smem_u32(&slot), 256); tmem_relinquish_pair(); }
   tc_fence_before();
   cluster_sync();
@@ -301,6 +302,7 @@ __global__ void __cluster_dims__(2, 1, 1) __launch_bounds__(128, 1) peak_2cta(in
     reinterpret_cast<bf16*>(gbase)[i] = __float2bfloat16_rn(float((i * 7) % 9 - 4) * 0.25f);
   fence_proxy_async_smem();
   if (threadIdx.x == 0) { mbar_init(smem_u32(&bar), 1); fence_mbar_init(); }
+  cluster_sync();  // the peer started before the pair allocation (tcgen05_gemm.cuh, note 6)
   if (warp == 0) { tmem_alloc_pair(smem_u32(&slot), 256); tmem_relinquish_pair(); }
   tc_fence_before();
   cluster_sync();
@@ -431,6 +433,7 @@ struct Options {
   std::vector<std::string> shapes, data{"int", "normal", "split"};
   std::vector<int> ms{64, 100, 128, 257, 1000, 1980, 4096, 7920, 8192};
   int runs = 5, reps = 20;
+  std::string control = "none";  // sanitize mode: none | unwritten (initcheck control) | oob (memcheck control)
 };
 static Options parse(int argc, char** argv, int first) {
   Options o;
@@ -442,6 +445,7 @@ static Options parse(int argc, char** argv, int first) {
     else if (a == "--m") { o.ms.clear(); for (auto& t : split_list(next())) o.ms.push_back(std::stoi(t)); }
     else if (a == "--runs") o.runs = std::stoi(next());
     else if (a == "--reps") o.reps = std::stoi(next());
+    else if (a == "--control") o.control = next();
     else if (a == "--timeout-ms") g_timeout_ns = std::stoull(next()) * 1000000ull;
     else throw std::runtime_error("unknown option " + a);
   }
@@ -805,13 +809,25 @@ static int sanitize_mode(int variant, const std::string& dir, const Options& o) 
     for (const auto& kind : o.data) {
       if (kind == "split" && !s->vision) continue;
       for (int M : o.ms) {
-        Inputs in(kind, M, s->n, s->k, case_seed(kind, *s, M));
-        const size_t bytes = size_t(M) * s->n * (out16 ? 2 : 4);
+        // Controls (the kernels unchanged): `unwritten` gives C one extra row the probe never writes and downloads
+        // it (initcheck must report it); `oob` runs the probe with M + 1 rows into C sized for M rows (memcheck must
+        // report the stores past the allocation).
+        const bool unwritten = o.control == "unwritten", oob = o.control == "oob";
+        if (!unwritten && !oob && o.control != "none") throw std::runtime_error("unknown control " + o.control);
+        const int run_m = oob ? M + 1 : M;
+        Inputs in(kind, run_m, s->n, s->k, case_seed(kind, *s, M));
+        const size_t row_bytes = size_t(s->n) * (out16 ? 2 : 4);
+        const size_t bytes = (size_t(M) + (unwritten ? 1 : 0)) * row_bytes;
         Device c(bytes);  // deliberately not initialised: initcheck sees any element the probe fails to write
-        const Plan plan = make_plan(variant, out16, in.a.as<bf16>(), in.b.as<bf16>(), c.p, M, s->n, s->k);
+        const Plan plan = make_plan(variant, out16, in.a.as<bf16>(), in.b.as<bf16>(), c.p, run_m, s->n, s->k);
         run_plan(plan);
         sync("probe");
         const auto h = download<uint8_t>(c.p, bytes);
+        if (unwritten || oob) {
+          std::printf("{\"control\":\"%s\",\"case\":\"%s.%s.m%d\"}\n", o.control.c_str(), name, kind.c_str(), M);
+          std::fflush(stdout);
+          return 0;
+        }
         const std::string path = dir + "/" + name + "." + kind + ".m" + std::to_string(M) + (out16 ? ".bf16" : ".f32");
         std::ofstream f(path, std::ios::binary);
         f.write(reinterpret_cast<const char*>(h.data()), h.size());
@@ -898,6 +914,7 @@ int main(int argc, char** argv) try {
     for (auto& t : split_list(argv[2])) v.push_back(std::stoi(t));
     rc = speed_mode(v, parse(argc, argv, 3));
   } else throw std::runtime_error("unknown mode " + mode);
+  check(cudaFreeHost(g_trap_host), "cudaFreeHost");
   return rc;
 } catch (const std::exception& e) {
   std::fprintf(stderr, "error: %s\n", e.what());

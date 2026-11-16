@@ -326,7 +326,11 @@ gemm_1cta(const __grid_constant__ CUtensorMap map_a, const __grid_constant__ CUt
 //    signalled on the leader's `full` barrier (its address in the peer obtained by `mapa`), so the leader's producer
 //    expects the bytes of both CTAs. `tcgen05.commit ... multicast::cluster` with mask 0b11 arrives on the barrier at
 //    the same offset in both CTAs (`empty`, `acc_full`). The epilogue warps of both CTAs arrive on the leader's
-//    `acc_empty` (count 8). TMEM is allocated and freed with `.cta_group::2` by one warp in each CTA.
+//    `acc_empty` (count 8). TMEM is allocated and freed with `.cta_group::2` by one warp in each CTA, and only after
+//    a cluster barrier: the allocation's SASS (UTCATOMSWS.2CTA, then a remote mbarrier arrive and STAS into the
+//    peer) touches the peer CTA's reserved shared memory, which the peer initialises when it starts. Allocating
+//    before the barrier is a race (racecheck, build b3: 15 reports, write in the peer's prologue, read at the
+//    remote arrive); C1-C5 did not see it.
 __device__ __forceinline__ uint32_t cluster_rank() {
   uint32_t r;
   asm volatile("mov.u32 %0, %%cluster_ctarank;" : "=r"(r));
@@ -414,6 +418,9 @@ gemm_2cta(const __grid_constant__ CUtensorMap map_a, const __grid_constant__ CUt
     prefetch_tensormap(&map_a);
     prefetch_tensormap(&map_b);
   }
+  // Both CTAs must have started (their reserved allocator state initialised) before the pair allocation, whose
+  // expansion arrives on and stores into the peer's shared memory: racecheck found this (b3), see note 6.
+  cluster_sync();
   if (warp == 0) { tmem_alloc_pair(smem_u32(&tmem_slot), kCols); tmem_relinquish_pair(); }
   tc_fence_before();
   cluster_sync();
