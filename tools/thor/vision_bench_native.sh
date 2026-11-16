@@ -7,7 +7,7 @@
 # Usage (Thor host): vision_bench_native.sh BUILD_TAG OUT_TAG
 set -uo pipefail
 T=${1:?BUILD_TAG}; O=${2:?OUT_TAG}
-B=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
+B=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
 X="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 P="docker exec lfm3-profile-v1 /opt/venv/bin/python"
 $P /workspace/liquid-CUDA/tools/lfm3_vision_bench_native.py requests /workspace/data/vision-bench $C/$O || exit 1

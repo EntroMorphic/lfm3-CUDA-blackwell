@@ -6,7 +6,7 @@
 # Usage (Thor host): vision_e2e_round.sh BUILD_TAG OUT_TAG
 set -euo pipefail
 T=${1:?BUILD_TAG}; O=${2:?OUT_TAG}
-B=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
+B=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
 D="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 P="docker exec -i lfm3-profile-v1 /opt/venv/bin/python"
 mkdir -p $B/$O/req $B/$O/out

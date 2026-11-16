@@ -52,8 +52,16 @@ byte-identical to the same request alone.
 | `normalize` | audio mode: speak numbers and abbreviations as words (default true with no system prompt or one naming American or British English) |
 | `stream` | true: newline-delimited JSON events as the engine generates |
 
-User messages may hold up to 64 audio parts (base64 WAV, 16 kHz mono, 16-bit PCM or 32-bit float). For spoken replies
-to spoken input use `interleaved`.
+User messages may hold up to 64 audio parts (base64 WAV, 16 kHz mono, 16-bit PCM or 32-bit float) and up to 16 image
+parts, `{"type": "image", "image": "<base64 JPEG or PNG>"}`, in any order with text. For spoken replies to spoken input
+use `interleaved`.
+
+Images: a request with an image part may be up to 16 MiB (others keep 4 MiB); an image may decode to at most 64
+megapixels; it is resized as the model's processor does (at most about 2 megapixels reach the model), and a full-size
+image takes 2,048 of the request's 4,096 tokens. A bad image is refused before the engine sees the request, with its
+own error: `invalid_image_base64`, `image_corrupt`, `image_truncated`, `image_unsupported_format` (only JPEG and PNG),
+`image_unsupported_jpeg`, `image_unsupported_png`, `image_aspect_ratio` (over 200:1), `image_too_large` (413),
+`too_many_images`. Without a vision encoder for the checkpoint, image parts get 501 `image_input_unsupported`.
 
 Reply: `text`, `audio_wav_base64` (24 kHz 16-bit mono WAV), `audio_seconds`, `frames`, `chunks`, `seed`, `cancelled`,
 `truncated`, `prefill_seconds`, `generate_seconds`.

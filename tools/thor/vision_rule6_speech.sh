@@ -5,7 +5,7 @@
 # Usage (Thor host): vision_rule6_speech.sh BUILD_TAG   -> build/BUILD_TAG-rule6/
 set -uo pipefail
 T=${1:?BUILD_TAG}
-R=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA; B=$R/build; E=/workspace/liquid-CUDA/build
+R=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA; B=$R/build; E=/workspace/liquid-CUDA/build
 O=$B/$T-rule6; C=$E/$T-rule6; M=/workspace/models/LFM3-Omni-2B
 BIN=$E/$T/lfm3-speech
 EXEC="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"

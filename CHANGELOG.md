@@ -5,9 +5,10 @@ committed.
 
 ## Unreleased
 
-- **Images in (in progress).** Native JPEG/PNG decoding and preprocessing bit-identical to HF's on 1,982 images, with a
-  stricter-than-reference policy for damaged files; native vision encoder and projector at least as accurate as HF's
-  BF16 path on all 31 test images. ([images-v1](validation/images-v1/))
+- **Images in.** Native JPEG/PNG decoding and preprocessing bit-identical to HF's on 1,982 images, with a
+  stricter-than-reference policy for damaged files; native vision encoder and projector more accurate than HF's BF16
+  path on all 31 test images; image parts in `POST /speech` (bodies up to 16 MiB with images). POPE 89.06 vs HF 89.11;
+  MMStar answers agree with the FP32 model's 94.8% of the time, HF BF16's 93.9%. ([images-v1](validation/images-v1/))
 
 ## 2026-11-14
 

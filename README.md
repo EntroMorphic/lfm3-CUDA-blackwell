@@ -7,7 +7,8 @@ better quality than the Hugging Face reference implementation.
 No Python, PyTorch or cuBLAS at run time: the tokenizer, chat template, image and audio front ends, encoders, language
 model, depth decoder and audio codec are all native, served behind a loopback HTTP server, `liquid-lfm3-server`.
 
-> **Status: research software.** Everything below is measured on one machine (a Jetson AGX Thor) against
+> **Status: research software.** Image understanding is new (November 2026); its listening and reading review is
+> still open. Everything below is measured on one machine (a Jetson AGX Thor) against
 > pinned Hugging Face references; see [Validation](#how-it-is-validated). It is not a general-purpose serving stack.
 
 ## What works
@@ -16,7 +17,7 @@ model, depth decoder and audio codec are all native, served behind a loopback HT
 |---|---|---|---|
 | Text | ✅ | ✅ | Greedy tokens identical to Transformers eager on the fixtures; per-token NLL 12.8–14.4% closer to an FP32 model than HF SDPA's at every length tested, 256 to 32K tokens ([g4-gates-v2](validation/g4-gates-v2/)); native tokenizer and chat template bit-exact ([g2-text-v1](validation/g2-text-v1/)) |
 | Speech | ✅ | ✅ | ASR WER 2.59% vs HF's 2.61% on LibriSpeech test-clean ([audio-in-v1](validation/audio-in-v1/)); text-to-speech matches HF by ear and beats it on long-form text ([speech-e2e-v1](validation/speech-e2e-v1/), [speech-long-form-v1](validation/speech-long-form-v1/)) |
-| Images | 🚧 | — | Decoding and preprocessing bit-identical to HF on 1,982 images; vision encoder more accurate than HF BF16 on all 31 test images; benchmark parity in progress ([images-v1](validation/images-v1/)) |
+| Images | ✅ | — | Decoding and preprocessing bit-identical to HF on 1,982 images; vision encoder more accurate than HF BF16 on all 31 test images; POPE accuracy 89.06 vs HF 89.11; on MMStar, answers closer to the FP32 model than HF BF16's (94.8% vs 93.9% agreement) ([images-v1](validation/images-v1/)) |
 | Video | — | — | Not started |
 
 Serving: concurrent speech requests batched on the GPU, each byte-identical to its reply alone
