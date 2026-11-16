@@ -300,3 +300,84 @@ DFT. Options for Tripp, none started:
    unblock.
 3. A rule change on ties (Tripp's call), e.g. accept a difference whose reference lies within a stated fraction of a
    float step of the midpoint. It would not cover the near-zero outputs where both paths miss by over half a step.
+
+## Amendment 2 (2026-11-16, Tripp's decision: option 1; before its code): features correctly rounded, made fast
+**"Exact", defined once.** Today's inputs, taken as exact numbers:
+- the windowed float32 samples `float(x[n] · w[n])` (today's float32 window);
+- today's float32 mel filters.
+
+The pipeline's mathematics on them in exact arithmetic: the DFT with exact twiddles (cos and sin of 2π n k / 400),
+`|X|²`, the mel sums, `log10`, the clamp at −12, then `(· + 4) / 4`, rounded once to float32 (to nearest, ties to
+even). The new front end's output must be that float, for every output.
+
+**How each output is computed.**
+1. **Fast path.** A transform in double precision or better, then the power and the mel sums in double, then `log10`.
+   Each output carries a rigorous bound `E` on |computed − exact| from the error analysis below. If the interval
+   [v − E, v + E] contains no float32 rounding boundary, the computed value is rounded and is correct.
+2. **Otherwise**, that one output is recomputed in quad precision (aarch64 `long double`, IEEE quad; `__float128`
+   elsewhere):
+   - the direct DFT of the bins its mel filter spans, with quad twiddles;
+   - `log10` from quad series implemented here (no libquadmath), with a stated error bound;
+   - rounded under the same test at quad's bound.
+   If even the quad interval contains a boundary (expected never; about 1e-25 per output), the quad value is rounded
+   and the case is counted and reported.
+
+**The error bound (fast path), written down.** u = 2^-53.
+- **Twiddles:** the table's `cos`/`sin` of `2.0 * M_PI * i / 400` are within δw = 24u of the exact values. That is the
+  argument's three roundings (2π · 3.01u ≈ 19u, cos and sin being 1-Lipschitz) plus libm's documented ≤ 1 ulp for
+  cos and sin.
+- **Per stage, max-norm**, with A the largest |component| entering the stage and e its error bound:
+  - twiddle multiply (two fused operations): e' = 1.415 e + A (2δw + 2.5u), A' = 1.415 A;
+  - radix-4 butterfly (additions; ±i exact): e' = 4e + 8.1u A, A' = 4A;
+  - radix-5 butterfly (four fused complex multiply-adds per output): e' = 7e + A (8δw + 80u), A' = 9A;
+  - growth factors (1 + 4u) on each A' are carried.
+- **In double**, over the stages n = 5, 25, 100, 400 from A0 = max|x[n]|: e ≤ 576,153 u A0 = 6.4e-11 A0 per
+  component of every bin.
+- **Power:** |P̂ − P| ≤ e (2(|re| + |im|) + 2e) + 2.02u P̂.
+- **Mel sum** (filters ≥ 0, exact): Δ = Σ_k f_k |P̂_k − P_k| + (K + 1) 1.01u m̂, K the filter's nonzero taps.
+- **log10:** E_L = Δ / ((m̂ − Δ) ln 10) + 8u |L̂|. The 8u covers twice glibc's documented ≤ 2 ulp for `log10`; a
+  documented bound, not a proof, and rule 1's check of every output against the quad reference would expose a
+  violation. If m̂ ≤ Δ, the quad path; if m̂ = Δ = 0 (silence), the output is exactly −2.
+- **Clamp** (1-Lipschitz), then the addition: E = (E_L + 1.01u |L̂c + 4|) / 4, inflated by (1 + 1e-9) for the bound's
+  own arithmetic.
+
+**Why the fast path has two candidates.** With the plain double FFT, Tripp's first proposal, the bound above is
+6.4e-11 A0 per bin. A mel band whose bins are 1% of A0 then has a v error near 1.4e-9: about a 5% chance per output
+of falling back to quad. At 0.01% of A0, every output falls back. Weak high bands at that level are ordinary in speech,
+and each quad recompute costs on the order of a millisecond. So both are coded:
+- **F1:** the double FFT under the bound above;
+- **F2:** the same FFT compensated (double-double: TwoSum and fma-based TwoProduct, error-free). Its bound is the same
+  recurrence with u_dd = 2^-104 · 4 in place of u (and δw for the double-double twiddle table, ≤ 4 u_dd · 24). The
+  quad path then falls to near never; its cost is about 5–15× the double FFT's arithmetic.
+
+Their outputs are the same floats by construction; only speed differs. The candidate with the lower front-end time at
+90 s (quiet Thor, rule 2's run) ships. Each run reports its quad-fallback count.
+
+**Fallback to today's bytes.** The environment variable `LFM3_AUDIO_FEATURES=dft` makes every binary (lfm3-speech, the
+worker, the server) use today's direct DFT, read once at startup. The default is the correctly rounded front end once
+rule 1 passes; until then, today's DFT.
+
+**Rules, amended (2026-11-16).**
+1. **Exactness.** On all 2,620 clips, the 40 dumped clips and the 9 edge cases, on Thor (aarch64) and the workstation
+   (x86-64), at 1 and 4 threads, for F1 and F2: every output float equals the quad reference's correctly rounded value.
+   - The reference is a separate implementation in `audio_mel_audit`: libquadmath on x86, `long double` on aarch64,
+     quad FFT with quad twiddles, its own interval test.
+   - Every float that differs from today's bytes is listed with the reference; each must be strictly closer to it.
+     That follows from correct rounding; the list makes it visible.
+   - Any output the reference cannot decide at quad is reported.
+2. **Speed** (as amended in amendment 1): time to first token at least as fast as HF's at 10.4, 35 and 90 s; the front
+   end alone reported per clip for F1 and F2 at 1 and 4 threads; threads kept only if 4 cut the 90 s front-end time by
+   at least 20%. **Expected to fail** for the reasons recorded under amendment 1: the encoder and the language model's
+   prefill alone exceed HF's whole time to first token. The encoder's own round would follow under that bar.
+3. **Transcripts.** lfm3-speech over all 2,620 LibriSpeech utterances with the new front end:
+   - expected identical to today's token sequences except possibly on the clips whose features changed;
+   - every changed transcript is read and listed with both texts;
+   - corpus WER against today's: paired-bootstrap 95% upper bound at most +0.05 points;
+   - against HF: upper bound at most +0.25 (audio-in-v1's rule 3).
+4. **Audio-in replies.** The 360 + 93 stage files and the server's audio-in check: identical except where features
+   changed, each change listed and its replies read. Every reply from a clip whose features did not change is
+   byte-identical. The server's replies equal the new lfm3-speech's byte for byte.
+5. **The fallback flag:** with `LFM3_AUDIO_FEATURES=dft`, rule 1's original reference bytes on all 2,620 + 40 + 12
+   clips, and the 360 + 93 files, byte-identical.
+
+Rules 3 (stall), 5 (sanitizers), 6 (nothing else changes) and 7 (red-team) of the original stand.
