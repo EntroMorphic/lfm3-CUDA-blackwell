@@ -136,3 +136,24 @@ Built as `audio-bench-a1` (sha256 `274af23b...`). Checked functionally, not time
 A single smoke run (idle but shared GPU; **not** a measurement) showed the encoder at 15.8 ms on the 2.1 s clip. That
 is more than the estimate above, so fixed per-clip costs (13 scratch allocations, zeroed and freed per clip) may weigh
 at short lengths. Rule 0's run decides.
+
+## Rule 0 results (2026-11-16, Tripp's quiet session): **STOP**, as the rule is written
+Tripp ran `tools/thor/audio_speed_rule0.sh audio-bench-a1 vimg-a5 quiet-v1-audio` on a quiet Thor
+(`build/quiet-v1-audio/summary.json`). The GPU encoder is under 15% of native time to first token at the typical
+(10.4 s) and long (35 s) clips, so the round stops here. Recorded from Tripp's report; the full per-clip table is to
+be copied from `summary.json` after the quiet window.
+
+| clip | native time to first token | HF time to first token | native `log_mel` alone (front end only) |
+|---|---|---|---|
+| 10.4 s | 0.173 s | 0.051 s | 0.104 s |
+| 35 s | 0.485 s | 0.072 s | 0.349 s |
+| 90 s | 1.20 s | 0.141 s | 0.898 s |
+
+HF's feature extractor takes 3–5 ms. The GPU encoder alone takes 0.166 s at 90 s (encode-only), more than HF's whole
+time to first token. The rule's verdict stands. In absolute terms, native is 3–9× slower than HF to its first token:
+- most of that is `log_mel` (audio-frontend-v1);
+- what remains (encoder and the language model's prefill: about 0.07 s at 10.4 s and 0.30 s at 90 s) is still over
+  HF's whole time to first token.
+
+So this encoder round may return under audio-frontend-v1 amendment 1's bar (time to first token at least as fast as
+HF's). It would need new rules; nothing here is overridden.
