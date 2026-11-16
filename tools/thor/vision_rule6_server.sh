@@ -4,6 +4,7 @@
 # streaming, audio in through the server, TTS through the server, the text gate), then images through the server
 # (tools/check_lfm3_image_server.py), on a quiet machine. Outputs in build/OUT_TAG/.
 # Usage: vision_rule6_server.sh A S OUT_TAG [PHASES]   PHASES: any of "engine server image" (default all)
+# E2E_ROUND: the vision_e2e_round.sh output holding lfm3-speech's replies for A (default vimg-e2e-a1, images-v1's)
 set -uo pipefail
 A=${1:?A}; S=${2:?S}; T=${3:?OUT_TAG}; PHASES=${4:-engine server image}
 W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
@@ -35,7 +36,7 @@ if [[ " $PHASES " == *" server "* ]]; then
 fi
 if [[ " $PHASES " == *" image "* ]]; then
   echo "== images through the server $(date +%T)"
-  $X python3 /workspace/liquid-CUDA/tools/check_lfm3_image_server.py $C/$S/liquid-lfm3-server $M $C/vimg-e2e-a1 $CO/image-server.json > image-server.log 2>&1; tail -1 image-server.log
+  $X python3 /workspace/liquid-CUDA/tools/check_lfm3_image_server.py $C/$S/liquid-lfm3-server $M $C/${E2E_ROUND:-vimg-e2e-a1} $CO/image-server.json > image-server.log 2>&1; tail -1 image-server.log
 fi
 bash $W/liquid-CUDA/tools/thor/power_state.sh power-end-$P.json power-start-$P.json > /dev/null || echo "WARN power changed"
 echo "VISION RULE6 SERVER DONE $(date +%T)"
