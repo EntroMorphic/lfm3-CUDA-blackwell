@@ -206,3 +206,61 @@ tests:
 
 The whole host suite, run from the worktree: 2,158 passed, 235 skipped. The skips are suites that look for the
 checkpoint beside the repository, which a worktree lacks; a rerun from a copy that has it is under way.
+
+## Amendment 1 (2026-11-16, Tripp, after audio-speed-v1 rule 0; before any FFT code): a double-precision FFT first
+**Why.** Rule 0 (audio-speed-v1's quiet run, `build/quiet-v1-audio/summary.json`) puts native time to first token at
+3–9× HF's:
+
+| clip | native | HF | native `log_mel` alone |
+|---|---|---|---|
+| 10.4 s | 0.173 s | 0.051 s | 0.104 s |
+| 35 s | 0.485 s | 0.072 s | 0.349 s |
+| 90 s | 1.20 s | 0.141 s | 0.898 s |
+
+HF's feature extractor takes 3–5 ms. The exact direct DFT, even spread over 12 threads, stays far above that.
+
+**Design, changed.** The DFT becomes an FFT in double:
+- a 400-point real transform by mixed radix (400 = 2^4 · 5^2), its twiddles the same doubles as the DFT's table
+  (`cos`/`sin` of 2π i/400);
+- about 20× fewer operations per frame than the direct sums.
+
+Unchanged: the windowed float32 samples, the power (`fma(re, re, im·im)`), the mel sums (same order, fused), `log10`,
+and the float rounding. The FFT's power differs from the DFT's by about 1e-16 relative. A float output can differ
+only where that moves a value across a float rounding point. The usual place is near a rounding boundary; the other is
+near 0, where `(log10(mel) + 4) / 4` cancels and the float spacing is tiny. The direct DFT (option a1, which passed
+rule 1) stays the fallback, and ships if the FFT fails amended rule 1.
+
+**Threads: kept only if they still help.** Rule 2's quiet run times the FFT at 1 thread and at 4. `kMelThreads` stays
+4 only if 4 threads cut the 90 s clip's `log_mel` time (front end only) by at least 20% against 1 thread; otherwise it
+becomes 1.
+
+**Rule 1, amended (exactness).** The FFT's features against the current path's (the reference bytes of rule 1) on all
+2,620 clips, the 40 dumped clips and the 9 edge cases, at 1 and 4 threads:
+- byte-identical, **or**, for every float that differs, an audit:
+  - a reference value from a quad-precision recomputation of that output: the same float32 windowed samples and
+    float32 filters, the DFT sums, power, mel sums and `log10` all in IEEE quad (aarch64 `long double`), then the same
+    `(max(·, -12) + 4) / 4`;
+  - the difference passes if the FFT's float is **at least as close** to the reference as the current path's
+    (|FFT − ref| ≤ |current − ref|);
+  - a difference where the FFT's float is farther from the reference **fails** rule 1.
+- Every differing float is listed: clip, mel bin, frame, both floats, the reference, and how far it is from the
+  rounding boundary or from 0.
+
+**Rule 4, amended for clips whose features differ (only if any do).**
+- Every clip whose features are byte-identical must still give byte-identical replies, all of rule 4 as written.
+- For the clips whose features differ: their LibriSpeech transcripts against the current path's.
+  - Every changed transcript is read (coherency).
+  - Over the 2,620, the WER change against the current path has a paired-bootstrap 95% upper bound of at most
+    **+0.05** points.
+  - The server's replies still equal the new lfm3-speech's byte for byte.
+
+**Rule 2, amended (speed; quiet Thor; labeled).** Time to first token (end to end, rule 0's method) at least as fast
+as HF's at the 10.4, 35 and 90 s clips. The front end alone (front end only) is reported per clip at 1 and 4 threads.
+
+**Expected, recorded before the run.** From rule 0's figures, the encoder and the language model's prefill alone take
+about 0.07 s at 10.4 s and 0.30 s at 90 s, against HF's whole 0.051 and 0.141 s. Amended rule 2 can be met only if
+those shrink too. The encoder may therefore need its own round with the same bar (time to first token at least as fast
+as HF's): audio-speed-v1's design, under new rules. That is noted here and not started.
+
+Rules 3 (stall), 5 (sanitizers), 6 (nothing else changes) and 7 (red-team) stand as written. The handler-thread move
+stands.
