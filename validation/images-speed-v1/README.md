@@ -59,3 +59,31 @@ allocating and zeroing scratch per image ~58 ms. Changes, the mathematics unchan
   (The design said a batch of 2 summed in FP32: same products, one accumulation.)
 - Attention: K and V split once per layer into BF16 buffers in the tiles' layouts (V transposed); 8 warps a block.
 - Scratch kept between images (~0.5 GB after the largest), no longer freed and re-zeroed each time.
+
+## Rule 1 results (2026-11-16): **PASS**, x2/x2 ships
+`tools/thor/vision_accuracy_round.sh vspeed-a2 vspeed-rule1-a2 x2 x2` (`rule1/`): on all 31 images, image_features'
+error 0.023-0.112 of HF BF16's (images-v1's FP32 path: the same range), minimum token cosine 0.9999966 (>= 0.9999).
+In rule order: x1/x1 failed the thresholds on china alone (0.396, cosine 0.978), and so did each mixed variant
+(x2/x1 0.214, x1/x2 0.297): x2/x2 is the only variant that passes, and the encoder's default
+(`lfm3_vision::Precision`). The next build (`vspeed-a3`: attention fragments by `ldmatrix.x4`, tiles double-buffered by
+`cp.async`, the products and their order unchanged) reproduced all 713 stage files of the 31 images byte for byte.
+
+## Rule 2 results (2026-11-16): **PASS** in two rounds of three; the third slowed by the machine
+Encode alone at 8,192 patches (`lfm3-vision-check`, warm median of 3): FP32 path 1.87 s; first split build 0.685 s;
+amendment 1's 0.458 s; with ldmatrix and double buffering 0.389 s. nsys of the last split build (`profile/`): attention
+~48% at ~23 TFLOPS, the GEMMs ~28% at ~43 TFLOPS. `lfm3-speech` build `vimg-a4` (sha256 `8af368b4...`), three rounds
+of `tools/thor/vision_speed_round.sh` (MAXN, GPU clocks locked at 1.575 GHz in all three), `rule2/`:
+| round | 4K photographs, HF / native end to end | other 9 requests | native decode | native faster on |
+|---|---|---|---|---|
+| vspeed-v2 07:27 | 0.91, 0.92 | 1.03-1.18 | ~20.2 ms/token | 9 of 11 |
+| vspeed-v3 07:36 | **1.07, 1.08** | 1.12-1.29 | 16.0-16.3 ms/token | **11 of 11** |
+| vspeed-v4 07:43 | **1.05, 1.07** | 1.11-1.28 | 16.1-16.3 ms/token | **11 of 11** |
+- v2 is the same binary and the same work: its 44 native replies are token-identical to v3's; only its decode was
+  slower (20.2, 20.2, 20.2, then 17.8 ms/token across its passes, recovering). The previous build run right after it
+  decoded at 16.0-16.3, and probes of text before and after a 4K image on both builds showed no effect of the
+  encoder's kept memory (`vdecode-probe`: 15.8-16.3 ms/token throughout). The cause was the machine at that time; the
+  method's power check records GPU and CPU clocks, not the memory clock (unreadable without root) or other load: a
+  gap, recorded. v3 and v4 meet the rule; v2 is kept here, not discarded.
+- At 4K: image encode 0.364 s (HF 0.148), prefill with it 0.59 s (HF's first token 0.32), front end 0.32-0.42 s
+  (HF 0.16), decode 16.3 ms/token (HF 21.7): native is ahead end to end on the faster decode. The encode, the language
+  model's prefill and the CPU front end are still slower than HF's: the tcgen05 round and the GPU front end.

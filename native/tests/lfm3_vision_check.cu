@@ -1,7 +1,9 @@
 // lfm3-vision-check: the native vision encoder and projector (lfm/vision_encoder.cuh) on HF's own inputs, every stage
 // written for comparison with HF's FP32 and BF16 dumps (tools/dump_lfm3_vision_reference.py,
 // tools/compare_lfm3_vision_stages.py; validation/images-v1 rule 2).
-// Usage: lfm3-vision-check MODEL_DIR CASE_DIR OUT_DIR
+// Usage: lfm3-vision-check MODEL_DIR CASE_DIR OUT_DIR [--linear fp32|x1|x2] [--attention fp32|x1|x2] [--repeat R]
+//   --linear, --attention: the encoder's precision modes (lfm3_vision::Precision; validation/images-speed-v1);
+//   --repeat R: each image's timed encode runs R times after one untimed encode, stages.json then holding the median.
 //   CASE_DIR: pixel_values.npy (float32 [rows][1536]) and image_grid_thw.npy (int64 [images][3]), as HF dumped them.
 //   OUT_DIR/<stage>.f32: each stage, the images' rows concatenated in order (HF's layout): patchifier, embedding_norm,
 //   rotary.0 (cos) and rotary.1 (sin), layer00..layer13, proj.layer_norm, proj.linear_1, proj.gelu, proj.linear_2,
@@ -10,6 +12,7 @@
 #include <lfm/safetensors.hpp>
 #include <lfm/vision_encoder.cuh>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -73,8 +76,8 @@ void append(std::map<std::string, std::vector<float>>& out, const std::string& n
 }  // namespace
 
 int main(int argc, char** argv) {
-  if (argc != 4) {
-    std::fprintf(stderr, "usage: lfm3-vision-check MODEL_DIR CASE_DIR OUT_DIR\n");
+  if (argc < 4 || argc % 2) {
+    std::fprintf(stderr, "usage: lfm3-vision-check MODEL_DIR CASE_DIR OUT_DIR [--linear M] [--attention M] [--repeat R]\n");
     return 2;
   }
   try {
@@ -84,7 +87,16 @@ int main(int argc, char** argv) {
     cs << cf.rdbuf();
     const lfm::Json root = lfm::Json::parse(cs.str());
     auto weights = std::make_shared<lfm::Safetensors>(model);
-    lfm3_vision::Encoder encoder(weights, root);
+    lfm3_vision::Precision precision;
+    int repeat = 0;
+    for (int i = 4; i + 1 < argc; i += 2) {
+      const std::string o = argv[i], v = argv[i + 1];
+      if (o == "--linear") precision.linear = lfm3_vision::Precision::parse(v);
+      else if (o == "--attention") precision.attention = lfm3_vision::Precision::parse(v);
+      else if (o == "--repeat") repeat = std::stoi(v);
+      else throw std::runtime_error("unknown option " + o);
+    }
+    lfm3_vision::Encoder encoder(weights, root, precision);
     const Npy pv = read_npy(dir + "/pixel_values.npy"), grid = read_npy(dir + "/image_grid_thw.npy");
     if (pv.descr != "<f4" || pv.shape.size() != 2 || pv.shape[1] != 1536) throw std::runtime_error("pixel_values shape");
     if (grid.descr != "<i8" || grid.shape.size() != 2 || grid.shape[1] != 3) throw std::runtime_error("grid shape");
@@ -101,10 +113,16 @@ int main(int argc, char** argv) {
       if (row + n > size_t(pv.shape[0])) throw std::runtime_error("grid larger than pixel_values");
       if (features.n < n / 4 * 2048) features = lfm::fp32::DeviceArray<__nv_bfloat16>(n / 4 * 2048);
       // timed without dumps first (the encode alone), then again with them
-      cudaDeviceSynchronize();
-      const auto t0 = std::chrono::steady_clock::now();
-      encoder.encode(pixels + row * 1536, h, w, features.p);
-      seconds.push_back(std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count());
+      std::vector<double> times;
+      if (repeat > 0) encoder.encode(pixels + row * 1536, h, w, features.p);  // untimed, then the timed runs
+      for (int r = 0; r < std::max(1, repeat); ++r) {
+        cudaDeviceSynchronize();
+        const auto t0 = std::chrono::steady_clock::now();
+        encoder.encode(pixels + row * 1536, h, w, features.p);
+        times.push_back(std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count());
+      }
+      std::sort(times.begin(), times.end());
+      seconds.push_back(times[times.size() / 2]);
       lfm3_vision::Dumps d;
       encoder.encode(pixels + row * 1536, h, w, features.p, &d);
       append(stages, "patchifier", d.patchifier);

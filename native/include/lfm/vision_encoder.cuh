@@ -15,17 +15,21 @@
 //   No final norm.
 // - projector: LayerNorm(1024, eps 1e-6), the 4 tokens of each merge block concatenated (4096), linear 4096 -> 4096,
 //   exact GELU, linear 4096 -> 2048 (biases on all three).
-// Precision: FP32 activations throughout, the weights at their stored BF16 values (lfm/fp32_ops.cuh, as the audio
-// encoder); only the output is rounded to BF16, the language model's input. The rotary angle is the model's as HF
+// Precision (validation/images-speed-v1): the residual stream, norms, softmax and nonlinearities in FP32; the matrix
+// multiplies and attention on the tensor cores with every activation split into two BF16 parts (hi + lo, ~2^-16 of
+// it) against the stored BF16 weights, FP32 accumulation: FP32's accuracy at the output (Precision::kX2, the default;
+// kFp32, the CUDA-core path of images-v1, remains). Only the output is rounded to BF16, the language model's input. The rotary angle is the model's as HF
 // defines it (float32 position times float32 inverse frequency); its cosine and sine, and the rotation, in FP64,
 // rounded once. Attention: exact softmax per query (running maximum, FP32 sums), keys in a fixed order.
 #include <lfm/fp32_ops.cuh>
+#include <lfm/gemm.cuh>
 #include <lfm/model_config.hpp>
 #include <lfm/safetensors.hpp>
 #include <lfm/safetensors_header.hpp>
 
 #include <cmath>
 #include <functional>
+#include <map>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -33,6 +37,22 @@
 #include <vector>
 
 namespace lfm3_vision {
+
+// How the encoder's matrix multiplies and attention compute (validation/images-speed-v1): kFp32, FP32 activations on
+// the CUDA cores (images-v1, rule 2); kX1, BF16-rounded activations on the tensor cores, FP32 accumulation; kX2,
+// activations split hi + lo into two BF16 parts on the tensor cores. Norms, softmax, nonlinearities and the residual
+// stream are FP32 in every mode.
+struct Precision {
+  enum Mode { kFp32, kX1, kX2 };
+  // the default: images-speed-v1 rule 1 (x2 on all 31 images, error 0.023-0.112 of HF BF16's, as FP32's)
+  Mode linear = kX2, attention = kX2;
+  static Mode parse(const std::string& s) {
+    if (s == "fp32") return kFp32;
+    if (s == "x1") return kX1;
+    if (s == "x2") return kX2;
+    throw std::runtime_error("vision precision must be fp32, x1 or x2: " + s);
+  }
+};
 
 namespace kernels {
 using bf16 = __nv_bfloat16;
@@ -142,6 +162,240 @@ __global__ void __launch_bounds__(kAttnQueries) attention(const float* q, const 
   if (!active) return;
   for (int d = 0; d < 64; ++d) out[(size_t(query) * heads + h) * 64 + d] = __fdiv_rn(acc[d], total);
 }
+// ---- the tensor-core paths (validation/images-speed-v1) ----
+// A float as BF16 parts: hi = bf16(v); lo = bf16(v - hi) (x2), so hi + lo holds v to about 2^-16 of it.
+__device__ __forceinline__ void split_bf16(float v, bf16& hi, bf16& lo) {
+  hi = __float2bfloat16_rn(v);
+  lo = __float2bfloat16_rn(__fsub_rn(v, __bfloat162float(hi)));
+}
+// x [rows][in] FP32 -> lfm::gemm's A operand [rows][parts * in]: hi in columns 0..in, lo (x2) in in..2 in, so one
+// GEMM against [W | W] (double_rows) sums hi·W + lo·W.
+__global__ void split_rows(const float* x, bf16* out, int rows, int in, int parts) {
+  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (i >= size_t(rows) * in) return;
+  const size_t r = i / in, c = i % in;
+  bf16 hi, lo;
+  split_bf16(x[i], hi, lo);
+  out[r * parts * in + c] = hi;
+  if (parts == 2) out[r * parts * in + in + c] = lo;
+}
+// [W | W]: each row of W [rows][in] twice, the B operand of the split multiply
+__global__ void double_rows(const bf16* w, bf16* out, int rows, int in) {
+  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (i >= size_t(rows) * in) return;
+  const size_t r = i / in, c = i % in;
+  out[r * 2 * in + c] = out[r * 2 * in + in + c] = w[i];
+}
+// y[i] = c[i] + bias[i % cols]
+__global__ void add_bias(const float* c, const bf16* bias, size_t n, int cols, float* y) {
+  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (i < n) y[i] = __fadd_rn(c[i], __bfloat162float(bias[i % cols]));
+}
+// K and V split once per layer into the attention tiles' layouts: ks [kv][npad][PARTS * 64] (part p in columns
+// 64 p ..), vt [kv][PARTS][64][npad] (V transposed); keys at or past n are zeros. A block: 64 keys of one kv head,
+// loaded coalesced, V transposed through shared memory.
+__global__ void split_kv(const float* k, const float* v, bf16* ks, bf16* vt, int n, int npad, int kv_heads, int parts) {
+  __shared__ float tile[64][65];
+  const int key0 = blockIdx.x * 64, g = blockIdx.y;
+  for (int e = threadIdx.x; e < 64 * 64; e += blockDim.x) {
+    const int j = e / 64, d = e % 64, key = key0 + j;
+    const float kx = key < n ? k[(size_t(key) * kv_heads + g) * 64 + d] : 0.0f;
+    tile[j][d] = key < n ? v[(size_t(key) * kv_heads + g) * 64 + d] : 0.0f;
+    bf16 hi, lo;
+    split_bf16(kx, hi, lo);
+    bf16* row = ks + (size_t(g) * npad + key) * (parts * 64);
+    row[d] = hi;
+    if (parts == 2) row[64 + d] = lo;
+  }
+  __syncthreads();
+  for (int e = threadIdx.x; e < 64 * 64; e += blockDim.x) {
+    const int d = e / 64, j = e % 64;
+    bf16 hi, lo;
+    split_bf16(tile[j][d], hi, lo);
+    vt[(size_t(g) * parts * 64 + d) * npad + key0 + j] = hi;
+    if (parts == 2) vt[(size_t(g) * parts * 64 + 64 + d) * npad + key0 + j] = lo;
+  }
+}
+__device__ __forceinline__ uint32_t pack_bf16(float lo_col, float hi_col) {
+  const __nv_bfloat162 p = __floats2bfloat162_rn(lo_col, hi_col);
+  return *reinterpret_cast<const uint32_t*>(&p);
+}
+__device__ __forceinline__ void mma_bf16(float (&c)[4], const uint32_t (&a)[4], uint32_t b0, uint32_t b1) {
+  asm volatile("mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 {%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, "
+               "{%0,%1,%2,%3};\n"
+               : "+f"(c[0]), "+f"(c[1]), "+f"(c[2]), "+f"(c[3])
+               : "r"(a[0]), "r"(a[1]), "r"(a[2]), "r"(a[3]), "r"(b0), "r"(b1));
+}
+// Fused bidirectional attention on the tensor cores (mma.sync m16n8k16, BF16 operands, FP32 accumulation), head
+// dimension 64: q [n][heads][64], k/v [n][kv_heads][64] FP32, out [n][heads][64] FP32. A block's 4 warps own 16
+// queries each of one head; keys pass in tiles of 64 through shared memory (K as [key][dim], V transposed as
+// [dim][key], rows padded to 72 so a warp's fragment loads hit distinct banks), in ascending order. Per tile: S = Q·Kᵀ
+// into FP32 accumulators, the scale, the running maximum and the rescale of the old sums in FP32 (as the CUDA-core
+// kernel), then O += P·V with P taken from S's accumulators (their layout is the next product's A operand).
+// PARTS 1: Q, K, V and P rounded to BF16; PARTS 2: each split hi + lo, three products (hi·hi + hi·lo + lo·hi).
+// K and V come split (split_kv): ks [kv][npad][PARTS * 64], vt [kv][PARTS][64][npad]. Tiles arrive by cp.async,
+// double buffered (the next tile loads while this one computes), into dynamic shared memory; B fragments come by
+// ldmatrix.x4 (four 8x8 matrices a load). The products and their order are those of the kernel this replaced
+// (images-speed-v1: outputs byte-identical): S per key block nb, k steps 0..3, hi·hi, hi·lo, lo·hi; then P·V per
+// k step t, dimension blocks 0..7, the same three.
+constexpr int kTcWarps = 8, kTcQueries = 16 * kTcWarps, kTcKeys = 64, kTcPad = 72;
+template <int PARTS>
+constexpr int tc_shared_bytes() { return 2 * 2 * PARTS * kTcKeys * kTcPad * int(sizeof(bf16)); }
+__device__ __forceinline__ unsigned shared_address(const void* p) {
+  return static_cast<unsigned>(__cvta_generic_to_shared(p));
+}
+template <int PARTS>
+__global__ void __launch_bounds__(32 * kTcWarps) attention_tc(const float* q, const bf16* ksg, const bf16* vtg,
+                                                              float* out, int n, int npad, int heads, int kv_heads,
+                                                              float scale) {
+  using Tile = bf16[PARTS][kTcKeys][kTcPad];
+  extern __shared__ __align__(16) unsigned char smem[];
+  Tile* ks = reinterpret_cast<Tile*>(smem);                                        // [stage] K tile [part][key][dim]
+  Tile* vt = reinterpret_cast<Tile*>(smem + 2 * sizeof(Tile));                     // [stage] V tile [part][dim][key]
+  const int h = blockIdx.y, g = h / (heads / kv_heads);
+  const int warp = threadIdx.x / 32, lane = threadIdx.x % 32, gid = lane >> 2, tig = lane & 3;
+  const int q0 = blockIdx.x * kTcQueries + warp * 16;
+  const int mi = lane >> 3, mr = lane & 7;  // ldmatrix: this lane addresses row mr of matrix mi
+  uint32_t qa[PARTS][4][4];
+#pragma unroll
+  for (int s = 0; s < 4; ++s)
+#pragma unroll
+    for (int r = 0; r < 4; ++r) {
+      const int row = q0 + gid + (r & 1) * 8, d = s * 16 + tig * 2 + (r >> 1) * 8;
+      float a = 0.0f, b = 0.0f;
+      if (row < n) {
+        const float* src = q + (size_t(row) * heads + h) * 64 + d;
+        a = src[0], b = src[1];
+      }
+      bf16 ah, al, bh, bl;
+      split_bf16(a, ah, al);
+      split_bf16(b, bh, bl);
+      qa[0][s][r] = pack_bf16(__bfloat162float(ah), __bfloat162float(bh));
+      if constexpr (PARTS == 2) qa[PARTS - 1][s][r] = pack_bf16(__bfloat162float(al), __bfloat162float(bl));
+    }
+  const bf16* kg = ksg + size_t(g) * npad * (PARTS * 64);
+  const bf16* vg = vtg + size_t(g) * PARTS * 64 * npad;
+  auto load = [&](int stage, int key0) {
+    for (int e = threadIdx.x; e < kTcKeys * PARTS * 8; e += 32 * kTcWarps) {
+      const int j = e / (PARTS * 8), c = e % (PARTS * 8);
+      lfm::fp32::kernels::copy16_async(&ks[stage][c / 8][j][(c % 8) * 8], kg + size_t(key0 + j) * (PARTS * 64) + c * 8);
+    }
+    for (int e = threadIdx.x; e < PARTS * 64 * 8; e += 32 * kTcWarps) {
+      const int pd = e / 8, c = e % 8;  // pd = part * 64 + dim
+      lfm::fp32::kernels::copy16_async(&vt[stage][pd / 64][pd % 64][c * 8], vg + size_t(pd) * npad + key0 + c * 8);
+    }
+    lfm::fp32::kernels::commit_async();
+  };
+  float o[8][4] = {};
+  float row_max[2] = {-INFINITY, -INFINITY}, row_sum[2] = {0.0f, 0.0f};
+  load(0, 0);
+  for (int key0 = 0, stage = 0; key0 < n; key0 += kTcKeys, stage ^= 1) {
+    if (key0 + kTcKeys < n) {
+      load(stage ^ 1, key0 + kTcKeys);
+      lfm::fp32::kernels::wait_async<1>();
+    } else {
+      lfm::fp32::kernels::wait_async<0>();
+    }
+    __syncthreads();
+    const Tile& K = ks[stage];
+    const Tile& Vt = vt[stage];
+    float s[8][4] = {};
+#pragma unroll
+    for (int nb = 0; nb < 8; ++nb)
+#pragma unroll
+      for (int st = 0; st < 4; st += 2) {
+        uint32_t b[PARTS][4];
+#pragma unroll
+        for (int part = 0; part < PARTS; ++part)
+          lfm::gemm::detail::ldmatrix_x4(shared_address(&K[part][nb * 8 + mr][(st + (mi >> 1)) * 16 + (mi & 1) * 8]),
+                                         b[part][0], b[part][1], b[part][2], b[part][3]);
+#pragma unroll
+        for (int u = 0; u < 2; ++u) {
+          mma_bf16(s[nb], qa[0][st + u], b[0][2 * u], b[0][2 * u + 1]);
+          if constexpr (PARTS == 2) {
+            mma_bf16(s[nb], qa[0][st + u], b[PARTS - 1][2 * u], b[PARTS - 1][2 * u + 1]);
+            mma_bf16(s[nb], qa[PARTS - 1][st + u], b[0][2 * u], b[0][2 * u + 1]);
+          }
+        }
+      }
+    float tile_max[2] = {-INFINITY, -INFINITY};
+#pragma unroll
+    for (int nb = 0; nb < 8; ++nb)
+#pragma unroll
+      for (int c = 0; c < 4; ++c) {
+        const int key = key0 + nb * 8 + tig * 2 + (c & 1);
+        s[nb][c] = key < n ? __fmul_rn(s[nb][c], scale) : -INFINITY;
+        tile_max[c >> 1] = fmaxf(tile_max[c >> 1], s[nb][c]);
+      }
+    float rescale[2];
+#pragma unroll
+    for (int r = 0; r < 2; ++r) {
+      tile_max[r] = fmaxf(tile_max[r], __shfl_xor_sync(0xffffffffu, tile_max[r], 1));
+      tile_max[r] = fmaxf(tile_max[r], __shfl_xor_sync(0xffffffffu, tile_max[r], 2));
+      const float new_max = fmaxf(row_max[r], tile_max[r]);
+      rescale[r] = expf(row_max[r] - new_max);  // 0 on the first tile (exp(-inf))
+      row_max[r] = new_max;
+      row_sum[r] = __fmul_rn(row_sum[r], rescale[r]);
+    }
+#pragma unroll
+    for (int nb = 0; nb < 8; ++nb)
+#pragma unroll
+      for (int c = 0; c < 4; ++c) {
+        o[nb][c] = __fmul_rn(o[nb][c], rescale[c >> 1]);
+        const float p = expf(s[nb][c] - row_max[c >> 1]);
+        s[nb][c] = p;
+        row_sum[c >> 1] = __fadd_rn(row_sum[c >> 1], p);
+      }
+#pragma unroll
+    for (int t = 0; t < 4; ++t) {
+      uint32_t pa[PARTS][4];
+      const float* lo_blk = s[2 * t];
+      const float* hi_blk = s[2 * t + 1];
+      const float vals[4][2] = {{lo_blk[0], lo_blk[1]}, {lo_blk[2], lo_blk[3]}, {hi_blk[0], hi_blk[1]}, {hi_blk[2], hi_blk[3]}};
+#pragma unroll
+      for (int r = 0; r < 4; ++r) {
+        bf16 ah, al, bh, bl;
+        split_bf16(vals[r][0], ah, al);
+        split_bf16(vals[r][1], bh, bl);
+        pa[0][r] = pack_bf16(__bfloat162float(ah), __bfloat162float(bh));
+        if constexpr (PARTS == 2) pa[PARTS - 1][r] = pack_bf16(__bfloat162float(al), __bfloat162float(bl));
+      }
+#pragma unroll
+      for (int nb = 0; nb < 8; nb += 2) {
+        uint32_t b[PARTS][4];
+#pragma unroll
+        for (int part = 0; part < PARTS; ++part)
+          lfm::gemm::detail::ldmatrix_x4(shared_address(&Vt[part][(nb + (mi >> 1)) * 8 + mr][t * 16 + (mi & 1) * 8]),
+                                         b[part][0], b[part][1], b[part][2], b[part][3]);
+#pragma unroll
+        for (int u = 0; u < 2; ++u) {
+          mma_bf16(o[nb + u], pa[0], b[0][2 * u], b[0][2 * u + 1]);
+          if constexpr (PARTS == 2) {
+            mma_bf16(o[nb + u], pa[0], b[PARTS - 1][2 * u], b[PARTS - 1][2 * u + 1]);
+            mma_bf16(o[nb + u], pa[PARTS - 1], b[0][2 * u], b[0][2 * u + 1]);
+          }
+        }
+      }
+    }
+    __syncthreads();  // this stage is reloaded two tiles on
+  }
+#pragma unroll
+  for (int r = 0; r < 2; ++r) {
+    row_sum[r] = __fadd_rn(row_sum[r], __shfl_xor_sync(0xffffffffu, row_sum[r], 1));
+    row_sum[r] = __fadd_rn(row_sum[r], __shfl_xor_sync(0xffffffffu, row_sum[r], 2));
+  }
+#pragma unroll
+  for (int r = 0; r < 2; ++r) {
+    const int row = q0 + gid + r * 8;
+    if (row >= n) continue;
+    float* dst = out + (size_t(row) * heads + h) * 64;
+#pragma unroll
+    for (int nb = 0; nb < 8; ++nb) {
+      dst[nb * 8 + tig * 2] = __fdiv_rn(o[nb][r * 2], row_sum[r]);
+      dst[nb * 8 + tig * 2 + 1] = __fdiv_rn(o[nb][r * 2 + 1], row_sum[r]);
+    }
+  }
+}
 __global__ void add(float* x, const float* y, size_t n) {
   const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i < n) x[i] = __fadd_rn(x[i], y[i]);
@@ -239,7 +493,8 @@ class Encoder {
     check(P + "linear_2.weight", {kOut, kProjHidden}); check(P + "linear_2.bias", {kOut});
   }
 
-  Encoder(std::shared_ptr<lfm::Safetensors> weights, const lfm::Json& root) : weights_(std::move(weights)) {
+  Encoder(std::shared_ptr<lfm::Safetensors> weights, const lfm::Json& root, Precision precision = {})
+      : weights_(std::move(weights)), precision_(precision) {
     check_contract(root, [&](const std::string& name) -> std::optional<lfm::safetensors_header::Entry> {
       if (!weights_->has(name)) return std::nullopt;
       const auto& t = weights_->at(name);
@@ -267,7 +522,7 @@ class Encoder {
     f::check(cudaMemcpy(in.p, pixel_values, size_t(N) * kPatchDim * sizeof(float), cudaMemcpyHostToDevice), "pixels");
     const std::string V = "model.vision_tower.";
     auto& x = scratch(1, NW);
-    f::linear(in.p, w(V + "patchifier.weight"), nullptr, x.p, N, kWidth, kPatchDim);
+    mul(in.p, w(V + "patchifier.weight"), nullptr, x.p, N, kWidth, kPatchDim);
     if (dumps) dumps->patchifier = host(x.p, NW);
     f::rms_norm(x.p, w(V + "embedding_norm.weight"), x.p, nullptr, N, kWidth, eps_);
     if (dumps) dumps->embedding_norm = host(x.p, NW), dumps->layers.clear();
@@ -289,7 +544,8 @@ class Encoder {
           dumps->sin[t * 64 + k] = float(table[t * 32 + k % 32].y);
         }
     }
-    lfm::fp32::DeviceArray<double2> rope(table.size());
+    if (rope_.n < table.size()) rope_ = lfm::fp32::DeviceArray<double2>(table.size());
+    auto& rope = rope_;
     f::check(cudaMemcpy(rope.p, table.data(), table.size() * sizeof(double2), cudaMemcpyHostToDevice), "rotary");
     auto& n = scratch(2, NW);
     auto& proj = scratch(3, NW * 3);  // in_proj (3 x 1024), or q/k/v
@@ -302,30 +558,29 @@ class Encoder {
       const std::string p = layer(i);
       f::rms_norm(x.p, w(p + "operator_norm.weight"), n.p, nullptr, N, kWidth, eps_);
       if (!attention_[i]) {
-        f::linear(n.p, w(p + "conv.in_proj.weight"), nullptr, proj.p, N, 3 * kWidth, kWidth);
+        mul(n.p, w(p + "conv.in_proj.weight"), nullptr, proj.p, N, 3 * kWidth, kWidth);
         gate<<<f::blocks(NW), 256>>>(proj.p, mix.p, N, kWidth);
         spatial_conv<<<f::blocks(NW), 256>>>(mix.p, proj.p, w(p + "conv.spatial_conv.weight"), op.p, grid_h, grid_w,
                                              kWidth);
-        f::linear(op.p, w(p + "conv.out_proj.weight"), nullptr, mix.p, N, kWidth, kWidth);
+        mul(op.p, w(p + "conv.out_proj.weight"), nullptr, mix.p, N, kWidth, kWidth);
       } else {
         float *q = proj.p, *k = proj.p + NW, *v = proj.p + NW + size_t(N) * kv;
-        f::linear(n.p, w(p + "self_attn.q_proj.weight"), nullptr, q, N, kWidth, kWidth);
-        f::linear(n.p, w(p + "self_attn.k_proj.weight"), nullptr, k, N, kv, kWidth);
-        f::linear(n.p, w(p + "self_attn.v_proj.weight"), nullptr, v, N, kv, kWidth);
+        mul(n.p, w(p + "self_attn.q_proj.weight"), nullptr, q, N, kWidth, kWidth);
+        mul(n.p, w(p + "self_attn.k_proj.weight"), nullptr, k, N, kv, kWidth);
+        mul(n.p, w(p + "self_attn.v_proj.weight"), nullptr, v, N, kv, kWidth);
         f::rms_norm(q, w(p + "self_attn.q_layernorm.weight"), q, nullptr, N * kHeads, kHeadDim, eps_);
         f::rms_norm(k, w(p + "self_attn.k_layernorm.weight"), k, nullptr, N * kKvHeads, kHeadDim, eps_);
         axial_rotary<<<f::blocks(size_t(N) * kHeads * 32), 256>>>(q, rope.p, N, kHeads);
         axial_rotary<<<f::blocks(size_t(N) * kKvHeads * 32), 256>>>(k, rope.p, N, kKvHeads);
-        attention<<<dim3((N + kAttnQueries - 1) / kAttnQueries, kHeads), kAttnQueries>>>(
-            q, k, v, op.p, N, kHeads, kKvHeads, 0.125f);
-        f::linear(op.p, w(p + "self_attn.out_proj.weight"), nullptr, mix.p, N, kWidth, kWidth);
+        attend(q, k, v, op.p, N);
+        mul(op.p, w(p + "self_attn.out_proj.weight"), nullptr, mix.p, N, kWidth, kWidth);
       }
       add<<<f::blocks(NW), 256>>>(x.p, mix.p, NW);
       f::rms_norm(x.p, w(p + "ffn_norm.weight"), n.p, nullptr, N, kWidth, eps_);
-      f::linear(n.p, w(p + "feed_forward.w1.weight"), nullptr, ff_a.p, N, kMlp, kWidth);
-      f::linear(n.p, w(p + "feed_forward.w3.weight"), nullptr, ff_b.p, N, kMlp, kWidth);
+      mul(n.p, w(p + "feed_forward.w1.weight"), nullptr, ff_a.p, N, kMlp, kWidth);
+      mul(n.p, w(p + "feed_forward.w3.weight"), nullptr, ff_b.p, N, kMlp, kWidth);
       f::swiglu(ff_a.p, ff_b.p, size_t(N) * kMlp);
-      f::linear(ff_a.p, w(p + "feed_forward.w2.weight"), nullptr, mix.p, N, kWidth, kMlp);
+      mul(ff_a.p, w(p + "feed_forward.w2.weight"), nullptr, mix.p, N, kWidth, kMlp);
       add<<<f::blocks(NW), 256>>>(x.p, mix.p, NW);
       if (dumps) dumps->layers.push_back(host(x.p, NW));
     }
@@ -335,17 +590,16 @@ class Encoder {
                                                    kWidth, projector_eps_);
     if (dumps) dumps->proj_layer_norm = host(n.p, NW);
     auto& hid = scratch(5, size_t(T) * kProjHidden);
-    f::linear(n.p, w(P + "linear_1.weight"), w(P + "linear_1.bias"), hid.p, T, kProjHidden, kWidth * 4);
+    mul(n.p, w(P + "linear_1.weight"), w(P + "linear_1.bias"), hid.p, T, kProjHidden, kWidth * 4);
     if (dumps) dumps->proj_linear_1 = host(hid.p, size_t(T) * kProjHidden);
     gelu<<<f::blocks(size_t(T) * kProjHidden), 256>>>(hid.p, size_t(T) * kProjHidden);
     if (dumps) dumps->proj_gelu = host(hid.p, size_t(T) * kProjHidden);
     auto& feat = scratch(6, size_t(T) * kOut);
-    f::linear(hid.p, w(P + "linear_2.weight"), w(P + "linear_2.bias"), feat.p, T, kOut, kProjHidden);
+    mul(hid.p, w(P + "linear_2.weight"), w(P + "linear_2.bias"), feat.p, T, kOut, kProjHidden);
     if (dumps) dumps->proj_linear_2 = host(feat.p, size_t(T) * kOut);
     to_bf16<<<f::blocks(size_t(T) * kOut), 256>>>(feat.p, out, size_t(T) * kOut);
     f::check(cudaGetLastError(), "vision encoder launch");
     f::check(cudaDeviceSynchronize(), "vision encoder");
-    for (auto& b : scratch_) b = lfm::fp32::DeviceArray<float>();  // released after every image
     if (dumps) {
       std::vector<bf16> b(size_t(T) * kOut);
       f::check(cudaMemcpy(b.data(), out, b.size() * sizeof(bf16), cudaMemcpyDeviceToHost), "features");
@@ -361,8 +615,70 @@ class Encoder {
   float eps_ = 1e-5f, projector_eps_ = 1e-6f;
   double theta_ = 1e6;
   float inv_freq_[16] = {};
-  std::vector<lfm::fp32::DeviceArray<float>> scratch_ = std::vector<lfm::fp32::DeviceArray<float>>(8);
+  Precision precision_;
+  std::vector<lfm::fp32::DeviceArray<float>> scratch_ = std::vector<lfm::fp32::DeviceArray<float>>(9);
+  // scratch: kept between images (images-speed-v1 amendment 1), grown to the largest image seen
+  std::vector<lfm::fp32::DeviceArray<bf16>> scratch16_ = std::vector<lfm::fp32::DeviceArray<bf16>>(3);
+  std::map<const bf16*, lfm::fp32::DeviceArray<bf16>> doubled_;
+  lfm::fp32::DeviceArray<double2> rope_;
 
+  // y [rows][out] = x [rows][in] · Wᵀ (+ bias): the CUDA cores (kFp32), or lfm::gemm on the tensor cores with the
+  // activations as one BF16 part (kX1) or two (kX2: [hi | lo] against [W | W], one GEMM over K = 2 in), FP32 out.
+  void mul(const float* x, const bf16* W, const bf16* bias, float* y, int rows, int out, int in) {
+    namespace f = lfm::fp32;
+    if (precision_.linear == Precision::kFp32) {
+      f::linear(x, W, bias, y, rows, out, in);
+      return;
+    }
+    const int parts = precision_.linear == Precision::kX2 ? 2 : 1;
+    const size_t a = size_t(rows) * parts * in, c = size_t(rows) * out;
+    if (scratch16_[0].n < a) scratch16_[0] = f::DeviceArray<bf16>(a);
+    kernels::split_rows<<<f::blocks(size_t(rows) * in), 256>>>(x, scratch16_[0].p, rows, in, parts);
+    float* target = bias ? scratch(8, c).p : y;
+    lfm::gemm::Problem p = lfm::gemm::linear(scratch16_[0].p, parts == 2 ? doubled(W, out, in) : W, nullptr, rows,
+                                             parts * in, out);
+    p.c = nullptr, p.c_f32 = target;
+    lfm::gemm::run(p);
+    if (bias) kernels::add_bias<<<f::blocks(c), 256>>>(target, bias, c, out, y);
+  }
+  // [W | W] for the split multiply, built on first use and kept
+  const bf16* doubled(const bf16* W, int rows, int in) {
+    auto it = doubled_.find(W);
+    if (it == doubled_.end()) {
+      it = doubled_.emplace(W, lfm::fp32::DeviceArray<bf16>(size_t(rows) * 2 * in)).first;
+      kernels::double_rows<<<lfm::fp32::blocks(size_t(rows) * in), 256>>>(W, it->second.p, rows, in);
+    }
+    return it->second.p;
+  }
+  // Bidirectional attention over the image's n tokens (scale 1/8): the CUDA-core kernel, or K and V split once into
+  // the tensor-core kernel's tile layouts, then the kernel.
+  void attend(const float* q, const float* k, const float* v, float* out, int n) {
+    using namespace kernels;
+    namespace f = lfm::fp32;
+    if (precision_.attention == Precision::kFp32) {
+      attention<<<dim3((n + kAttnQueries - 1) / kAttnQueries, kHeads), kAttnQueries>>>(q, k, v, out, n, kHeads,
+                                                                                        kKvHeads, 0.125f);
+      return;
+    }
+    const int parts = precision_.attention == Precision::kX2 ? 2 : 1, npad = (n + kTcKeys - 1) / kTcKeys * kTcKeys;
+    const size_t each = size_t(kKvHeads) * npad * parts * 64;
+    for (int i : {1, 2})
+      if (scratch16_[i].n < each) scratch16_[i] = f::DeviceArray<bf16>(each);
+    split_kv<<<dim3(npad / 64, kKvHeads), 256>>>(k, v, scratch16_[1].p, scratch16_[2].p, n, npad, kKvHeads, parts);
+    const dim3 grid((n + kTcQueries - 1) / kTcQueries, kHeads);
+    static const bool configured =
+        cudaFuncSetAttribute(attention_tc<2>, cudaFuncAttributeMaxDynamicSharedMemorySize, tc_shared_bytes<2>()) ==
+            cudaSuccess &&
+        cudaFuncSetAttribute(attention_tc<1>, cudaFuncAttributeMaxDynamicSharedMemorySize, tc_shared_bytes<1>()) ==
+            cudaSuccess;
+    if (!configured) throw std::runtime_error("vision attention: cannot configure shared memory");
+    if (parts == 2)
+      attention_tc<2><<<grid, 32 * kTcWarps, tc_shared_bytes<2>()>>>(q, scratch16_[1].p, scratch16_[2].p, out, n, npad,
+                                                                     kHeads, kKvHeads, 0.125f);
+    else
+      attention_tc<1><<<grid, 32 * kTcWarps, tc_shared_bytes<1>()>>>(q, scratch16_[1].p, scratch16_[2].p, out, n, npad,
+                                                                     kHeads, kKvHeads, 0.125f);
+  }
   static std::string layer(int i) { return "model.vision_tower.layers." + std::to_string(i) + "."; }
   const bf16* w(const std::string& name) const { return weights_->at(name).device_data; }
   lfm::fp32::DeviceArray<float>& scratch(int slot, size_t n) {
