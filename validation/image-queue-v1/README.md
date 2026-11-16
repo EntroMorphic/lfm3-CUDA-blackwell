@@ -50,3 +50,13 @@ Out of scope: the decoders themselves (bit-identical to HF; images-v1 rule 1), a
   with their prompts' lengths as when sent alone, a two-image request's order kept under concurrency, deadlines while
   waiting 504 never 429, text's 429 kept while images decode. All HTTP host suites: 356 passed, 2 skipped (72 of the
   image file's own). Rules 1-5 on Thor follow; rule 0 runs on the server built before this change (`vimg-srv-a3`).
+
+## Rule 1 results (2026-11-16): **FAIL as written** (the rule was mis-specified); its intent met (`rule1/`)
+`check_lfm3_image_server.py` on `vimg-srv-q1` (quiet session 1, step 6): every reply identical to `lfm3-speech`'s,
+streamed, unstreamed and with the 11 sent at once; but 4 of the 11 simultaneous requests met 429s first (retried by
+the tool). Their code (`q429` probe, the same 11 at once, no retries): **`queue_full`**, not `frontend_busy`: at the
+server's default `--queue-size 4` the engine admits one request at a time and an image prefill takes about a second,
+so 11 arrivals overflow 4 waiting places, as 11 text requests would. My rule asked for no 429 at all without fixing
+the queue size, and named the queue's refusal 503 where it is 429 `queue_full`: both errors mine, recorded.
+What the rule meant (no refusal by the front end): the same probe at `--queue-size 16`: **11 of 11 served, no 429**
+on the new server; **6 of 11** on the server before the change (`vimg-srv-a3`), five refused `frontend_busy`.

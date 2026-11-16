@@ -152,3 +152,10 @@ red-team's build (`vspeed-a5`, identical device code) passed memcheck, initcheck
 lfm3-speech's regression 36 of 36, audio-in replies 360 of 360 and 93 of 93, e2e 90 of 90 and split 90 of 90
 identical, on `vimg-a4` and again on `vimg-a5`. The server checks run on a quiet machine
 (`tools/thor/quiet_session_v1.sh` step 5, `vimg-a5` with server `vimg-srv-a3`).
+
+## Rule 6 results (2026-11-16): **PASS**; images-speed-v1 is closed (`rule6-server/records.tar.gz`)
+`tools/thor/quiet_session_v1.sh` step 5 (`E2E_ROUND=vimg-e2e-a4 vision_rule6_server.sh vimg-a5 vimg-srv-a3`, quiet,
+MAXN): speech regression 36 of 36 identical; concurrent engine exactness PASS (41 of 41 against the reference);
+batch server, streaming, audio in through the server, TTS through the server: PASS; the text gate exit 0; images
+through the server identical to `lfm3-speech`'s, streamed, unstreamed and concurrent: PASS. With rules 1-5, every rule
+of this round passes (rule 2 in two rounds of three, the third recorded).
