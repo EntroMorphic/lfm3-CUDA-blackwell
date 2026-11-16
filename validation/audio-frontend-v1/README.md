@@ -382,7 +382,18 @@ rule 1 passes; until then, today's DFT.
 
 Rules 3 (stall), 5 (sanitizers), 6 (nothing else changes) and 7 (red-team) of the original stand.
 
-## Amendment 2, rule 1 on x86 (2026-11-16, workstation): **PASS**; Thor (aarch64) after the quiet window
+## Amendment 2, rule 1 on Thor (aarch64, 2026-11-16): **PASS**; rule 1 passes on both platforms
+`audio-mel-a2` (audio-mel-check and audio-mel-audit, both compiled as the engine compiles `log_mel`; `long double` is
+IEEE quad on aarch64), in lfm3-profile-v1 for the engine's libm, 8 workers. Binaries in `amendment2/thor/binaries.sha256`,
+records in `amendment2/thor/`:
+- F2 and F1 on the 40 dumped clips, the 12 edge clips and the 2,620: every float equals the reference's rounding,
+  none undecided;
+- quad recomputes: the same counts as x86 (F2 2 / 0 / 154; F1 43,477 / 1,734 / 2,325,008);
+- the changed floats are x86's exactly: the same 29 (clip, mel, frame, old float, new float) in the 2,620, and the
+  same 2 in the 40;
+- F2 at 4 threads and F1 at 4 threads equal F2 at 1 thread on all 2,620.
+
+## Amendment 2, rule 1 on x86 (2026-11-16, workstation): **PASS**
 The code is `Transform::kExactF1` / `kExactF2` in `lfm/audio_features.hpp`. The default is still today's DFT, until
 rule 1 passes on Thor too.
 

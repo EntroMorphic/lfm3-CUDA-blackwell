@@ -11,7 +11,7 @@ set -uo pipefail
 T=${1:?SPEECH_TAG}; O=${2:?OUT_TAG}; shift 2
 W=${LFM3_WORKSPACE:?set LFM3_WORKSPACE}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
 SAN=$C/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer
-EXEC="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
+EXEC="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia ${LFM3_AUDIO_FEATURES:+-e LFM3_AUDIO_FEATURES=$LFM3_AUDIO_FEATURES} lfm3-profile-v1"  # the front end: LFM3_AUDIO_FEATURES passed through
 M=/workspace/models/LFM3-Omni-2B; TOOLS=${*:-memcheck initcheck synccheck racecheck}
 mkdir -p $B/$O/req && cd $B/$O
 sha256sum $B/$T/lfm3-speech > binary.sha256

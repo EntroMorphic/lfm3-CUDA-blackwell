@@ -13,7 +13,7 @@ T=${1:?SPEECH_TAG}; O=${2:?OUT_TAG}; LATEST=${3:-14:00}
 W=${LFM3_WORKSPACE:?set LFM3_WORKSPACE}; B=$W/liquid-CUDA/build; E=/workspace/liquid-CUDA/build
 TOOLS=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 BIN=$E/$T/lfm3-speech; M=/workspace/models/LFM3-Omni-2B; C=$E/$O
-EXEC="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
+EXEC="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia ${LFM3_AUDIO_FEATURES:+-e LFM3_AUDIO_FEATURES=$LFM3_AUDIO_FEATURES} lfm3-profile-v1"  # the front end: LFM3_AUDIO_FEATURES passed through
 mkdir -p $B/$O && cd $B/$O
 sha256sum $B/$T/lfm3-speech > binary.sha256
 late() { [ "$(date +%H:%M)" \> "$LATEST" ] && { echo "SKIPPED $1: past $LATEST"; return 0; }; return 1; }
