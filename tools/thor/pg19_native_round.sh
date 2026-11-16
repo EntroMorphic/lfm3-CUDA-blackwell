@@ -7,7 +7,7 @@
 #    with a meta.json binding it to those windows. build/TAG/memory.log: host memory around each run.
 set -uo pipefail
 tag=$1; scorer=$2; hf=$3; model=$4; lengths=$5
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
 O=$B/$tag; test ! -e $O || { echo "exists $tag"; exit 1; }; mkdir -p $O
 EX="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 fail(){ echo "FAIL: $1"; exit 1; }

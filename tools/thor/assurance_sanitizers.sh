@@ -6,7 +6,7 @@
 # depend on timing). FP32=0 skips the fp32-linear-check part. Memory: lfm3-profile-v1 is limited to 48 GiB; racecheck
 # with 4 rows takes ~30 GB and one at a time ~20 GB, so the two racecheck runs cannot share the container.
 set -uo pipefail
-R=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA
+R=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA
 T=${T:-speed-a4}; SUF=$([ $T = speed-a4 ] && echo "" || echo "-$T")
 B=$R/build/assure/san$SUF; C=/workspace/liquid-CUDA/build/assure/san$SUF; E=/workspace/liquid-CUDA/build
 BIN=$E/$T/lfm3-speech; M=/workspace/models/LFM3-Omni-2B

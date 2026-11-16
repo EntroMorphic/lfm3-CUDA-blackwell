@@ -6,7 +6,7 @@
 # Usage (Thor host): run_ppl.sh OUT_NAME [SCORER_DIR_NAME]
 set -uo pipefail
 name=$1; scorer_dir=${2:-score-v1}
-B=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build; out="$B/$name"; C="/workspace/liquid-CUDA/build/$name"
+B=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA/build; out="$B/$name"; C="/workspace/liquid-CUDA/build/$name"
 scorer="$B/$scorer_dir/lfm3-score"
 status(){ printf '{"stage":"%s","rc":%s,"unix":%s}\n' "$1" "$2" "$(date +%s)" > "$out.status.json"; }
 test ! -e "$out" || { echo "exists: $out"; exit 1; }

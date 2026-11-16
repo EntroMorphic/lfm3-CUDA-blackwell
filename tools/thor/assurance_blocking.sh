@@ -3,7 +3,7 @@
 # normal and with CUDA_LAUNCH_BLOCKING=1, on lfm3-speech TAG.
 set -uo pipefail
 T=${1:?TAG}
-R=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA; B=$R/build; E=/workspace/liquid-CUDA/build
+R=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA; B=$R/build; E=/workspace/liquid-CUDA/build
 O=$B/assure/blocking-$T; C=$E/assure/blocking-$T; M=/workspace/models/LFM3-Omni-2B
 rm -rf $O && mkdir -p $O/normal $O/blocking && cd $O
 sha256sum $B/$T/lfm3-speech > binary.sha256

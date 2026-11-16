@@ -6,7 +6,7 @@
 #   e.g. g4_native_evidence.sh cmake-g4-default-v6 cmake-g4-native-v6 spread-v2 g4-evidence-v1
 set -uo pipefail
 default=$1; native=$2; spread=$3; tag=$4
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
 for o in $tag-decode-rate $tag-http-batch; do test ! -e $B/$o || { echo "exists $o"; exit 1; }; done
 EX="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia"
 CK=/workspace/models/LFM3-Omni-2B

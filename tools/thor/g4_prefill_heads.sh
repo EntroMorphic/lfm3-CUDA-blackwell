@@ -8,7 +8,7 @@
 # Usage: g4_prefill_heads.sh TAG
 set -uo pipefail
 tag=$1
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
 IMG=sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f
 O=$B/$tag; test ! -e $O && test ! -e $B/$tag-build || { echo "exists $tag"; exit 1; }; mkdir -p $O
 echo "== sources"; (cd $R && sha256sum native/src/lfm3_main.cu native/include/lfm/gemm.cuh tools/thor/g4_prefill_heads.sh) | sed 's/^/  /'

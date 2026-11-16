@@ -5,7 +5,7 @@
 # Needs the validated runs in build/: speech-chunk-native-v1, speech-split-native-v3/requests, speech-e2e-v1, speech-v1.
 set -uo pipefail
 T=${1:?BUILD_TAG}
-B=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
+B=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
 X="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1 $C/$T/lfm3-speech $M"
 O=$B/$T-check; rm -rf $O; mkdir -p $O/req
 same() { for x in $3; do cmp -s $B/$1.$x $O/$2.$x && echo "SAME   $2.$x" || echo "DIFFER $2.$x"; done; }

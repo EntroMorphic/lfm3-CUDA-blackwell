@@ -5,7 +5,7 @@
 # Usage: g4_tier2b.sh ANCHOR_DIR_NAME OUT_JSON
 set -u
 name=$1; report=$2
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
 test ! -e $B/$name || { echo "exists $name"; exit 1; }
 avail(){ awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo; }
 echo "== sources"; (cd $R && git rev-parse HEAD 2>/dev/null; sha256sum tools/ppl_reference.py tools/ppl_fidelity.py tools/ppl_compare.py tools/thor/g4_tier2b.sh) | sed 's/^/  /'

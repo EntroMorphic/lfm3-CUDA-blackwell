@@ -21,7 +21,7 @@ case "${TIERS:-}" in "") tier_args=(); context_tier=(); metrics=() ;;
     tier_args=(--native-tiers --$TIERS "$PIN_DIR/forward.json"); context_tier=(--native-tiers --$TIERS "$PIN_DIR/context.json")
     metrics=(-e LFM_ALLOCATION_METRICS=1) ;;
   *) echo "TIERS must be pin or golden"; exit 2 ;; esac
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=${LFM3_BUILD_ROOT:-$W/liquid-CUDA/build}; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B=${LFM3_BUILD_ROOT:-$W/liquid-CUDA/build}; C=/workspace/liquid-CUDA/build
 # Engine kind, failing closed: native = no binary needs libcublas AND lfm::gemm is compiled in; cuBLAS = all need
 # libcublas. A native-GEMM build cannot pass the eager-bitwise forward/context gates: it needs TIERS.
 command -v readelf >/dev/null && command -v nm >/dev/null || { echo "readelf and nm are required"; exit 2; }

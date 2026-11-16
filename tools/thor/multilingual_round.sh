@@ -13,7 +13,7 @@
 # FLEURS must already be at data/fleurs/CONFIG/{test.tsv,audio/test/*.wav} (rule 0; downloaded only with Tripp's OK).
 set -uo pipefail
 tag=$1; st=$2; sv=$3; shift 3; phases="$*"
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; E=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; R=$W/liquid-CUDA; B=$R/build; E=/workspace/liquid-CUDA/build
 O=$B/ml-$tag; C=$E/ml-$tag; M=/workspace/models/LFM3-Omni-2B; T=/workspace/liquid-CUDA/tools
 F=/workspace/data/fleurs; WH=/workspace/models/whisper-large-v3
 EXN="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"

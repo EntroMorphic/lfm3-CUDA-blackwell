@@ -20,7 +20,7 @@ import subprocess
 import sys
 import time
 
-HOST = os.environ.get('THOR_HOST', 'ztflynn@10.64.24.32')
+HOST = os.environ.get('THOR_HOST', '')  # user@host of the target machine (ssh, key-based); required for remote operations
 REPO = Path(__file__).resolve().parents[1]
 REMOTE_REPO = os.environ.get('THOR_REPO', str(REPO))  # same absolute path on Thor
 CONTAINER = os.environ.get('THOR_CONTAINER', 'lfm3-profile-v1')
@@ -35,10 +35,17 @@ class Verification(Exception):
     pass
 
 
+def host():
+    """THOR_HOST, required: this tool never guesses which machine to run on."""
+    if not HOST:
+        raise Unreachable('set THOR_HOST to the target machine (user@host) for remote operations')
+    return HOST
+
+
 def remote(command, timeout=60):
     """Run a shell command on Thor; raise instead of returning partial or empty output."""
     try:
-        r = subprocess.run(SSH + [HOST, command], capture_output=True, text=True, timeout=timeout)
+        r = subprocess.run(SSH + [host(), command], capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
         raise Unreachable(f'remote command timed out after {timeout}s: {command[:120]}') from e
     if r.returncode == 255:
@@ -78,7 +85,7 @@ def sync(paths, timeout=120):
     remote('mkdir -p ' + ' '.join(sorted({shlex.quote(str(Path(d).parent)) for d in dests})))
     for src, dst in zip(local, dests):
         try:
-            r = subprocess.run(['scp', '-q', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', str(src), f'{HOST}:{dst}'],
+            r = subprocess.run(['scp', '-q', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', str(src), f'{host()}:{dst}'],
                                capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired as e:
             raise Unreachable(f'scp timed out after {timeout}s: {src}') from e

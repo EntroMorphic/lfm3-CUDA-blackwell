@@ -9,7 +9,7 @@
 # Usage: redteam_g6_runtime.sh BUILD_DIR_NAME SCORER_DIR_NAME OUT_NAME PPL_DIR_NAME
 set -uo pipefail
 build=$1; scorer_dir=$2; name=$3; ppl=$4
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B="$W/liquid-CUDA/build"; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B="$W/liquid-CUDA/build"; C=/workspace/liquid-CUDA/build
 out="$B/$name"; test ! -e "$out" || { echo "exists: $out"; exit 1; }; mkdir "$out"
 EX=(docker exec lfm3-profile-v1); BIN="$C/$build/liquid-lfm3"; SCORER="$C/$scorer_dir/lfm3-score"; M="$W/models/LFM3-Omni-2B"
 fail=0

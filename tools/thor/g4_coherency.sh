@@ -4,7 +4,7 @@
 # Usage: g4_coherency.sh TAG NAME:BUILD [NAME:BUILD ...]   e.g. g4_coherency.sh g4-coh-v1 native:g4-rt3-default cublas:g4-final-v2-cublas
 set -uo pipefail
 tag=$1; shift
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
 O=$B/$tag; test ! -e $O || { echo "exists $tag"; exit 1; }; mkdir -p $O
 EX="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 PY="$EX /opt/venv/bin/python3 -I /workspace/liquid-CUDA/tools/lfm3_coherency.py"

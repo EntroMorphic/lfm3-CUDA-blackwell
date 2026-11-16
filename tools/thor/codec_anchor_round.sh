@@ -3,7 +3,7 @@
 # Usage: codec_anchor_round.sh TAG TRACE_TAG   (TRACE_TAG: a tts_trace_round.sh output under build/)
 set -uo pipefail
 tag=$1; trace=$2
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; O=$W/liquid-CUDA/build/$tag; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; O=$W/liquid-CUDA/build/$tag; C=/workspace/liquid-CUDA/build
 test ! -e $O || { echo "exists $tag"; exit 1; }
 EX="docker exec -e TRITON_PTXAS_PATH=/workspace/tools/ptxas -e TRITON_PTXAS_BLACKWELL_PATH=/workspace/tools/ptxas lfm3-omni-dev /opt/venv/bin/python3"
 echo "== sources"; (cd $W/liquid-CUDA && sha256sum tools/lfm3_codec_anchor.py tools/thor/codec_anchor_round.sh) | sed 's/^/  /'

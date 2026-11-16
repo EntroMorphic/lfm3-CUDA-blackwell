@@ -5,7 +5,7 @@
 # Writes build/TAG/{onepass,chunked}/ (ppl_reference.py outputs) and build/TAG/memory.log (host memory around each run).
 set -uo pipefail
 tag=$1; model=$2; cls=$3; onepass=$4; chunked=$5; chunk=$6
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
 O=$B/$tag; test ! -e $O || { echo "exists $tag"; exit 1; }; mkdir -p $O
 PY="docker exec -e TRITON_PTXAS_PATH=/workspace/tools/ptxas -e TRITON_PTXAS_BLACKWELL_PATH=/workspace/tools/ptxas lfm3-omni-dev /opt/venv/bin/python3"
 mem(){ awk -v t="$1" '/MemTotal/{T=$2}/MemFree/{F=$2}/MemAvailable/{A=$2}/^Cached/{K=$2}/Buffers/{U=$2}

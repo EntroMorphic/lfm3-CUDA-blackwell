@@ -5,7 +5,7 @@
 #  - against the anchor as declared (FP32 SDPA, three lengths), for both engines (robust-ppl-g4-v{3,2}.json).
 # CPU only (reads NLL files). Usage: g4_tier2b_diagnostics.sh OUTDIR
 set -uo pipefail
-out=$1; R=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA; B=$R/build
+out=$1; R=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA; B=$R/build
 mkdir -p "$out"
 echo "== sources"; (cd $R && git rev-parse HEAD 2>/dev/null; sha256sum tools/ppl_fidelity.py tools/ppl_compare.py tools/thor/g4_tier2b_diagnostics.sh) | sed 's/^/  /'
 F="python3 $R/tools/ppl_fidelity.py --references $B/ppl-v5 --engine native-gemm"

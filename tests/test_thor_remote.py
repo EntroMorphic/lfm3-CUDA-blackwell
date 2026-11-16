@@ -60,7 +60,15 @@ def test_remote_hash_parse_requires_every_path(monkeypatch):
     assert tr.remote_sha256(['/p/one']) == {'/p/one': 'abc'}
 
 
+def test_remote_needs_thor_host(monkeypatch):
+    monkeypatch.setattr(tr, 'HOST', '')
+    monkeypatch.setattr(tr.subprocess, 'run', lambda *a, **k: pytest.fail('ssh ran without a host'))
+    with pytest.raises(tr.Unreachable, match='THOR_HOST'):
+        tr.remote('true')
+
+
 def test_remote_timeout_and_ssh_failure_raise(monkeypatch):
+    monkeypatch.setattr(tr, 'HOST', 'user@thor.example')
     def timeout(*a, **k):
         raise subprocess.TimeoutExpired(cmd='ssh', timeout=1)
     monkeypatch.setattr(tr.subprocess, 'run', timeout)

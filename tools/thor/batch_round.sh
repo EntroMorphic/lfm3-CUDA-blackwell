@@ -6,7 +6,7 @@
 # selection vs the host sampler; 5 GEMM bench and tile sweep; 6 coherency texts (decoded with the HF tokenizer).
 set -uo pipefail
 tag=$1; tools=$2
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
 O=$B/$tag; test ! -e $O || { echo "exists $tag"; exit 1; }; mkdir -p $O
 T=$C/$tools; M=/workspace/models/LFM3-Omni-2B
 EX="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"

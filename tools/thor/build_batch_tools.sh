@@ -3,7 +3,7 @@
 # Usage (Thor host): build_batch_tools.sh OUT_TAG   -> build/OUT_TAG/{lfm3-batch,lfm3-batch-teacher,lfm3-gpu-select-check,
 #                                                    decode-gemm-bench,tile-sweep} and sources.sha256
 set -euo pipefail
-tag=$1; W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; C=/workspace/liquid-CUDA/build/$tag
+tag=$1; W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; C=/workspace/liquid-CUDA/build/$tag
 IMG=sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f
 mkdir -p $W/liquid-CUDA/build/$tag
 docker run --rm --network none -v $W:/workspace $IMG bash -c "set -e; cd $C; N=/workspace/liquid-CUDA/native

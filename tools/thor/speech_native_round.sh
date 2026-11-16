@@ -4,7 +4,7 @@
 #   CHUNKED=1: long-form TTS by sentences (tools/lfm3_speech_chunked_hf.py requests; LFM3_SPLIT_RULE/CAP pass through)
 set -uo pipefail
 tag=$1; tools=$2; prompts=$3
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
 O=$B/$tag; test ! -e $O || { echo "exists $tag"; exit 1; }; mkdir -p $O/native
 EXN="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 PY="docker exec -e LFM3_SPLIT_RULE -e LFM3_SPLIT_CAP lfm3-omni-dev /opt/venv/bin/python3"  # split rule (chunked tool)

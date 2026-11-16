@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # audio-assurance-v1 rules 7-9: the engine in the tree against the builds fidelity was measured on.
 set -uo pipefail
-R=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA; B=$R/build; E=/workspace/liquid-CUDA/build
+R=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA; B=$R/build; E=/workspace/liquid-CUDA/build
 O=$B/assure/rerun; C=$E/assure/rerun; M=/workspace/models/LFM3-Omni-2B
 BIN=$E/speed-a4/lfm3-speech
 EXEC="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"

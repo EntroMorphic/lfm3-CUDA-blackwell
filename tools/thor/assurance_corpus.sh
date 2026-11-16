@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # audio-assurance-v1 rules 2 and 3: all of LibriSpeech test-clean through lfm3-speech speed-a4, alone then 8 rows staggered.
 set -uo pipefail
-R=/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA
+R=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/liquid-CUDA
 B=$R/build/assure; C=/workspace/liquid-CUDA/build/assure; A2=/workspace/liquid-CUDA/build/audioin-v2
 BIN=/workspace/liquid-CUDA/build/speed-a4/lfm3-speech
 mkdir -p $B && cd $B

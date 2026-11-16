@@ -6,7 +6,7 @@
 # Usage: textwait_rerun.sh TAG (the server build, e.g. twa-2)   Writes build/textwait/TAG/*.
 set -uo pipefail
 TAG=${1:?TAG}
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
 M=/workspace/models/LFM3-Omni-2B; L=/workspace/data/librispeech/wav
 X="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 O=$B/textwait/$TAG; CO=$C/textwait/$TAG; mkdir -p $O && cd $O

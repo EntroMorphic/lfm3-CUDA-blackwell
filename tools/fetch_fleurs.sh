@@ -3,7 +3,7 @@
 # internet), then copied to Thor. Run only with Tripp's OK (7.74 GB of audio, 8 MB of transcripts; CC-BY-4.0).
 # Writes data/fleurs/CONFIG/{test.tsv, audio/test.tar.gz, audio/test/*.wav} and data/fleurs/sha256.txt (every
 # downloaded file, recorded before extraction). --tsv-only fetches the transcripts alone (enough for rules 0-3, 5-9).
-# Usage: fetch_fleurs.sh [--tsv-only]   then: rsync -a data/fleurs/ ztflynn@10.64.24.32:Projects/000-research/lfm3-omni-2B/data/fleurs/
+# Usage: fetch_fleurs.sh [--tsv-only]   then: rsync -a data/fleurs/ "$THOR_HOST:<workspace>/data/fleurs/"
 set -euo pipefail
 W=$(cd "$(dirname "$0")/../.." && pwd); D=$W/data/fleurs; mkdir -p "$D"
 URL=https://huggingface.co/datasets/google/fleurs/resolve/main/data

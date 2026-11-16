@@ -4,7 +4,7 @@
 # Usage: assurance_server.sh A S [PHASES]   PHASES: any of "engine server fuzz soak" (default all)
 set -uo pipefail
 A=${1:?A}; S=${2:?S}; PHASES=${3:-engine server fuzz soak}
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
 X="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 L=/workspace/data/librispeech/wav
 O=$B/assure/final; CO=$C/assure/final; mkdir -p $O && cd $O

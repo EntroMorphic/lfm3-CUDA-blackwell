@@ -5,7 +5,7 @@
 # libjpeg-turbo 3.2.0 built on Thor (build/images-v1/decode-aarch64/ljt; the image's g++ is the host's, 13.3.0).
 # Usage (Thor host): build_speech.sh OUT_TAG   -> build/OUT_TAG/{lfm3-speech, sources.sha256, build-lfm3-speech.log}
 set -euo pipefail
-tag=$1; W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; C=/workspace/liquid-CUDA/build/$tag
+tag=$1; W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; C=/workspace/liquid-CUDA/build/$tag
 IMG=sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f
 test -f $W/liquid-CUDA/build/images-v1/decode-aarch64/ljt/lib/libjpeg.a || { echo "no libjpeg-turbo build (tools/build_image_decode_check.sh build/images-v1/decode-aarch64)"; exit 1; }
 mkdir -p $W/liquid-CUDA/build/$tag

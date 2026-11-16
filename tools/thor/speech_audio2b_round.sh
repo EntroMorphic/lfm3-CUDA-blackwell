@@ -3,7 +3,7 @@
 # Usage (Thor host): speech_audio2b_round.sh TAG PROMPTS_JSON ARM   (PROMPTS_JSON: a path under the repo; ARM: eval|card)
 set -uo pipefail
 tag=$1; prompts=$2; arm=$3
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build
 O=$B/$tag; mkdir -p $O
 PY="docker exec -e TRITON_PTXAS_PATH=/workspace/tools/ptxas -e TRITON_PTXAS_BLACKWELL_PATH=/workspace/tools/ptxas lfm3-omni-dev /opt/venv/bin/python3"
 fail(){ echo "FAIL: $1"; exit 1; }

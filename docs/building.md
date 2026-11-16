@@ -53,3 +53,25 @@ PYTHONPATH=tests python3 -m pytest tests audit/test_host_contracts.py -q
 References come from Hugging Face Transformers 5.20.2 with PyTorch 2.10 and torchvision 0.25, in pinned containers
 and virtual environments on Thor (GPU references) and on an x86 workstation (CPU references). Each validation round
 records the exact versions it used.
+
+## Machine layout
+
+The job scripts in `tools/thor/` assume one directory (the *workspace*) that holds this repository next to the model
+checkpoints and datasets, and that the containers mount it at `/workspace`:
+
+```
+<workspace>/
+├── liquid-CUDA/          this repository (build outputs in liquid-CUDA/build/, not committed)
+├── models/LFM3-Omni-2B/  the checkpoint
+└── data/                 benchmark and evaluation data, fetched by the tools
+```
+
+| Variable | Default | Used by |
+|---|---|---|
+| `LFM3_WORKSPACE` | the directory above this repository (derived from each script's own location) | `tools/thor/*.sh` |
+| `THOR_HOST` | none — required | `tools/thor_remote.py` (workstation-side remote jobs, `user@host`) |
+| `THOR_REPO` | this repository's absolute path | `tools/thor_remote.py` (the repository's path on the target) |
+| `THOR_CONTAINER` | `lfm3-profile-v1` | `tools/thor_remote.py` (the runtime container) |
+
+The runtime container runs the binaries with the pinned CUDA libraries first on `LD_LIBRARY_PATH`
+(`/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia`).

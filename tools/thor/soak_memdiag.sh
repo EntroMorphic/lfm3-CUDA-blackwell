@@ -3,7 +3,7 @@
 # which part of the host's memory in use grows. Usage: soak_memdiag.sh TAG OUTNAME   Writes build/textwait/OUTNAME/*.
 set -uo pipefail
 TAG=${1:?TAG}; NAME=${2:?OUTNAME}
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build
 M=/workspace/models/LFM3-Omni-2B; L=/workspace/data/librispeech/wav
 X="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 O=$B/textwait/$NAME; CO=$C/textwait/$NAME; mkdir -p $O && cd $O

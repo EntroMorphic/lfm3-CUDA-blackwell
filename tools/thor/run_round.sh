@@ -12,7 +12,7 @@
 # log under another name cannot trip the check and nothing the round writes is missed).
 set -uo pipefail
 R=${1:-}; [[ "$R" =~ ^[0-9]+$ ]] || { echo "usage: run_round.sh ROUND_NUMBER"; exit 2; }
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; B=$W/liquid-CUDA/build; T=$W/liquid-CUDA/tools
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; B=$W/liquid-CUDA/build; T=$W/liquid-CUDA/tools
 IMG=sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f
 st="$B/round-v$R.status.json"
 status(){ printf '{"round":%s,"stage":"%s","rc":%s,"unix":%s}\n' "$R" "$1" "$2" "$(date +%s)" > "$st"; }

@@ -5,7 +5,7 @@
 # Usage: tts_trace_round.sh TAG
 set -uo pipefail
 tag=$1
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; O=$W/liquid-CUDA/build/$tag; C=/workspace/liquid-CUDA/build/$tag
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; O=$W/liquid-CUDA/build/$tag; C=/workspace/liquid-CUDA/build/$tag
 test ! -e $O || { echo "exists $tag"; exit 1; }; mkdir -p $O
 # The model's causal conv is a Triton kernel; Triton's bundled ptxas does not know sm_110a, so point it at Thor's
 # (copied to tools/ptxas by run-minimal-thor.sh, as resume-tests-thor.sh does).
