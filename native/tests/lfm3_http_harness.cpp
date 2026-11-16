@@ -8,6 +8,7 @@
 //                     [--speech-rows N (default 2; 0: one /speech at a time through op "speech")] [--fail-op OP] [--fail-after N] [--port N] [--request-timeout S] [--socket-timeout S]
 //                     [--session-idle-timeout S] [--total-capacity N] [--max-sessions N] [--queue-size N]
 //                     [--handlers N] [--text-slice N] [--trace-ops FILE (each engine call's op, one per line)]
+//                     [--audio-features ahead|engine] [--feature-cache-log FILE (the feature cache's size at each audio request)]
 // Token from LFM3_SERVER_TOKEN. Prints {"ready":true,"port":N}. SIGTERM exits like liquid-lfm3-server.
 #include <lfm/lfm3_http.hpp>
 #include <lfm/speech_run.hpp>
@@ -90,6 +91,8 @@ class FakeEngine final : public lfm::http::Backend {
             throw std::runtime_error("harness: a clip's features computed ahead differ from log_mel");
         }
       }
+      // --feature-cache-log: the cache's entries as the engine takes an audio request (eviction tests)
+      if (cache_log_) cache_log_ << "entries " << lfm::audio_features::shared_feature_cache().size() << "\n" << std::flush;
       lfm3_speech::check_audio_spans(prompts[0], clip_tokens);
     } else {
       for (const auto& p : prompts) lfm3_speech::check_audio_spans(p, {});
@@ -396,6 +399,7 @@ class FakeEngine final : public lfm::http::Backend {
   std::vector<FakeRow> rows_;  // --speech-rows
   int admitted_ = 0, max_busy_ = 0;
   std::ofstream trace_;  // --trace-ops FILE
+  std::ofstream cache_log_;  // --feature-cache-log FILE (validation/audio-frontend-v1)
   bool image_input_ = true;  // --image-input: WorkerCore::image_input_supported
   // --audio-features ahead (default, as liquid-lfm3-server): every clip's features must be waiting in the shared cache,
   // equal to log_mel of the clip (checked in full for clips up to 20 s, by length beyond), or the op fails
@@ -423,6 +427,7 @@ int main(int argc, char** argv) try {
   bool speech = true;  // --speech off: the engine reports no speech support (a text-only checkpoint or build)
   bool audio_input = true;  // --audio-input off: speech without audio input (no encoder for the checkpoint)
   bool image_input = true;  // --image-input off: speech without image input (no vision encoder for the checkpoint)
+  std::string cache_log;  // --feature-cache-log FILE: "entries N" each time the fake engine takes an audio request
   std::string audio_features = "ahead";  // --audio-features ahead|engine: computed on the handlers (the server) or by the engine
   int speech_truncate = 0;
   std::string stream_fault;
@@ -439,6 +444,7 @@ int main(int argc, char** argv) try {
     else if (o == "--audio-input") audio_input = v == "on";
     else if (o == "--image-input") image_input = v == "on";
     else if (o == "--audio-features") audio_features = v;
+    else if (o == "--feature-cache-log") cache_log = v;
     else if (o == "--speech-truncate") speech_truncate = std::stoi(v);
     else if (o == "--speech-stream-fault") stream_fault = v;
     else if (o == "--speech-stream-piece-bytes") stream_piece_bytes = std::stoi(v);
@@ -493,6 +499,10 @@ int main(int argc, char** argv) try {
   engine.audio_input_ = speech && audio_input;
   engine.image_input_ = speech && image_input;
   engine.audio_features_ahead_ = policy.audio_features_ahead;
+  if (!cache_log.empty()) {
+    engine.cache_log_.open(cache_log);
+    if (!engine.cache_log_) throw std::runtime_error("cannot open --feature-cache-log file");
+  }
   if (!trace_ops.empty()) {
     engine.trace_.open(trace_ops);
     if (!engine.trace_) throw std::runtime_error("cannot open --trace-ops file");

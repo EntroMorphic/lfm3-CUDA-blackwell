@@ -224,3 +224,68 @@ def test_audio_features_computed_by_the_engine_when_not_ahead(harness_binary):
         _, n = prompt_length(h, ask([wav(1.0), wav(7.3)]))
     with running(harness_binary) as h:
         assert prompt_length(h, ask([wav(1.0), wav(7.3)]))[1] == n
+
+
+def _twin_wavs(seconds=3.0):
+    """Two clips identical but for their last sample: their base64 texts differ only at the very end."""
+    n = int(seconds * 16_000)
+    pcm = b"".join(struct.pack("<h", int(8000 * math.sin(i / 7))) for i in range(n - 1))
+    out = []
+    for last in (1000, -1000):
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as w:
+            w.setnchannels(1), w.setsampwidth(2), w.setframerate(16_000)
+            w.writeframes(pcm + struct.pack("<h", last))
+        out.append(base64.b64encode(buf.getvalue()).decode())
+    return out
+
+
+def test_near_identical_clips_at_once_each_get_their_own_features(harness_binary):
+    # the cache is keyed by the clip's whole base64 text: two clips differing in one sample never share features
+    # (the fake engine checks each request's features against log_mel of its own clip, byte for byte)
+    a, b = _twin_wavs()
+    assert a != b and a[:-8] == b[:-8]
+    with running(harness_binary, "--queue-size", "32", "--handlers", "16") as h:
+        alone = prompt_length(h, ask([a]))[1]
+        assert prompt_length(h, ask([b]))[1] == alone
+        results = _send_all(h, [ask([a]), ask([b])] * 6 + [ask([a, b]), ask([b, a])])
+        for i, (status, reply) in enumerate(results):
+            assert status == 200 and reply["cancelled"] is False, (i, status, reply)
+
+
+def test_features_are_dropped_when_a_request_ends_however_it_ends(harness_binary, tmp_path):
+    # a request's features stay in the cache only while the request exists: after a refusal, a client gone while
+    # queued, a stream dropped mid-reply and a deadline while queued, a request alone finds its own entry only
+    import socket
+    import time
+    from test_lfm3_http_speech import LONG, tts
+    from test_lfm3_http_speech_stream import request_bytes
+    log = tmp_path / "cache.log"
+    clips = [wav(1.0 + 0.25 * i) for i in range(5)]
+    with running(harness_binary, "--speech-rows", "1", "--token-delay-ms", "300", "--queue-size", "4",
+                 "--request-timeout", "3", "--feature-cache-log", str(log)) as h:
+        # refused by the front end after the features were computed: audio in an assistant message
+        status, reply = h.call("POST", "/speech", dict(messages=[
+            {"role": "user", "content": "Hi."}, {"role": "assistant", "content": [{"type": "audio", "audio": clips[0]}]},
+            {"role": "user", "content": "Again."}], mode="text", max_new_tokens=16))
+        assert status == 400, (status, reply)
+        busy = threading.Thread(target=lambda: h.call("POST", "/speech", tts(" ".join([LONG] * 8))))  # holds the row ~7 s
+        busy.start()
+        time.sleep(0.3)
+        # a client gone while queued
+        s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
+        s.sendall(request_bytes(ask([clips[1]], stream=True)))
+        time.sleep(0.5)
+        s.close()
+        # a request still queued at its deadline: 504, never runs
+        status, reply = h.call("POST", "/speech", ask([clips[2]]))
+        assert (status, reply) == (504, {"error": "queue_deadline"}), (status, reply)
+        busy.join(60)
+        # a stream dropped mid-reply
+        s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
+        s.sendall(request_bytes(ask([clips[3]], mode="interleaved", stream=True, max_new_tokens=64)))
+        s.recv(4096)
+        s.close()
+        time.sleep(1.5)  # the next cycle cancels it and frees its row
+        prompt_length(h, ask([clips[4]]))  # alone
+        assert log.read_text().splitlines()[-1] == "entries 1", log.read_text()
