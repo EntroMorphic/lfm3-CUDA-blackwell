@@ -142,7 +142,7 @@ int main(int argc,char** argv) {
  if(!trace_root.empty()) assert(std::filesystem::create_directory(trace_root));
  lfm::ModelConfig cfg;cfg.shape.vocabulary=8;
  std::map<std::string,Session> sessions;
- sessions.emplace("A",Session{16,{},{},{}});sessions.emplace("B",Session{16,{},{},{}});
+ sessions.emplace("A",Session{16,{},{},{},{}});sessions.emplace("B",Session{16,{},{},{},{}});
  lfm::text::SessionLedger ledger(2,32);ledger.create("A",16);ledger.create("B",16);
  std::shared_ptr<lfm::Safetensors> weights;
  int fd[2];assert(pipe2(fd,O_NONBLOCK|O_CLOEXEC)==0);
