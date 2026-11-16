@@ -5,7 +5,7 @@
 # byte-identical to a plain run's.
 # Usage (Thor host): vision_sanitizers.sh [TOOLS...]
 set -uo pipefail
-W=/home/ztflynn/Projects/000-research/lfm3-omni-2B; E=/workspace/liquid-CUDA/build
+W=${LFM3_WORKSPACE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}; E=/workspace/liquid-CUDA/build
 B=$W/liquid-CUDA/build/vision-v1/san; C=$E/vision-v1/san
 BIN=$E/vision-v1/lfm3-vision-check; M=/workspace/models/LFM3-Omni-2B
 SAN=$E/sanitizer-13.5.25/cuda_sanitizer_api-linux-sbsa-13.5.25-archive/compute-sanitizer/compute-sanitizer
