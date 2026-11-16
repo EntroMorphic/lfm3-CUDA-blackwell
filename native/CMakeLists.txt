@@ -10,7 +10,22 @@ option(LIQUID_LFM3_NATIVE_GEMM "LFM3 engine without cuBLAS (lfm::gemm)" ON)
 
 find_package(CUDAToolkit REQUIRED)
 find_package(Threads REQUIRED)
+# tcgen05 (validation/tcgen05-gemm-v1): lfm::gemm runs its large projections (M >= 257) on Thor's tensor memory,
+# bitwise identical to mma.sync. The one sm_110a unit is an object library; every other unit stays sm_110.
+# OFF until every rule of tcgen05-gemm-v1 passes.
+option(LIQUID_LFM3_TCGEN05 "lfm::gemm's tcgen05 path (sm_110a) for M >= 257" OFF)
+if(LIQUID_LFM3_TCGEN05)
+  add_library(lfm_gemm_tcgen05 OBJECT src/gemm_tcgen05.cu)
+  target_include_directories(lfm_gemm_tcgen05 PUBLIC include)
+  target_compile_features(lfm_gemm_tcgen05 PUBLIC cxx_std_20 cuda_std_20)
+  target_compile_definitions(lfm_gemm_tcgen05 PUBLIC LFM_GEMM_TCGEN05)
+  target_compile_options(lfm_gemm_tcgen05 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 -gencode arch=compute_110a,code=sm_110a>)
+  set_target_properties(lfm_gemm_tcgen05 PROPERTIES CUDA_ARCHITECTURES OFF)
+endif()
 function(lfm3_engine_gemm target)
+  if(LIQUID_LFM3_TCGEN05)
+    target_link_libraries(${target} PRIVATE lfm_gemm_tcgen05)
+  endif()
   if(LIQUID_LFM3_NATIVE_GEMM)
     target_compile_definitions(${target} PRIVATE LFM3_NATIVE_GEMM)
   else()
