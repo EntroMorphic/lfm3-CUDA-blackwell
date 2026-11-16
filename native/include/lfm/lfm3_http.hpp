@@ -497,6 +497,9 @@ struct Policy {
   // Concurrent speech (validation/speech-batch-v1): the engine's speech batch rows (ops speech_admit/speech_step,
   // WorkerCore::speech_rows); 0: one /speech at a time through op "speech".
   int speech_rows = 0;
+  // validation/audio-frontend-v1: the engine runs in this process (liquid-lfm3-server), so a clip's features computed
+  // on the request's handler thread reach it (lfm::audio_features::shared_feature_cache); off, the engine computes them
+  bool audio_features_ahead = false;
 };
 
 inline std::chrono::nanoseconds seconds(double s) {
@@ -823,6 +826,8 @@ class Service {
     std::string images_json;         // image input (#4): the images (base64 JPEG/PNG) as the engine request carries them
     bool image_input = false;        // the messages hold image parts
     std::vector<int> image_tokens;   // each image part's token count, in prompt order (decode_images)
+    // the clips' features computed ahead (compute_audio_features), held for the engine until the request ends
+    std::vector<lfm::audio_features::FeatureCache::Lease> audio_features;
     bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
     bool stream = false;             // the reply as events while the engine generates (speech_stream)
   };
@@ -883,6 +888,55 @@ class Service {
         } slot{*this};
         s.image_tokens.push_back(image_tokens(part.data));
       }
+  }
+  // validation/audio-frontend-v1: each audio clip's features (lfm::audio_features::log_mel) computed on the request's
+  // own handler thread before the front end, at most kAudioFeatureSlots clips at a time (each on up to kMelThreads
+  // threads), and left for the in-process engine, so the thread that steps every row no longer computes them. The
+  // waiting is decode_images': within the deadline (504 frontend_deadline), 503 when the server stops, 499 client_gone.
+  // Nothing here refuses a request: a clip whose features cannot be computed (a malformed message or WAV) is skipped,
+  // and encode_speech and the engine refuse it exactly as before; a clip skipped or expired is computed by the engine,
+  // the same bytes.
+  void compute_audio_features(Speech& s, Clock::time_point deadline, const std::function<bool()>& gone) {
+    if (!s.audio_input || s.split || !policy_.audio_features_ahead) return;
+    std::vector<std::string> clips;
+    try {
+      for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true, /*allow_image=*/true))
+        for (const auto& part : m.parts)
+          if (part.audio) clips.push_back(part.data);
+    } catch (const std::exception&) {
+      return;  // encode_speech refuses it
+    }
+    for (const auto& clip : clips) {
+      {
+        std::unique_lock g(audio_slots_lock_);
+        for (;;) {
+          if (stopping_) throw ApiError(503, "worker_unavailable");
+          if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
+          if (gone && gone()) throw ApiError(499, "client_gone");
+          if (audio_slots_ > 0) break;
+          audio_slots_cv_.wait_until(g, std::min(deadline, Clock::now() + std::chrono::milliseconds(50)));
+        }
+        --audio_slots_;
+      }
+      struct Slot {
+        Service& service;
+        ~Slot() {
+          {
+            std::lock_guard g(service.audio_slots_lock_);
+            ++service.audio_slots_;
+          }
+          service.audio_slots_cv_.notify_one();
+        }
+      } slot{*this};
+      lfm::audio_features::FeatureCache::Features features;
+      try {
+        features = std::make_shared<const std::vector<float>>(
+            lfm::audio_features::log_mel(lfm3_speech::clip_from_base64(clip)));
+      } catch (const std::exception&) {
+        continue;  // a bad clip: encode_speech refuses it with its own code
+      }
+      s.audio_features.push_back(lfm::audio_features::shared_feature_cache().put(clip, std::move(features)));
+    }
   }
   Speech validate_speech(const Json& item) const {
     const auto& o = object_of(item);
@@ -1218,7 +1272,8 @@ class Service {
     if (request->image_input && !policy_.image_input) throw ApiError(501, "image_input_unsupported");
     request->body = std::move(body);  // `messages` points into it until encode_speech drops it
     decode_images(*request, deadline, gone);
-    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input);
+    compute_audio_features(*request, deadline, gone);
+    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input || request->audio_input);
     if (policy_.speech_rows > 0) {
       auto t = std::make_shared<Ticket>();
       t->request = request, t->deadline = deadline;
@@ -1291,8 +1346,10 @@ class Service {
       ~Release() { --n; }
     } release{streams_};
     request->body = std::move(body);
-    decode_images(*request, deadline, [&] { return sink.peer && sink.peer() == Peer::Reset; });
-    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input);
+    const std::function<bool()> reset = [&] { return sink.peer && sink.peer() == Peer::Reset; };
+    decode_images(*request, deadline, reset);
+    compute_audio_features(*request, deadline, reset);
+    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input || request->audio_input);
     auto lines = std::make_shared<Lines>();
     std::future<std::string> future;
     // past the deadline: true if the request goes on (it completed meanwhile, or, in the speech batch, was admitted: it
@@ -2053,6 +2110,10 @@ class Service {
   std::mutex image_slots_lock_;
   std::condition_variable image_slots_cv_;
   int image_slots_ = kImageDecodeSlots;
+  static constexpr int kAudioFeatureSlots = 2;  // clips whose features are computed at once (compute_audio_features)
+  std::mutex audio_slots_lock_;
+  std::condition_variable audio_slots_cv_;
+  int audio_slots_ = kAudioFeatureSlots;
   std::mutex queue_lock_;
   std::condition_variable queue_cv_;
   std::deque<std::shared_ptr<Job>> queue_;

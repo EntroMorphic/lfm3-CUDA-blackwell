@@ -118,3 +118,69 @@ Out of scope: the GPU encoder (audio-speed-v1), the WAV and base64 parsers, and 
 
 Failures are recorded here, not discarded. Every speed figure is labeled front end only, encode-only, decode loop or
 end to end.
+
+## The code (2026-11-16, after Tripp's go; before rule 0's run)
+- `lfm::audio_features::log_mel(samples, threads = kMelThreads)` (`lfm/audio_features.hpp`):
+  - the DFT's basis is a [400][204] table of the original's doubles;
+  - 4 frames share each pass over it;
+  - each (frame, bin) sum runs over n in ascending order, with `std::fma` where the shipped binary fused. That is the
+    window, the DFT sums, the power and the mel sums. `linspace`'s fused form is written too; at start 0 it changes
+    nothing;
+  - frames are split across threads, at least 64 frames each, and a thread that cannot be started runs on the calling
+    thread instead.
+  The shipped binary's operations were read from `vimg-a5/lfm3-speech`'s disassembly of `log_mel` (all inlined,
+  721 instructions). The filters, tables and `mel_to_hz` are unfused; `hz_to_mel` is folded at compile time.
+- lfm3-speech and the worker call it where they did, now threaded (4 by default).
+- The handler-thread move (part 2), after image-queue-v1 part 1 landed on main (`a350659`), rebased onto it:
+  - **Where the features live:** `Service::compute_audio_features` puts each clip's features in a process-wide
+    `FeatureCache`, keyed by the clip's base64 text exactly as the engine request carries it. The request holds a
+    `Lease` on its entries until it ends.
+  - **Engine side:** `WorkerCore::parse_speech` finds them and hands them on in `Options::audio_features`. The speech
+    engine uses them instead of calling `log_mel`. A miss means the engine computes the features itself, the same
+    bytes. Misses: the out-of-process worker, lfm3-speech, a skipped clip.
+  - **Waiting:** decode_images' pattern, with `kAudioFeatureSlots` = 2.
+  - **Refusals unchanged:** nothing in the new step refuses a request. A malformed message or WAV is skipped and
+    refused later by encode_speech, as before.
+  - **Not in the design, needed by rule 4 (8 and 32 audio requests at once, every reply as lfm3-speech's):** audio
+    requests now wait for `frontend_call` within their deadline, as image requests do, instead of a 429.
+    Text keeps its 429.
+  - `Policy::audio_features_ahead` is on in liquid-lfm3-server only. The HTTP harness defaults it on (as the server)
+    and its fake engine fails any request whose clip has no features waiting, or features unequal to `log_mel`'s
+    (compared in full up to 20 s, by length beyond). `--audio-features engine` turns the hand-off off.
+- Tools: `native/tests/audio_mel_check.cpp` (`tools/thor/build_mel_check.sh`, compiled as the engine compiles
+  `log_mel`) and `tools/audio_mel_lists.py`.
+
+## Rule 1 results (2026-11-16): **PASS**
+The reference is `audio-mel-ref`: audio-mel-check built from the original header (commit `80bc435`), nvcc's host pass
+at -O3 as the engine. Its `log_mel` compiles to the same 74 floating-point instructions as `vimg-a5/lfm3-speech`'s
+(only the filter setup's scheduling differs). It reproduced the engine's recorded features byte for byte on the 40
+dumped clips (`audioin-v2/native-dump`) and the 12 clips of the 9 edge cases, then wrote all 2,620 clips' features.
+The new code is `audio-mel-fe-a1` (sha256 `b76c3716...`), in `build/audio-fe-r1/` on Thor:
+
+| | clips | threads | identical |
+|---|---|---|---|
+| 40 dumped clips, against the engine's recorded runs | 40 | 1, 2, 4, 12 (each run twice) | 40 at every count |
+| 9 edge cases (12 clips), against the recorded runs | 12 | 1, 2, 4, 12 (each run twice) | 12 at every count |
+| all of LibriSpeech test-clean, against the reference | 2,620 | 1, 2; 4 and 12 run twice | 2,620 at every count |
+
+**On x86 too** (workstation, g++ 11.4, `-O3 -march=native`, glibc's libm): the new code gives Thor's bytes on all
+2,620, the 40 and the 12, at 1, 4 and 12 threads. Built without hardware FMA (`-O3`, so `std::fma` runs in software):
+also 2,620 of 2,620 and 12 of 12.
+
+Control: the original code built on x86 without FMA differs from Thor's bytes on 9 of the 2,620 clips, 1 float each
+(at most 6e-8), and on 1 of the 40 dumped clips. Its bytes depended on the compiler's fusion; the explicit `std::fma`
+removes that.
+
+Host suites: `tests/test_audio_input_host.py`, 58 passed in its plain, ASan+UBSan and TSan builds:
+- a TSan variant is new (clang++, ASLR off, as the HTTP suites);
+- a new test runs `log_mel` at 1 to 12 threads and from 8 callers at once, on 1, 400, 16,000 and 160,000 samples, all
+  byte-identical.
+
+## Rule 5, the lfm3-speech part (before the server change)
+`tools/thor/audio_frontend_sanitizers.sh audio-fe-speech-a1 audio-fe-san`. lfm3-speech built from this code (rule 1's
+`log_mel`, before the rebase), on cut-1, the two-clip request, 1089-134686-0000 and the 90-second recording, every
+stage dumped, 16 tokens:
+- the plain run's stage files equal the recorded runs' (cut-1: 4; two-clip: 8; 1089-134686-0000: 4);
+- memcheck: 0 errors, 0 bytes leaked, outputs identical;
+- initcheck: 0 errors, outputs identical;
+- synccheck and racecheck: running.

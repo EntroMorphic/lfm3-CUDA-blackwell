@@ -234,7 +234,15 @@ class Batch {
         bf16* dst = audio_rows_->p + at * runner_.s.hidden;
         if (id == audio_token) {
           lfm::audio_features::Dump dump;
-          const auto mel = lfm::audio_features::log_mel(o.audio[clip++]);
+          // computed ahead on the request's handler thread when the server could (validation/audio-frontend-v1), or
+          // here: the same bytes
+          const auto& ahead = clip < o.audio_features.size() ? o.audio_features[clip] : nullptr;
+          std::vector<float> computed;
+          if (!ahead) computed = lfm::audio_features::log_mel(o.audio[clip]);
+          const auto& mel = ahead ? *ahead : computed;
+          if (mel.size() != size_t(lfm::audio_features::kMels) * lfm::audio_features::frames(o.audio[clip].size()))
+            throw std::logic_error("speech: a clip's features do not match its length");  // unreachable
+          ++clip;
           at += size_t(encoder_->encode(mel, dst, o.record_audio ? &dump : nullptr));
           if (o.record_audio) w.res.audio_dumps.push_back(std::move(dump));
         } else {

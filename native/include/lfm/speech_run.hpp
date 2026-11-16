@@ -34,6 +34,9 @@ struct Options {
   // audio input (#3): the clips, 16 kHz mono samples, one per <|audio|> span of the prompt in order (each span holds
   // lfm::audio_features::tokens(samples) placeholders); record_audio keeps every clip's stages in Result::audio_dumps
   std::vector<std::vector<float>> audio;
+  // each clip's features when computed ahead (lfm::audio_features::FeatureCache, validation/audio-frontend-v1): empty,
+  // or one per clip, null where the engine computes them itself (the same bytes either way)
+  std::vector<lfm::audio_features::FeatureCache::Features> audio_features;
   bool record_audio = false;
   // image input (#4): the images after the native front end (lfm/image_preprocess.hpp), one per <|image|> span of the
   // prompt in order (each span holds PixelValues::tokens placeholders); audio and image spans may interleave

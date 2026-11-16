@@ -79,8 +79,17 @@ class FakeEngine final : public lfm::http::Backend {
       if (request.at("audio").array().size() > 64) throw std::runtime_error("too many audio clips");
       if (chunked) throw std::runtime_error("chunks cannot take audio input");
       std::vector<size_t> clip_tokens;
-      for (const auto& a : request.at("audio").array())
-        clip_tokens.push_back(lfm::audio_features::tokens(lfm3_speech::clip_from_base64(a.string()).size()));
+      for (const auto& a : request.at("audio").array()) {
+        const auto samples = lfm3_speech::clip_from_base64(a.string());
+        clip_tokens.push_back(lfm::audio_features::tokens(samples.size()));
+        if (audio_features_ahead_) {  // validation/audio-frontend-v1: the hand-off WorkerCore relies on
+          const auto f = lfm::audio_features::shared_feature_cache().find(a.string());
+          if (!f) throw std::runtime_error("harness: a clip's features were not computed ahead");
+          if (f->size() != size_t(lfm::audio_features::kMels) * lfm::audio_features::frames(samples.size()) ||
+              (samples.size() <= 20 * 16000 && *f != lfm::audio_features::log_mel(samples)))
+            throw std::runtime_error("harness: a clip's features computed ahead differ from log_mel");
+        }
+      }
       lfm3_speech::check_audio_spans(prompts[0], clip_tokens);
     } else {
       for (const auto& p : prompts) lfm3_speech::check_audio_spans(p, {});
@@ -388,6 +397,9 @@ class FakeEngine final : public lfm::http::Backend {
   int admitted_ = 0, max_busy_ = 0;
   std::ofstream trace_;  // --trace-ops FILE
   bool image_input_ = true;  // --image-input: WorkerCore::image_input_supported
+  // --audio-features ahead (default, as liquid-lfm3-server): every clip's features must be waiting in the shared cache,
+  // equal to log_mel of the clip (checked in full for clips up to 20 s, by length beyond), or the op fails
+  bool audio_features_ahead_ = true;
   bool audio_input_ = true;  // --audio-input: WorkerCore::audio_input_supported  // --speech-truncate K: answer only the first K chunks, as a request the step budget cut
  private:
   int fail_after_, fail_count_ = 0;
@@ -411,6 +423,7 @@ int main(int argc, char** argv) try {
   bool speech = true;  // --speech off: the engine reports no speech support (a text-only checkpoint or build)
   bool audio_input = true;  // --audio-input off: speech without audio input (no encoder for the checkpoint)
   bool image_input = true;  // --image-input off: speech without image input (no vision encoder for the checkpoint)
+  std::string audio_features = "ahead";  // --audio-features ahead|engine: computed on the handlers (the server) or by the engine
   int speech_truncate = 0;
   std::string stream_fault;
   int stream_piece_bytes = 4, speech_rows = 2;
@@ -425,6 +438,7 @@ int main(int argc, char** argv) try {
     else if (o == "--speech") speech = v == "on";
     else if (o == "--audio-input") audio_input = v == "on";
     else if (o == "--image-input") image_input = v == "on";
+    else if (o == "--audio-features") audio_features = v;
     else if (o == "--speech-truncate") speech_truncate = std::stoi(v);
     else if (o == "--speech-stream-fault") stream_fault = v;
     else if (o == "--speech-stream-piece-bytes") stream_piece_bytes = std::stoi(v);
@@ -460,6 +474,8 @@ int main(int argc, char** argv) try {
   policy.audio_input = speech && audio_input;
   policy.image_input = speech && image_input;
   policy.speech_rows = speech ? speech_rows : 0;
+  if (audio_features != "ahead" && audio_features != "engine") throw std::runtime_error("--audio-features: ahead or engine");
+  policy.audio_features_ahead = audio_features == "ahead";
   policy.stops = config.eos;
   for (auto name : {"audio_token_id", "audio_out_token_id", "image_token_id", "video_token_id", "mixed_start_token_id", "audio_start_token_id"})
     policy.suppress.push_back(model.at(name).integer());
@@ -476,6 +492,7 @@ int main(int argc, char** argv) try {
   engine.rows_.assign(size_t(std::max(0, speech_rows)), {});
   engine.audio_input_ = speech && audio_input;
   engine.image_input_ = speech && image_input;
+  engine.audio_features_ahead_ = policy.audio_features_ahead;
   if (!trace_ops.empty()) {
     engine.trace_.open(trace_ops);
     if (!engine.trace_) throw std::runtime_error("cannot open --trace-ops file");

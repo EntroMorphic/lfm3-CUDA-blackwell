@@ -674,6 +674,7 @@ class WorkerCore {
     }
     if(prompts.empty() || (!chunked && prompts.size()!=1)) throw std::runtime_error("speech needs one prompt, or chunks");
     std::vector<std::vector<float>> clips;  // decoded and checked (spans included) before any engine state changes
+    std::vector<lfm::audio_features::FeatureCache::Features> features;  // computed ahead by the in-process server
     if(request.has("audio")) {
       if(!audio_in_ok) throw std::runtime_error("audio input is not supported by this checkpoint");
       if(request.at("audio").array().size()>kSpeechMaxClips) throw std::runtime_error("too many audio clips");
@@ -682,6 +683,7 @@ class WorkerCore {
       for(const auto& a:request.at("audio").array()) {
         clips.push_back(lfm3_speech::clip_from_base64(a.string()));
         clip_tokens.push_back(lfm::audio_features::tokens(clips.back().size()));
+        features.push_back(lfm::audio_features::shared_feature_cache().find(a.string()));  // validation/audio-frontend-v1
       }
       lfm3_speech::check_audio_spans(prompts[0],clip_tokens);
     } else {
@@ -705,7 +707,7 @@ class WorkerCore {
     }
     auto& o=job.o;
     o.mode=mode=="audio"?lfm::audio::Requested::Audio:mode=="text"?lfm::audio::Requested::Text:lfm::audio::Requested::Interleaved;
-    o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);o.images=std::move(images);
+    o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);o.audio_features=std::move(features);o.images=std::move(images);
     return job;
   }
   // The streaming observers: progress lines, each prefixed with `tag` (e.g. "\"ticket\":7," for a batch row).

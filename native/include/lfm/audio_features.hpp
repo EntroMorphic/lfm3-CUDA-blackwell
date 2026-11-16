@@ -18,7 +18,11 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <stdexcept>
+#include <string>
 #include <system_error>
 #include <thread>
 #include <vector>
@@ -185,6 +189,72 @@ inline std::vector<float> log_mel(const std::vector<float>& samples, int threads
   detail::log_mel_frames(x.data(), T, 0, std::min(T, per), out.data());
   for (auto& w : workers) w.join();
   return out;
+}
+
+// Features computed ahead of the engine (validation/audio-frontend-v1). The in-process server computes a clip's
+// features on the request's handler thread and leaves them here, keyed by the clip as the engine request carries it
+// (its base64 text, byte for byte); the engine takes them instead of computing them on the thread that steps every
+// row. A Lease holds an entry until the request ends (the same clip in two requests: one entry, two leases). A clip
+// the engine does not find here (the out-of-process worker, lfm3-speech, a refused or expired request) is computed
+// by the engine as before: log_mel is a function of the clip, so a hit and a miss give the same bytes.
+class FeatureCache {
+ public:
+  using Features = std::shared_ptr<const std::vector<float>>;
+  class Lease {
+   public:
+    Lease() = default;
+    Lease(Lease&& o) noexcept : cache_(o.cache_), key_(std::move(o.key_)) { o.cache_ = nullptr; }
+    Lease& operator=(Lease&& o) noexcept {
+      if (this != &o) release(), cache_ = o.cache_, key_ = std::move(o.key_), o.cache_ = nullptr;
+      return *this;
+    }
+    Lease(const Lease&) = delete;
+    Lease& operator=(const Lease&) = delete;
+    ~Lease() { release(); }
+
+   private:
+    friend class FeatureCache;
+    Lease(FeatureCache* cache, std::string key) : cache_(cache), key_(std::move(key)) {}
+    void release() noexcept {
+      if (!cache_) return;
+      std::lock_guard g(cache_->lock_);
+      const auto it = cache_->entries_.find(key_);
+      if (it != cache_->entries_.end() && --it->second.leases == 0) cache_->entries_.erase(it);
+      cache_ = nullptr;
+    }
+    FeatureCache* cache_ = nullptr;
+    std::string key_;
+  };
+  // Leaves `features` under `key` (kept as they are when the key is already there: the same clip, the same bytes).
+  Lease put(const std::string& key, Features features) {
+    std::lock_guard g(lock_);
+    auto& e = entries_[key];
+    if (!e.features) e.features = std::move(features);
+    ++e.leases;
+    return Lease(this, key);
+  }
+  Features find(const std::string& key) const {
+    std::lock_guard g(lock_);
+    const auto it = entries_.find(key);
+    return it == entries_.end() ? nullptr : it->second.features;
+  }
+  size_t size() const {
+    std::lock_guard g(lock_);
+    return entries_.size();
+  }
+
+ private:
+  struct Entry {
+    Features features;
+    int leases = 0;
+  };
+  mutable std::mutex lock_;
+  std::map<std::string, Entry> entries_;
+};
+// The process's cache: the in-process server's Service puts, its WorkerCore finds.
+inline FeatureCache& shared_feature_cache() {
+  static FeatureCache cache;
+  return cache;
 }
 
 }  // namespace lfm::audio_features

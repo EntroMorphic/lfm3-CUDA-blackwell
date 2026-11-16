@@ -10,6 +10,7 @@ import base64
 import io
 import math
 import struct
+import threading
 import wave
 
 import pytest
@@ -163,3 +164,63 @@ def test_no_audio_encoder_is_501_and_speech_still_serves(harness_binary):
         status, reply = h.call("POST", "/speech", dict(messages=[{"role": "user", "content": "Read this aloud."}],
                                                         mode="audio", max_new_tokens=64))
         assert status == 200 and reply["cancelled"] is False
+
+
+# validation/audio-frontend-v1: the clips' features are computed on the handler threads (2 clips at a time) and handed
+# to the engine; the fake engine fails any op whose clip has no features waiting, or features unequal to log_mel's.
+
+def _send_all(h, bodies):
+    results = [None] * len(bodies)
+
+    def run(i):
+        results[i] = h.call("POST", "/speech", bodies[i])
+    threads = [threading.Thread(target=run, args=(i,)) for i in range(len(bodies))]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(300)
+    return results
+
+
+def test_simultaneous_audio_requests_are_all_served_with_their_features(harness_binary):
+    # rule 4: audio requests sent at once are each served as alone (no 429: they wait for the front end, as images do)
+    clips = [wav(2.0 + 1.7 * i) for i in range(4)]
+    with running(harness_binary, "--queue-size", "32", "--handlers", "16") as h:
+        alone = [prompt_length(h, ask([c]))[1] for c in clips]
+        results = _send_all(h, [ask([clips[i % 4]]) for i in range(12)])
+        for i, (status, reply) in enumerate(results):
+            assert status == 200 and reply["cancelled"] is False, (i, status, reply)
+            assert reply["chunks"][0]["frames"] == alone[i % 4]
+        # two clips in one request, and the same clip in two requests at once, alongside others
+        both = prompt_length(h, ask(clips[:2]))[1]
+        results = _send_all(h, [ask(clips[:2]), ask([clips[0]]), ask([clips[0]]), ask([clips[3]])])
+        assert [r[0] for r in results] == [200] * 4, results
+        assert results[0][1]["chunks"][0]["frames"] == both
+
+
+def test_audio_requests_past_their_deadline_while_waiting_are_504_never_429(harness_binary):
+    long = wav(60.0)
+    with running(harness_binary, "--request-timeout", "1", "--queue-size", "32", "--handlers", "16") as h:
+        results = _send_all(h, [ask([long], max_new_tokens=64)] * 8)
+        for status, reply in results:
+            assert (status == 200 and reply["cancelled"] is False) or \
+                (status, reply) in ((504, {"error": "frontend_deadline"}), (504, {"error": "queue_deadline"})), (status, reply)
+        prompt_length(h, ask([wav(1.0)]))  # and the server serves on
+
+
+def test_text_requests_keep_their_429_while_audio_features_compute(harness_binary):
+    tts = dict(messages=[{"role": "user", "content": "Read this aloud."}], mode="audio", max_new_tokens=64)
+    with running(harness_binary, "--queue-size", "32", "--handlers", "16") as h:
+        results = _send_all(h, [ask([wav(30.0)])] * 4 + [tts] * 6)
+        for status, reply in results[:4]:
+            assert status == 200, (status, reply)
+        for status, reply in results[4:]:
+            assert status == 200 or (status, reply) == (429, {"error": "frontend_busy"}), (status, reply)
+
+
+def test_audio_features_computed_by_the_engine_when_not_ahead(harness_binary):
+    # the out-of-process worker's way (no shared cache): the same prompts
+    with running(harness_binary, "--audio-features", "engine") as h:
+        _, n = prompt_length(h, ask([wav(1.0), wav(7.3)]))
+    with running(harness_binary) as h:
+        assert prompt_length(h, ask([wav(1.0), wav(7.3)]))[1] == n
