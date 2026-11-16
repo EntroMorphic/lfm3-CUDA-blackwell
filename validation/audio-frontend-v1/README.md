@@ -381,3 +381,35 @@ rule 1 passes; until then, today's DFT.
    clips, and the 360 + 93 files, byte-identical.
 
 Rules 3 (stall), 5 (sanitizers), 6 (nothing else changes) and 7 (red-team) of the original stand.
+
+## Amendment 2, rule 1 on x86 (2026-11-16, workstation): **PASS**; Thor (aarch64) after the quiet window
+The code is `Transform::kExactF1` / `kExactF2` in `lfm/audio_features.hpp`. The default is still today's DFT, until
+rule 1 passes on Thor too.
+
+The reference is `audio-mel-audit exact`, written separately from the code under test:
+- its own any-radix quad FFT (radices 2, 2, 2, 2, 5, 5) with libquadmath's `cosq`, `sinq` and `log10q`;
+- its own interval test, a generous 1e6 quad ulps of A0 on every bin.
+
+Records are in `amendment2/`:
+
+| set | path | floats | equal to the reference's rounding | reference undecided | changed from today (all toward the reference) | outputs recomputed in quad |
+|---|---|---|---|---|---|---|
+| 40 dumped clips | F2 | 4,391,424 | all | 0 | 2 | 2 |
+| 40 dumped clips | F1 | 4,391,424 | all | 0 | 2 | 43,477 |
+| 9 edge cases (12 clips) | F2 | 259,072 | all | 0 | 0 | 0 |
+| 9 edge cases (12 clips) | F1 | 259,072 | all | 0 | 0 | 1,734 |
+| 2,620 LibriSpeech | F2 | 248,578,432 | all | 0 | 29 | 154 |
+| 2,620 LibriSpeech | F1 | 248,578,432 | all | 0 | 29 | 2,325,008 |
+
+- **Threads:** F2 at 4 threads and F1 at 4 threads equal F2 at 1 thread on all 2,620 clips. The audit runs each clip
+  at 1 thread.
+- **The changed floats.** 29 floats in 28 clips (7021-85628-0009 has 2):
+  - each moves by one float step (at most 6e-8) onto the exact value's rounding;
+  - the 2 in the dumped set (8455-210777-0002, 8555-292519-0007) are among them;
+  - each one's quad reference is listed in `amendment2/exact-f2-all2620-ref.jsonl`.
+  Rule 3's transcripts concern these 28 clips.
+- **F1 against F2, as derived before the code.** F1's double-precision bound cannot decide about 0.94% of outputs (the
+  weak bands), and each goes to quad. F2's compensated bound sends 154 in 249 million. The same floats either way;
+  rule 2's quiet run decides between them. F2 is expected to win by a wide margin.
+- Host tests (`test_audio_input_host.py`; plain, ASan+UBSan, TSan): F1 and F2 equal at 1–12 threads and from 8 callers
+  at once, and `__float128` builds and runs under clang's TSan.

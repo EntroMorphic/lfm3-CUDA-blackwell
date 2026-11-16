@@ -1,0 +1,1 @@
+{"mode": "compare", "transform": "f1", "threads": 4, "repeat": 1, "clips": 2620, "identical": 2620, "differ": [], "exact_outputs": {"fast": 246253424, "quad": 2325008, "undecided": 0}}

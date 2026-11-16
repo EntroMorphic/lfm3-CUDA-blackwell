@@ -1,0 +1,4 @@
+f2: 12 clips, 259072 floats: 0 not the reference's rounding, 0 undecided by the reference; 0 changed from today (0 of them the reference's rounding); fast 259072, quad 0, quad undecided 0
+f2: 2620 clips, 248578432 floats: 0 not the reference's rounding, 0 undecided by the reference; 29 changed from today (29 of them the reference's rounding); fast 248578278, quad 154, quad undecided 0
+f1: 12 clips, 259072 floats: 0 not the reference's rounding, 0 undecided by the reference; 0 changed from today (0 of them the reference's rounding); fast 257338, quad 1734, quad undecided 0
+f1: 2620 clips, 248578432 floats: 0 not the reference's rounding, 0 undecided by the reference; 29 changed from today (29 of them the reference's rounding); fast 246253424, quad 2325008, quad undecided 0
