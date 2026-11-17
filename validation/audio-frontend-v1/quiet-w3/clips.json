@@ -1,0 +1,27 @@
+[
+ {
+  "name": "short",
+  "case": "4446-2275-0004",
+  "wav": "/workspace/data/librispeech/wav/4446-2275-0004.wav"
+ },
+ {
+  "name": "median",
+  "case": "121-127105-0007",
+  "wav": "/workspace/data/librispeech/wav/121-127105-0007.wav"
+ },
+ {
+  "name": "typical",
+  "case": "1089-134686-0000",
+  "wav": "/workspace/data/librispeech/wav/1089-134686-0000.wav"
+ },
+ {
+  "name": "long",
+  "case": "4507-16021-0047",
+  "wav": "/workspace/data/librispeech/wav/4507-16021-0047.wav"
+ },
+ {
+  "name": "joined90",
+  "case": "asr-joined-90s",
+  "wav": "/workspace/liquid-CUDA/build/server-stream-v3-check/work/joined-90s.wav"
+ }
+]

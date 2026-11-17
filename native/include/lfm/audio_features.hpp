@@ -99,16 +99,17 @@ inline constexpr int kMelThreads = 4;
 //   double FFT (F1) or the compensated double-double FFT (F2) under a written error bound, and the output is
 //   recomputed in quad precision wherever that bound cannot decide its rounding. F1 and F2 give the same floats.
 enum class Transform { kDft, kFft, kExactF1, kExactF2 };
-// The process's default: today's DFT until amendment 2's rule 1 passes; LFM3_AUDIO_FEATURES (read once) chooses
-// explicitly: dft, fft, exact-f1, exact-f2.
+// The process's default: F2, the correctly rounded front end (amendment 2: rule 1 passed on Thor and x86; F2 the faster
+// in quiet window 3). LFM3_AUDIO_FEATURES (read once) chooses explicitly: dft (today's bytes, the fallback), fft,
+// exact-f1, exact-f2.
 inline Transform default_transform() {
   static const Transform t = [] {
     const char* v = std::getenv("LFM3_AUDIO_FEATURES");
     const std::string s = v ? v : "";
-    if (s.empty() || s == "dft") return Transform::kDft;
+    if (s.empty() || s == "exact-f2") return Transform::kExactF2;
+    if (s == "dft") return Transform::kDft;
     if (s == "fft") return Transform::kFft;
     if (s == "exact-f1") return Transform::kExactF1;
-    if (s == "exact-f2") return Transform::kExactF2;
     throw std::runtime_error("LFM3_AUDIO_FEATURES: dft, fft, exact-f1 or exact-f2");
   }();
   return t;

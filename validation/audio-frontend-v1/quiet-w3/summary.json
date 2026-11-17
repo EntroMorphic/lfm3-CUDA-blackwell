@@ -1,0 +1,193 @@
+{
+ "rows": {
+  "dft": {
+   "short": {
+    "audio_seconds": 2.11,
+    "log_mel_t1": 0.008743478,
+    "log_mel_t4": 0.003025143,
+    "encoder": 0.007220587,
+    "native_encode": 0.0104313,
+    "native_prefill": 0.0327632,
+    "native_ttft": 0.0464733,
+    "hf_ttft": 0.04002547598793171
+   },
+   "median": {
+    "audio_seconds": 5.79,
+    "log_mel_t1": 0.023899505,
+    "log_mel_t4": 0.00615223,
+    "encoder": 0.013957723,
+    "native_encode": 0.0199892,
+    "native_prefill": 0.0450857,
+    "native_ttft": 0.058924542105263156,
+    "hf_ttft": 0.04403946702950634
+   },
+   "typical": {
+    "audio_seconds": 10.435,
+    "log_mel_t1": 0.04301563,
+    "log_mel_t4": 0.0110021,
+    "encoder": 0.022758755,
+    "native_encode": 0.0337419,
+    "native_prefill": 0.0662623,
+    "native_ttft": 0.08025185555555556,
+    "hf_ttft": 0.050299396010814235
+   },
+   "long": {
+    "audio_seconds": 34.955,
+    "log_mel_t1": 0.144018577,
+    "log_mel_t4": 0.036752102,
+    "encoder": 0.066640058,
+    "native_encode": 0.103492,
+    "native_prefill": 0.160079,
+    "native_ttft": 0.1742284680851064,
+    "hf_ttft": 0.07208494300721213
+   },
+   "joined90": {
+    "audio_seconds": 90,
+    "log_mel_t1": 0.373079284,
+    "log_mel_t4": 0.094762364,
+    "encoder": 0.16577977,
+    "native_encode": 0.259593,
+    "native_prefill": 0.385503,
+    "native_ttft": 0.3996542195121951,
+    "hf_ttft": 0.14119648400810547
+   }
+  },
+  "exact-f1": {
+   "short": {
+    "audio_seconds": 2.11,
+    "log_mel_t1": 0.03030534,
+    "log_mel_t4": 0.013856074,
+    "encoder": 0.007038002,
+    "native_encode": 0.021126,
+    "native_prefill": 0.0433914,
+    "native_ttft": 0.05708038333333333,
+    "hf_ttft": 0.04002547598793171
+   },
+   "median": {
+    "audio_seconds": 5.79,
+    "log_mel_t1": 0.080552827,
+    "log_mel_t4": 0.025871715,
+    "encoder": 0.013937407,
+    "native_encode": 0.0395954,
+    "native_prefill": 0.064583,
+    "native_ttft": 0.0783991052631579,
+    "hf_ttft": 0.04403946702950634
+   },
+   "typical": {
+    "audio_seconds": 10.435,
+    "log_mel_t1": 0.168504595,
+    "log_mel_t4": 0.049305687,
+    "encoder": 0.022952945,
+    "native_encode": 0.0719423,
+    "native_prefill": 0.104384,
+    "native_ttft": 0.11833408333333334,
+    "hf_ttft": 0.050299396010814235
+   },
+   "long": {
+    "audio_seconds": 34.955,
+    "log_mel_t1": 0.584705097,
+    "log_mel_t4": 0.188994992,
+    "encoder": 0.066349032,
+    "native_encode": 0.255634,
+    "native_prefill": 0.312032,
+    "native_ttft": 0.3261588085106383,
+    "hf_ttft": 0.07208494300721213
+   },
+   "joined90": {
+    "audio_seconds": 90,
+    "log_mel_t1": 1.45526759,
+    "log_mel_t4": 0.394689182,
+    "encoder": 0.16543135,
+    "native_encode": 0.559251,
+    "native_prefill": 0.684641,
+    "native_ttft": 0.6987712787456447,
+    "hf_ttft": 0.14119648400810547
+   }
+  },
+  "exact-f2": {
+   "short": {
+    "audio_seconds": 2.11,
+    "log_mel_t1": 0.016039381,
+    "log_mel_t4": 0.0054261,
+    "encoder": 0.007026585,
+    "native_encode": 0.0127178,
+    "native_prefill": 0.0352214,
+    "native_ttft": 0.04896865,
+    "hf_ttft": 0.04002547598793171
+   },
+   "median": {
+    "audio_seconds": 5.79,
+    "log_mel_t1": 0.043720425,
+    "log_mel_t4": 0.01111851,
+    "encoder": 0.013727888,
+    "native_encode": 0.0249598,
+    "native_prefill": 0.0502513,
+    "native_ttft": 0.06408014210526315,
+    "hf_ttft": 0.04403946702950634
+   },
+   "typical": {
+    "audio_seconds": 10.435,
+    "log_mel_t1": 0.079048332,
+    "log_mel_t4": 0.01999823,
+    "encoder": 0.022667117,
+    "native_encode": 0.0434809,
+    "native_prefill": 0.0760092,
+    "native_ttft": 0.09002917222222222,
+    "hf_ttft": 0.050299396010814235
+   },
+   "long": {
+    "audio_seconds": 34.955,
+    "log_mel_t1": 0.265206047,
+    "log_mel_t4": 0.066649159,
+    "encoder": 0.066818779,
+    "native_encode": 0.133728,
+    "native_prefill": 0.190176,
+    "native_ttft": 0.20435610638297874,
+    "hf_ttft": 0.07208494300721213
+   },
+   "joined90": {
+    "audio_seconds": 90,
+    "log_mel_t1": 0.680460329,
+    "log_mel_t4": 0.170972912,
+    "encoder": 0.165625874,
+    "native_encode": 0.337345,
+    "native_prefill": 0.462881,
+    "native_ttft": 0.4770727770034843,
+    "hf_ttft": 0.14119648400810547
+   }
+  }
+ },
+ "verdict": {
+  "dft": {
+   "ttft_at_most_hf": {
+    "typical": false,
+    "long": false,
+    "joined90": false
+   },
+   "rule2_pass": false
+  },
+  "exact-f1": {
+   "ttft_at_most_hf": {
+    "typical": false,
+    "long": false,
+    "joined90": false
+   },
+   "rule2_pass": false
+  },
+  "exact-f2": {
+   "ttft_at_most_hf": {
+    "typical": false,
+    "long": false,
+    "joined90": false
+   },
+   "rule2_pass": false
+  }
+ },
+ "ships": "exact-f2",
+ "threads": {
+  "t1": 0.680460329,
+  "t4": 0.170972912,
+  "keep_4": true
+ },
+ "note": "front end only: log_mel_t1/t4 (bench); encode-only: encoder (bench); end to end: native_ttft = prefill + one mean step, hf_ttft from the file read to the first new token"
+}

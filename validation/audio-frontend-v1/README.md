@@ -432,7 +432,7 @@ Records are in `amendment2/`:
     main checkout too. It is a known workstation limit (transformers 4.57.6 cannot load the checkpoint's remote
     code), confirmed by the coordinator, and unrelated to this round.
 
-### Amendment 2 GPU checks on Thor (2026-11-16; shared GPU, exactness only): in progress
+### Amendment 2 GPU checks on Thor (2026-11-16; shared GPU, exactness only)
 `lfm3-speech` `audio-fe-speech-a3` (sha256 `214a576c...`), server and worker `audio-fe-srv-a2` (`9dbf1add...`,
 `4af26a8d...`).
 - With `LFM3_AUDIO_FEATURES=exact-f2`:
@@ -445,4 +445,62 @@ Records are in `amendment2/`:
 - **The driver was trimmed while running (SIGTERM to the two scripts only).** Its rule 5 pass would have repeated
   e2e, split and both corpus runs under `dft`. Rule 5 needs only today's bytes for the features and the 360 + 93
   files, and the repeat would have taken about 2.5 hours of a shared GPU. The 2,620-clip corpus pass (exact-f2)
-  continued; `tools/thor/audio_frontend_amend2_rest.sh` waits for it and runs the rest.
+  continued. `tools/thor/audio_frontend_amend2_rest.sh` waited for it and was in turn stopped (SIGTERM) before its
+  sanitizer step, which would have run into quiet window 3. `audio_frontend_amend2_rest2.sh` ran the rest without
+  the sanitizers, and they ran overnight after the windows.
+- **Rule 3, transcripts (exact-f2):** **PASS.** The 2,620 utterances alone: every token sequence identical to
+  audioin-v2's (`compare_speech_outputs.py --slots-only`, 2,620 of 2,620), including the 28 clips whose features
+  changed. No transcript changed, so the WER is exactly today's (2.59% against HF's 2.61%) and there was none to read.
+  The corpus in 8 staggered rows: 13,260 of 13,260 output files identical to the run alone.
+- **Rule 4, audio-in replies (exact-f2):** **PASS.**
+  - Stage files: as above (355 + 93; only the two changed clips' stage files differ, their replies identical).
+  - The server's audio-in check (`check_lfm3_audio_in_server.py`): PASS in both modes, `dft` and `exact-f2`. Every
+    reply equals that mode's lfm3-speech byte for byte, a repeated request is identical, the text control is
+    identical, and the server exits 0.
+  - 8 and 32 audio requests at once (`check_lfm3_audio_frontend_server.py`, exact-f2, `--queue-size 40 --handlers
+    48`): **PASS** on the second run. All 8 and all 32 were served (none refused) and every reply was byte-identical
+    to lfm3-speech's on the same conversations; the text control was identical and the server exited 0.
+    `amendment2/server/`.
+  - **First run failed, from a tool bug:** 8/8 and 32/32 served, 0 identical. The tool compared the server's text
+    with rule 3's corpus outputs, which were made from `prompt_ids` and carry no `"text"` field, so every comparison
+    was against `None`. Fixed: the tool now makes its own references, the same conversations through lfm3-speech
+    `--batch` as messages, as `check_lfm3_audio_in_server.py` does, and refuses a missing reference text.
+  - Coherency: I read the 32 replies (`amendment2/server/at-once-32-v2.json`): coherent transcriptions from 1.3 s to
+    35 s, with the model's known slips ("Ham, to be or not to be"), all byte-identical to today's.
+- **Rule 5, the fallback flag (`LFM3_AUDIO_FEATURES=dft`):** **PASS.**
+  - The features of all 2,620 + 40 + 12 clips are byte-identical to rule 1's reference (audio-mel-check, 4 threads).
+  - The 360 + 93 stage files are identical to the recorded runs.
+- **Sanitizers (rule 5 of the original), exact-f2**, `audio_frontend_sanitizers.sh audio-fe-speech-a3 audio-fe-a2-san`
+  (overnight, sharing the GPU with another agent's sanitizers):
+  - plain run: the stage files of cut-1, the two-clip request and 1089-134686-0000 equal the recorded runs';
+  - memcheck: 0 errors, 0 bytes leaked; initcheck: 0 errors; synccheck: 0 errors; outputs identical to the plain run;
+  - racecheck: running.
+
+### Rule 2 results (amended; quiet window 3, 2026-11-16, run by Tripp): **FAIL**, as recorded in advance; **F2 ships**
+`tools/thor/quiet_audio_frontend.sh` (MAXN, GPU clocks locked, the power state unchanged start to end), `quiet-w3/`.
+Bench `audio-bench-a2` (`3b92e75a...`), lfm3-speech `audio-fe-speech-a3`. Each figure is the median of 5:
+- `log_mel` alone at 1 and 4 threads: front end only;
+- the encoder alone: encode-only;
+- time to first token: end to end (native: prefill + one mean decode step; HF: from reading the file to the first
+  new token).
+
+| clip | HF time to first token | today's DFT* | F1 | F2 |
+|---|---|---|---|---|
+| 10.4 s | 0.050 s | 0.080 s | 0.118 s | 0.090 s |
+| 35 s | 0.072 s | 0.174 s | 0.326 s | 0.204 s |
+| 90 s | 0.141 s | 0.400 s | 0.699 s | 0.477 s |
+| 90 s, `log_mel` alone, 1 / 4 threads | 3–5 ms | 0.373 / 0.095 s | 1.455 / 0.395 s | 0.680 / 0.171 s |
+
+\* "Today's DFT" here is rule 1's code: the same bytes as rule 0's front end, threaded and vectorized across bins.
+- **Amended rule 2 fails in every mode**, as recorded before the run. With F2, time to first token is 1.8–3.4× HF's.
+  The rest is the encoder (0.166 s at 90 s, encode-only, more than HF's whole 0.141 s) and the language model's
+  prefill, beyond the front end.
+- **Against rule 0** (the shipped engine, quiet-v1): F2's time to first token is 0.173 → 0.090 s at 10.4 s,
+  0.485 → 0.204 s at 35 s, and 1.20 → 0.477 s at 90 s, with every feature correctly rounded.
+- **F2 ships:** its 90 s front end at 4 threads is 0.171 s against F1's 0.395 s.
+- **4 threads are kept:** 0.171 s against 0.680 s at 1 thread, a 75% cut (the bar was 20%).
+- **The default is now F2** (`lfm::audio_features::default_transform()`), for lfm3-speech, the worker and the server.
+  `LFM3_AUDIO_FEATURES=dft` restores today's bytes (rule 5). Host suite `test_audio_input_host.py` with F2 as the
+  default: 70 passed (plain, ASan+UBSan, TSan).
+- **The next bar is the encoder:** the encoder round under amendment 1's bar (time to first token at least as fast
+  as HF's), audio-speed-v1's design under new rules, as noted; not started.

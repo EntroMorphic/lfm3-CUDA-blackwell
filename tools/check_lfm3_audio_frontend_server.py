@@ -4,9 +4,12 @@ lfm3-profile-v1; black box over HTTP, the server started like a deployment). The
 utterances spread over the corpus's lengths (sorted by length, evenly spaced, the longest included); each request is
 audio-in-v1's (system "Perform ASR in English.", mode text, greedy, 512 tokens). Pass: every request 200 (none
 refused: audio requests wait for the front end), and every reply's text byte-identical to lfm3-speech's for the same
-utterance (REF_DIR/CASE.json, e.g. rule 4's corpus run, itself equal to audioin-v2's); then a text /generate control
-before and after gives the same ids, and the server exits 0.
-Usage: check_lfm3_audio_frontend_server.py SERVER MODEL CASES.json REF_DIR N OUT_JSON [SERVER_ARG...]
+conversation: lfm3-speech SPEECH runs the same messages (each clip as its WAV path) in one --batch, its outputs in
+WORK_DIR/CASE.json (the reply "text" as the server decodes it); then a text /generate control before and after gives
+the same ids, and the server exits 0. Both engines inherit the environment (LFM3_AUDIO_FEATURES).
+(A first version compared with rule 4's corpus outputs, which were made from prompt_ids and carry no "text": every
+comparison failed against None. validation/audio-frontend-v1 records it.)
+Usage: check_lfm3_audio_frontend_server.py SERVER SPEECH MODEL CASES.json WORK_DIR N OUT_JSON [SERVER_ARG...]
 """
 import base64
 import hashlib
@@ -21,12 +24,28 @@ import urllib.request
 from pathlib import Path
 
 
-def main(server, model, cases_json, ref_dir, n, out_json, *server_args):
+def conversation(clip):
+    return [{"role": "system", "content": "Perform ASR in English."},
+            {"role": "user", "content": [{"type": "audio", "audio": clip}]}]
+
+
+def main(server, speech, model, cases_json, work, n, out_json, *server_args):
     n = int(n)
     cases = sorted(json.load(open(cases_json))["cases"], key=lambda c: (c["seconds"], c["case"]))
     pick = sorted({round(i * (len(cases) - 1) / (n - 1)) for i in range(n)}) if n > 1 else [len(cases) - 1]
     chosen = [cases[i] for i in pick]
     assert len(chosen) == n
+    # the references: lfm3-speech on the same conversations, the clips as paths
+    work = Path(work)
+    work.mkdir(parents=True, exist_ok=True)
+    with open(work / "list.txt", "w") as f:
+        for c in chosen:
+            req = work / f"{c['case']}.req.json"
+            req.write_text(json.dumps(dict(messages=conversation(c["audio"][0]), mode="text", max_new_tokens=512, seed=0)))
+            f.write(f"{req} {work / c['case']}\n")
+    r = subprocess.run([speech, model, "--batch", str(work / "list.txt")], capture_output=True, text=True)
+    if r.returncode != 0:
+        sys.exit(f"lfm3-speech failed: {r.stderr[-500:]}")
     token = secrets.token_urlsafe(32)
     token_path = Path(out_json).with_suffix(".token")
     fd = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -55,9 +74,7 @@ def main(server, model, cases_json, ref_dir, n, out_json, *server_args):
     for c in chosen:
         wav = c["audio"][0]
         clip = base64.b64encode(Path(wav).read_bytes()).decode()
-        bodies.append(dict(messages=[{"role": "system", "content": "Perform ASR in English."},
-                                     {"role": "user", "content": [{"type": "audio", "audio": clip}]}],
-                           mode="text", max_new_tokens=512, seed=0))
+        bodies.append(dict(messages=conversation(clip), mode="text", max_new_tokens=512, seed=0))
     results = [None] * n
     go = threading.Event()
 
@@ -77,11 +94,12 @@ def main(server, model, cases_json, ref_dir, n, out_json, *server_args):
                   wall_seconds=round(wall, 2), cases={})
     ok = True
     for c, (status, reply, seconds) in zip(chosen, results):
-        ref = json.load(open(Path(ref_dir) / f"{c['case']}.json"))
-        same = status == 200 and reply.get("text") == ref.get("text")
+        ref = json.load(open(work / f"{c['case']}.json"))
+        same = status == 200 and ref.get("text") is not None and reply.get("text") == ref.get("text")
         ok &= same
         report["cases"][c["case"]] = dict(seconds=c["seconds"], status=status, text_identical=same,
-                                          error=None if status == 200 else reply, wall_seconds=round(seconds, 2))
+                                          error=None if status == 200 else reply, wall_seconds=round(seconds, 2),
+                                          text=reply.get("text"), reference_text=None if same else ref.get("text"))
     s1, after = post("/generate", control)
     report["text_control_identical"] = s0 == s1 == 200 and before["generated_ids"] == after["generated_ids"]
     ok &= report["text_control_identical"]
