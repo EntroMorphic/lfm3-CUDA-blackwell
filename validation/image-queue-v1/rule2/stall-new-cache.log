@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/workspace/liquid-CUDA/build/../tools/measure_lfm3_image_stall.py", line 87, in <module>
+    main(*sys.argv[1:5], *(int(a) for a in sys.argv[5:6]), *sys.argv[6:])
+  File "/workspace/liquid-CUDA/build/../tools/measure_lfm3_image_stall.py", line 70, in main
+    one_run(s, None)  # warm
+    ^^^^^^^^^^^^^^^^
+  File "/workspace/liquid-CUDA/build/../tools/measure_lfm3_image_stall.py", line 58, in one_run
+    return dict(worst_gap=max(g for g in gaps if g is not None), row_gaps=gaps,
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: max() iterable argument is empty

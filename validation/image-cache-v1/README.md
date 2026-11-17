@@ -80,3 +80,26 @@ identical across conversations. The turn-1 times expose an intermittent 3-4 s pr
 the first a cache hit) equal to `lfm3-speech`'s text, cache on and off; the 11 at once, twice, on both; the
 three-turn conversations on cherry and two, twice each, the same on and off; the 8 listening-set requests
 (interleaved, 1,024 tokens) text and WAV identical on and off (the record keeps each WAV's sha256).
+
+## Rule 2 results (2026-11-16, quiet window 3): **part (a) FAIL as written, part (b) PASS in substance** (`rule2/`)
+`tools/measure_lfm3_image_turns.py`, 4 conversations (the first a warm-up), medians; new `vimg-srv-c2` (cache on, the
+default) against old `vimg-srv-a3`, same window, MAXN:
+| request | turn | new end to end | old end to end | new first text | old first text | new engine prefill | old |
+|---|---|---|---|---|---|---|---|
+| cherry (4K) | 1 | 1.466 | 2.643 | 0.354 | 1.534 | 0.227 | 0.592 |
+| cherry | 2 | **1.345** | 2.529 | **0.415** | 1.599 | 0.288 | 0.653 |
+| cherry | 3 | 1.530 | 2.700 | 0.419 | 1.589 | 0.291 | 0.656 |
+| two | 1-3 | 1.17-1.19 | 1.31-1.33 | 0.085-0.100 | 0.229-0.242 | 0.068-0.082 | 0.136-0.150 |
+Texts identical across conversations on both servers.
+- **Rule as written could not be applied to turn 1 vs turn 2**: the tool's warm-up conversation sends the same image,
+  so on the new server every measured turn 1 is already a hit (the warm-up's own turn 1, the one miss, was the
+  server's first request: 3.38 s, cold). The comparison that measures the same thing is new against old (old: every
+  turn a miss). **(b)** Turn 2 is shorter by **1.18 s** against the bar of 80% of a miss's front end plus encode (~0.95
+  + ~0.36 s from rule 0: 1.05 s): met.
+- **(a) "request to prefill start at most 30 ms on a hit"**: not isolated by this tool; its upper bound, first text
+  minus engine prefill (which also holds the first generated token), is **0.127 s** for cherry and 0.018 s for two.
+  The difference scales with the payload: cherry is a 9.8 MB PNG, a 13 MB base64 body, which every request must
+  still send, receive and parse as JSON (in process: parsed by the front end and again by `parse_speech`) and
+  compare as a key. The cache cannot remove the payload; the bar was written without it. **FAIL as written**; a
+  breakdown (receive, parse, lookup) is queued, and parsing once instead of twice is a candidate fix.
+- The old server's runs show two 4.4 s prefills (conversations 3 and 4): the prefill stall (`validation/prefill-stall-v1/`).

@@ -1,0 +1,8 @@
+0 [(3.378, 0.62), (1.345, 0.288), (1.53, 0.291)]
+1 [(1.465, 0.227), (1.344, 0.288), (1.53, 0.291)]
+2 [(1.466, 0.227), (1.345, 0.288), (1.53, 0.291)]
+3 [(1.466, 0.227), (1.345, 0.288), (1.532, 0.291)]
+turn 1: end_to_end 1.466, first_text 0.354, prefill 0.227, generate 1.041
+turn 2: end_to_end 1.345, first_text 0.415, prefill 0.288, generate 0.860
+turn 3: end_to_end 1.530, first_text 0.419, prefill 0.291, generate 1.041
+texts identical across conversations: True

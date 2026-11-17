@@ -1,0 +1,117 @@
+{
+ "runs": [
+  [
+   {
+    "end_to_end": 2.3344453390163835,
+    "first_text": 1.2990539410093334,
+    "prefill": 0.150742348,
+    "generate": 1.034255976,
+    "text": "The most striking element in the picture is the **ornate multi\u2011tiered traditional Chinese pavilion (tower)** in the foreground. Its vivid red\u2011painted wooden columns and eaves, the layered orange\u2011and\u2011green glazed\u2011tile roofs, and the golden finial at the very top draw"
+   },
+   {
+    "end_to_end": 1.1832630690187216,
+    "first_text": 0.09703109398833476,
+    "prefill": 0.079347301,
+    "generate": 1.033878637,
+    "text": "The dominant colors are **red** (the painted wooden columns and walls) and **green** (the glazed roof tiles and eaves), with **orange** appearing as the warm tones of the roof tiles and the flower's petals. These are set against a pale, hazy **blue\u2011gray** background"
+   },
+   {
+    "end_to_end": 1.1871896960074082,
+    "first_text": 0.10067608501412906,
+    "prefill": 0.081749667,
+    "generate": 1.034089686,
+    "text": "The light in the image is bright, soft, and natural, consistent with a clear, sunny day. It appears to come from the upper left, casting a gentle, even illumination across the scene without harsh shadows or deep contrasts. The sky is a pale, hazy blue, and the overall brightness is high, giving"
+   }
+  ],
+  [
+   {
+    "end_to_end": 1.1719392400118522,
+    "first_text": 0.08584232098655775,
+    "prefill": 0.067566438,
+    "generate": 1.033739267,
+    "text": "The most striking element in the picture is the **ornate multi\u2011tiered traditional Chinese pavilion (tower)** in the foreground. Its vivid red\u2011painted wooden columns and eaves, the layered orange\u2011and\u2011green glazed\u2011tile roofs, and the golden finial at the very top draw"
+   },
+   {
+    "end_to_end": 1.1846352199791,
+    "first_text": 0.09757480898406357,
+    "prefill": 0.079555995,
+    "generate": 1.034626988,
+    "text": "The dominant colors are **red** (the painted wooden columns and walls) and **green** (the glazed roof tiles and eaves), with **orange** appearing as the warm tones of the roof tiles and the flower's petals. These are set against a pale, hazy **blue\u2011gray** background"
+   },
+   {
+    "end_to_end": 1.1852583380241413,
+    "first_text": 0.09951800300041214,
+    "prefill": 0.081561236,
+    "generate": 1.033366055,
+    "text": "The light in the image is bright, soft, and natural, consistent with a clear, sunny day. It appears to come from the upper left, casting a gentle, even illumination across the scene without harsh shadows or deep contrasts. The sky is a pale, hazy blue, and the overall brightness is high, giving"
+   }
+  ],
+  [
+   {
+    "end_to_end": 1.1708647789782844,
+    "first_text": 0.0851186620129738,
+    "prefill": 0.067518251,
+    "generate": 1.033497946,
+    "text": "The most striking element in the picture is the **ornate multi\u2011tiered traditional Chinese pavilion (tower)** in the foreground. Its vivid red\u2011painted wooden columns and eaves, the layered orange\u2011and\u2011green glazed\u2011tile roofs, and the golden finial at the very top draw"
+   },
+   {
+    "end_to_end": 1.1810534830146935,
+    "first_text": 0.09757232997799292,
+    "prefill": 0.079585534,
+    "generate": 1.031318521,
+    "text": "The dominant colors are **red** (the painted wooden columns and walls) and **green** (the glazed roof tiles and eaves), with **orange** appearing as the warm tones of the roof tiles and the flower's petals. These are set against a pale, hazy **blue\u2011gray** background"
+   },
+   {
+    "end_to_end": 1.1877825320116244,
+    "first_text": 0.10079672298161313,
+    "prefill": 0.082257347,
+    "generate": 1.034721045,
+    "text": "The light in the image is bright, soft, and natural, consistent with a clear, sunny day. It appears to come from the upper left, casting a gentle, even illumination across the scene without harsh shadows or deep contrasts. The sky is a pale, hazy blue, and the overall brightness is high, giving"
+   }
+  ],
+  [
+   {
+    "end_to_end": 1.1710428229998797,
+    "first_text": 0.08527247197343968,
+    "prefill": 0.067596837,
+    "generate": 1.033480809,
+    "text": "The most striking element in the picture is the **ornate multi\u2011tiered traditional Chinese pavilion (tower)** in the foreground. Its vivid red\u2011painted wooden columns and eaves, the layered orange\u2011and\u2011green glazed\u2011tile roofs, and the golden finial at the very top draw"
+   },
+   {
+    "end_to_end": 1.1343150540196802,
+    "first_text": 0.09707852700375952,
+    "prefill": 0.079170259,
+    "generate": 1.034786996,
+    "text": "The dominant colors are **red** (the painted wooden columns and walls) and **green** (the glazed roof tiles and eaves), with **orange** appearing as the warm tones of the roof tiles and the flower's petals. These are set against a pale, hazy **blue\u2011gray** background"
+   },
+   {
+    "end_to_end": 1.1856509030039888,
+    "first_text": 0.09979057000600733,
+    "prefill": 0.081745794,
+    "generate": 1.033608599,
+    "text": "The light in the image is bright, soft, and natural, consistent with a clear, sunny day. It appears to come from the upper left, casting a gentle, even illumination across the scene without harsh shadows or deep contrasts. The sky is a pale, hazy blue, and the overall brightness is high, giving"
+   }
+  ]
+ ],
+ "medians": [
+  {
+   "end_to_end": 1.1710428229998797,
+   "first_text": 0.08527247197343968,
+   "prefill": 0.067566438,
+   "generate": 1.033497946
+  },
+  {
+   "end_to_end": 1.1810534830146935,
+   "first_text": 0.09757232997799292,
+   "prefill": 0.079555995,
+   "generate": 1.034626988
+  },
+  {
+   "end_to_end": 1.1856509030039888,
+   "first_text": 0.09979057000600733,
+   "prefill": 0.081745794,
+   "generate": 1.033608599
+  }
+ ],
+ "texts_repeatable": true
+}

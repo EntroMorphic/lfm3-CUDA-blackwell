@@ -1,0 +1,117 @@
+{
+ "runs": [
+  [
+   {
+    "end_to_end": 3.772769281989895,
+    "first_text": 2.6625908849819098,
+    "prefill": 0.617004276,
+    "generate": 1.042608448,
+    "text": "The element that stands out most is the cluster of **bright white blossoms** in the center of the frame. Their clean, luminous petals, delicate five\u2011petal shape, and the small pink\u2011tinged stamens with golden anthers are in sharp focus, making them the clear focal point."
+   },
+   {
+    "end_to_end": 2.5342961190035567,
+    "first_text": 1.606841495988192,
+    "prefill": 0.653388857,
+    "generate": 0.860062205,
+    "text": "The dominant colors are **white** (the blossoms) and **dark brown** (the tree branches), with **green** (the new leaves) and small accents of **pink** (the flower centers and leaf tips) adding subtle contrast."
+   },
+   {
+    "end_to_end": 2.7092120639863424,
+    "first_text": 1.5979504570132121,
+    "prefill": 0.655763065,
+    "generate": 1.043157506,
+    "text": "The light in the image is soft, natural, and diffused, suggesting gentle daylight\u2014likely a bright but overcast or shaded day rather than harsh, direct sun. It illuminates the white blossoms evenly from the front, allowing their delicate petals and the tiny orange stamens to catch a bright, even glow"
+   }
+  ],
+  [
+   {
+    "end_to_end": 2.634113123989664,
+    "first_text": 1.5241373399912845,
+    "prefill": 0.592076941,
+    "generate": 1.042340501,
+    "text": "The element that stands out most is the cluster of **bright white blossoms** in the center of the frame. Their clean, luminous petals, delicate five\u2011petal shape, and the small pink\u2011tinged stamens with golden anthers are in sharp focus, making them the clear focal point."
+   },
+   {
+    "end_to_end": 2.5287894690118264,
+    "first_text": 1.5993599780194927,
+    "prefill": 0.6524284,
+    "generate": 0.861601854,
+    "text": "The dominant colors are **white** (the blossoms) and **dark brown** (the tree branches), with **green** (the new leaves) and small accents of **pink** (the flower centers and leaf tips) adding subtle contrast."
+   },
+   {
+    "end_to_end": 2.6999674680118915,
+    "first_text": 1.5909730010025669,
+    "prefill": 0.656531611,
+    "generate": 1.041306618,
+    "text": "The light in the image is soft, natural, and diffused, suggesting gentle daylight\u2014likely a bright but overcast or shaded day rather than harsh, direct sun. It illuminates the white blossoms evenly from the front, allowing their delicate petals and the tiny orange stamens to catch a bright, even glow"
+   }
+  ],
+  [
+   {
+    "end_to_end": 6.512760298006469,
+    "first_text": 5.402155774005223,
+    "prefill": 4.466013348,
+    "generate": 1.043782326,
+    "text": "The element that stands out most is the cluster of **bright white blossoms** in the center of the frame. Their clean, luminous petals, delicate five\u2011petal shape, and the small pink\u2011tinged stamens with golden anthers are in sharp focus, making them the clear focal point."
+   },
+   {
+    "end_to_end": 2.521335066005122,
+    "first_text": 1.5935409780067857,
+    "prefill": 0.652668467,
+    "generate": 0.859875555,
+    "text": "The dominant colors are **white** (the blossoms) and **dark brown** (the tree branches), with **green** (the new leaves) and small accents of **pink** (the flower centers and leaf tips) adding subtle contrast."
+   },
+   {
+    "end_to_end": 2.7004228479927406,
+    "first_text": 1.589016898011323,
+    "prefill": 0.655591007,
+    "generate": 1.043617574,
+    "text": "The light in the image is soft, natural, and diffused, suggesting gentle daylight\u2014likely a bright but overcast or shaded day rather than harsh, direct sun. It illuminates the white blossoms evenly from the front, allowing their delicate petals and the tiny orange stamens to catch a bright, even glow"
+   }
+  ],
+  [
+   {
+    "end_to_end": 2.643098471016856,
+    "first_text": 1.5335656630049925,
+    "prefill": 0.592085891,
+    "generate": 1.042021315,
+    "text": "The element that stands out most is the cluster of **bright white blossoms** in the center of the frame. Their clean, luminous petals, delicate five\u2011petal shape, and the small pink\u2011tinged stamens with golden anthers are in sharp focus, making them the clear focal point."
+   },
+   {
+    "end_to_end": 6.262360523978714,
+    "first_text": 5.331674496992491,
+    "prefill": 4.394857038,
+    "generate": 0.862591959,
+    "text": "The dominant colors are **white** (the blossoms) and **dark brown** (the tree branches), with **green** (the new leaves) and small accents of **pink** (the flower centers and leaf tips) adding subtle contrast."
+   },
+   {
+    "end_to_end": 2.6958193159953225,
+    "first_text": 1.5871309180220123,
+    "prefill": 0.655869835,
+    "generate": 1.040789417,
+    "text": "The light in the image is soft, natural, and diffused, suggesting gentle daylight\u2014likely a bright but overcast or shaded day rather than harsh, direct sun. It illuminates the white blossoms evenly from the front, allowing their delicate petals and the tiny orange stamens to catch a bright, even glow"
+   }
+  ]
+ ],
+ "medians": [
+  {
+   "end_to_end": 2.643098471016856,
+   "first_text": 1.5335656630049925,
+   "prefill": 0.592085891,
+   "generate": 1.042340501
+  },
+  {
+   "end_to_end": 2.5287894690118264,
+   "first_text": 1.5993599780194927,
+   "prefill": 0.652668467,
+   "generate": 0.861601854
+  },
+  {
+   "end_to_end": 2.6999674680118915,
+   "first_text": 1.589016898011323,
+   "prefill": 0.655869835,
+   "generate": 1.041306618
+  }
+ ],
+ "texts_repeatable": true
+}

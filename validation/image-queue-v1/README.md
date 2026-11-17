@@ -87,3 +87,21 @@ before commit: the refactor first left smart_resize's aspect-ratio refusal outsi
 one per build variant; `decode_image` now runs the count or preprocessing under it).
 Exactness through the server: image-cache-v1 rule 1's check runs the in-process server with the handoff on (32 of 32).
 Rule 2 (the stall with part 2) and rule 3 (memory) follow in a quiet window.
+
+## Rule 2 results (2026-11-16, quiet window 3): **FAIL** (stall 0.66 s > 50 ms; was 1.06 s) (`rule2/`)
+`tools/measure_lfm3_image_stall.py` on `vimg-srv-c2` (part 2, image cache off: `--image-cache-mb 0`), cherry (4K), 3
+repeats, MAXN throughout (`power-*.json`), tegrastats recorded. Worst gap between audio events on the 7 streaming rows:
+without the image 0.823 / 0.339 / 0.341 s, with it 1.017 / 0.993 / 1.000 s; medians **0.341 -> 1.000 s, stall 0.66 s**
+(rule 0 on the old server: 1.06 s). Part 2 took the decode off the engine thread (~0.4 s), as designed; what remains
+is the encode and the 4K prefill, which run on the engine thread between decode steps: part 2 was never going to remove
+them, and the 50 ms bar cannot be met without splitting the prefill into chunks interleaved with decoding (a separate
+round, not started; recorded as a candidate). Every row still completes, every reply 200.
+The cache-on run crashed in the tool (`stall-new-cache.log`): the warm-up run on a cold server got no audio inside its
+window and the gap computation raised. Fixed (`f2106db`: the warm-up measures nothing; a measured run with no gaps
+says so); rerun queued for the next quiet window. With a hit, the encode is gone too, so that run will show the
+prefill alone.
+
+## Rule 3 results (2026-11-16, quiet window 3): **PASS** (`rule3/`)
+`tools/measure_lfm3_image_rss.py`, 16 simultaneous cherry (4K) requests on `vimg-srv-c2`: idle 5,506 MB, peak
+**6,031 MB (+525 MB, bar +1 GB)**, after 5,662 MB. Statuses: 200s and 429 `queue_full` for those past the queue (the
+default queue size; the rule is about memory, and the refused ones still arrived and were parsed).
