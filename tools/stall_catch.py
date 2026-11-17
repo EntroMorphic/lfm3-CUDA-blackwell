@@ -10,6 +10,7 @@ STALL_PREFIX (e.g. "docker exec -u 1000 -e LD_PRELOAD=... lfm3-profile-v1"): run
 instead (paths as the container sees them; gdb on the host attaches to its host PID, the same uid 1000 on both sides,
 the preload opting it in to tracing). The engine's PID is then found by its command line."""
 import os
+import re
 import subprocess
 import sys
 import time
@@ -52,6 +53,25 @@ def threads():
     return res
 
 
+def where(gdb_out):
+    """Each frame-0 PC in gdb's output resolved against /proc/PID/maps (gdb across PID namespaces has no symbols):
+    the mapping, its file and the file offset, for addr2line/nm offline; then the whole maps file."""
+    try:
+        maps = open(f"/proc/{pid}/maps").read()
+    except OSError as e:
+        return f"--- maps unreadable: {e}\n"
+    rows = []
+    for line in maps.splitlines():
+        f = line.split(None, 5)
+        lo, hi = (int(x, 16) for x in f[0].split("-"))
+        rows.append((lo, hi, int(f[2], 16), f[1], f[5] if len(f) > 5 else "[anon]"))
+    text = "--- frame-0 PCs\n"
+    for pc in sorted({int(m, 16) for m in re.findall(r"^#0\s+(0x[0-9a-f]+)", gdb_out, re.M)}):
+        hit = next((r for r in rows if r[0] <= pc < r[1]), None)
+        text += (f"{pc:#x} {hit[4]} {hit[3]} file offset {pc - hit[0] + hit[2]:#x}\n" if hit else f"{pc:#x} unmapped\n")
+    return text + f"--- /proc/{pid}/maps\n" + maps
+
+
 caught, last, prev, prev_t = 0, 0.0, {}, time.time()
 started = time.time()  # the model's load faults too: no catch in its first 90 s
 while proc.poll() is None:
@@ -73,6 +93,7 @@ while proc.poll() is None:
                                    capture_output=True, text=True, timeout=300)
                 state = "".join(f"--- {p}\n" + open(p).read() for p in
                                 ("/proc/meminfo", "/proc/buddyinfo", "/proc/vmstat", f"/proc/{pid}/status"))
+                state += where(g.stdout)
                 (out / f"catch-{caught}.txt").write_text(f"faulting tid {tid} {name}\n" + g.stdout + g.stderr + state)
                 print(f"{time.time():.3f} CATCH {caught} done in {time.time() - now:.1f} s", file=log, flush=True)
                 now_threads = threads()
