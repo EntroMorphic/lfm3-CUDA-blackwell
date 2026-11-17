@@ -345,3 +345,34 @@ token prefill cell is not completed (infeasible on this machine: >110 GiB and gr
 - Run on the host with the same guard (SIGTERM, recorded NOT COMPLETED, if MemAvailable drops under 8 GB), after
   quiet window 7 finishes, by `tools/thor/tgemm_host_race2048.sh` (a waiter: window 7's QUIET-V7-FINISHED, then no
   compute-sanitizer running); results in `build/tgemm-r3-host2048/`.
+
+## Rule 4b pair 2 results (window 7, 2026-11-17, ON first then OFF; `build/quiet-tcgen05-4b-pair2/`): rule 4b FAIL, only because the OFF baseline failed crowd identity
+Verdict by `tools/tcgen05_4b_pair_verdict.py` under amendments 2 and 2a (`verdict.json`):
+| | ON (`tgemm-on1`, server `0193b11b`) | OFF (`tgemm-off1`, server `54ee76ac`) |
+|---|---|---|
+| non-memory gates | all true | **crowd identity false** (all others true) |
+| crowd after, unstreamed / streamed | 56/56 / 56/56 | **52/56** / 56/56 |
+| replies; in-soak differ | 3,398; 0 | 3,406; 0 |
+| server RSS idle growth (gate <= 64) | +4.0 MiB, pass | -38.1 MiB, pass |
+| cgroup anon at checkpoints 1-4 (MiB) | 418.0 / 554.7 / 641.4 / 584.1 | 447.5 / 563.6 / 671.2 / 587.5 |
+| cgroup anon growth, checkpoints 2 to 4 (gate <= 64) | +29.4, pass | +23.9, pass |
+| run verdict | **pass** | **fail** (crowd) |
+| reported only: `host_used_less_client` growth | +244.2 MiB (the harness's own memory verdict false) | -6.2 MiB |
+| reported only: 429 retries per reply | 16.06 | 20.22 |
+- **Equivalence (2a, ON's growth <= max(OFF's growth, 0) + 32):** server RSS: ON +4.0 against the bound
+  max(-38.1, 0) + 32 = 32: **pass** (ON minus OFF is +42.1; 2a gates ON's growth against the bound, not the
+  difference, so the script's pass matches 2a as written). cgroup anon: ON +29.4 against the bound 23.9 + 32 = 55.9:
+  **pass**.
+- **Retries:** ON/OFF retries per reply 0.795 (ON lower): no investigation.
+- **rule_4b_pass = false, only because the OFF run failed crowd identity.** ON passes every gate.
+- **OFF's crowd failure is a recorded failure, cause not yet known.** The four unstreamed cases that differed:
+  `budget-truncated-s1`, `numbers-normalized-s1`, `image-mirror`, `image-noise`; streamed 56/56; in-soak differ 0. The
+  same OFF binary had the crowd 56/56 in window 5. The harness's crowd check counts a non-200 as a differ and saves
+  neither the status nor the reply, so a 429 after its retries run out (3,000 x 10 ms) cannot be told apart from a
+  content difference in these records. The baseline is main's path (no tcgen05); Tripp is investigating it on main.
+  Nothing rerun.
+- **Reported, not gated, and noted:** ON's `host_used_less_client` grew +244.2 MiB (amendment 2 moved it out of the
+  gate as including driver memory that swings ~500 MiB at idle; window 5's OFF alone grew 57.3). Not analysed further
+  here; its per-reading records are in `on/soak-4b.readings.jsonl`.
+**Rule 4b status: FAIL as recorded** (window 4 FAIL; window 5 not decisive; pair 2 FAIL on the OFF baseline's crowd,
+cause unknown, ON passing its gates). The build option stays OFF.
