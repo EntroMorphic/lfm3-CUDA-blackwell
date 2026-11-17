@@ -1,0 +1,33 @@
+630 requests, median prefill 0.033 s, stalls (> median + 1 s): 22
+STALL 94d8b7dfbb1d66ab-s6 prefill 4.118: {'proc_minflt': 12187726, 'proc_utime': 43, 'proc_stime': 379}
+STALL 4f0c22069ee9f19b-s10 prefill 3.826: {'proc_minflt': 11320042, 'proc_utime': 42, 'proc_stime': 350}
+STALL 1c15e59f2aadf6ca-s13 prefill 3.832: {'proc_minflt': 11335908, 'proc_utime': 46, 'proc_stime': 348}
+STALL 1205a36179461e61-s6 prefill 3.819: {'proc_minflt': 11298789, 'proc_utime': 40, 'proc_stime': 350}
+STALL 1205a36179461e61-s10 prefill 3.674: {'proc_minflt': 10866446, 'proc_utime': 47, 'proc_stime': 330}
+STALL c534cfaade327bc7-s5 prefill 3.960: {'proc_minflt': 11721354, 'proc_utime': 46, 'proc_stime': 361}
+STALL c534cfaade327bc7-s12 prefill 3.900: {'proc_minflt': 11544337, 'proc_utime': 50, 'proc_stime': 354}
+STALL bd1b3a8ea981bd9a-s13 prefill 3.401: {'proc_minflt': 10268229, 'proc_utime': 32, 'proc_stime': 315}
+STALL 9ca6f2752696d588-s13 prefill 3.838: {'proc_minflt': 11346810, 'proc_utime': 41, 'proc_stime': 347}
+STALL 862552c0794598cc-s2 prefill 3.845: {'proc_minflt': 11372100, 'proc_utime': 36, 'proc_stime': 359}
+STALL e19c7e05dbe3eccf-s2 prefill 4.037: {'proc_minflt': 11947625, 'proc_utime': 46, 'proc_stime': 367}
+STALL 92ff9bf8ee5f93e1-s1 prefill 3.459: {'proc_minflt': 10224720, 'proc_utime': 35, 'proc_stime': 323}
+STALL b8eb8bb81ddacadc-s3 prefill 3.861: {'proc_minflt': 11420197, 'proc_utime': 42, 'proc_stime': 355}
+STALL dd207bf531b90e44-s9 prefill 3.473: {'proc_minflt': 1752796, 'proc_utime': 23, 'proc_stime': 165}
+STALL 3e39fa84d626fa2b-s6 prefill 4.036: {'proc_minflt': 11945890, 'proc_utime': 37, 'proc_stime': 371}
+STALL 3e39fa84d626fa2b-s15 prefill 4.060: {'proc_minflt': 12185773, 'proc_utime': 47, 'proc_stime': 367}
+STALL 6bee531d0d92a9b8-s13 prefill 4.095: {'proc_minflt': 12124043, 'proc_utime': 47, 'proc_stime': 373}
+STALL 89b56321958b05f6-s3 prefill 3.505: {'proc_minflt': 10367382, 'proc_utime': 41, 'proc_stime': 315}
+STALL a11b81e7e1964b19-s8 prefill 3.458: {'proc_minflt': 10222544, 'proc_utime': 42, 'proc_stime': 318}
+STALL 122825c9a1966762-s4 prefill 3.439: {'proc_minflt': 10166491, 'proc_utime': 40, 'proc_stime': 314}
+STALL c4ac8a6c0846cd87-s10 prefill 3.815: {'proc_minflt': 11270633, 'proc_utime': 43, 'proc_stime': 348}
+STALL 34bc0730a6cf62ed-s15 prefill 3.771: {'proc_minflt': 2248677, 'proc_utime': 14, 'proc_stime': 205}
+normal 94d8b7dfbb1d66ab-s1 prefill 0.022: {'proc_minflt': 2800, 'proc_utime': 8, 'proc_stime': 3}
+normal 1c15e59f2aadf6ca-s4 prefill 0.034: {'proc_minflt': 4, 'proc_utime': 10}
+normal 8326f130f2a7d20f-s8 prefill 0.034: {'proc_utime': 16}
+normal bd1b3a8ea981bd9a-s11 prefill 0.033: {'proc_utime': 9}
+normal 862552c0794598cc-s15 prefill 0.033: {'proc_utime': 13, 'proc_stime': 1}
+normal aae98c822383deec-s1 prefill 0.031: {'proc_utime': 18, 'proc_stime': 1}
+normal d89fc0474d13fbc9-s3 prefill 0.032: {'proc_utime': 9}
+normal 5eb364b95f7540fc-s4 prefill 0.033: {'proc_minflt': 2, 'proc_utime': 13}
+normal 92ff9bf8ee5f93e1-s6 prefill 0.032: {'proc_minflt': 3, 'proc_utime': 15}
+normal f978117507e67b07-s7 prefill 0.032: {'proc_utime': 15}
