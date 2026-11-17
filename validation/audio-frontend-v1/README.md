@@ -480,6 +480,10 @@ Records are in `amendment2/`:
     - lfm3-profile-v1 hit its 96 GiB memory cgroup limit while another agent's 8,192-patch vision racecheck ran
       alongside it (their record: `build/tgemm-r3/oom-killed/`).
     - It reruns alone after quiet window 5 (`audio-fe-a2-san-race`).
+  - **racecheck, rerun alone: PASS.** It started at 05:05 once window 5 had finished and no other sanitizer ran, and
+    ended 07:12:15 on 2026-11-17: exit 0, 7,631 s, "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)",
+    outputs identical to the plain run. The plain run again matched the recorded stage files (cut-1: 4; two-clip: 8;
+    1089-134686-0000: 4). Binary: `audio-fe-speech-a3/lfm3-speech` (`214a576c...`).
 
 ### Rule 2 results (amended; quiet window 3, 2026-11-16, run by Tripp): **FAIL**, as recorded in advance; **F2 ships**
 `tools/thor/quiet_audio_frontend.sh` (MAXN, GPU clocks locked, the power state unchanged start to end), `quiet-w3/`.
@@ -509,3 +513,48 @@ Bench `audio-bench-a2` (`3b92e75a...`), lfm3-speech `audio-fe-speech-a3`. Each f
   default: 70 passed (plain, ASan+UBSan, TSan).
 - **The next bar is the encoder:** the encoder round under amendment 1's bar (time to first token at least as fast
   as HF's), audio-speed-v1's design under new rules, as noted; not started.
+
+## Closing summary (2026-11-17)
+**What ships.**
+- **The front end:** `log_mel` computes every feature as the correctly rounded value of the exact mathematics on
+  today's float32 inputs (amendment 2, F2: a compensated double-double FFT under a written error bound, with a quad
+  recompute where the bound cannot decide; 154 recomputes in 249 million outputs on the corpus).
+  - It is the default in lfm3-speech, the worker and the server.
+  - It uses 4 threads.
+  - It differs from today's bytes in 29 floats of 28 LibriSpeech clips, each by one float step toward the exact value.
+- **Fallback:** `LFM3_AUDIO_FEATURES=dft` restores today's bytes exactly. It is today's direct DFT, now threaded and
+  vectorized, with the same bytes.
+- **The server:** each clip's features are computed on its handler thread (2 slots, waiting within the deadline) and
+  handed to the in-process engine through a content-keyed, request-leased cache. Audio requests wait for the front end
+  instead of a 429; text is unchanged.
+
+**The rules.**
+
+| rule | verdict |
+|---|---|
+| 0, measure first (front-end share) | done: `log_mel` was 60–75% of time to first token (audio-speed-v1 rule 0, quiet-v1) |
+| 0, the stall at 8 and 32 rows | **not run** |
+| 1, byte-identical (the threaded DFT) | PASS: 2,620 + 40 + 12 clips, 1–12 threads, Thor and x86 |
+| 1, amendment 1 (double FFT) | FAIL: 37 ties re-rolled, 21 farther from the quad reference; superseded |
+| 1, amendment 2 (correctly rounded) | PASS: every float of 2,620 + 40 + 12 clips equals an independent quad reference's rounding; F1 and F2, 1 and 4 threads, Thor and x86 |
+| 2, amended (time to first token at most HF's at 10.4, 35, 90 s) | **FAIL, as recorded in advance:** F2 0.090 / 0.204 / 0.477 s against HF 0.050 / 0.072 / 0.141 s. F2 chosen over F1; 4 threads kept |
+| 3, the stall rule (other rows' gaps) | **not run** |
+| 3 (amendment 2), transcripts | PASS: 2,620 of 2,620 token sequences unchanged; WER exactly today's; 8 rows identical to alone |
+| 4, audio-in replies | PASS: stage files (only the two changed clips' feature files differ, their replies identical); the server's audio-in check in both modes; 8 and 32 requests at once all served, all identical (the first at-once run failed on a tool bug, recorded) |
+| 5 (amendment 2), the fallback flag | PASS: features and the 360 + 93 stage files byte-identical to today's |
+| 5, sanitizers | PASS: host ASan+UBSan and TSan (the threaded front end, the slots, the cache); compute-sanitizer memcheck (no leaks), initcheck, synccheck, and racecheck (rerun alone after an OOM kill that was not a finding) |
+| 6, nothing else changes | partly: e2e 90/90 and split 90/90 identical; host suites pass (one pre-existing workstation failure). **Not run:** lfm3-speech's 36-output regression, images' rule 6 checks, the text gate, the server's batch/stream/TTS/image checks, the RSS bound with 16 × 90 s requests |
+| 7, red-team | **not done** |
+
+**Before merge:**
+- the unrun parts of rule 6 (the regression scripts under `tools/thor/`);
+- the red-team pass (rule 7);
+- the stall measurement (rules 0 and 3).
+
+They touch the server change, which this round's exactness checks do not fully cover.
+
+**Next (not started; to scope with Tripp after merging):**
+- the encoder round under amendment 1's bar, time to first token at least as fast as HF's. The encoder alone
+  (0.166 s at 90 s) exceeds HF's whole time to first token;
+- the language model's prefill;
+- the 3.3–4 s intermittent prefill stall found by the timing scan, in TTS prefills too (not the encoders).
