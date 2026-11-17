@@ -10,8 +10,12 @@ one token per 32 x 32 block. Every build variant of the harness runs (plain, ASa
 """
 import base64
 import io
+import json
 import random
+import socket
+import struct
 import threading
+import time
 
 import pytest
 
@@ -19,7 +23,7 @@ PIL = pytest.importorskip("PIL")
 from PIL import Image  # noqa: E402
 
 from test_lfm3_http_audio_in import wav  # noqa: E402
-from test_lfm3_http_native import harness_binary, running  # noqa: E402,F401  (fixture)
+from test_lfm3_http_native import TOKEN, Harness, harness_binary, running  # noqa: E402,F401  (fixture)
 
 
 def image(width, height, mode="RGB", fmt="PNG", noise=False, **save):
@@ -258,3 +262,71 @@ def test_image_cache_zero_keeps_nothing(harness_binary, tmp_path):
         prompt_length(h, ask([a]))
         prompt_length(h, ask([a]))
     assert _log_lines(log) == ["handoff", "handoff"]
+
+
+# ------------------------------------------------------------------ red-team (image-queue-v1 rule 5, image-cache-v1 rule 6)
+
+def _reset_client(h, body):
+    """A client that sends its request and will leave with a reset (SO_LINGER 0): the server's `gone`."""
+    payload = json.dumps(body).encode()
+    head = (f"POST /speech HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\n"
+            f"Content-Length: {len(payload)}\r\nAuthorization: Bearer {TOKEN}\r\n\r\n").encode()
+    s = socket.create_connection(("127.0.0.1", h.port), timeout=30)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
+    s.sendall(head + payload)
+    return s
+
+
+def test_every_way_an_image_request_ends_releases_its_leases(harness_binary, tmp_path):
+    # Each decoded image is leased in the handoff (lfm::LeasedMap) until its request ends. Requests that end after
+    # their images were leased (refused by the front end, a later image refused, the client leaving while it waits for
+    # a decode slot, decodes, queues or runs) must leave nothing behind: the next request's engine call sees only its
+    # own entry.
+    log = tmp_path / "handoff.log"
+    raw = bytearray(base64.b64decode(image(640, 480, noise=True)))
+    raw[-20] ^= 1
+    corrupt = base64.b64encode(bytes(raw)).decode()
+    slow = [image(1448, 1448 - 32 * i, noise=True) for i in range(6)]
+    with running(harness_binary, "--image-handoff", "on", "--handoff-log", str(log), "--image-cache-mb", "0",
+                 "--queue-size", "32", "--handlers", "16") as h:
+        # decoded and leased, then refused by the front end: two full-size images overflow the prompt
+        status, body = h.call("POST", "/speech", ask([image(2048, 1024), image(2048, 1024, mode="L")]))
+        assert (status, body) == (400, {"error": "invalid_request"}), (status, body)
+        # the first image leased, the second refused
+        status, body = h.call("POST", "/speech", ask([image(320, 240, noise=True), corrupt]))
+        assert (status, body) == (400, {"error": "image_corrupt"}), (status, body)
+        # clients that leave while their requests wait for a slot, decode, queue or run
+        sockets = [_reset_client(h, ask([p], max_new_tokens=512)) for p in slow]
+        time.sleep(0.2)
+        for s in sockets:
+            s.close()
+        fresh = image(300, 200, noise=True)
+        for _ in range(100):  # the requests that were left end within moments (their handlers poll every 50 ms)
+            prompt_length(h, ask([fresh]))
+            if log.read_text().split()[-1] == "1":
+                break
+            time.sleep(0.1)
+        assert log.read_text().split()[-1] == "1", log.read_text()
+
+
+def test_image_requests_waiting_to_decode_when_the_server_stops_get_503(harness_binary):
+    # A request waiting for a decode slot when the server stops is answered 503 worker_unavailable within a poll
+    # (50 ms), not left to its deadline; the server exits cleanly (no sanitizer report).
+    pictures = [image(1448, 1448 - 32 * i, noise=True) for i in range(12)]
+    h = Harness(harness_binary, "--queue-size", "32", "--handlers", "16", "--request-timeout", "300")
+    results = [None] * len(pictures)
+
+    def run(i):
+        results[i] = h.call("POST", "/speech", ask([pictures[i]]))
+    threads = [threading.Thread(target=run, args=(i,)) for i in range(len(pictures))]
+    for t in threads:
+        t.start()
+    time.sleep(0.3)
+    start = time.monotonic()
+    h.stop()
+    for t in threads:
+        t.join(60)
+    assert time.monotonic() - start < 30
+    for r in results:
+        assert r and (r[0] == 200 or r == (503, {"error": "worker_unavailable"})), results
+    assert any(r[0] == 503 for r in results), results  # 12 decodes, two at a time: most were still waiting

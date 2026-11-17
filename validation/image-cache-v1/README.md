@@ -103,3 +103,103 @@ Texts identical across conversations on both servers.
   compare as a key. The cache cannot remove the payload; the bar was written without it. **FAIL as written**; a
   breakdown (receive, parse, lookup) is queued, and parsing once instead of twice is a candidate fix.
 - The old server's runs show two 4.4 s prefills (conversations 3 and 4): the prefill stall (`validation/prefill-stall-v1/`).
+
+## Red-team (rule 6) (2026-11-17, x86 host only; commit `8104cd5`)
+I read `lfm/lru_bytes.hpp`, the front end's token cache (`Service::decode_images`), `WorkerCore::parse_speech`,
+`set_image_cache_mb`, `stats`, and `Batch::admit`'s keep and copy in `src/lfm3_speech.cuh`. Host findings have a
+failing test first, then the fix. GPU-side findings are described rather than changed (no GPU on this host, and no
+Thor time for this pass).
+- **C1, keys held twice (fixed; medium, memory: rule 3's bound).** `LruBytes` kept each key in its map and a second
+  copy in its order list, but charged it once. The front end's token cache, whose entries are almost entirely key,
+  could therefore hold ~2x its budget (about 1 GiB at the default 512). The engine's host-side keys were doubled the
+  same way. Found with it: `put` pushed the key into the order list before inserting the map entry. An allocation
+  failure in the insert left a list entry with no map entry, and `trim` would then dereference `end()`. Test:
+  `lru_bytes_check.cpp` (putting a 1 MiB key took 2 MiB). Fix: the order list holds pointers to the map's keys (a
+  `std::map` node's key never moves), and the map entry is inserted first and removed again if the list's
+  allocation fails.
+- **C2, cost overflow (fixed; low).** `key.size() + value_bytes` could wrap to a small cost and be kept under any
+  budget. Today's callers pass bounded sizes. Test: a `SIZE_MAX` value was kept under a budget of 1,000. Fix: the
+  comparison is made without forming the sum.
+- **C3, a front-end hit without the engine's rows decodes on the engine thread (GPU-side, described; medium, the
+  stall image-queue part 2 removed comes back; replies stay correct).** When the front end's token cache hits, the
+  handler skips the decode, so it hands nothing over. If the engine's cache then lacks the rows, `parse_speech`
+  decodes and preprocesses on the engine-owner thread (~0.4 s at 4K, every row stalled). Ways that happens:
+  (a) The two budgets fill at very different rates. A 4K image costs the engine ~13 MB of key plus 8 MB of rows, but
+  costs the front end ~13 MB of key alone. The engine therefore evicts first, after ~24 distinct 4K images at the
+  default budgets.
+  (b) The first request with an image never reached the encoder (504 `queue_deadline`, cancelled while queued, 429
+  `queue_full` after decoding).
+  (c) Two requests sent together with the same new image, where the first leaves the queue before the second is
+  admitted.
+  The fake engine has no GPU cache, so the host suite shows this only as the expected `decode` line in
+  `test_a_resent_image_skips_the_front_ends_decode_and_changes_nothing`. Proposed fix: the engine publishes the keys
+  it holds. For example, `lfm3_speech::ImageCache` takes an insert/evict hook that keeps a mutex-guarded set beside
+  `shared_pixel_handoff()`. On a token-count hit, `decode_images` (in-process, `policy_.image_handoff`) skips the
+  decode only when the engine holds that key. Otherwise it decodes and leases as on a miss; the cached count stays
+  valid. An eviction between that check and `parse_speech` would still decode on the engine thread, but rarely.
+  **Thor check needed:** rule 2's stall with 30 distinct 4K images sent first, then a re-send.
+- **C4, rows and media outlive their request (GPU-side, described; medium, memory outside every budget).**
+  `Batch::admit` copies the whole `Options` into the row (`w.o = o`), and `ChunkRun` keeps its own `o_`. Both hold the
+  images' `PixelValues` (50 MB for a full-size image), the keys (up to 16 MiB each) and the `shared_ptr<ImageRows>` of
+  cache hits. `ChunkRun` goes away when the request ends, but `Row::o` lives until that row is next admitted. With 8
+  to 16 rows, evicted GPU rows (8 MB each), pixel values and keys stay allocated after their requests end, which the
+  budget does not count. The copies (`images.push_back(*pixels)` in `parse_speech`, `o = o_` in `ChunkRun::next`,
+  `w.o = o`) are also ~150 MB of memcpy per full-size image on the engine thread. Proposed fix (bookkeeping only, no
+  numerics):
+  (1) In `admit`, after the prefill, clear `w.o.images`, `w.o.image_rows`, `w.o.image_keys` and `w.o.audio`. After
+  `admit`, the row reads only `forced_*`, `codec_finalize`, `on_audio`, `on_slot`, `cancelled` and `record_hidden`.
+  (2) In `ChunkRun::next`, move the media out of `o_` instead of copying them. Image and audio requests are never
+  chunked, so they have exactly one chunk.
+  (3) Let `Options` hold `shared_ptr<const PixelValues>` so the handoff's pixels are shared, not copied.
+  **Thor check needed:** compute-sanitizer memcheck, and rule 1's exactness after the change.
+- **C5, keeping rows can fail the server closed (GPU-side, described; low to medium).** The keep in `Batch::admit`
+  (`std::make_shared<ImageRows>` -> `cudaMalloc`, then a D2D copy) throws on an allocation failure. A throw from
+  `speech_admit` is a rejected native operation, which the Service treats as fatal, so every row and queued request
+  gets 503 and the server stays down until restarted. That happens over an optional cache, after an encode that
+  succeeded. Proposed fix: wrap the keep in `try { ... } catch (const std::exception&) { cudaGetLastError(); }`
+  (`cudaErrorMemoryAllocation` is not sticky) and continue uncached. Any sticky error still surfaces at the
+  `cudaDeviceSynchronize` that follows.
+- **Eviction while a request uses an entry: no defect.** The request holds `shared_ptr<const ImageRows>` from
+  `parse_speech` until it is done with it (longer than needed: C4). The vision encoder, the keep's copy and the hit's
+  copy all run on the legacy default stream, so a buffer freed after eviction is never read by work still in flight.
+  `cudaFree` also synchronizes.
+- **Cancellation mid-encode: no defect.** The encode runs synchronously inside `admit`, and cancellation is observed
+  only between steps. A row is kept only after `vision_->encode` returned exactly `im.tokens` rows. If the request is
+  cancelled later, the kept rows are still the image's exact encoder output.
+- **The worker restarting: no defect, but the design does not match the README.** In process, the engine never
+  restarts: a fault fails the server closed, and a process restart starts both caches empty. The front end's cache
+  holds only counts, which are a function of the bytes, so they cannot go stale. The out-of-process
+  `liquid-lfm3-worker` has **no image cache at all** (no flag, so its budget stays 0, and no handoff). The design's
+  "out of process: the worker" was not built, so rule 1's "through the worker" compared the cache off with the cache
+  off. Recorded; no change.
+- **Never the wrong image (rule 4): no defect.** Keys are the full base64 text, compared in full by `std::map` on
+  every side. An image part is exactly `{"type": "image", "image": ...}` (any other key is refused), so there is no
+  MIME type or detail setting to differ under the same text. The format is sniffed from the bytes, and the
+  preprocessing (`PreprocessConfig`, min/max pixels) is fixed with no per-request option. The same text always gives
+  the same pixels, and therefore the same rows. The same bytes in different text (padding, for instance) make separate
+  entries, which is harmless. An empty key is refused by `parse_messages`, and the engine uses `""` only as its "not
+  cached" marker. A huge key is at most 16 MiB (the body limit), is charged in full, and a key over the budget is not
+  kept. A hit is checked against the image's grid and token count in `admit`.
+- **A refusal is never cached: no defect.** The front end stores a count only after a decode and count that succeeded.
+  The engine keeps rows only after a whole encode. The existing test sends a corrupt image twice and gets 400 twice.
+- **Budget 0 or a change at runtime: no defect.** At 0, `put` keeps nothing and the engine passes no keys
+  (`caching = budget() > 0`); an existing test covers it. The budget is set once, before the Service's threads
+  start. `set_budget` trims, and `LockedLruBytes` locks it.
+- **Thread safety: no defect.** The engine's `image_cache_` is touched only on the engine-owner thread:
+  `parse_speech`, `Batch::admit` and `stats` all run in `WorkerCore::handle`, whose only in-process caller is the
+  Service's `rpc` on that thread. `set_image_cache_mb` runs in `main` before the Service starts its threads. The
+  front end's cache is a `LockedLruBytes`.
+- **`stats` (low, recorded).** `image_cache_entries`, `image_cache_bytes` (keys plus GPU rows) and
+  `image_cache_budget_bytes` are reported by the worker's op `stats`. But `liquid-lfm3-server`, the one binary with a
+  cache, never sends `stats` and has no endpoint for it. The out-of-process worker always reports a budget of 0. The
+  front end's cache has no figures at all. Rule 3's "the cache's bytes (reported by `stats`)" therefore cannot be read
+  from the server as built; it needs an API decision (for example, fields on `/health`).
+- **Disclosure (fixed, docs).** The design promised that SECURITY.md and docs/server-api.md would describe the
+  timing side channel and `--image-cache-mb`; neither did. Both now do.
+- **Lookup cost (low, accepted).** Without a hash, a crafted set of images whose base64 shares a long prefix makes
+  each `std::map` comparison read up to the whole key. That costs ~log2(entries) x 16 MiB of memcmp per request at
+  worst (~10 ms), partly on the engine thread. It is bounded by the body limit.
+
+Host suites after the fixes (plain, ASan+UBSan, TSan; every `tests/test_lfm3_http_*.py` and `tests/test_lru_bytes.py`):
+**619 passed, 2 skipped** (36 min; 3 warnings, unhandled exceptions in client threads of existing tests whose connection closed without a reply). `test_lru_bytes.py` now also runs a plain build. Its byte-counting checks run in the plain and ASan
+builds; TSan's runtime owns `operator new`, so that build checks the threads only.

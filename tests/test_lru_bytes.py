@@ -10,7 +10,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.parametrize("compiler, flags", [("g++", ["-fsanitize=address,undefined", "-fno-sanitize-recover=all"]),
+@pytest.mark.parametrize("compiler, flags", [("g++", ["-DPLAIN"]),
+                                             ("g++", ["-fsanitize=address,undefined", "-fno-sanitize-recover=all"]),
                                              ("clang++", ["-fsanitize=thread"])])
 def test_lru_bytes_and_leased_map(tmp_path, compiler, flags):
     if shutil.which(compiler) is None:
