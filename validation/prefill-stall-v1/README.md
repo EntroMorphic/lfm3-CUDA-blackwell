@@ -50,3 +50,9 @@ the outputs' page cache is charged): Tripp's to change, with the evidence. (Supe
 machine, done in window 4), with /proc/meminfo, buddyinfo and the THP counters snapshotted
 around each stall; if caught, the backtrace names the code that touches ~40 GB of 4 KiB pages. Not yet a fix: no
 change is proposed until the cause is known. A system setting (THP) would be Tripp's to change, with the evidence.
+
+## Window 5 note, written before its data was read (2026-11-17 01:30)
+Window 5 began at 01:12:57; a tcgen05 racecheck (1,024-token text, `build/tgemm-r3c/`, in the same container) ran
+01:12:58-01:19:56, overlapping the first ~7 min of the container-1 probe. Since load has hidden the stall before
+(stall-v4), container-1 is read only on requests whose prefill starts after 01:20:00; container-2 (after the host
+run) is the clean container run. The pre-registered reading in `tools/thor/quiet_session_v5.sh` otherwise stands.
