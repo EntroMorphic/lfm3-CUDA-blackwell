@@ -321,3 +321,14 @@ Windows 4 and 5 stay recorded as **FAIL** (window 5's pair not decisive). For ru
   "ON minus OFF < 32" would have failed on server RSS only because OFF's RSS shrank (ON +7.4 MiB, OFF -29.1 MiB,
   difference 36.5), not because ON grew. 2a is the only change that check prompted; every other part of amendment 2
   is unchanged.
+
+**Rule 3, the 4,096-token racecheck on the host (2026-11-17 07:12-07:25, `build/tgemm-r3-host/`): NOT COMPLETED.**
+Started after the audio round's racecheck (07:12:15), alone; the plain host run of the request passed (exit 0). The
+racecheck run's memory grew about linearly, ~8 GiB a minute with no plateau: MemAvailable 118.3 GiB at the start,
+95.4 at 2 min, 70.3 at 5, 46.0 at 8, 21.8 at 11, **6.9 GiB at 13 min (781 s)**, when the guard stopped it with
+SIGTERM as set (under 8 GB). It had used over 110 GiB and was still growing; in the container it was OOM-killed at
+100 GB. Racecheck's host-side tracking of a 4,096-row prefill does not fit on Thor (125 GB). No hazard was reported
+before the stop (the log ends at the sanitizer banner).
+**Rule 3 status: every check run is clean with outputs identical and the controls detected; the racecheck x 4,096-
+token prefill cell is not completed (infeasible on this machine: >110 GiB and growing).** The 1,024-token racecheck
+(clean) stays information only, per Tripp's decision; the cell is left for Tripp.
