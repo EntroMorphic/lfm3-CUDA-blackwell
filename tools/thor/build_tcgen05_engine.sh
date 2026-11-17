@@ -31,6 +31,7 @@ docker run --rm --network none -v $W:/workspace $IMG bash -c "set -e; cd $C; N=$
   nvcc \$F \$T -DLFM3_NATIVE_GEMM -o lfm3-batch \$N/apps/lfm3_batch.cu \$N/src/safetensors.cpp \$O > build-lfm3-batch.log 2>&1
   if [ $mode = on ]; then
     nvcc \$F \$T -o lfm3-tcgen05-gemm-check \$N/tests/lfm3_tcgen05_gemm_check.cu \$O > build-check.log 2>&1
+    nvcc \$F \$T -o lfm3-tcgen05-soak \$N/tests/lfm3_tcgen05_soak.cu \$O > build-soak.log 2>&1
   fi
   TC=OFF; [ $mode = on ] && TC=ON
   cmake -S \$N -B cmake -DLIQUID_LFM3_OPS_TESTS=ON -DLIQUID_LFM3_NATIVE_GEMM=ON -DLIQUID_LFM3_TCGEN05=\$TC > cmake.log 2>&1
@@ -40,4 +41,4 @@ docker run --rm --network none -v $W:/workspace $IMG bash -c "set -e; cd $C; N=$
   chown -R 1000:1000 ."
 cd $W/liquid-CUDA/build/$tag
 for b in lfm3-speech lfm3-batch liquid-lfm3-server liquid-lfm3-worker liquid-lfm3; do readelf -d $b | grep -q cublas && { echo "$b links cuBLAS"; exit 1; }; done
-sha256sum lfm3-speech lfm3-vision-check lfm3-batch liquid-lfm3 liquid-lfm3-worker liquid-lfm3-server $( [ $mode = on ] && echo lfm3-tcgen05-gemm-check ) | tee binaries.sha256
+sha256sum lfm3-speech lfm3-vision-check lfm3-batch liquid-lfm3 liquid-lfm3-worker liquid-lfm3-server $( [ $mode = on ] && echo lfm3-tcgen05-gemm-check lfm3-tcgen05-soak ) | tee binaries.sha256
