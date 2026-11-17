@@ -28,6 +28,7 @@ docker run --rm --network none -v $W:/workspace $IMG bash -c "set -e; cd $C; N=$
   g++ -std=c++20 -O2 -Wall -Wextra -I \$N/include -c \$N/src/image_preprocess.cpp -o image_preprocess.o >> build-image.log 2>&1
   nvcc \$F \$T -DLFM3_NATIVE_GEMM -o lfm3-speech \$N/apps/lfm3_speech.cu \$N/src/safetensors.cpp image_decode.o image_preprocess.o \$L/lib/libjpeg.a \$O > build-lfm3-speech.log 2>&1
   nvcc \$F \$T -o lfm3-vision-check \$N/tests/lfm3_vision_check.cu \$N/src/safetensors.cpp \$O > build-lfm3-vision-check.log 2>&1
+  nvcc \$F \$T -DLFM3_NATIVE_GEMM -o lfm3-batch \$N/apps/lfm3_batch.cu \$N/src/safetensors.cpp \$O > build-lfm3-batch.log 2>&1
   if [ $mode = on ]; then
     nvcc \$F \$T -o lfm3-tcgen05-gemm-check \$N/tests/lfm3_tcgen05_gemm_check.cu \$O > build-check.log 2>&1
   fi
@@ -38,5 +39,5 @@ docker run --rm --network none -v $W:/workspace $IMG bash -c "set -e; cd $C; N=$
   ! grep -iE ' error|warning' build-*.log
   chown -R 1000:1000 ."
 cd $W/liquid-CUDA/build/$tag
-for b in lfm3-speech liquid-lfm3-server liquid-lfm3-worker liquid-lfm3; do readelf -d $b | grep -q cublas && { echo "$b links cuBLAS"; exit 1; }; done
-sha256sum lfm3-speech lfm3-vision-check liquid-lfm3 liquid-lfm3-worker liquid-lfm3-server $( [ $mode = on ] && echo lfm3-tcgen05-gemm-check ) | tee binaries.sha256
+for b in lfm3-speech lfm3-batch liquid-lfm3-server liquid-lfm3-worker liquid-lfm3; do readelf -d $b | grep -q cublas && { echo "$b links cuBLAS"; exit 1; }; done
+sha256sum lfm3-speech lfm3-vision-check lfm3-batch liquid-lfm3 liquid-lfm3-worker liquid-lfm3-server $( [ $mode = on ] && echo lfm3-tcgen05-gemm-check ) | tee binaries.sha256
