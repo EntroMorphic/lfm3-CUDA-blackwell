@@ -105,3 +105,10 @@ prefill alone.
 `tools/measure_lfm3_image_rss.py`, 16 simultaneous cherry (4K) requests on `vimg-srv-c2`: idle 5,506 MB, peak
 **6,031 MB (+525 MB, bar +1 GB)**, after 5,662 MB. Statuses: 200s and 429 `queue_full` for those past the queue (the
 default queue size; the rule is about memory, and the refused ones still arrived and were parsed).
+
+## Rule 2 with the cache (2026-11-16, quiet window 4): **FAIL**, stall **0.28 s** (`rule2-w4/`)
+The same measurement with the image cache on (window 3's run crashed in the tool; fixed `f2106db`). Worst gaps without
+the image 0.384 / 0.339 / 0.337 s, with it 1.016 / 0.622 / 0.619 s (the first repeat the image's miss, the next two
+hits: image request 2.18 s, then 1.36 and 1.35 s); medians **0.339 -> 0.622 s, stall 0.28 s**. Old server 1.06 s,
+part 2 alone 0.66 s, with a cache hit 0.28 s: what remains is the 4K prefill itself on the engine thread. A chunked
+prefill interleaved with decode steps is the candidate for the 50 ms bar (not started).

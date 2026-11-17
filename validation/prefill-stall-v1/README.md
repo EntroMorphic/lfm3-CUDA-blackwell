@@ -32,7 +32,21 @@ three passes hid them) and audio-in-listen (1). So: engine-wide, not the encoder
 So the trigger depends on the machine's state at the time, not only on the request sequence; GPU load from other
 work suppresses it.
 
+- **quiet-w4** (`tools/stall_catch.py`, quiet window 4, 22:48-23:12, nothing else running; `quiet-w4/`): **0 stalls in
+  630** (prefill median 0.033 s, max 0.036 s), no catch. Like stall-v4, the engine ran **on the host**; every stall
+  ever recorded (stall-v1, quiet-w3, the server runs) ran **inside the container `lfm3-profile-v1`**.
+- **The container's memory cgroup** (read 23:20): `memory.max` 96 GiB, `memory.peak` = the limit, `memory.events`
+  **max 33,326** (times the limit was hit), 43 GB of page cache (`file`) charged to it against 0.12 GB of anon,
+  in-cgroup reclaim `pgscan` 6.9 M / `pgsteal` 6.4 M. The probe's global counters (`pgsteal_direct`, kswapd,
+  compaction) do not see reclaim at a cgroup's limit, which is why they "did not move".
+- **Hypothesis** (not yet tested): the runs' outputs and reads fill the container's page cache up to its 96 GiB limit;
+  from then on allocations inside the container reclaim from its own cache synchronously, and the prefill pays
+  seconds of kernel time and millions of faults. Window 5 (`tools/thor/quiet_session_v5.sh`, rule written in the
+  script before the data): the probe samples the cgroup and runs container, host, container.
+
 ## Next
-Repeat stall_catch on a quiet machine (window 4: quiet-w3 shows the quiet probe reproduces it), with /proc/meminfo, buddyinfo and the THP counters snapshotted
+Window 5 tests the container hypothesis; if it holds, the fix is a container setting (the memory limit, or where
+the outputs' page cache is charged): Tripp's to change, with the evidence. (Superseded: repeat stall_catch on a quiet
+machine, done in window 4), with /proc/meminfo, buddyinfo and the THP counters snapshotted
 around each stall; if caught, the backtrace names the code that touches ~40 GB of 4 KiB pages. Not yet a fix: no
 change is proposed until the cause is known. A system setting (THP) would be Tripp's to change, with the evidence.

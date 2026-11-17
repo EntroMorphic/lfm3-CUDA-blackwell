@@ -1,0 +1,4 @@
+engine 564694
+1794894517.323 tid 564694 'lfm3-speech' minflt/s 290393 stime+4
+1794894518.726 tid 564694 'lfm3-speech' minflt/s 251294 stime+1
+done, exit 0, 0 catches
