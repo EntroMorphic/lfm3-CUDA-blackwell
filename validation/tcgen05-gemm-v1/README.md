@@ -135,3 +135,35 @@ M in {256, 257, 258, 4096}, not 32,768 (its FP32 output pair would be 33.5 GB).
   shared GPU).
 - Rule 5 (Tripp's window 3, `quiet_tcgen05_gemm.sh`): RULE 5 PASS; image requests at most HF end to end on 3 of 3
   rounds (the full numbers are in `build/quiet-w3-tcgen05/summary.txt`, to be copied here).
+
+## Rule 4 results (window 4, 2026-11-16 21:11-22:48, quiet, unattended; `build/quiet-w4-tcgen05/`)
+**4a, synthetic soak: PASS.** 1,200 s, 4 streams, 685,356 calls (342,063 on tcgen05): 0 outputs differing, no error
+or trap; the gate (amendment 1): 0 calls over 10x their problem's soak median, worst 5.72x (`v.w2.m8192`). Reported
+(the original bar): 2 calls over 10x solo, worst 19.2x.
+
+**4b, server soak: FAIL**, on one clause: the idle memory figure `host_used_less_client` grew **83.0 MiB** from the
+first idle checkpoint to the last (bar 64 MiB). Every other clause passed: 3,474 replies, all status 200, **0
+differ, 0 errors** (1,144 unstreamed, 1,290 streamed, 153 dropped by design, 871 text; 52,036 429s retried, as the
+harness does under 12 clients with 4K images in the mix), the processes alive throughout, server RSS idle growth
++19.3 MiB (pass), the crowd 56 of 56 identical unstreamed and streamed, exit 0. (`client_load`, the client's own
+RSS, +155.5 MiB, is reported by the harness, not gated.) The bar is not changed.
+
+Analysis (from `soak-4b.json`, `soak-4b.samples.jsonl` and the 30 s `host-memory.jsonl` sampler beside it):
+- The four idle checkpoints read 13,907.5 / 13,983.9 / 14,008.8 / 13,990.4 MiB. The growth is all in the first
+  interval: checkpoint 2 to 4 is +6.5 MiB, 3 to 4 is -18.4 MiB. The first two checkpoints' 10 idle readings spread
+  by **503 and 496 MiB** (the last two: 0.0 and 9.9), so their medians were taken on a figure still moving by half
+  a gigabyte at idle; the 83 MiB is smaller than that within-checkpoint spread.
+- The image path's one-time GPU allocations are not it: the sampler's `residual` (on Thor, GPU memory from system
+  memory) stepped +1.36 GB once at 21:40:34, during the harness's reference phase (each image request alone, before
+  the timed soak, ~21:45), which matches the vision encoder's kept `[W | W]` cache and scratch (~1.4 GB,
+  images-speed-v1's red-team), and was flat (9.5-9.9 GB) from there to the end.
+- The soak ran alone in the window (the runner is sequential: the frontend checks before it, the stall catcher after).
+- **Is it tcgen05?** Not shown either way by experiment: this soak (images and long prompts added to the audio soak)
+  has never run on the OFF build, so whether the same clause fails there is unknown. By construction the tcgen05 path
+  allocates nothing (tensor maps on the host stack, the accumulator in on-chip tensor memory, no device or host
+  allocation), so it cannot itself hold memory; the figure's movement sits in the early checkpoints and the harness's
+  host figure has drifted before without tcgen05 (text-wait-v1 rule 7: "the earlier passes were luck", four soaks).
+  These make the server/harness more likely, but do not prove it.
+- To settle it (proposed, not run): the same 4b soak on `tgemm-off1` in a quiet window (60 min + references), and,
+  if it passes there, once more on `tgemm-on1`; reported beside it, the 10 readings of each checkpoint (the harness
+  keeps only median and spread) to see what moves by 500 MiB at idle early in the soak.
