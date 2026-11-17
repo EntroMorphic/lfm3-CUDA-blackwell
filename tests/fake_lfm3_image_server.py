@@ -8,7 +8,7 @@ hit skips the handler's decode only while the engine holds the image. Decoding i
 (DECODE seconds of its own CPU time), encoding on the engine thread, so /proc shows where each happened.
 Environment: FAKE_DEFAULT_CACHE_MB (the default budget, 512), FAKE_C3_UNFIXED=1 (the front end skips on any count hit:
 the engine thread decodes), FAKE_FAULT_KEEP=1 (the engine never keeps rows), FAKE_LEAK_MB=N (each image request
-leaves N MiB allocated), FAKE_STREAM_SECONDS (an audio stream's length, 1.2).
+leaves N MiB allocated), FAKE_HANDLER_POOL=1 (a fixed handler pool, not a thread per connection), FAKE_STREAM_SECONDS (an audio stream's length, 1.2).
 Usage: fake_lfm3_image_server.py --experimental MODEL_DIR --token-file FILE --port 0 [--image-cache-mb N] [...]
 """
 import base64
@@ -170,11 +170,16 @@ def main(argv):
                 self.wfile.write((json.dumps(dict(event="done", **r)) + "\n").encode())
 
     class PooledServer(HTTPServer):
-        """A fixed pool of handler threads, as the server's (--handlers): a thread's CPU time outlives its request."""
-        pool = concurrent.futures.ThreadPoolExecutor(max_workers=16)
+        """As the server (lfm3_http.hpp: each accepted connection on its own detached thread, which ends with the
+        request, so its CPU time leaves /proc/PID/task; window 10 found this). FAKE_HANDLER_POOL=1: a fixed pool whose
+        threads outlive their requests instead."""
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=16) if os.environ.get("FAKE_HANDLER_POOL") else None
 
         def process_request(self, request, client_address):
-            self.pool.submit(self.serve_one, request, client_address)
+            if self.pool is not None:
+                self.pool.submit(self.serve_one, request, client_address)
+            else:
+                threading.Thread(target=self.serve_one, args=(request, client_address), daemon=True).start()
 
         def serve_one(self, request, client_address):
             try:

@@ -132,6 +132,15 @@ def thread_cpu(pid):
     return out
 
 
+def process_cpu(pid):
+    """User + system CPU seconds of the whole process, threads that have ended included (/proc/PID/stat: the kernel
+    folds an exited thread's time into the group). Window 10's per-thread reading missed the server's per-connection
+    handler threads, which end with their request (image-cache-v1, C3-C5 results)."""
+    stat = Path(f"/proc/{pid}/stat").read_text()
+    fields = stat[stat.rindex(")") + 2:].split()
+    return (int(fields[11]) + int(fields[12])) / TICK
+
+
 def cpu_delta(before, after):
     return {tid: after[tid] - before.get(tid, 0.0) for tid in after}
 
@@ -145,16 +154,18 @@ def split_cpu(delta, engine_tid):
 
 def timed(s, body, engine_tid=None, timeout=600):
     pid = s.proc.pid
-    before = thread_cpu(pid)
+    before, total_before = thread_cpu(pid), process_cpu(pid)
     t0 = time.monotonic()
     status, reply = s.post(body, timeout=timeout)
     seconds = time.monotonic() - t0
-    delta = cpu_delta(before, thread_cpu(pid))
+    delta, total = cpu_delta(before, thread_cpu(pid)), process_cpu(pid) - total_before
     row = dict(status=status, seconds=seconds, text=reply.get("text") if status == 200 else None,
                prefill_seconds=reply.get("prefill_seconds") if status == 200 else None,
                error=None if status == 200 else reply, top_threads=sorted(delta.items(), key=lambda kv: -kv[1])[:4])
+    row["process_cpu"] = total
     if engine_tid is not None:
-        row["engine_cpu"], row["other_cpu"], row["other_tid"] = split_cpu(delta, engine_tid)
+        row["engine_cpu"], row["largest_live_other_cpu"], row["other_tid"] = split_cpu(delta, engine_tid)
+        row["other_cpu"] = max(0.0, total - row["engine_cpu"])  # every other thread, ended ones included
     return row, delta
 
 
@@ -494,6 +505,26 @@ class SanitizedServer(Server):
         return self.proc.returncode, "".join(getattr(self, "stderr_lines", []))
 
 
+def signal_masks(pid):
+    """Per thread: name, SigBlk, and whether SIGTERM (15) is blocked. The server blocks SIGTERM in main and sigwaits on
+    one thread; a thread started before that (e.g. by compute-sanitizer) would take SIGTERM with the default action
+    (window 10: exit 15 under memcheck, 0 plain). Recorded before the SIGTERM to test that."""
+    out = {}
+    try:
+        tasks = list(Path(f"/proc/{pid}/task").iterdir())
+    except OSError as e:
+        return {"error": str(e)}
+    for t in tasks:
+        try:
+            fields = dict(l.split(":\t", 1) for l in (t / "status").read_text().splitlines() if ":\t" in l)
+        except OSError:
+            continue
+        blk = int(fields.get("SigBlk", "0"), 16)
+        out[t.name] = dict(name=fields.get("Name", "").strip(), sigblk=fields.get("SigBlk", "").strip(),
+                           sigterm_blocked=bool(blk >> 14 & 1))
+    return out
+
+
 def memcheck(sanitizer, server, model, round_dir, out_dir):
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -531,6 +562,7 @@ def memcheck(sanitizer, server, model, round_dir, out_dir):
                 st, r = s.post(bodies[n], timeout=7200)
                 rec["last"].append(dict(name=n, status=st, text=r.get("text"), prefill_seconds=r.get("prefill_seconds")))
         finally:
+            rec["signal_masks"] = signal_masks(getattr(s, "server_pid", s.proc.pid))
             rec["exit"], err = s.stop()
             rec["stderr_tail"] = err[-4000:]
     rec["seconds"] = time.monotonic() - t0

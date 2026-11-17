@@ -372,3 +372,17 @@ injected string in it only), `vimg-c3/lfm3-speech` (`b281be64`); no cuBLAS.
 Next (a later window): the thread-CPU reading from `/proc/PID/stat` (the process total, which keeps exited threads'
 time) minus the engine thread; C3's location and C5 rerun with it, their gates unchanged; the server under memcheck
 with every thread's blocked-signal mask (`SigBlk`) recorded before the SIGTERM, to test the suspected cause.
+
+### Amendment to the C3-C5 procedure (2026-11-17, after window 10, before any rerun)
+- **The thread-CPU reading** (C3's location, C5's "decoded on a handler again"): "the largest non-engine thread" cannot
+  be read for this server, whose handler threads end with their request. It becomes **every non-engine thread's CPU,
+  ended threads included**: the process's total from `/proc/PID/stat` minus the engine thread's. The thresholds are
+  unchanged (decoded >= 0.20 s, not decoded <= 0.10 s, engine margin 0.20 s), and so are the controls that say whether
+  the reading works (the hit <= 0.10 s; the never-seen image >= 0.20 s). If a control fails again, the location stays
+  not measured. The process total also holds the handlers' other work on a 13 MB body (receive, two JSON parses); the
+  hit control bounds it. The fake server in the host tests now runs a thread per connection, as the server does (the old
+  reading fails against it; the new passes, 18 of 18).
+- **The server under memcheck**: before the SIGTERM, every thread's `SigBlk` is recorded. If some thread doesn't block
+  SIGTERM, the suspected cause of window 10's exit 15 holds, and it's the server's signal design, not the image cache.
+  The gate stays exit 0: a fix would be the server's (a handler that only wakes the waiting thread, so it doesn't matter
+  which thread takes the signal), made and checked as a change of its own.
