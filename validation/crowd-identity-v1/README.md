@@ -29,3 +29,15 @@ N times (each round gated as before; with N=1 the verdict is the same as before)
 3. **No difference in 20 rounds: not reproduced.** Nothing is concluded. The diagnostics stay in the soak, so the
    next long soak's crowd says which it was.
 Mixed results read as 1.
+
+## Results (quiet window 9, 2026-11-17 13:19-14:59): **reading 3, not reproduced** (`quiet-w9-crowd/`)
+The same binaries as window 7's OFF run (server `54ee76ac`, worker `b211b296`), main's soak harness with the crowd
+diagnostics (`e0413a7a`), the tcgen05 branch's wrapper (`9437ef67`). A 600 s soak at 12 clients and text share 0.25:
+584 replies, all 200, 0 differ, 0 errors, 17,910 retried 429s, server alive throughout, both servers exit 0. Then
+**20 crowd rounds: 56/56 identical in every round, unstreamed and streamed (2,240 replies, 0 differences)**; no
+`crowd-differ.jsonl` was written. The harness exited 1 only on its memory gate, which a 600 s soak cannot pass (2 idle
+checkpoints; the gate needs 4); memory is not this probe's question.
+By the reading set before the run, nothing is concluded: window 7's four differences are still a recorded failure of
+unknown cause. What is now known: on a fresh server after 10 minutes of the same mix, the crowd is identical 40 times
+out of 40. Not tested: the crowd after an hour's load (window 7's state). The diagnostics stay in the soak harness, so
+the next full-length soak's crowd records status, tries and the differing fields for any difference.
