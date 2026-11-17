@@ -5,7 +5,10 @@ a monitor samples every engine thread's minor faults from /proc every 50 ms, and
 RATE per second it records the thread and attaches gdb once (every thread's backtrace, then detach), at most CATCHES
 times, 10 s apart. (A first version ran the engine under gdb from the start: 6x slower, and no stall in 145 requests.)
 Usage (Thor host): stall_catch.py LFM3_SPEECH MODEL_DIR LIST OUT_DIR PRELOAD_SO [CATCHES] [RATE]
-LD_LIBRARY_PATH as for nsys (the container's pinned CUDA libraries)."""
+LD_LIBRARY_PATH as for nsys (the container's pinned CUDA libraries).
+STALL_PREFIX (e.g. "docker exec -u 1000 -e LD_PRELOAD=... lfm3-profile-v1"): run the engine inside the container
+instead (paths as the container sees them; gdb on the host attaches to its host PID, the same uid 1000 on both sides,
+the preload opting it in to tracing). The engine's PID is then found by its command line."""
 import os
 import subprocess
 import sys
@@ -18,10 +21,22 @@ rate = float(sys.argv[7]) if len(sys.argv) > 7 else 1e6
 out = Path(out)
 out.mkdir(parents=True, exist_ok=True)
 env = dict(os.environ, LD_PRELOAD=preload)
-proc = subprocess.Popen([binary, model, "--batch", lst], env=env, stdout=open(out / "run.out", "w"),
-                        stderr=subprocess.STDOUT)
+prefix = os.environ.get("STALL_PREFIX", "").split()
+proc = subprocess.Popen(prefix + [binary, model, "--batch", lst], env=env if not prefix else None,
+                        stdout=open(out / "run.out", "w"), stderr=subprocess.STDOUT)
 log = open(out / "monitor.txt", "w")
 pid = proc.pid
+if prefix:  # the docker client is proc; the engine is its own host process
+    pid = None
+    for _ in range(600):
+        r = subprocess.run(["pgrep", "-f", "^" + binary + " .*--batch " + lst], capture_output=True, text=True)
+        if r.stdout.split():
+            pid = int(r.stdout.split()[0])
+            break
+        time.sleep(0.1)
+    if pid is None:
+        print("engine not found", file=log, flush=True)
+        sys.exit(1)
 print(f"engine {pid}", file=log, flush=True)
 
 

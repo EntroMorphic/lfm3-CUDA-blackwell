@@ -23,7 +23,7 @@ else
   RUN="docker exec $U -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1 $C/$T/lfm3-speech $M --batch $C/$O/list.txt"
 fi
 CG=$(find /sys/fs/cgroup/system.slice -maxdepth 1 -type d -name "docker-$(docker inspect lfm3-profile-v1 --format '{{.Id}}')*" | head -1)
-echo "memlock $(ulimit -l) KiB (soft) $(ulimit -H -l) (hard); STALL_HOST=${STALL_HOST:-0} STALL_USER=${STALL_USER:-root}" > limits.txt
+echo "user ${STALL_USER:-root (container) or host}; memlock $(ulimit -l) KiB (soft) $(ulimit -H -l) (hard); STALL_HOST=${STALL_HOST:-0} STALL_USER=${STALL_USER:-root}" > limits.txt
 echo "$CG" > cgroup.txt; cat $CG/memory.max $CG/memory.events >> cgroup.txt 2>/dev/null
 head -1 list.txt
 cat /sys/kernel/mm/transparent_hugepage/enabled /sys/kernel/mm/transparent_hugepage/defrag > thp.txt
