@@ -25,12 +25,26 @@ busy=$(pgrep -af "[l]fm3-speech|[l]iquid-lfm3|[c]ompute-sanitizer|[r]un_lfm3|[c]
 [ -n "$busy" ] && nr "not quiet: $busy"
 
 echo "== builds $(date +%T)"
-bash $HERE/build_speech.sh $SP $SRC_REL > build-speech.log 2>&1 || nr "lfm3-speech build: $(tail -2 build-speech.log)"
-bash $HERE/build_audio_bench.sh $BE $SRC_REL > build-bench.log 2>&1 || nr "bench build: $(tail -2 build-bench.log)"
-for pair in "$SV $SRC_REL" "$BS $BASE_REL"; do set -- $pair
+# Safe to rerun: a build is reused when its binary exists and its recorded source tree (tree.sha256: every file under
+# native/, hashed) equals the current one; otherwise it is built and the record written. FORCE_BUILD=1 rebuilds all.
+tree() { (cd $W/liquid-CUDA/$1 && find native -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -c1-64); }
+SRC_TREE=$(tree $SRC_REL) && BASE_TREE=$(tree $BASE_REL) || nr "cannot hash the sources"
+reuse() {  # reuse DIR BINARY TREE: true when DIR/BINARY exists and DIR's record equals TREE
+  [ "${FORCE_BUILD:-0}" != 1 ] && [ -x $B/$1/$2 ] && [ "$(cat $B/$1/tree.sha256 2>/dev/null)" = "$3" ] && echo "reused $1"
+}
+reuse $SP lfm3-speech $SRC_TREE || {
+  bash $HERE/build_speech.sh $SP $SRC_REL > build-speech.log 2>&1 || nr "lfm3-speech build: $(tail -2 build-speech.log)"
+  echo $SRC_TREE > $B/$SP/tree.sha256; }
+reuse $BE audio-encoder-bench $SRC_TREE || {
+  bash $HERE/build_audio_bench.sh $BE $SRC_REL > build-bench.log 2>&1 || nr "bench build: $(tail -2 build-bench.log)"
+  echo $SRC_TREE > $B/$BE/tree.sha256; }
+for triple in "$SV $SRC_REL $SRC_TREE" "$BS $BASE_REL $BASE_TREE"; do set -- $triple
+  reuse $1 liquid-lfm3-server $3 && continue
+  rm -rf "${B:?}/${1:?}"  # a fresh CMake tree (a previous partial build is not reused)
   docker run --rm --network none -v $W/liquid-CUDA/$2/native:/src/native:ro -v $W:/workspace $IMG bash -c \
     "bash $C/../$SRC_REL/tools/thor/build_native.sh $C/$1; rc=\$?; chown -R 1000:1000 $C/$1 $C/$1.cmake.log $C/$1.build.log; exit \$rc" \
     > build-$1.log 2>&1 || nr "server build $1: $(tail -2 build-$1.log)"
+  echo $3 > $B/$1/tree.sha256
 done
 (cd $B && sha256sum $SP/lfm3-speech $BE/audio-encoder-bench $SV/liquid-lfm3-server $SV/liquid-lfm3-worker $BS/liquid-lfm3-server) > binaries.sha256
 busy=$(pgrep -af "[l]fm3-speech|[l]iquid-lfm3|[c]ompute-sanitizer|[r]un_lfm3|[c]heck_lfm3" | head -3)

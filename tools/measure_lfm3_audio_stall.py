@@ -6,6 +6,9 @@ clip (text mode, 32 tokens). Per streaming row, the longest gap between consecut
 start to 4 s after it (the gap spanning the start included), against the same window of a run without the clip. For
 each clip, runs alternate (without, with) REPEATS times on one server; the stall is the difference of the medians of
 each run's worst row. Clips: CLIPS_JSON ([{"name", "wav"}], rule 0's five; paths as this process sees them).
+Every request retries a 429 frontend_busy (up to 3,000 tries, 10 ms apart, as tools/check_lfm3_speech_batch_server.py),
+timed from its first attempt: a streaming row's first attempt counts as its first event, so a row the front end holds
+back shows the wait as a gap (quiet window 8: a row's 429 ended the run, as a failure, before any measurement).
 Usage: measure_lfm3_audio_stall.py SERVER MODEL_DIR CLIPS_JSON ROWS OUT_JSON [REPEATS]
 """
 import base64
@@ -46,27 +49,45 @@ class RowsServer(Server):
         token_path.unlink()
 
 
+TRIES, PAUSE = 3000, 0.01  # a 429 (the front end prepares one request at a time) is retried, as a client does
+
+
+def retried(call):
+    """call() until it is not a 429 (as tools/check_lfm3_speech_batch_server.py's retried): (result, first try's time,
+    tries)."""
+    first = time.monotonic()
+    for tries in range(1, TRIES + 1):
+        r = call()
+        if r[0] != 429:
+            return r, first, tries
+        time.sleep(PAUSE)
+    return r, first, TRIES
+
+
 def one_run(s, rows, clip_body):
     body = dict(messages=[{"role": "system", "content": "Respond with interleaved text and audio."},
                           {"role": "user", "content": QUESTION}], mode="interleaved", max_new_tokens=600)
     results = [None] * (rows - 1)
 
     def stream(i):
-        results[i] = s.stream(dict(body, seed=i + 1))
+        results[i] = retried(lambda: s.stream(dict(body, seed=i + 1)))
     threads = [threading.Thread(target=stream, args=(i,)) for i in range(rows - 1)]
     for t in threads:
         t.start()
     time.sleep(START)
     t_clip = time.monotonic()
-    clip_result = s.post(clip_body) if clip_body else None
-    clip_seconds = time.monotonic() - t_clip
+    clip_result, _, clip_tries = retried(lambda: s.post(clip_body)) if clip_body else (None, None, 0)
+    clip_seconds = time.monotonic() - t_clip  # from the first attempt: time spent refused counts
     for t in threads:
         t.join()
-    gaps = []
-    for status, events, times, t0 in results:
+    gaps, row_tries = [], []
+    for (status, events, times, t0), first, tries in results:
         if status != 200:
-            raise SystemExit(f"a streaming row failed: {status} {events[:1]}")
-        audio = [t0 + tm for e, tm in zip(events, times) if e["event"] == "audio"]
+            raise SystemExit(f"a streaming row failed after {tries} tries: {status} {events[:1]}")
+        row_tries.append(tries)
+        # the row's first attempt counts as its first event: a row held back by the front end (retrying a 429) shows
+        # the wait as a gap, from its first attempt to its first audio, instead of leaving the measurement
+        audio = [first] + [t0 + tm for e, tm in zip(events, times) if e["event"] == "audio"]
         inside = [a for a in audio if t_clip <= a <= t_clip + WINDOW]
         before = [a for a in audio if a < t_clip][-1:]
         seq = before + inside
@@ -76,7 +97,8 @@ def one_run(s, rows, clip_body):
     real = [g for g in gaps if g is not None]
     if not real:
         raise SystemExit("no row streamed audio across the window")
-    return dict(worst_gap=max(real), row_gaps=gaps, clip_seconds=clip_seconds if clip_body else None)
+    return dict(worst_gap=max(real), row_gaps=gaps, clip_seconds=clip_seconds if clip_body else None,
+                clip_tries=clip_tries, row_tries=row_tries)
 
 
 def main(server_bin, model, clips_json, rows, out_json, repeats=3):

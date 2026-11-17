@@ -673,3 +673,30 @@ Not changed:
 - **`tools/thor/quiet_audio_rest.sh`:** written, `bash -n` clean on Thor, and synced with the fixed sources to
   `build/audio-src-b`; the base sources (`a350659`) are in `build/audio-src-base`. Not run. It builds its own
   binaries at the start of the window.
+
+## Quiet window 8 (2026-11-17, run by Tripp): **not runnable**, nothing measured; fixed before any rerun
+`quiet_audio_rest.sh`, log on Thor `build/quiet-w8/quiet_audio_rest.log`:
+- **13:08:32, the builds:** OK (`audio-fe-w-base-srv`, `audio-fe-w-srv`, `audio-fe-w-speech`, `audio-fe-w-bench`).
+- **13:16:29, rule 3's bar:** ran (the encoder alone and the language-model prefill per clip, under
+  `build/quiet-audio-rest/`). Not read here: this session may not ssh to Thor. It is not a rule's result on its own.
+- **13:17:28, the stall:** "NOT RUNNABLE: stall audio-fe-w-base-srv 8: a streaming row failed: 429
+  [{'error': 'frontend_busy'}]"; exit 1.
+
+**Cause: a defect in the stall tool, not in the server.**
+- The server's front end prepares one request at a time and answers 429 `frontend_busy` to others. That applies to
+  text requests and to the streaming rows' text-in speech requests on both servers, and to audio requests on the base
+  server.
+- `measure_lfm3_audio_stall.py` treated a 429 as a failure. Clients are expected to retry, as main's tools do
+  (`check_lfm3_speech_batch_server.py` `retried()`).
+
+**Fixed:**
+- Every request the stall tool sends (the streaming rows and the clip request) retries a 429 up to 3,000 times, 10 ms
+  apart, timed from its first attempt.
+- A streaming row's first attempt counts as its first event. A row the front end holds back therefore shows the wait
+  as a gap in the window, rather than leaving the measurement. That is a small addition to amendment 3's gap
+  definition, made before any measurement: without it, a held row would hide the stall it suffers.
+- The run records the clip request's tries and each row's tries.
+
+**Rerun safety:** each build directory records the hash of the source tree it was built from (`tree.sha256`). A build
+is reused when its binary exists and the record matches the current sources, and rebuilt otherwise; `FORCE_BUILD=1`
+rebuilds all. Window 8's builds carry no record, so the first rerun rebuilds them once.
