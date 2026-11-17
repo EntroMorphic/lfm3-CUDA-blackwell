@@ -828,6 +828,7 @@ class Service {
     std::vector<int> image_tokens;   // each image part's token count, in prompt order (decode_images)
     // the clips' features computed ahead (compute_audio_features), held for the engine until the request ends
     std::vector<lfm::audio_features::FeatureCache::Lease> audio_features;
+    std::vector<std::pair<size_t, size_t>> audio_clips;  // each clip's (offset, length) in audio_json (encode_speech)
     bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
     bool stream = false;             // the reply as events while the engine generates (speech_stream)
   };
@@ -890,23 +891,22 @@ class Service {
       }
   }
   // validation/audio-frontend-v1: each audio clip's features (lfm::audio_features::log_mel) computed on the request's
-  // own handler thread before the front end, at most kAudioFeatureSlots clips at a time (each on up to kMelThreads
-  // threads), and left for the in-process engine, so the thread that steps every row no longer computes them. The
-  // waiting is decode_images': within the deadline (504 frontend_deadline), 503 when the server stops, 499 client_gone.
-  // Nothing here refuses a request: a clip whose features cannot be computed (a malformed message or WAV) is skipped,
-  // and encode_speech and the engine refuse it exactly as before; a clip skipped or expired is computed by the engine,
-  // the same bytes.
+  // own handler thread, at most kAudioFeatureSlots clips at a time (each on up to kMelThreads threads), and left for
+  // the in-process engine, so the thread that steps every row no longer computes them. It runs after encode_speech
+  // (red-team finding 1): a request the front end refuses is refused exactly as before, at the cost it had before; the
+  // clips are the engine request's own (s.audio_clips: spans of s.audio_json, no copies). A clip whose features are
+  // already in the cache (the same clip in flight, or twice here) is leased, not computed again. The waiting is
+  // decode_images': within the deadline (504 frontend_deadline), 503 when the server stops, 499 client_gone. A clip
+  // whose features are not left here is computed by the engine: the same bytes.
   void compute_audio_features(Speech& s, Clock::time_point deadline, const std::function<bool()>& gone) {
-    if (!s.audio_input || s.split || !policy_.audio_features_ahead) return;
-    std::vector<std::string> clips;
-    try {
-      for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true, /*allow_image=*/true))
-        for (const auto& part : m.parts)
-          if (part.audio) clips.push_back(part.data);
-    } catch (const std::exception&) {
-      return;  // encode_speech refuses it
-    }
-    for (const auto& clip : clips) {
+    if (!policy_.audio_features_ahead) return;
+    auto& cache = lfm::audio_features::shared_feature_cache();
+    for (const auto& [at, length] : s.audio_clips) {
+      const std::string_view clip(s.audio_json.data() + at, length);
+      if (auto lease = cache.lease_if_present(clip)) {
+        s.audio_features.push_back(std::move(*lease));
+        continue;
+      }
       {
         std::unique_lock g(audio_slots_lock_);
         for (;;) {
@@ -928,14 +928,18 @@ class Service {
           service.audio_slots_cv_.notify_one();
         }
       } slot{*this};
+      if (auto lease = cache.lease_if_present(clip)) {  // computed by another request while this one waited
+        s.audio_features.push_back(std::move(*lease));
+        continue;
+      }
       lfm::audio_features::FeatureCache::Features features;
       try {
         features = std::make_shared<const std::vector<float>>(
-            lfm::audio_features::log_mel(lfm3_speech::clip_from_base64(clip)));
+            lfm::audio_features::log_mel(lfm3_speech::clip_from_base64(std::string(clip))));
       } catch (const std::exception&) {
-        continue;  // a bad clip: encode_speech refuses it with its own code
+        continue;  // not expected (encode_speech decoded this clip); the engine computes or refuses it as before
       }
-      s.audio_features.push_back(lfm::audio_features::shared_feature_cache().put(clip, std::move(features)));
+      s.audio_features.push_back(cache.put(clip, std::move(features)));
     }
   }
   Speech validate_speech(const Json& item) const {
@@ -1019,7 +1023,10 @@ class Service {
       for (const auto& part : m.parts) {
         if (part.audio) {
           clip_tokens.push_back(lfm::audio_features::tokens(lfm3_speech::clip_from_base64(part.data).size()));
-          s.audio_json += (clip_tokens.size() > 1 ? ",\"" : "\"") + part.data + "\"";  // checked base64: no escapes
+          s.audio_json += clip_tokens.size() > 1 ? ",\"" : "\"";
+          s.audio_clips.emplace_back(s.audio_json.size(), part.data.size());  // compute_audio_features' clips
+          s.audio_json += part.data;  // checked base64: no escapes
+          s.audio_json += '"';
           media.push_back({lfm3_text::kAudioToken, clip_tokens.back()});
         } else if (part.image) {
           // decoded and preprocessed before the front end (decode_images), as the engine will: its token count
@@ -1272,8 +1279,8 @@ class Service {
     if (request->image_input && !policy_.image_input) throw ApiError(501, "image_input_unsupported");
     request->body = std::move(body);  // `messages` points into it until encode_speech drops it
     decode_images(*request, deadline, gone);
+    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input || request->audio_input, gone);
     compute_audio_features(*request, deadline, gone);
-    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input || request->audio_input);
     if (policy_.speech_rows > 0) {
       auto t = std::make_shared<Ticket>();
       t->request = request, t->deadline = deadline;
@@ -1348,8 +1355,8 @@ class Service {
     request->body = std::move(body);
     const std::function<bool()> reset = [&] { return sink.peer && sink.peer() == Peer::Reset; };
     decode_images(*request, deadline, reset);
+    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input || request->audio_input, reset);
     compute_audio_features(*request, deadline, reset);
-    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input || request->audio_input);
     auto lines = std::make_shared<Lines>();
     std::future<std::string> future;
     // past the deadline: true if the request goes on (it completed meanwhile, or, in the speech batch, was admitted: it
@@ -1553,13 +1560,22 @@ class Service {
 
   // One serialized CPU frontend job at a time (lfm3_server.Service._frontend_call, wait=False):
   // a second concurrent encode is refused rather than queued. `wait` (image requests, validation/image-queue-v1: their
-  // images already decoded, only rendering and tokenizing is left) waits for it within the deadline instead.
+  // images already decoded, only rendering and tokenizing is left; audio requests, validation/audio-frontend-v1)
+  // waits for it within the deadline instead, in 50 ms steps: 503 when the server stops, 499 client_gone when `gone`
+  // says the client has left (audio-frontend-v1 red-team finding 5), 504 frontend_deadline past the deadline.
   template <class F>
-  void frontend_call(F&& function, Clock::time_point deadline, bool wait = false) {
+  void frontend_call(F&& function, Clock::time_point deadline, bool wait = false, const std::function<bool()>& gone = {}) {
     if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
     std::unique_lock guard(frontend_lock_, std::defer_lock);
-    if (wait ? !guard.try_lock_until(deadline) : !guard.try_lock())
-      throw wait ? ApiError(504, "frontend_deadline") : ApiError(429, "frontend_busy");
+    if (!wait) {
+      if (!guard.try_lock()) throw ApiError(429, "frontend_busy");
+    } else {
+      while (!guard.try_lock_until(std::min(deadline, Clock::now() + std::chrono::milliseconds(50)))) {
+        if (stopping_) throw ApiError(503, "worker_unavailable");
+        if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
+        if (gone && gone()) throw ApiError(499, "client_gone");
+      }
+    }
     if (stopping_) throw ApiError(503, "worker_unavailable");
     if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
     function();

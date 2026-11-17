@@ -25,8 +25,10 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <thread>
 #include <vector>
@@ -654,7 +656,7 @@ inline std::vector<float> log_mel(const std::vector<float>& samples, int threads
     if (a >= e) continue;
     try {
       workers.emplace_back(detail::log_mel_frames, x.data(), T, a, e, out.data(), transform);
-    } catch (const std::system_error&) {  // no thread to be had: this range on the calling thread (same bytes)
+    } catch (...) {  // no thread to be had (EAGAIN, or bad_alloc: red-team finding 4): this range here, the same bytes
       detail::log_mel_frames(x.data(), T, a, e, out.data(), transform);
     }
   }
@@ -670,14 +672,22 @@ inline std::vector<float> log_mel(const std::vector<float>& samples, int threads
 // the engine does not find here (the out-of-process worker, lfm3-speech, a refused or expired request) is computed
 // by the engine as before: log_mel is a function of the clip, so a hit and a miss give the same bytes.
 class FeatureCache {
+  struct Entry {
+    std::shared_ptr<const std::vector<float>> features;
+    int leases = 0;
+  };
+  using Map = std::map<std::string, Entry, std::less<>>;
+
  public:
   using Features = std::shared_ptr<const std::vector<float>>;
+  // An entry held for one request. It keeps the entry's map position (stable until erased), not a copy of its key:
+  // the key, a clip's base64 text, can be megabytes (audio-frontend-v1 red-team finding 2).
   class Lease {
    public:
     Lease() = default;
-    Lease(Lease&& o) noexcept : cache_(o.cache_), key_(std::move(o.key_)) { o.cache_ = nullptr; }
+    Lease(Lease&& o) noexcept : cache_(o.cache_), it_(o.it_) { o.cache_ = nullptr; }
     Lease& operator=(Lease&& o) noexcept {
-      if (this != &o) release(), cache_ = o.cache_, key_ = std::move(o.key_), o.cache_ = nullptr;
+      if (this != &o) release(), cache_ = o.cache_, it_ = o.it_, o.cache_ = nullptr;
       return *this;
     }
     Lease(const Lease&) = delete;
@@ -686,26 +696,36 @@ class FeatureCache {
 
    private:
     friend class FeatureCache;
-    Lease(FeatureCache* cache, std::string key) : cache_(cache), key_(std::move(key)) {}
+    Lease(FeatureCache* cache, Map::iterator it) noexcept : cache_(cache), it_(it) {}
     void release() noexcept {
       if (!cache_) return;
       std::lock_guard g(cache_->lock_);
-      const auto it = cache_->entries_.find(key_);
-      if (it != cache_->entries_.end() && --it->second.leases == 0) cache_->entries_.erase(it);
+      if (--it_->second.leases == 0) cache_->entries_.erase(it_);
       cache_ = nullptr;
     }
     FeatureCache* cache_ = nullptr;
-    std::string key_;
+    Map::iterator it_{};
   };
-  // Leaves `features` under `key` (kept as they are when the key is already there: the same clip, the same bytes).
-  Lease put(const std::string& key, Features features) {
+  // Leaves `features` under `key` (kept as they are when the key already has features: the same clip, the same
+  // bytes). The map position comes first, so a failed allocation leaves no lease counted (red-team finding 3).
+  Lease put(std::string_view key, Features features) {
     std::lock_guard g(lock_);
-    auto& e = entries_[key];
-    if (!e.features) e.features = std::move(features);
-    ++e.leases;
-    return Lease(this, key);
+    auto it = entries_.find(key);
+    if (it == entries_.end()) it = entries_.emplace(std::string(key), Entry{}).first;
+    if (!it->second.features) it->second.features = std::move(features);
+    ++it->second.leases;
+    return Lease(this, it);
   }
-  Features find(const std::string& key) const {
+  // A lease on the entry for `key` when its features are already there (the same clip in flight in another request,
+  // or twice in one): nothing to compute. Otherwise nothing.
+  std::optional<Lease> lease_if_present(std::string_view key) {
+    std::lock_guard g(lock_);
+    const auto it = entries_.find(key);
+    if (it == entries_.end() || !it->second.features) return std::nullopt;
+    ++it->second.leases;
+    return Lease(this, it);
+  }
+  Features find(std::string_view key) const {
     std::lock_guard g(lock_);
     const auto it = entries_.find(key);
     return it == entries_.end() ? nullptr : it->second.features;
@@ -716,12 +736,8 @@ class FeatureCache {
   }
 
  private:
-  struct Entry {
-    Features features;
-    int leases = 0;
-  };
   mutable std::mutex lock_;
-  std::map<std::string, Entry> entries_;
+  Map entries_;
 };
 // The process's cache: the in-process server's Service puts, its WorkerCore finds.
 inline FeatureCache& shared_feature_cache() {

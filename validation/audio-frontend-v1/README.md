@@ -613,3 +613,49 @@ run them:
 - images through the server (`check_lfm3_image_server.py` against `vimg-e2e-a1`).
 
 Each passes as its tool's exit status says.
+
+## Rule 7, red-team (2026-11-17): no wrong output; one medium defect and five smaller ones, fixed
+An independent reviewer read the server change (`a350659..HEAD`: the handler-thread features, the handoff, waiting
+instead of 429, cancellation, a client that leaves, deadlines, the cache's lifetime) from the code only. It found no
+wrong output, no crash in normal use and no hang.
+
+Checked and found sound:
+- the key identity: the server keys a clip by its exact base64 text, the same string the engine request carries and
+  the engine looks up;
+- no eviction between lookup and use, and no stale entry;
+- clip order;
+- every slot released on every exit;
+- no deadlock among the image slots, the audio slots and the front-end lock;
+- text keeping its 429;
+- the out-of-process worker and lfm3-speech computing their own features;
+- lease moves;
+- process exit (`_Exit`).
+
+Findings, and what was done:
+1. **Medium: requests that would be refused paid the full feature cost first.** Under load their refusal could
+   become 504/503/499 instead of 400/429, against this round's "refused exactly as before". With an image part in a
+   16 MiB body, about 390 s of audio was computed (about 20 MB of features) before the 4,096-token refusal.
+   - **Fixed:** features are computed after `encode_speech`, from the engine request's own clips (`Speech::audio_clips`,
+     spans of `audio_json`, no copies). Anything the front end refuses is refused as before, at its old cost.
+   - The "at most 4.6 MB of features" statement above is corrected: features exist only for requests the front end
+     accepted, at most 4,096 tokens, so at most about 327 s of audio (about 17 MB).
+2. **Memory: each clip pinned two more copies of its base64 key** (in the map and in the `Lease`) for the whole
+   request.
+   - **Fixed:** the `Lease` holds the entry's map position, and the map takes `string_view` lookups.
+   - **Amendment 3's memory check was optimistic:** 16 copies of one clip share one cache entry. **Corrected before it
+     runs:** the 16 clips are the 90 s clip with its last sample set to 16 different values (distinct keys and
+     entries). The gate is all 16 served and growth ≤ 1 GiB; how many replies match the warm text is reported.
+3. **An entry could leak if the key copy failed** (out of memory only). **Fixed:** the map position is taken before
+   the lease is counted; the `Lease` constructor cannot throw.
+4. **The threaded `log_mel` would `std::terminate` on `bad_alloc` from a thread's construction.** **Fixed:** any
+   failure to start a thread runs that range on the calling thread (the same bytes).
+5. **A client that left while waiting for the front end was not noticed until later.** **Fixed:** the timed wait polls
+   in 50 ms steps for the server stopping (503), the client gone (499) and the deadline (504). Image requests wait
+   there too and gain the same.
+6. **A repeated clip was computed once per copy** (in one request, or in requests at once). **Fixed:** a clip whose
+   features are already in the cache is leased without computing, checked before and after taking a slot.
+
+Not changed:
+- fairness of the timed lock between text and audio (each hold is short);
+- CPU oversubscription (2 slots × 4 threads, plus the image slots and the engine). That is what the stall rule
+  measures in the quiet window.
