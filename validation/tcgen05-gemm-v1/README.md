@@ -376,3 +376,25 @@ Verdict by `tools/tcgen05_4b_pair_verdict.py` under amendments 2 and 2a (`verdic
   here; its per-reading records are in `on/soak-4b.readings.jsonl`.
 **Rule 4b status: FAIL as recorded** (window 4 FAIL; window 5 not decisive; pair 2 FAIL on the OFF baseline's crowd,
 cause unknown, ON passing its gates). The build option stays OFF.
+
+**Rule 3, the 2,048-token racecheck on the host (amendment 3; 2026-11-17, after window 7; `build/tgemm-r3-host2048/`):
+clean.** Binary `tgemm-on1` lfm3-speech (`7e3da591...`), pinned runtime libraries. Plain host run 11:14:16-11:14:20,
+exit 0. Racecheck 11:14:20-11:24:20, exit 0, 600 s: **0 hazards (0 errors, 0 warnings); all 5 outputs identical** to
+the plain run. MemAvailable 118.6 GiB at the start, low 53.3 GiB (11:18:20), 118.0 GiB after; the 8 GB guard never
+came near.
+**Rule 3 under amendment 3: PASS.** memcheck (no leaks), synccheck and initcheck clean on the 4,096-token prefill and
+on the vision cases; racecheck clean on the vision cases (the 8,192-patch case included) and on the 2,048-token prefill;
+every output identical to its plain run; both positive controls detected. Recorded beside it: the 4,096-token racecheck
+NOT COMPLETED (infeasible on Thor), the 1,024-token racecheck information only.
+
+## Standing of the round (2026-11-17)
+| rule | verdict |
+|---|---|
+| 1 GEMM exactness at the entry point | **PASS** (353/353, 0 bytes differing) |
+| 2 every byte-identity regression | **PASS** (all identical; the batch-server and stream checks passed on their quiet rerun) |
+| 3 sanitizers (amendment 3) | **PASS** |
+| 4a synthetic tensor-memory soak (amendment 1) | **PASS** (685,356 calls, 0 differ, worst 5.72x the soak median) |
+| 4b server soak | **FAIL as recorded**: window 4 FAIL, window 5 not decisive, pair 2 (amendments 2, 2a) FAIL **only because the OFF baseline failed crowd identity** (4 unstreamed cases, cause unknown; ON passes every gate). The baseline is main's path; under investigation on main (crowd-identity-v1, a probe queued in window 9 after window 8). |
+| 5 speed | **PASS** (window 3) |
+| 6 coherency | **PASS** |
+**`LIQUID_LFM3_TCGEN05` stays OFF** until rule 4b passes.
