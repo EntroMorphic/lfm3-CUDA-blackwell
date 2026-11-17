@@ -5,7 +5,7 @@ after they start, an 8th request brings a 4K photograph (stage-0 "cherry", text 
 the longest gap between consecutive audio events from the image request's start to 4 s after it, against the same
 window of a run without the image. Runs alternate (without, with) REPEATS times on one server; the result is each
 run's worst row and the difference of the medians.
-Usage: measure_lfm3_image_stall.py SERVER MODEL_DIR IMAGE_REQUEST_JSON OUT_JSON [REPEATS]
+Usage: measure_lfm3_image_stall.py SERVER MODEL_DIR IMAGE_REQUEST_JSON OUT_JSON [REPEATS [SERVER_ARGS...]]
 """
 import json
 import statistics
@@ -60,12 +60,12 @@ def one_run(s, image_body):
                 image_seconds=image_seconds, started=t_image - t_start)
 
 
-def main(server_bin, model, image_req, out_json, repeats=3):
+def main(server_bin, model, image_req, out_json, repeats=3, *server_args):
     image_body = as_client(json.loads(Path(image_req).read_text()))
     image_body["max_new_tokens"] = 32
     runs = []
     with tempfile.TemporaryDirectory() as scratch:
-        s = Server(server_bin, model, scratch)
+        s = Server(server_bin, model, scratch, extra=server_args)
         try:
             one_run(s, None)  # warm
             for r in range(repeats):
@@ -84,4 +84,4 @@ def main(server_bin, model, image_req, out_json, repeats=3):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:5], *(int(a) for a in sys.argv[5:6]))
+    main(*sys.argv[1:5], *(int(a) for a in sys.argv[5:6]), *sys.argv[6:])

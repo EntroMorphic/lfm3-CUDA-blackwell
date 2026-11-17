@@ -38,6 +38,7 @@ def threads():
 
 
 caught, last, prev, prev_t = 0, 0.0, {}, time.time()
+started = time.time()  # the model's load faults too: no catch in its first 90 s
 while proc.poll() is None:
     try:
         now_threads, now = threads(), time.time()
@@ -49,13 +50,15 @@ while proc.poll() is None:
             r = (minflt - prev[tid][1]) / dt
             if r > rate / 4:
                 print(f"{now:.3f} tid {tid} {name!r} minflt/s {r:.0f} stime+{st - prev[tid][2]}", file=log, flush=True)
-            if r > rate and caught < catches and now - last > 10:
+            if r > rate and caught < catches and now - last > 10 and now - started > 90:
                 caught, last = caught + 1, now
                 print(f"{now:.3f} CATCH {caught}: tid {tid} {name!r}", file=log, flush=True)
                 g = subprocess.run(["gdb", "-q", "-batch", "-p", str(pid), "-ex", "set pagination off",
                                     "-ex", "thread apply all bt 25", "-ex", "detach"],
                                    capture_output=True, text=True, timeout=300)
-                (out / f"catch-{caught}.txt").write_text(f"faulting tid {tid} {name}\n" + g.stdout + g.stderr)
+                state = "".join(f"--- {p}\n" + open(p).read() for p in
+                                ("/proc/meminfo", "/proc/buddyinfo", "/proc/vmstat", f"/proc/{pid}/status"))
+                (out / f"catch-{caught}.txt").write_text(f"faulting tid {tid} {name}\n" + g.stdout + g.stderr + state)
                 print(f"{time.time():.3f} CATCH {caught} done in {time.time() - now:.1f} s", file=log, flush=True)
                 now_threads = threads()
     prev, prev_t = now_threads, time.time()
