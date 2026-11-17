@@ -93,6 +93,9 @@ class FakeEngine final : public lfm::http::Backend {
       std::vector<size_t> image_tokens;
       lfm::image::Limits limits;
       limits.max_pixels = lfm::http::kSpeechMaxImagePixels;
+      // image-queue-v1 red-team: the handoff's entries when the engine meets this request (leases released on every
+      // way a request ends leave only those of the requests still in flight)
+      if (handoff_log_.is_open()) handoff_log_ << lfm::image::shared_pixel_handoff().size() << "\n" << std::flush;
       for (const auto& a : request.at("images").array()) {
         const std::string bytes = lfm::base64::decode(a.string());
         const auto pv = lfm::image::preprocess(
@@ -395,6 +398,7 @@ class FakeEngine final : public lfm::http::Backend {
   std::ofstream trace_;  // --trace-ops FILE
   bool image_input_ = true;  // --image-input: WorkerCore::image_input_supported
   std::ofstream image_log_;  // --image-log FILE: per image, "handoff" (found handed over) or "decode"
+  std::ofstream handoff_log_;  // --handoff-log FILE: per image request, the handoff's entry count as the engine meets it
   bool audio_input_ = true;  // --audio-input: WorkerCore::audio_input_supported  // --speech-truncate K: answer only the first K chunks, as a request the step budget cut
  private:
   int fail_after_, fail_count_ = 0;
@@ -419,7 +423,7 @@ int main(int argc, char** argv) try {
   bool audio_input = true;  // --audio-input off: speech without audio input (no encoder for the checkpoint)
   bool image_input = true;  // --image-input off: speech without image input (no vision encoder for the checkpoint)
   bool image_handoff = false;  // --image-handoff on: as the in-process server (image-queue-v1 part 2)
-  std::string image_log;
+  std::string image_log, handoff_log;
   int speech_truncate = 0;
   std::string stream_fault;
   int stream_piece_bytes = 4, speech_rows = 2;
@@ -436,6 +440,7 @@ int main(int argc, char** argv) try {
     else if (o == "--image-input") image_input = v == "on";
     else if (o == "--image-handoff") image_handoff = v == "on";
     else if (o == "--image-log") image_log = v;
+    else if (o == "--handoff-log") handoff_log = v;
     else if (o == "--image-cache-mb") settings.image_cache_mb = std::stoi(v);
     else if (o == "--speech-truncate") speech_truncate = std::stoi(v);
     else if (o == "--speech-stream-fault") stream_fault = v;
@@ -490,6 +495,7 @@ int main(int argc, char** argv) try {
   engine.audio_input_ = speech && audio_input;
   engine.image_input_ = speech && image_input;
   if (!image_log.empty()) engine.image_log_.open(image_log);
+  if (!handoff_log.empty()) engine.handoff_log_.open(handoff_log);
   if (!trace_ops.empty()) {
     engine.trace_.open(trace_ops);
     if (!engine.trace_) throw std::runtime_error("cannot open --trace-ops file");

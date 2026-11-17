@@ -1,10 +1,18 @@
 // validation/image-cache-v1 rule 3 (host): lfm::LruBytes and lfm::LeasedMap under their contracts. Exits nonzero with a
-// message on the first violation. Built by tests/test_lru_bytes.py (ASan+UBSan; TSan for the threaded part).
+// message on the first violation. Built by tests/test_lru_bytes.py (plain, ASan+UBSan; TSan for the threaded part).
+// GCC's mismatched-new-delete warning cannot see that the operator new below is malloc's (the warning fires where the
+// containers' code is inlined, so it is off for the whole file)
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmismatched-new-delete"
+#endif
 #include <lfm/leased_map.hpp>
 #include <lfm/lru_bytes.hpp>
 
+#include <atomic>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <new>
 #include <random>
 #include <string>
 #include <thread>
@@ -18,7 +26,78 @@
     }                                                               \
   } while (0)
 
+// Every byte operator new hands out (validation/image-cache-v1 red-team: what holding a key really costs). The keys are
+// whole images' base64 text, up to 16 MiB each: a copy of one is the size of the entry itself. Counted in the plain and
+// ASan+UBSan builds; TSan's runtime defines operator new itself (it cannot be replaced there), so that build checks
+// the rest, its threads.
+#if defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define LFM_NO_COUNTING 1
+#endif
+#endif
+#ifndef LFM_NO_COUNTING
+static std::atomic<size_t> g_allocated{0};
+void* operator new(size_t n) {
+  g_allocated += n;
+  if (void* p = std::malloc(n ? n : 1)) return p;
+  throw std::bad_alloc();
+}
+void operator delete(void* p) noexcept { std::free(p); }
+void operator delete(void* p, size_t) noexcept { std::free(p); }
+#define ALLOCATED() g_allocated.load()
+#define CHECK_ALLOCATED(c) CHECK(c)
+#else
+#define ALLOCATED() size_t(0)
+#define CHECK_ALLOCATED(c) ((void)0)
+#endif
+
 int main() {
+  // red-team (image-cache-v1 rule 6): a cost that would overflow size_t is not kept (it wrapped to a small cost and
+  // was kept under any budget)
+  {
+    lfm::LruBytes<int> lru(1000);
+    lru.put("k", std::make_shared<const int>(1), SIZE_MAX);
+    CHECK(lru.size() == 0 && lru.bytes() == 0);
+    lru.put("k", std::make_shared<const int>(1), SIZE_MAX - 100);
+    CHECK(lru.size() == 0 && lru.bytes() == 0);
+    lru.put(std::string(10, 'k'), std::make_shared<const int>(1), 990);  // exactly the budget: kept
+    CHECK(lru.size() == 1 && lru.bytes() == 1000);
+  }
+  // red-team (image-cache-v1 rule 6): an entry holds its key once, as it is charged once. Before, the order list kept a
+  // second copy: the front end's token cache, all keys, could hold twice its budget.
+  {
+    const std::string key(1 << 20, 'k');
+    lfm::LruBytes<int> lru(4 << 20);
+    const auto value = std::make_shared<const int>(1);
+    const size_t before = ALLOCATED();
+    lru.put(key, value, sizeof(int));
+    [[maybe_unused]] const size_t taken = ALLOCATED() - before;
+    CHECK_ALLOCATED(taken >= key.size() && taken < key.size() + 4096);
+    CHECK(lru.find(key) && lru.bytes() == key.size() + sizeof(int));
+    // eviction still finds and frees the least recent entry by its key
+    lru.put(std::string(3 << 20, 'z'), value, sizeof(int));
+    CHECK(!lru.find(key) && lru.size() == 1);
+  }
+  // red-team (image-queue-v1 rule 5): a lease does not copy its key. Before, each lease held its own copy of the
+  // image's base64 text: a request's images took their size again per lease, for the request's whole life.
+  {
+    const std::string key(1 << 20, 'k');
+    lfm::LeasedMap<int> m;
+    [[maybe_unused]] size_t before = ALLOCATED();
+    auto first = m.put(key, std::make_shared<const int>(1));
+    CHECK_ALLOCATED(ALLOCATED() - before < key.size() + 4096);  // the map's own copy only
+    before = ALLOCATED();
+    auto second = m.put(key, std::make_shared<const int>(2));
+    CHECK_ALLOCATED(ALLOCATED() - before < 4096);
+    CHECK(m.size() == 1 && *m.find(key) == 1);
+    {
+      auto moved = std::move(first);
+      lfm::LeasedMap<int>::Lease assigned;
+      assigned = std::move(second);
+      CHECK(m.size() == 1);
+    }
+    CHECK(m.size() == 0 && !m.find(key));
+  }
   // 200 distinct keys of random sizes under a budget: the total never exceeds it; the most recent entry is kept
   {
     std::mt19937 rng(1117);
