@@ -398,3 +398,4 @@ NOT COMPLETED (infeasible on Thor), the 1,024-token racecheck information only.
 | 5 speed | **PASS** (window 3) |
 | 6 coherency | **PASS** |
 **`LIQUID_LFM3_TCGEN05` stays OFF** until rule 4b passes.
+- Pair 2's OFF crowd failure, not reproduced (main `dff4bf1`, `validation/crowd-identity-v1/README.md`, window 9): on the same OFF binaries (server `54ee76ac`, worker `b211b296`), a 600 s soak (584 replies, 0 differ) then 20 crowd rounds, every one 56/56 identical both ways (2,240 replies). Under that probe's reading set beforehand nothing is concluded: window 7's four differences stay a recorded failure of unknown cause, and the state after an hour of load was not tested. Rule 4b stays FAIL as recorded; the option stays OFF.
