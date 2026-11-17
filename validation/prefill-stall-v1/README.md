@@ -112,3 +112,29 @@ instruction faults again), not code that walks new memory. Host state at the cat
 **Correction (window 5 onward):** the `memlock` figure in `limits.txt` for container runs is the host shell's
 (`ulimit -l` runs in `stall_probe.sh`, outside `docker exec`), so it reads 16,098,844 KiB. The container's own limit
 is 8 MiB, as measured inside it for window 6; the container (created 2026-11-06, started 2026-11-15) was not changed.
+
+## Window 11 results (2026-11-17 15:33-15:58, quiet): **the faulting instruction is in libcuda** (`quiet-w11-catch/`)
+4 catches (container, uid 1000), the faulting thread the engine's main thread each time, frame 0 at the same address:
+**`/usr/lib/aarch64-linux-gnu/nvidia/libcuda.so.1.1`, file offset `0x3d3344`** (window 8's `...f3344` is the
+same instruction at another load address). The library is the same file inside and outside the container (sha256
+`fab2598e...`). The instruction, from `objdump -d` (stripped; the nearest exported symbol, `cuVDPAUCtxCreate`, is
+0x91a70 bytes before it and unrelated):
+```
+3d331c: ldr x0, [x20, #5264]    ; a driver structure
+3d3320: ldr w2, [x0, #40]       ; the value to write
+3d3324: ldr x1, [x21, #64]
+3d3328: ldr w3, [x1, #3152]
+3d332c: ldr w0, [x1, #3488]     ; an offset
+3d3330: ldr x1, [x1, #27280]
+3d3334: cmp w3, #0x8 ; b.ls 3d335c
+3d333c: ldr x1, [x1, #5408]     ; a base address
+3d3340: add x0, x1, x0
+3d3344: str w2, [x0]            ; <- every catch
+3d3348: b 3d320c
+```
+One 32-bit store to base + offset, then a return: the shape of a doorbell write (the driver telling the GPU new work is
+queued), not a copy. The process maps `/dev/nvidia0` write-only twice (64 KiB each), as a doorbell region would be.
+**Working hypothesis, not established:** the page this store writes keeps being unmapped, so every store traps (11 M
+minor faults at ~0.3 us each, all kernel time). The address it writes is not yet known. Window 14
+(`tools/thor/quiet_session_v14.sh`) records the registers at the catch and resolves `x0` to its mapping, and compares
+the container's device mappings with a host run's.

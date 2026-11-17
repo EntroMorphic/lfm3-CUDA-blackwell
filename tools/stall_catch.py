@@ -65,7 +65,13 @@ def where(gdb_out):
         f = line.split(None, 5)
         lo, hi = (int(x, 16) for x in f[0].split("-"))
         rows.append((lo, hi, int(f[2], 16), f[1], f[5] if len(f) > 5 else "[anon]"))
-    text = "--- frame-0 PCs\n"
+    text = "--- registers pointing into a mapping (x0-x30, from gdb)\n"
+    for name, val in sorted(set(re.findall(r"^(x[0-9]+|sp|pc)\s+(0x[0-9a-f]+)", gdb_out, re.M))):
+        v = int(val, 16)
+        hit = next((r for r in rows if r[0] <= v < r[1]), None)
+        if hit and not hit[4].endswith(".so") and ".so." not in hit[4]:
+            text += f"{name} {v:#x} {hit[4]} {hit[3]} {hit[0]:#x}-{hit[1]:#x} offset {v - hit[0]:#x}\n"
+    text += "--- frame-0 PCs\n"
     for pc in sorted({int(m, 16) for m in re.findall(r"^#0\s+(0x[0-9a-f]+)", gdb_out, re.M)}):
         hit = next((r for r in rows if r[0] <= pc < r[1]), None)
         text += (f"{pc:#x} {hit[4]} {hit[3]} file offset {pc - hit[0] + hit[2]:#x}\n" if hit else f"{pc:#x} unmapped\n")
@@ -74,7 +80,14 @@ def where(gdb_out):
 
 caught, last, prev, prev_t = 0, 0.0, {}, time.time()
 started = time.time()  # the model's load faults too: no catch in its first 90 s
+maps_at = float(os.environ.get("STALL_MAPS_AT", "0"))  # seconds: one snapshot of the maps (a host run never catches)
 while proc.poll() is None:
+    if maps_at and time.time() - started >= maps_at:
+        maps_at = 0
+        try:
+            (out / "maps-snapshot.txt").write_text(open(f"/proc/{pid}/maps").read())
+        except OSError as e:
+            print(f"maps snapshot failed: {e}", file=log, flush=True)
     try:
         now_threads, now = threads(), time.time()
     except FileNotFoundError:
@@ -89,7 +102,8 @@ while proc.poll() is None:
                 caught, last = caught + 1, now
                 print(f"{now:.3f} CATCH {caught}: tid {tid} {name!r}", file=log, flush=True)
                 g = subprocess.run(["gdb", "-q", "-batch", "-p", str(pid), "-ex", "set pagination off",
-                                    "-ex", "thread apply all bt 25", "-ex", "detach"],
+                                    "-ex", "thread apply all bt 25", "-ex", "thread apply all info registers",
+                                    "-ex", "detach"],
                                    capture_output=True, text=True, timeout=300)
                 state = "".join(f"--- {p}\n" + open(p).read() for p in
                                 ("/proc/meminfo", "/proc/buddyinfo", "/proc/vmstat", f"/proc/{pid}/status"))
