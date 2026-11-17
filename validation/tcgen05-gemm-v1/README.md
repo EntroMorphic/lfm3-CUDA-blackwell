@@ -222,3 +222,30 @@ Rerun (`tgemm-r3b`, 00:20-01:12, the container otherwise empty at the start; `tg
 **Rule 3 status:** every check run is clean and its outputs identical, the controls detected; the one cell not met as
 written is racecheck x 4,096-token prefill (infeasible: 100 GB at the kill). Pending Tripp's decision on the 1,024-
 token racecheck as its stand-in.
+
+**Rule 3, the 4,096-token racecheck (Tripp, 2026-11-17: no stand-in; run it on the host).** The 1,024-token result
+above stays as information only. `tools/thor/tcgen05_host_racecheck.sh` runs it on the Thor host (125 GB, no memory
+cgroup) with `build/racecheck-pinned-libs-v1` (as `build/stall-v4/run.sh`), a plain host run of the same request
+first; it waits until the audio round's racecheck has finished and no compute-sanitizer runs, logs free memory every
+minute, and stops the run with SIGTERM (recorded NOT COMPLETED) if MemAvailable drops under 8 GB. Waiting on Thor
+since 01:21 (`build/tgemm-r3-host/`). Result: pending.
+
+## Rule 6 results (coherency, 2026-11-17): read, no engine fault
+From the ON build's own outputs (`tgemm-r2-e2e/out`, `tgemm-on1-rule6/dump`), which rule 2 found byte-identical to
+the validated builds', read end to end:
+- **The 11 image stage-0 replies.** Seven describe their images accurately and fluently: cherry (white blossoms on a
+  branch, stamens, blurred background), china (the red-and-green pagoda over water), flower (a peach dahlia, 79
+  tokens, a complete answer), gray (the same pavilion in black and white), mirror (a sunset lake as a mirror), rgba
+  (the dahlia in detail), two (a structured comparison of the pavilion and the dahlia). Four are fluent but unrelated to
+  their image, encyclopedia-style text with invented facts: noise (a UAE football season), small (a "Jade Pagoda" in
+  Nanjing), tall (a fabricated 2020 Senate race), wide (the "Tian Tan Buddha" in Beijing). Those four test images are
+  degenerate: their prompts carry 0 (noise) or 1-2 (small, tall, wide) image tokens, and HF FP32 replies to `small`
+  with the same "Jade Pagoda" text. The model's behavior on near-empty images, not the engine's. No repetition loop, no
+  broken text, no language switch.
+- **10 audio-in replies** (the first 10 of the 40 dumped clips, "Perform ASR in English"): each a complete, coherent
+  LibriSpeech transcription ending at `<|im_end|>`, e.g. "He hoped there would be stew for dinner, turnips and carrots
+  and bruised potatoes and fat mutton pieces..." and the Sonnet 115 passage ("But reckoning time, whose million
+  accidents..."), with ordinary ASR slips ("Carton" for Cotton, "dam soul" for damsel, "twisted" for 'twixt, "the tree
+  kind" for three-wire).
+**Rule 6: PASS** (no coherency fault; the off-image replies are the model's, identical to the validated build's and,
+where HF's FP32 reply is recorded, to HF's).
