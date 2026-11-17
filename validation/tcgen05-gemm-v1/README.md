@@ -126,3 +126,12 @@ M in {256, 257, 258, 4096}, not 32,768 (its FP32 output pair would be 33.5 GB).
   blocked tensor-memory allocation, the risk this rule exists for, would show orders of magnitude beyond either; the
   solo bar measured ordinary queueing. The soak's problems were resized before this run (each ~1 ms alone; the LM head
   at 300 rows, 5.6 ms alone, removed) after a first dry run had shown it as the long pole.
+
+**Rule 2, the quiet reruns (2026-11-16 18:41-19:12, after window 3; MAXN, clocks locked;
+`tools/thor/quiet_tcgen05_reruns.sh` -> `build/tgemm-r2-quiet/`): both PASS. Rule 2 PASSES.**
+- Batch-server check: **PASS** (exactness rule 1 and real-time rule 3; up to 16 concurrent TTS streams with no gap; 7
+  TTS streams with 5 spoken questions joining: 0 stalls; server exit 0).
+- Stream check: **PASS** (every case exact, rules 1-3; the cost ratio streamed / plain 1.005, against 1.083 on the
+  shared GPU).
+- Rule 5 (Tripp's window 3, `quiet_tcgen05_gemm.sh`): RULE 5 PASS; image requests at most HF end to end on 3 of 3
+  rounds (the full numbers are in `build/quiet-w3-tcgen05/summary.txt`, to be copied here).
