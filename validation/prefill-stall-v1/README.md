@@ -83,3 +83,15 @@ Still different inside the container: the engine runs as **root** (uid 0; the ho
 filter (mode 2); `/dev/shm` 64 MiB; the container image's own libstdc++/libgcc/libgomp; the mount namespace.
 Next (window 8): the same probe inside the container as uid 1000 (`docker exec -u 1000`), order uid 1000, root,
 uid 1000.
+
+## Window 6 results (2026-11-17 07:27-08:39, quiet): the memlock hypothesis **falsified** (`quiet-w6/`)
+| run | memlock (soft/hard) | stalls of 630 |
+|---|---|---|
+| host-8m-1 | 8,192 / 8,192 KiB (the container's) | **0** |
+| host-default | 16,098,844 KiB | **0** |
+| host-8m-2 | 8,192 / 8,192 KiB | **0** |
+By the pre-registered reading, RLIMIT_MEMLOCK is not the trigger. The host is now 0 of 3,780 across five quiet runs;
+the container 56 of 1,260. Remaining differences between the two: the user (root in the container, uid 1000 on the
+host), the container's seccomp filter, its memory cgroup (`system.slice/docker-*.scope` against the user slice),
+its mount namespace (the image's overlayfs for `/pinned-cuda` and the nvidia libraries; `/workspace` bind-mounted),
+and the nvidia container runtime's device setup.

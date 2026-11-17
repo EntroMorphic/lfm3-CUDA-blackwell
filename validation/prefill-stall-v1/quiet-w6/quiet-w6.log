@@ -1,0 +1,17 @@
+waiting for quiet 05:06:40: 587505 bash -c cd ~/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build && bash -n audio-fe-a2-san-race/racecheck-after-w5.sh && setsid bash audio-fe
+587507 bash audio-fe-a2-san-race/racecheck-after-w5.sh
+602688 bash -c B=~/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build; awk "BEGIN{print strftime(\"%T\")}"; ls $B/tgemm-r3b/text/text4096.req.json; 
+== quiet 07:26:48
+== stall probe host-8m-1 07:26:48
+memlock 8192 KiB (soft) 8192 (hard)
+630 requests, median prefill 0.033 s, stalls (> median + 1 s): 0
+0
+== stall probe host-default 07:51:22
+memlock 16098844 KiB (soft) 16098844 (hard)
+630 requests, median prefill 0.033 s, stalls (> median + 1 s): 0
+0
+== stall probe host-8m-2 08:15:12
+memlock 8192 KiB (soft) 8192 (hard)
+630 requests, median prefill 0.033 s, stalls (> median + 1 s): 0
+0
+QUIET-V6-FINISHED 08:39:11
