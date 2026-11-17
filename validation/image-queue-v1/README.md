@@ -112,3 +112,48 @@ the image 0.384 / 0.339 / 0.337 s, with it 1.016 / 0.622 / 0.619 s (the first re
 hits: image request 2.18 s, then 1.36 and 1.35 s); medians **0.339 -> 0.622 s, stall 0.28 s**. Old server 1.06 s,
 part 2 alone 0.66 s, with a cache hit 0.28 s: what remains is the 4K prefill itself on the engine thread. A chunked
 prefill interleaved with decode steps is the candidate for the 50 ms bar (not started).
+
+## Red-team (rule 5) (2026-11-17, x86 host only; commit `8104cd5`)
+I read `Service::decode_images`, `frontend_call`, `speech`/`speech_stream`, `lfm/leased_map.hpp`, `image_handoff.hpp`
+and `WorkerCore::parse_speech` and looked for faults, then wrote a test for each finding before fixing it. The
+results, by area:
+- **A lease copied its key (fixed; low to medium, memory).** `LeasedMap::Lease` kept its own copy of the key, which is
+  the image part's whole base64 text (up to 16 MiB). Every in-flight request therefore held its images' text once
+  more, for its whole life, on top of the map's copy and the body. Test: `native/tests/lru_bytes_check.cpp`, the
+  LeasedMap block (counts the bytes `operator new` hands out: the first lease of a 1 MiB key took 2 MiB, and a second
+  lease of the same key took another 1 MiB). Fix: a lease holds its map iterator. It is valid because an entry is
+  erased only at its last lease's release.
+- **Lease lifetime on every exit path: no defect.** The leases live in `Speech::image_leases`, so each ends when its
+  request's `Speech` does. That holds for a refusal after decoding (a later image refused, or the prompt over
+  capacity in `encode_speech`), a 504, a 499, 429 `queue_full`, a ticket cancelled or abandoned, and a request that
+  completes. If an exception is thrown while a lease is being pushed, the temporary lease releases itself. The decode
+  slot is released by the RAII `Slot`. New guard test: `test_every_way_an_image_request_ends_releases_its_leases`.
+  The harness's fake engine logs the handoff's size (`--handoff-log`). After refused requests and clients that reset
+  while waiting, decoding, queued or running, the next request's engine call sees only its own entry. A mutation (a
+  lease never released) makes the test fail.
+- **Stop while waiting: no defect.** `close()` sets `stopping_`, and waiters see it within one 50 ms poll and answer
+  503 `worker_unavailable`. New test: `test_image_requests_waiting_to_decode_when_the_server_stops_get_503`. It sends
+  12 large images and stops the server during the decodes. Every reply is 200 or 503 `worker_unavailable`, at least
+  one is 503, and the process exits cleanly (no sanitizer report).
+- **Deadline while waiting: no defect** (existing test: 504 `frontend_deadline`, never 429). A decode that has
+  started is not interrupted; it is bounded by the decoder's limits (~0.4 s at 4K), and `frontend_call` then refuses
+  504.
+- **A client that leaves: no defect in this change; a limitation inherited from the earlier design.** Only a reset is
+  seen as `gone` (POLLHUP/POLLERR). A client that closes with a FIN looks the same as one that half-closes and still
+  reads (audio-assurance-v1's rule), so its request keeps its place. Unstreamed, that request runs to its end; a
+  streamed one ends at its first write. `gone` is not polled while a request waits for `frontend_call`'s timed mutex.
+  That mutex is held only to render and tokenize (milliseconds), and the batched wait polls `gone` right after.
+- **A failed service (`failed_`, engine fault) is not checked while waiting to decode: no change.** An image request
+  still decodes before meeting the 503, because image refusals are validation and come before 503, as text's 400 comes
+  before its lease's 503. The cost is CPU in a terminal state that needs a restart anyway.
+- **Thread safety: no defect.** The slots are a counter under `image_slots_lock_` with a condition variable,
+  `stopping_` is atomic, and the handoff is a mutex-guarded map of `shared_ptr<const PixelValues>`. A lease can be
+  released on the engine-owner thread (the last `Speech` reference is dropped there) under the same mutex. The HTTP
+  suites pass under TSan.
+- **Engine-side cost of the handoff (GPU-side, described rather than changed; low to medium, memory and engine-thread
+  time).** `parse_speech` copies the handed-over `PixelValues` (`images.push_back(*pixels)`). A full-size image is
+  8,192 patches x 1,536 floats = **50 MB**. `ChunkRun::next` copies the Options again, and `Batch::admit` copies them
+  into the row (`w.o = o`). That makes ~150 MB of memcpy per full-size image on the engine thread. The row keeps its
+  copy until the row is next admitted, which is after the request has ended. See image-cache-v1's red-team (C4) for
+  the precise fix.
+Host suites after the fixes: see image-cache-v1's red-team section (one run covers both).
