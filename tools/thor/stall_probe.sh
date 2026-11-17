@@ -7,7 +7,8 @@
 # Since quiet-w4 it also samples the container's memory cgroup (memory.events "max": the times the 96 GiB limit was
 # hit; memory.stat's in-cgroup reclaim), invisible in the global counters. STALL_HOST=1 runs the same engine on the
 # host instead (outside the container's cgroup, as stall_catch did: 0 stalls in 1,260 requests).
-# Usage (Thor host): [STALL_HOST=1] stall_probe.sh BUILD OUT_TAG
+# STALL_USER=UID runs the container engine as that user (docker exec -u) instead of root.
+# Usage (Thor host): [STALL_HOST=1 | STALL_USER=UID] stall_probe.sh BUILD OUT_TAG
 set -uo pipefail
 T=${1:?BUILD}; O=${2:?OUT_TAG}
 W=${LFM3_WORKSPACE:?set LFM3_WORKSPACE}; B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B
@@ -18,10 +19,11 @@ if [ "${STALL_HOST:-0}" = 1 ]; then
   RUN="env LD_LIBRARY_PATH=$B/racecheck-pinned-libs-v1:/usr/lib/aarch64-linux-gnu/nvidia $B/$T/lfm3-speech $W/models/LFM3-Omni-2B --batch $B/$O/list.txt"
 else
   sed "s#$C/speech-normalize-v1/dev/tts/\([^ ]*\)\$#$C/$O/out/\1#" $B/speech-normalize-v1/dev/tts/list.txt > list.txt
-  RUN="$X $C/$T/lfm3-speech $M --batch $C/$O/list.txt"
+  U=${STALL_USER:+-u $STALL_USER}
+  RUN="docker exec $U -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1 $C/$T/lfm3-speech $M --batch $C/$O/list.txt"
 fi
 CG=$(find /sys/fs/cgroup/system.slice -maxdepth 1 -type d -name "docker-$(docker inspect lfm3-profile-v1 --format '{{.Id}}')*" | head -1)
-echo "memlock $(ulimit -l) KiB (soft) $(ulimit -H -l) (hard)" > limits.txt
+echo "memlock $(ulimit -l) KiB (soft) $(ulimit -H -l) (hard); STALL_HOST=${STALL_HOST:-0} STALL_USER=${STALL_USER:-root}" > limits.txt
 echo "$CG" > cgroup.txt; cat $CG/memory.max $CG/memory.events >> cgroup.txt 2>/dev/null
 head -1 list.txt
 cat /sys/kernel/mm/transparent_hugepage/enabled /sys/kernel/mm/transparent_hugepage/defrag > thp.txt
