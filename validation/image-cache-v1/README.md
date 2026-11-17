@@ -221,3 +221,135 @@ builds; TSan's runtime owns `operator new`, so that build checks the threads onl
    memcheck on `lfm3-speech` with image hits, misses and evictions: 0 errors, no leaks.
 4. **C5:** a fault-injection build (keep allocation forced to fail) serves the request, replies identically to the
    cache-off reply, keeps the server up, and caches nothing.
+
+## C3-C5 Thor procedure (set before the run) (2026-11-17)
+Set before any of its data exists; the four rules above are not changed. Runner: `tools/thor/quiet_session_v10.sh`
+(results in `build/quiet-w10-c3c5/`). It starts after window 9's `QUIET-V9-FINISHED` (or `NOT QUIET`) line, once no
+engine, sanitizer, probe, build or HF process has run for three checks 30 s apart. Builds and exactness come first;
+the stall comes last, after a second quiet check. Every server command runs in `lfm3-profile-v1` through
+`docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia`, as in window 9. Processes are stopped
+with SIGTERM only.
+
+**Builds** (at the start of the window, from the tree as synced, in parallel; sha256s in `binaries.sha256`):
+- `vimg-srv-c3` (server and worker): `tools/thor/build_native.sh` as is, in the pinned compiler image, `--network none`.
+  No script in `tools/thor` records how `vimg-srv-c2` was configured. The image options are not CMake options: the
+  CMake build compiles the vendored libjpeg-turbo itself. So the production configuration is used unchanged.
+- `vimg-srv-c3f`: the same with `-DCMAKE_CUDA_FLAGS=-DLFM3_FAULT_IMAGE_KEEP`. Checked on x86 with CMake: the define
+  reaches the server's CUDA compile line. Checked by the runner: the fault binary contains "injected: image rows not
+  kept" and the normal one does not; neither links cuBLAS.
+- `vimg-c3` (`lfm3-speech`): `tools/thor/build_speech.sh`. The brief's nvcc line named `tests/lfm3_speech.cu`, but the
+  source is now `native/apps/lfm3_speech.cu`, linked with the image front end and libjpeg-turbo, which is what
+  `build_speech.sh` does (same image and flags).
+
+**Images** (`tools/make_lfm3_c3_images.py`, standard library only; sha256s in `images.sha256` and each manifest):
+`images/prime/c3-01..30.png` and `images/fresh/c3-31.png`. Each is cherry (3840 x 2160) with 16 bytes of one scanline
+changed (row `71 x index mod 2160`), recompressed at zlib level 6. Each file is about 9.89 MB. Its base64 key is about
+13,181,400 bytes, and it is 1,980 tokens, so 8,110,080 bytes of rows. Cost per image: about 21.29 MB in the engine
+(key plus rows) and 13.18 MB in the front end (key). Cherry's own key is 13,111,720 bytes.
+With the default budgets (512 MiB = 536,870,912 bytes each):
+- The engine gets cherry plus 30 primes, about 660 MB, so cherry is evicted.
+- The front end gets small, cherry and 30 keys, about 408.6 MB, so cherry's count is kept.
+
+The check tool recomputes both figures from the images and refuses to run if either does not hold.
+
+**Rule 1 (exact).**
+- (a) `$X lfm3-speech MODEL --batch` on `vimg-e2e-a4`'s 11 requests (`build/vimg-e2e-a4/req`, written by
+  `tools/thor/vision_e2e_round.sh`: text mode, 128 tokens, `record_image`). Then `tools/compare_speech_outputs.py
+  build/vimg-e2e-a4/out e2e/out`: every file identical, the JSON's timing fields excepted, as in earlier rounds.
+- (b) `tools/check_lfm3_image_cache.py vimg-srv-c3 MODEL vimg-e2e-a4 image-cache.json LISTEN`: **32 of 32**. LISTEN
+  is the listening set's `req/`. The runner finds it as the `build/*/req` that holds `01-china.json` and
+  `08-mm05.json`, or takes `LISTEN_DIR`.
+- (c) The host suites, on x86 at `e2f8b7f` (which contains 0d743af): every `tests/test_lfm3_http_*.py` and
+  `tests/test_lru_bytes.py`, plain, ASan+UBSan and TSan, **622 passed, 2 skipped** (28 min; 3 warnings, the known
+  client-thread exceptions). The new tools' own tests (`tests/test_lfm3_image_cache_fixes_tools.py`, against
+  `tests/fake_lfm3_image_server.py`): 18 passed.
+
+**Rule 2 (C3).**
+- **Where the image is decoded: cannot be measured as written.** The rule names "`decode` vs `handoff` in the
+  engine's log". The real server has no such log; those lines exist only in the host harness (`--image-log`).
+  **Stand-in:** each thread's CPU time (`/proc/PID/task/TID/stat`, utime + stime) across each request, read by
+  `tools/check_lfm3_image_cache_fixes.py c3`. A 4K decode is ~0.3-0.4 s of one thread's CPU. The engine-owner thread
+  is the one that spends the most on a 64-token text request.
+- **c3 sequence:** text and small (warm-up); text (finds the engine thread); cherry (the seed); cherry (the hit);
+  c3-01..30, each once with 1 token; cherry (**the probe**); cherry (a hit again); c3-31 (a never-seen image).
+  Cherry requests are the stage-0 request: 128 tokens.
+- **Reading:** decoded on the handler when the probe's largest non-engine thread used **>= 0.20 s** and the engine
+  thread used at most the fresh image's engine CPU **+ 0.20 s**. Decoded on the engine thread when the other threads
+  used <= 0.10 s and the engine used >= the fresh image's + 0.20 s.
+- **Void unless the controls hold:**
+  - the hit's largest non-engine thread <= 0.10 s;
+  - the fresh image's >= 0.20 s;
+  - the probe's `prefill_seconds` at least the midpoint of the hit's and the fresh image's (the engine had to encode
+    again, so the rows had been evicted).
+- **Also required:** every cherry reply's text equal to `lfm3-speech`'s, and every status 200.
+- **The stall:** `tools/measure_lfm3_image_stall.py` (cherry, 3 repeats), three runs on `vimg-srv-c3` in the same
+  window:
+  - cache on, as in window 4;
+  - **`--prime-images images/prime`** (new option): after the warm-up, cherry is sent once alone. Then before
+    **every** measured run, with and without the image, c3-01..30 are sent one by one. So every "with" run re-sends
+    cherry in the C3 state. Priming only once would leave repeats 2 and 3 as plain hits.
+  - `--image-cache-mb 0`.
+
+  Without the option the tool is unchanged (host test: arguments and output keys).
+  - **Bar as written:** the primed stall within 0.10 s of 0.28 s.
+  - **Prediction, recorded now:** about **0.66 s**, so the bar as written is expected to fail. In the C3 state the
+    engine no longer holds the rows. With the fix, the re-send is a miss whose decode ran on a handler: the engine
+    thread still encodes (~0.36 s) and prefills. That is window 3's cache-off condition (0.66 s), not a hit (0.28 s).
+    Without the fix the engine thread would also decode (~0.4 s), as before image-queue part 2 (1.06 s). So the
+    rule's two reference points are one step off.
+  - **Also reported:** whether the primed stall is <= this window's cache-off stall + 0.10 s, meaning the engine
+    thread did not decode.
+
+  Both lines are printed. The rule's verdict stays the literal one.
+
+**Rule 3 (C4).**
+- **Memory: "device memory" cannot be measured per process on Thor.** The GPU allocates from system memory, and no
+  `/proc` field shows it (`tools/thor/host_memory_sampler.py`). "Beyond its cache budget" is read as "beyond what its
+  caches hold".
+- The server reports no cache figures (see `stats` in the red-team), so the caches' growth is computed from the
+  images:
+  - host: each image's key twice (the front end's copy and the engine's): 15 x 2 x ~13,181,400 = ~395.4 MB;
+  - device: each image's rows: 15 x 8,110,080 = 121.65 MB.
+- **Stand-ins:**
+  - host: the server's VmRSS;
+  - device: Thor's in-use memory (MemTotal - MemAvailable), less the server's RssAnon + RssShmem, less the client's.
+- `check_lfm3_image_cache_fixes.py c4`, server with `--queue-size 16` (default 8 rows):
+  1. Text and small (warm-up).
+  2. c3-01 alone, then **after_1**.
+  3. c3-02..16 sent **at once**, so that they spread over the rows (sent one by one, they would all reuse one row and
+     hide C4). Then **after_16**.
+  4. A reading 10 s later is recorded, not gated.
+
+  Each reading is the median of 5 samples, 0.5 s apart, after 3 s idle. All 16 requests must return 200.
+- **Gate:** VmRSS(after_16) - VmRSS(after_1) - 395.4 MB **<= 64 MiB**, and the device stand-in's growth minus
+  121.65 MB **<= 64 MiB**. Allocation rounding of the kept rows falls inside the margin.
+- **Control, not gated:** the same procedure on `vimg-srv-c2` (before C1 and C4), to show the measure moves.
+- **Memcheck: cannot be measured as written on `lfm3-speech`.** It has no image cache ("`lfm3-speech` sets no cache"
+  above), so it has no hits and no evictions. Two runs instead:
+  - **(i) `lfm3-speech`** under `compute-sanitizer --tool memcheck --leak-check full --error-exitcode 99`,
+    `--concurrent 4`, on cherry, two, small, small, flower (16 tokens; `speech-list`). This covers C4's code: shared
+    pixels, `admit` by value, the one-chunk move, the row without media, rows reused, and a repeated image. Required:
+    exit 0, **ERROR SUMMARY 0 errors, 0 bytes leaked**, outputs identical to the same run without the sanitizer.
+  - **(ii) The server**, the only binary with the cache, at `--image-cache-mb 1` under memcheck. There is **no leak
+    check**: the server ends with `std::_Exit` by design and frees nothing, so every live allocation would be
+    reported. The sequence is small, small, wide, tall, small, tall, china, two, wide (8 tokens each), then small,
+    tall and wide at once, then small. Expected engine states, simulated from the stage-0 sizes: miss, hit, miss,
+    miss (evicts 1), miss (evicts 1), hit, over budget (not kept), over and over, miss (evicts 1). Required: exit 0,
+    ERROR SUMMARY 0 errors, every status 200, texts equal to the plain run of the same sequence.
+
+**Rule 4 (C5).** `check_lfm3_image_cache_fixes.py c5` runs three servers in turn:
+- `vimg-srv-c3 --image-cache-mb 0` (off);
+- `vimg-srv-c3` (on, the calibration);
+- `vimg-srv-c3f` (fault).
+
+Each gets: cherry 3 times unstreamed and once streamed; two, twice; then `GET /health`, a text request, and SIGTERM.
+- "Replies identically to the cache-off reply": every text equal to the off server's, and to `lfm3-speech`'s.
+- "Keeps the server up": `/health` 200, the text request after it 200, the process alive, exit 0 on SIGTERM.
+- **"Caches nothing" cannot be read directly** (no stats endpoint). **Stand-in:** each re-send of cherry to the fault
+  server is decoded on a handler again (largest non-engine thread >= 0.20 s: the engine published no held rows). Its
+  `prefill_seconds` must also be at least the midpoint between the cache-on server's miss and hit (it was encoded
+  again).
+- Calibration required: the cache-on server's re-sends are hits (prefill at least 0.1 s below its miss, no handler
+  decode). `on` must also equal `off`.
+
+**Expected runtime:** builds ~25 min, exactness ~30 min, C3/C4/C5 ~15 min, memchecks ~1-3 h, stall ~20 min.
