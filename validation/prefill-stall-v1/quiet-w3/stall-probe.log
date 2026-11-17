@@ -1,0 +1,42 @@
+/workspace/liquid-CUDA/build/speech-normalize-v1/dev/tts/94d8b7dfbb1d66ab-s1.req.json /workspace/liquid-CUDA/build/quiet-w3-stall/out/94d8b7dfbb1d66ab-s1
+== run 18:14:44
+exit 0
+630 requests, median prefill 0.033 s, stalls (> median + 1 s): 28
+STALL 4f0c22069ee9f19b-s5 prefill 3.622: {'proc_minflt': 10677235, 'proc_utime': 42, 'proc_stime': 333}
+STALL 1c15e59f2aadf6ca-s2 prefill 3.556: {'proc_minflt': 10481970, 'proc_utime': 41, 'proc_stime': 326}
+STALL 1c15e59f2aadf6ca-s13 prefill 3.943: {'proc_minflt': 11636225, 'proc_utime': 43, 'proc_stime': 357}
+STALL 1205a36179461e61-s6 prefill 3.810: {'proc_minflt': 11250940, 'proc_utime': 43, 'proc_stime': 350}
+STALL 1205a36179461e61-s10 prefill 3.658: {'proc_minflt': 10799803, 'proc_utime': 48, 'proc_stime': 329}
+STALL 1205a36179461e61-s14 prefill 3.676: {'proc_minflt': 10847737, 'proc_utime': 39, 'proc_stime': 334}
+STALL 9ca6f2752696d588-s4 prefill 3.571: {'proc_minflt': 10545458, 'proc_utime': 42, 'proc_stime': 326}
+STALL bfa0a874c8eb9591-s15 prefill 4.073: {'proc_minflt': 12034120, 'proc_utime': 43, 'proc_stime': 369}
+STALL d89fc0474d13fbc9-s4 prefill 4.118: {'proc_minflt': 10001754, 'proc_utime': 42, 'proc_stime': 325}
+STALL e859827a61b9f3ec-s7 prefill 3.992: {'proc_minflt': 12031275, 'proc_utime': 42, 'proc_stime': 367}
+STALL e859827a61b9f3ec-s14 prefill 4.100: {'proc_minflt': 12376987, 'proc_utime': 49, 'proc_stime': 375}
+STALL f978117507e67b07-s8 prefill 3.863: {'proc_minflt': 11402998, 'proc_utime': 40, 'proc_stime': 357}
+STALL b8eb8bb81ddacadc-s2 prefill 3.832: {'proc_minflt': 11313688, 'proc_utime': 45, 'proc_stime': 347}
+STALL dd207bf531b90e44-s14 prefill 3.415: {'proc_minflt': 1775670, 'proc_utime': 29, 'proc_stime': 142}
+STALL e1ce1499f59659f3-s8 prefill 3.342: {'proc_minflt': 3529497, 'proc_utime': 25, 'proc_stime': 200}
+STALL 3e39fa84d626fa2b-s5 prefill 3.846: {'proc_minflt': 11356650, 'proc_utime': 46, 'proc_stime': 353}
+STALL 3e39fa84d626fa2b-s14 prefill 3.960: {'proc_minflt': 11692942, 'proc_utime': 42, 'proc_stime': 362}
+STALL 6e3289bbc07000aa-s4 prefill 3.329: {'proc_minflt': 9812570, 'proc_utime': 42, 'proc_stime': 300}
+STALL 6bee531d0d92a9b8-s5 prefill 3.918: {'proc_minflt': 11569681, 'proc_utime': 44, 'proc_stime': 354}
+STALL 89b56321958b05f6-s4 prefill 4.013: {'proc_minflt': 11855459, 'proc_utime': 43, 'proc_stime': 365}
+STALL 122825c9a1966762-s2 prefill 3.349: {'proc_minflt': 9872379, 'proc_utime': 40, 'proc_stime': 309}
+STALL 122825c9a1966762-s13 prefill 3.438: {'proc_minflt': 10143964, 'proc_utime': 37, 'proc_stime': 316}
+STALL e6fb159b4169439c-s3 prefill 4.050: {'proc_minflt': 5524440, 'proc_utime': 33, 'proc_stime': 248}
+STALL fb35e54ca9797fb4-s11 prefill 3.989: {'proc_minflt': 11783098, 'proc_utime': 47, 'proc_stime': 357}
+STALL c4ac8a6c0846cd87-s11 prefill 3.933: {'proc_minflt': 11594943, 'proc_utime': 37, 'proc_stime': 362}
+STALL 34bc0730a6cf62ed-s2 prefill 3.465: {'proc_minflt': 10223377, 'proc_utime': 40, 'proc_stime': 315}
+STALL 34bc0730a6cf62ed-s8 prefill 3.739: {'proc_minflt': 9700342, 'proc_utime': 40, 'proc_stime': 308}
+STALL 34bc0730a6cf62ed-s14 prefill 3.584: {'proc_minflt': 10575291, 'proc_utime': 47, 'proc_stime': 324}
+normal 94d8b7dfbb1d66ab-s1 prefill 0.023: {'proc_minflt': 2800, 'proc_utime': 5, 'proc_stime': 3}
+normal 1c15e59f2aadf6ca-s4 prefill 0.033: {'proc_utime': 14}
+normal 8326f130f2a7d20f-s9 prefill 0.033: {'proc_utime': 18}
+normal bd1b3a8ea981bd9a-s10 prefill 0.033: {'proc_utime': 9, 'proc_stime': 1}
+normal 862552c0794598cc-s12 prefill 0.033: {'proc_utime': 13}
+normal bfa0a874c8eb9591-s13 prefill 0.033: {'proc_utime': 10}
+normal e19c7e05dbe3eccf-s15 prefill 0.033: {'proc_utime': 10}
+normal 5eb364b95f7540fc-s2 prefill 0.033: {'proc_minflt': 3, 'proc_utime': 10}
+normal 92ff9bf8ee5f93e1-s3 prefill 0.033: {'proc_utime': 11, 'proc_stime': 1}
+normal f978117507e67b07-s6 prefill 0.031: {'proc_utime': 12, 'proc_stime': 1}
