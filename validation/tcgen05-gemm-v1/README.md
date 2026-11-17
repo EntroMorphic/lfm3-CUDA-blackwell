@@ -288,3 +288,26 @@ Per-reading data (`{off,on}/soak-4b.readings.jsonl`; summary by `readings_summar
   (the 130 s budget-truncated TTS case, the 4K images) were in flight at different times. One sample per build.
 **Status:** rule 4b FAIL as measured (window 4: ON +83.0 MiB; window 5: OFF +57.3 pass, ON +70.5 fail, not decisive).
 The per-reading data show nothing specific to tcgen05; I do not claim more than the table allows.
+
+## Amendment 2 (2026-11-17, Tripp's decision; set before any new data): rule 4b's memory gate, for new runs only
+Windows 4 and 5 stay recorded as **FAIL** (window 5's pair not decisive). For runs made after this amendment:
+- **Gated (each bar 64 MiB, per run):**
+  1. the server process's RSS growth over the idle checkpoints (the harness's `memory_idle.server_rss`, first to last
+     checkpoint; the clause and its bar unchanged);
+  2. the container memory cgroup's **anon** growth from **checkpoint 2 to checkpoint 4** (each checkpoint's value the
+     median of its 10 idle readings, from `soak-4b.readings.jsonl`), after the first-call warm-up that windows 4-5
+     showed on both builds (~170 MiB of anon between checkpoints 1 and 2, then flat).
+  Both are figures the engine controls.
+- **Equivalence (gated):** for each gated figure, ON's growth minus OFF's growth is under **32 MiB** (ON may be lower by
+  any amount).
+- **Every other clause of the harness still gates**, unchanged: every reply identical to its reference, no 5xx or
+  transport error, both processes alive, the crowd identical, exit 0.
+- **Reported, not gating:** `host_used_less_client` (the harness's own memory verdict), because on Thor it includes
+  driver memory that moves ~500 MiB at idle outside the container (window 5: MemFree +502 MiB at one reading with page
+  cache, process memory and the cgroup constant) and OFF alone grew 57.3 MiB against 64; and the client's RSS.
+- **Retries, reported:** 429 retries per completed reply for each build. If ON's ratio exceeds OFF's by more than 25%,
+  the cause is investigated before integration; it does not gate.
+- **The run:** a fresh pair in reverse order, ON first then OFF (`tools/thor/quiet_tcgen05_4b_pair2.sh`), same harness,
+  cases, duration (3,600 s), clients (12) and text share (0.25); the verdict computed by
+  `tools/tcgen05_4b_pair_verdict.py` from the two runs' records. Rule 4b passes if both runs pass every gated item
+  above and the equivalence holds.
