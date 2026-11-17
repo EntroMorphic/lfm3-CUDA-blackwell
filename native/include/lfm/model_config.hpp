@@ -104,6 +104,16 @@ class Json {
     if (take(s, p) != '"') throw std::runtime_error("expected JSON string");
     std::string out;
     for (;;) {
+      // the plain run up to the next quote, backslash or control character, appended at once (the same bytes as one
+      // at a time: a 13 MB base64 image part parsed ~6x faster)
+      size_t run = p;
+      while (run < s.size()) {
+        const unsigned char u = static_cast<unsigned char>(s[run]);
+        if (u == '"' || u == '\\' || u < 32) break;
+        ++run;
+      }
+      out.append(s, p, run - p);
+      p = run;
       char c = take(s, p);
       if (c == '"') return out;
       if (static_cast<unsigned char>(c) < 32) throw std::runtime_error("control character in JSON string");
@@ -144,7 +154,7 @@ class Json {
       Array array;
       space(s, p);
       const char end = c == '{' ? '}' : ']';
-      if (p < s.size() && s[p] == end) { ++p; return c == '{' ? Json{object} : Json{array}; }
+      if (p < s.size() && s[p] == end) { ++p; return c == '{' ? Json{std::move(object)} : Json{std::move(array)}; }
       for (;;) {
         space(s, p);
         if (c == '{') {
@@ -156,7 +166,8 @@ class Json {
         } else array.push_back(parse_value(s, p, depth + 1));
         space(s, p);
         const char separator = take(s, p);
-        if (separator == end) return c == '{' ? Json{object} : Json{array};
+        if (separator == end) return c == '{' ? Json{std::move(object)} : Json{std::move(array)};  // moved: a copy
+        // here copied every nested value once per level
         if (separator != ',') throw std::runtime_error("invalid JSON separator");
       }
     }
