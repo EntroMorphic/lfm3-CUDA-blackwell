@@ -75,15 +75,6 @@ pins pageable buffers for copies; a pin that fails or falls back under 8 MiB wou
 in kernel time with no memory growth. Window 6 (`tools/thor/quiet_session_v6.sh`, its reading written in the
 script before the data) runs the host at 8 MiB, the default, 8 MiB.
 
-## Window 6 results (2026-11-17 07:27-08:39, quiet): the memlock hypothesis **falsified**
-Host runs at the container's RLIMIT_MEMLOCK (8 MiB soft and hard, `limits.txt`), at the host default (16 GB), at 8 MiB
-again: **0, 0, 0 stalls of 630** (median prefill 0.033 s each). By the pre-registered reading memlock is not the
-trigger. Running total: container 56 of 1,260, host 0 of 3,780.
-Still different inside the container: the engine runs as **root** (uid 0; the host runs are uid 1000); a seccomp
-filter (mode 2); `/dev/shm` 64 MiB; the container image's own libstdc++/libgcc/libgomp; the mount namespace.
-Next (window 8): the same probe inside the container as uid 1000 (`docker exec -u 1000`), order uid 1000, root,
-uid 1000.
-
 ## Window 6 results (2026-11-17 07:27-08:39, quiet): the memlock hypothesis **falsified** (`quiet-w6/`)
 | run | memlock (soft/hard) | stalls of 630 |
 |---|---|---|
@@ -95,3 +86,5 @@ the container 56 of 1,260. Remaining differences between the two: the user (root
 host), the container's seccomp filter, its memory cgroup (`system.slice/docker-*.scope` against the user slice),
 its mount namespace (the image's overlayfs for `/pinned-cuda` and the nvidia libraries; `/workspace` bind-mounted),
 and the nvidia container runtime's device setup.
+Next (window 8, `tools/thor/quiet_session_v8.sh`): the probe in the container as root (control), uid 1000, uid 1000;
+a catch inside the container as uid 1000 if uid 1000 stalls.
