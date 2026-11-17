@@ -251,6 +251,12 @@ def prompt_cases():
 
 def test_every_validation_prompt_matches_hf_ids(tool, tmp_path):
     transformers = pytest.importorskip("transformers")
+    pytest.importorskip("torchvision")
+    if tuple(int(x) for x in transformers.__version__.split(".")[:2]) < (5, 20):
+        # the checkpoint's remote code (the processor imports modeling_lfm3_omni, which imports modeling_lfm3_vl) does
+        # not load before 5.20; the references are made with the pinned 5.20.2 (docs/building.md). 2026-11-17: passes
+        # under transformers 5.20.2 + torchvision 0.25.0; under 4.57.6 it failed on the missing module, never on ids.
+        pytest.skip(f"needs transformers >= 5.20 (pinned 5.20.2) for the checkpoint's remote code; found {transformers.__version__}")
     processor = transformers.AutoProcessor.from_pretrained(CHECKPOINT, trust_remote_code=True)
     cases = prompt_cases()
     rows = [dict(messages=[{"role": "system", "content": s}, {"role": "user", "content": u}], capacity=4096,
