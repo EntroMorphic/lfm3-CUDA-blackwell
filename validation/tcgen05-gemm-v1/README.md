@@ -189,3 +189,20 @@ growth between checkpoints. A single pair is one sample each: when one run passe
 idle-memory clause and their `host_used_less_client` growth figures differ by less than 64 MiB (the bar's own
 size), the pair is reported as **not decisive** instead of being read by the table, and the rule-4b verdict stays
 FAIL. Order effect (OFF first) noted.
+
+## Rule 3 results (sanitizers, 2026-11-16 23:12 - ; `build/tgemm-r3/`, `tgemm-r3b/`)
+First run (`tools/thor/tcgen05_gemm_rule3.sh tgemm-on1 tgemm-r3`, sharing the GPU and the container with the audio
+round's sanitizers):
+- Vision (`lfm3-vision-check`, small / two-image / 8,192-patch cases): memcheck (0 bytes leaked), initcheck and
+  synccheck 0 errors on all three, outputs identical; racecheck small and two-image 0 hazards, outputs identical.
+- **Racecheck, maximum case: not completed.** After 3,525 s the process was killed by the kernel's **memory-cgroup
+  OOM killer** (lfm3-profile-v1's cgroup at its 96 GiB limit, 00:19:16: it killed a 34.6 GB `lfm3-speech`, the other
+  round's sanitizer run, and reaped `lfm3-vision-check`); the sanitizer reported 0 hazards up to then and "process
+  didn't terminate successfully" (exit 9), its outputs incomplete. Not a kernel or tcgen05 fault; rerun alone
+  (`tgemm-r3b`). Its logs are kept in `tgemm-r3/oom-killed/`.
+- **The 4,096-token text case did not run: my script's error.** The request had no `capacity`, so the default 4,096
+  could not hold 4,096 prompt tokens + 4 new; even the plain run refused it ("prompt (4096) + max_new_tokens exceeds
+  capacity"), and the sanitized runs had nothing to compare (the script printed "0 outputs identical", a false
+  label, now "NOT COMPARED"). Fixed (capacity 4,352) and rerun in `tgemm-r3b`.
+- Positive controls on the same sanitizer: initcheck's unwritten row reported (128 errors), memcheck's out-of-bounds
+  row reported (5 errors).
