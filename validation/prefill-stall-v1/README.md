@@ -88,3 +88,20 @@ its mount namespace (the image's overlayfs for `/pinned-cuda` and the nvidia lib
 and the nvidia container runtime's device setup.
 Next (window 8, `tools/thor/quiet_session_v8.sh`): the probe in the container as root (control), uid 1000, uid 1000;
 a catch inside the container as uid 1000 if uid 1000 stalls.
+
+## Window 8 results (2026-11-17 11:25-12:42, quiet): running as root **falsified** (`quiet-w8/`)
+| run | user in the container | stalls of 630 | median prefill |
+|---|---|---|---|
+| container-root (control) | root | **34** | 0.033 s |
+| container-u1000 | 1000 | **31** | 0.032 s |
+| container-u1000-2 | 1000 | **26** | 0.032 s |
+The control reproduces, and both uid 1000 runs stall (>= 5 each): by the pre-registered reading in
+`tools/thor/quiet_session_v8.sh`, **the user is not the trigger**. The stalls look as before: 3.3-4.1 s, 1.5-12 M minor
+faults each (`proc_minflt` = the cgroup's `pgfault`), 1.5-3.7 s of kernel time. The container is now 116 of 3,150
+across five quiet runs; the host 0 of 3,780. Remaining differences: seccomp, the memory cgroup's place in the
+hierarchy, the mount namespace (overlayfs for `/pinned-cuda` and the nvidia libraries) and the nvidia runtime's
+device setup. The catcher (inside the container as uid 1000, host gdb attached) started 12:42; its result follows.
+
+**Correction (window 5 onward):** the `memlock` figure in `limits.txt` for container runs is the host shell's
+(`ulimit -l` runs in `stall_probe.sh`, outside `docker exec`), so it reads 16,098,844 KiB. The container's own limit
+is 8 MiB, as measured inside it for window 6; the container (created 2026-11-06, started 2026-11-15) was not changed.
