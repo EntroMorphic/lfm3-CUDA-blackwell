@@ -558,3 +558,58 @@ They touch the server change, which this round's exactness checks do not fully c
   (0.166 s at 90 s) exceeds HF's whole time to first token;
 - the language model's prefill;
 - the 3.3–4 s intermittent prefill stall found by the timing scan, in TTS prefills too (not the encoders).
+
+## Amendment 3 (2026-11-17, before any of these runs): the remaining rules, how they run
+These run in one later quiet window (`tools/thor/quiet_audio_rest.sh`, no arguments): rule 0's second part, rule 3,
+the memory bound, and all of rule 6. It exits 0 when every gated rule passes, 1 when the run is not possible (not
+quiet, not MAXN, a build or tool failing to give a result), 2 when a gated rule fails. Nothing here has run.
+
+**Builds**, made at the window's start from the final sources (CPU only, before any measurement):
+- lfm3-speech, the server and the worker from this branch (F2 the default);
+- the server and worker from `a350659`, the main branch this round started from: today's front end on the engine
+  thread. That is rule 0's "current server".
+
+**Rows: 8 and 16, not 8 and 32 (changed here).** Rule 0 asked for 32 rows or, failing that, 8 speech rows plus text
+streams up to 32. Neither can run:
+- the server accepts at most 16 speech rows (`--speech-rows` 1..16, the most validated);
+- text sessions generate one at a time (two with `/generate_batch`), so text streams cannot fill rows to 32.
+
+So the stall is measured at 8 rows (the default) and at 16 (the most the server runs).
+
+**The stall (rule 0's second part; rule 3)**, `tools/measure_lfm3_audio_stall.py`:
+- R − 1 rows stream interleaved replies (a long spoken answer, `stream: true`).
+- 3 s after they start, one ASR request brings a clip. Clips are rule 0's five (2.11 s, the test-clean median,
+  10.4 s, 34.96 s, the 90 s recording).
+- **The gap:** per streaming row, the longest gap between consecutive audio events from the clip request's start to
+  4 s after it, including the gap that spans the start, against the same window of a run without the clip. Runs
+  alternate without and with, 3 times each, on one server. The stall is the difference of the medians of each run's
+  worst row.
+- **Rule 0's record:** the base server's stall at both row counts. Its "under 50 ms at 90 s" test would have dropped
+  part 2; part 2 is built, so this is recorded and not re-decided.
+- **Rule 3, gated (the new server, F2):** for every clip at 8 and 16 rows, the stall is at most the clip's GPU encode
+  + its language-model prefill + 10 ms. Those figures come from the same window:
+  - the encoder alone: `audio-encoder-bench`, encode-only, median of 5;
+  - the prefill: lfm3-speech's `prefill_seconds − encode_seconds`, median of 5.
+
+**The memory bound (rule 6's last line), gated**, `tools/measure_lfm3_audio_memory.py`, on the new server with 8
+rows, `--queue-size 40 --handlers 48`:
+- **Idle RSS:** VmRSS 5 s after one warm 90 s request.
+- **Peak:** the most VmRSS sampled every 50 ms from the first of 16 simultaneous 90 s requests (the same clip, each
+  its own base64 copy) to the last reply.
+- **Pass:** peak − idle ≤ 1 GiB, and all 16 replies 200 with the warm request's text.
+
+On Thor, GPU memory is system memory that the process's RSS may not count. That is recorded, not corrected; the
+CPU-side growth (bodies, features, cache keys) is what this bound is for.
+
+**Rule 6, gated, on the new binaries.** The checks of images-speed-v1 rule 6 and audio-in-v1, as their own scripts
+run them:
+- lfm3-speech's regression (`speech_regression_check.sh`): 36 SAME, no DIFFER or RUN FAILED; every refusal exits
+  nonzero with no outputs left; the request-is-output case keeps its request; the stale hidden file is removed;
+- `vision_rule6_speech.sh`: the 360 + 93 audio-in files, e2e 90 and split 90. **Changed here:** the two dumped clips'
+  feature files that F2 changed (5 files, rule 4) are expected to differ; any other difference fails;
+- the concurrent engine (`check_lfm3_speech_concurrent.py`);
+- the server's batch, stream, audio-in and TTS checks;
+- the text gate (control `7ea05068...`);
+- images through the server (`check_lfm3_image_server.py` against `vimg-e2e-a1`).
+
+Each passes as its tool's exit status says.
