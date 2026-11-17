@@ -481,7 +481,12 @@ def test_frontend_is_serialized(harness_binary):
     with running(harness_binary) as h:
         a, b = session(h), session(h)
         heavy = [{"role": "user", "content": "éa" * 1_200_000}]  # 3.6 MB, under the 4 MiB body limit
-        thread, result = in_thread(generate, h, a, 8, heavy)
+        def heavy_until_served():  # the probes below can hold the front end first; the heavy request retries then
+            while (r := generate(h, a, 8, heavy))[0] == 429:
+                time.sleep(0.01)
+            return r
+
+        thread, result = in_thread(heavy_until_served)
         statuses = []
         deadline = time.monotonic() + 20
         while thread.is_alive() and time.monotonic() < deadline:
