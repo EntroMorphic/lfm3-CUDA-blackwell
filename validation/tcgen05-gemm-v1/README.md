@@ -206,3 +206,19 @@ round's sanitizers):
   label, now "NOT COMPARED"). Fixed (capacity 4,352) and rerun in `tgemm-r3b`.
 - Positive controls on the same sanitizer: initcheck's unwritten row reported (128 errors), memcheck's out-of-bounds
   row reported (5 errors).
+
+Rerun (`tgemm-r3b`, 00:20-01:12, the container otherwise empty at the start; `tgemm-r3c`, 01:13-01:20):
+- Racecheck, vision: small, two-image and **maximum (8,192 patches, every projection on tcgen05): 0 hazards**,
+  outputs identical (65, 199 and 2,144 s).
+- Text prefill, 4,096 tokens (capacity fixed): memcheck (0 bytes leaked), synccheck and initcheck **0 errors, all 5
+  outputs identical**.
+- **Racecheck on the 4,096-token prefill: cannot run in this container.** After 614 s the memory-cgroup OOM killer
+  killed it (01:11:28): `lfm3-speech` under racecheck had reached **100 GB of anonymous memory**, past
+  lfm3-profile-v1's 96 GiB limit, alone in the container. Racecheck's host-side tracking for a 4,096-row prefill does
+  not fit; the rule as written cannot be met for this one tool in this container.
+- Recorded as information, not as a substitute until Tripp decides: racecheck on a **1,024-token** prefill
+  (M = 1,024 >= 257, so the LM's projections take tcgen05): **0 hazards, all 5 outputs identical** to its plain run
+  (`tgemm-r3c`, 416 s).
+**Rule 3 status:** every check run is clean and its outputs identical, the controls detected; the one cell not met as
+written is racecheck x 4,096-token prefill (infeasible: 100 GB at the kill). Pending Tripp's decision on the 1,024-
+token racecheck as its stand-in.
