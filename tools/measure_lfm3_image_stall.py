@@ -27,7 +27,7 @@ TEXT = ("The river bends around the old mill, where the water slows and darkens 
 ROWS, START_IMAGE, WINDOW = 7, 3.0, 4.0
 
 
-def one_run(s, image_body):
+def one_run(s, image_body, warm=False):
     body = dict(messages=[{"role": "user", "content": TEXT}], mode="audio", max_new_tokens=900, split=False)
     results = [None] * ROWS
     t_start = time.monotonic()
@@ -47,6 +47,8 @@ def one_run(s, image_body):
     image_seconds = time.monotonic() - t_image if image_body else None  # the image request alone, not the streams
     for t in threads:
         t.join()
+    if warm:  # a cold server's first audio can land after the window: the warm-up run measures nothing
+        return None
     gaps = []
     for status, events, times, t0 in results:
         assert status == 200, status
@@ -55,6 +57,8 @@ def one_run(s, image_body):
         before = [a for a in audio if a < t_image][-1:]  # the gap that spans the window's start counts too
         seq = before + inside
         gaps.append(max((b - a for a, b in zip(seq, seq[1:])), default=None))
+    if all(g is None for g in gaps):
+        raise RuntimeError(f"no row had two audio events in the window: {[len(r[1]) for r in results]} events per row")
     return dict(worst_gap=max(g for g in gaps if g is not None), row_gaps=gaps,
                 image_status=image_result[0] if image_result else None,
                 image_seconds=image_seconds, started=t_image - t_start)
@@ -67,7 +71,7 @@ def main(server_bin, model, image_req, out_json, repeats=3, *server_args):
     with tempfile.TemporaryDirectory() as scratch:
         s = Server(server_bin, model, scratch, extra=server_args)
         try:
-            one_run(s, None)  # warm
+            one_run(s, None, warm=True)
             for r in range(repeats):
                 for kind in ("without", "with"):
                     out = one_run(s, image_body if kind == "with" else None)
