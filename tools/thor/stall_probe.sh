@@ -21,6 +21,7 @@ else
   RUN="$X $C/$T/lfm3-speech $M --batch $C/$O/list.txt"
 fi
 CG=$(find /sys/fs/cgroup/system.slice -maxdepth 1 -type d -name "docker-$(docker inspect lfm3-profile-v1 --format '{{.Id}}')*" | head -1)
+echo "memlock $(ulimit -l) KiB (soft) $(ulimit -H -l) (hard)" > limits.txt
 echo "$CG" > cgroup.txt; cat $CG/memory.max $CG/memory.events >> cgroup.txt 2>/dev/null
 head -1 list.txt
 cat /sys/kernel/mm/transparent_hugepage/enabled /sys/kernel/mm/transparent_hugepage/defrag > thp.txt
