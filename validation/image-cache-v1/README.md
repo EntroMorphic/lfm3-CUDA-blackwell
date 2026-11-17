@@ -80,6 +80,10 @@ identical across conversations. The turn-1 times expose an intermittent 3-4 s pr
 the first a cache hit) equal to `lfm3-speech`'s text, cache on and off; the 11 at once, twice, on both; the
 three-turn conversations on cherry and two, twice each, the same on and off; the 8 listening-set requests
 (interleaved, 1,024 tokens) text and WAV identical on and off (the record keeps each WAV's sha256).
+**Correction (2026-11-17, from the rule 6 red-team):** the rule asks for "in process and through the worker". The
+check ran the in-process server only; the out-of-process worker has no image cache and no handoff, so through the
+worker there is nothing to compare (cache on and off are the same code there). Rule 1 holds for the in-process
+server, where the cache exists; "through the worker" is vacuous, not passed.
 
 ## Rule 2 results (2026-11-16, quiet window 3): **part (a) FAIL as written, part (b) PASS in substance** (`rule2/`)
 `tools/measure_lfm3_image_turns.py`, 4 conversations (the first a warm-up), medians; new `vimg-srv-c2` (cache on, the
