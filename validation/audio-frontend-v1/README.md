@@ -474,7 +474,12 @@ Records are in `amendment2/`:
   (overnight, sharing the GPU with another agent's sanitizers):
   - plain run: the stage files of cut-1, the two-clip request and 1089-134686-0000 equal the recorded runs';
   - memcheck: 0 errors, 0 bytes leaked; initcheck: 0 errors; synccheck: 0 errors; outputs identical to the plain run;
-  - racecheck: running.
+  - racecheck: **not completed: killed, not a finding.**
+    - The lfm3-speech under compute-sanitizer (34.6 GB) was OOM-killed at 00:19:16 on 2026-11-17, after 3,726 s and
+      22 of its output files, so its "0 hazards displayed" covers only part of the run.
+    - lfm3-profile-v1 hit its 96 GiB memory cgroup limit while another agent's 8,192-patch vision racecheck ran
+      alongside it (their record: `build/tgemm-r3/oom-killed/`).
+    - It reruns alone after quiet window 5 (`audio-fe-a2-san-race`).
 
 ### Rule 2 results (amended; quiet window 3, 2026-11-16, run by Tripp): **FAIL**, as recorded in advance; **F2 ships**
 `tools/thor/quiet_audio_frontend.sh` (MAXN, GPU clocks locked, the power state unchanged start to end), `quiet-w3/`.
