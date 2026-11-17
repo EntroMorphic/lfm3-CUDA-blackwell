@@ -7,6 +7,7 @@
 // pointers: an evicted entry stays alive for whoever still holds it (a request in flight), only the map forgets it.
 // Not thread-safe: callers lock (LockedLruBytes) or keep it on one thread.
 #include <cstddef>
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -20,6 +21,9 @@ class LruBytes {
  public:
   using Value = std::shared_ptr<const T>;
   explicit LruBytes(size_t budget = 0) : budget_(budget) {}
+  // Told each key the moment it is kept (true) and forgotten (false), in order (validation/image-cache-v1 C3: the
+  // engine publishes which images it holds). Called under the caller's own locking; it must not throw.
+  void set_observer(std::function<void(const std::string& key, bool kept)> observer) { observer_ = std::move(observer); }
   void set_budget(size_t budget) {
     budget_ = budget;
     trim();
@@ -50,6 +54,7 @@ class LruBytes {
     }
     at->second.at = order_.begin();
     bytes_ += cost;
+    if (observer_) observer_(at->first, true);
     trim();
   }
   size_t bytes() const { return bytes_; }
@@ -65,6 +70,7 @@ class LruBytes {
   void trim() {
     while (bytes_ > budget_ && !order_.empty()) {
       const auto it = entries_.find(*order_.back());
+      if (observer_) observer_(it->first, false);
       bytes_ -= it->second.cost;
       entries_.erase(it);
       order_.pop_back();
@@ -73,6 +79,7 @@ class LruBytes {
   size_t budget_ = 0, bytes_ = 0;
   std::list<const std::string*> order_;  // most recent first: each entry's key, as the map holds it
   std::map<std::string, Entry> entries_;
+  std::function<void(const std::string&, bool)> observer_;
 };
 
 // The same, for several threads (the server's handler threads).

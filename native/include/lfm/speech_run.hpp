@@ -40,7 +40,8 @@ struct Options {
   bool record_audio = false;
   // image input (#4): the images after the native front end (lfm/image_preprocess.hpp), one per <|image|> span of the
   // prompt in order (each span holds PixelValues::tokens placeholders); audio and image spans may interleave
-  std::vector<lfm::image::PixelValues> images;
+  // Shared and immutable (validation/image-cache-v1 C4): the in-process handoff's pixels are used, not copied.
+  std::vector<std::shared_ptr<const lfm::image::PixelValues>> images;
   // validation/image-cache-v1: per image (empty: none of this), its key for the engine's image cache (the image part's
   // base64 text; empty: not cached), and its encoder rows when the cache had them (null: encode). With rows, images[i]
   // holds only its grid and tokens, no pixel values.
@@ -163,7 +164,18 @@ class ChunkRun {
     }
     o_.codec_continue = k_ > 0, o_.codec_finalize = final_;
     prompt = &prompts_[k_];
-    o = o_;
+    if (prompts_.size() == 1) {  // the one chunk takes the media, moved (validation/image-cache-v1 C4: not copied)
+      auto images = std::move(o_.images);
+      auto keys = std::move(o_.image_keys);
+      auto rows = std::move(o_.image_rows);
+      auto audio = std::move(o_.audio);
+      o_.images.clear(), o_.image_keys.clear(), o_.image_rows.clear(), o_.audio.clear();
+      o = o_;
+      o.images = std::move(images), o.image_keys = std::move(keys), o.image_rows = std::move(rows);
+      o.audio = std::move(audio);
+    } else {
+      o = o_;
+    }
     return true;
   }
   void done(Result c) {
@@ -220,7 +232,7 @@ inline Result run_chunks(SessionT& session, const std::vector<std::vector<int>>&
   if (truncated) *truncated = false;
   const std::vector<int>* prompt = nullptr;
   Options chunk;
-  while (run.next(prompt, chunk)) run.done(session.generate(*prompt, chunk));
+  while (run.next(prompt, chunk)) run.done(session.generate(*prompt, std::move(chunk)));
   info = run.info();
   if (truncated) *truncated = run.truncated();
   return run.take();

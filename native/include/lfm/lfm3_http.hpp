@@ -876,7 +876,10 @@ class Service {
         if (!part.image) continue;
         // image-cache-v1: these exact bytes were decoded before (and accepted: only a decoded image is kept): their
         // count, with no decode; the engine finds the image's rows in its own cache, or decodes it again itself
-        if (const auto known = image_token_cache_.find(part.data)) {
+        // C3: in process, only when the engine also holds its rows (else the engine thread would decode it): decoded
+        // here instead and handed over, as a miss
+        if (const auto known = image_token_cache_.find(part.data);
+            known && (!policy_.image_handoff || lfm::image::shared_held_images().holds(part.data))) {
           s.image_tokens.push_back(*known);
           continue;
         }

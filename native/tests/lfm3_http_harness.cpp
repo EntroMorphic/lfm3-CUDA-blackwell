@@ -97,6 +97,12 @@ class FakeEngine final : public lfm::http::Backend {
       // way a request ends leave only those of the requests still in flight)
       if (handoff_log_.is_open()) handoff_log_ << lfm::image::shared_pixel_handoff().size() << "\n" << std::flush;
       for (const auto& a : request.at("images").array()) {
+        // --engine-cache-mb: the engine's image cache as WorkerCore keeps it (keys published to the front end, C3)
+        if (const auto held = engine_cache_.find(a.string())) {
+          if (image_log_.is_open()) image_log_ << "cached\n" << std::flush;
+          image_tokens.push_back(size_t(*held));
+          continue;
+        }
         const std::string bytes = lfm::base64::decode(a.string());
         const auto pv = lfm::image::preprocess(
             lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size(), limits));
@@ -107,6 +113,7 @@ class FakeEngine final : public lfm::http::Backend {
           throw std::runtime_error("handed-over pixel values differ from the engine's decode");
         if (image_log_.is_open()) image_log_ << (handed ? "handoff\n" : "decode\n") << std::flush;
         image_tokens.push_back(size_t(pv.tokens));
+        engine_cache_.put(a.string(), std::make_shared<const int>(pv.tokens), size_t(pv.tokens) * 4096);
       }
       lfm3_speech::check_image_spans(prompts[0], image_tokens);
     } else {
@@ -397,6 +404,7 @@ class FakeEngine final : public lfm::http::Backend {
   int admitted_ = 0, max_busy_ = 0;
   std::ofstream trace_;  // --trace-ops FILE
   bool image_input_ = true;  // --image-input: WorkerCore::image_input_supported
+  lfm::LruBytes<int> engine_cache_;  // --engine-cache-mb N (default 0: none): a stand-in for WorkerCore::image_cache_
   std::ofstream image_log_;  // --image-log FILE: per image, "handoff" (found handed over) or "decode"
   std::ofstream handoff_log_;  // --handoff-log FILE: per image request, the handoff's entry count as the engine meets it
   bool audio_input_ = true;  // --audio-input: WorkerCore::audio_input_supported  // --speech-truncate K: answer only the first K chunks, as a request the step budget cut
@@ -424,6 +432,7 @@ int main(int argc, char** argv) try {
   bool image_input = true;  // --image-input off: speech without image input (no vision encoder for the checkpoint)
   bool image_handoff = false;  // --image-handoff on: as the in-process server (image-queue-v1 part 2)
   std::string image_log, handoff_log;
+  int engine_cache_mb = 0;
   int speech_truncate = 0;
   std::string stream_fault;
   int stream_piece_bytes = 4, speech_rows = 2;
@@ -442,6 +451,7 @@ int main(int argc, char** argv) try {
     else if (o == "--image-log") image_log = v;
     else if (o == "--handoff-log") handoff_log = v;
     else if (o == "--image-cache-mb") settings.image_cache_mb = std::stoi(v);
+    else if (o == "--engine-cache-mb") engine_cache_mb = std::stoi(v);
     else if (o == "--speech-truncate") speech_truncate = std::stoi(v);
     else if (o == "--speech-stream-fault") stream_fault = v;
     else if (o == "--speech-stream-piece-bytes") stream_piece_bytes = std::stoi(v);
@@ -495,6 +505,8 @@ int main(int argc, char** argv) try {
   engine.audio_input_ = speech && audio_input;
   engine.image_input_ = speech && image_input;
   if (!image_log.empty()) engine.image_log_.open(image_log);
+  engine.engine_cache_.set_observer([](const std::string& key, bool kept) { lfm::image::shared_held_images().kept(key, kept); });
+  engine.engine_cache_.set_budget(size_t(engine_cache_mb) << 20);
   if (!handoff_log.empty()) engine.handoff_log_.open(handoff_log);
   if (!trace_ops.empty()) {
     engine.trace_.open(trace_ops);

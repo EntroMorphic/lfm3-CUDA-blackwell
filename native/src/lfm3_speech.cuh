@@ -181,7 +181,7 @@ class Batch {
   // a video or speech-output placeholder; <|audio|> spans that are not exactly the clips', <|image|> spans that are not
   // exactly the images'; continuing a codec stream the row's previous request did not leave open), then the prefill
   // (the media encoded in prompt order and injected in place of their placeholders) and the load into the row.
-  void admit(int r, std::vector<int> prompt, const Options& o) {
+  void admit(int r, std::vector<int> prompt, Options o) {  // by value: the row keeps it without its media (C4)
     using namespace lfm::audio;
     if (r < 0 || r >= rows_ || row_[size_t(r)].busy) throw std::runtime_error("speech: admit to a busy or invalid row");
     Row& w = row_[size_t(r)];
@@ -202,7 +202,8 @@ class Batch {
           (!o.image_rows.empty() && o.image_rows.size() != o.images.size()))
         throw std::runtime_error("speech: image keys or cached rows differ from the images");
       for (size_t k = 0; k < o.images.size(); ++k) {
-        const auto& im = o.images[k];
+        if (!o.images[k]) throw std::runtime_error("speech: an image is missing");
+        const auto& im = *o.images[k];
         const ImageRows* cached = k < o.image_rows.size() ? o.image_rows[k].get() : nullptr;
         if (im.grid_t != 1 || im.grid_h <= 0 || im.grid_w <= 0 || im.grid_h % 2 || im.grid_w % 2 ||
             im.row_size != lfm3_vision::Encoder::kPatchDim || im.tokens != im.grid_h * im.grid_w / 4 ||
@@ -244,7 +245,7 @@ class Batch {
       const auto e0 = Clock::now();
       size_t total = 0;
       for (const auto& clip : o.audio) total += lfm::audio_features::tokens(clip.size());
-      for (const auto& im : o.images) total += size_t(im.tokens);
+      for (const auto& im : o.images) total += size_t(im->tokens);
       if (audio_capacity_ < total)
         audio_rows_ = std::make_unique<Buffer<bf16>>(total * size_t(runner_.s.hidden)), audio_capacity_ = total;
       // each span's medium, in prompt order (the spans were checked above: one span per clip and per image)
@@ -260,7 +261,7 @@ class Batch {
           if (o.record_audio) w.res.audio_dumps.push_back(std::move(dump));
         } else {
           const size_t k = image++;
-          const auto& im = o.images[k];
+          const auto& im = *o.images[k];
           const size_t bytes = size_t(im.tokens) * runner_.s.hidden * sizeof(bf16);
           if (k < o.image_rows.size() && o.image_rows[k]) {  // the cache's rows (validation/image-cache-v1)
             cuda_check(cudaMemcpy(dst, o.image_rows[k]->rows.p, bytes, cudaMemcpyDeviceToDevice));
@@ -271,9 +272,18 @@ class Batch {
             // kept for the next time the same bytes come (only after a whole encode; the rows are the encoder's own)
             if (image_cache_ && k < o.image_keys.size() && !o.image_keys[k].empty() &&
                 o.image_keys[k].size() + bytes <= image_cache_->budget()) {
-              auto kept = std::make_shared<ImageRows>(im.grid_h, im.grid_w, n, size_t(n) * runner_.s.hidden);
-              cuda_check(cudaMemcpy(kept->rows.p, dst, bytes, cudaMemcpyDeviceToDevice));
-              image_cache_->put(o.image_keys[k], std::move(kept), bytes);
+              // an optional cache: failing to keep never fails the request (C5). cudaMalloc's out-of-memory is not
+              // sticky; anything sticky surfaces at the synchronize below.
+              try {
+#ifdef LFM3_FAULT_IMAGE_KEEP  // validation/image-cache-v1 C5's fault-injection build: every keep fails
+                throw std::runtime_error("injected: image rows not kept");
+#endif
+                auto kept = std::make_shared<ImageRows>(im.grid_h, im.grid_w, n, size_t(n) * runner_.s.hidden);
+                cuda_check(cudaMemcpy(kept->rows.p, dst, bytes, cudaMemcpyDeviceToDevice));
+                image_cache_->put(o.image_keys[k], std::move(kept), bytes);
+              } catch (const std::exception&) {
+                (void)cudaGetLastError();
+              }
             }
             at += size_t(n);
           }
@@ -296,7 +306,11 @@ class Batch {
     }
     w.t1 = Clock::now();
     w.res.prefill_seconds = std::chrono::duration<double>(w.t1 - t0).count();
-    w.o = o;
+    // the row keeps its options without the media: after the prefill nothing reads them, and kept they would hold
+    // pixels, keys and cached GPU rows until the row is next used, outside every budget (validation/image-cache-v1 C4)
+    o.images.clear(), o.image_keys.clear(), o.image_rows.clear(), o.audio.clear();
+    o.images.shrink_to_fit(), o.image_keys.shrink_to_fit(), o.image_rows.shrink_to_fit(), o.audio.shrink_to_fit();
+    w.o = std::move(o);
     w.sampler.emplace(FrameSamplingOptions{0.4, 1.2, 64, o.seed});
     w.pending.clear();
     w.forced_token = w.forced_frame = 0;
@@ -570,8 +584,8 @@ class Session {
   Session(Runner& runner, const std::string& model_dir) : batch_(runner, model_dir, 1) {}
   void set_image_cache(ImageCache* cache) { batch_.set_image_cache(cache); }
 
-  Result generate(std::vector<int> prompt, const Options& o) {
-    batch_.admit(0, std::move(prompt), o);
+  Result generate(std::vector<int> prompt, Options o) {
+    batch_.admit(0, std::move(prompt), std::move(o));
     while (batch_.step().empty()) {}
     const bool cancelled = batch_.cancelled(0);
     Result r = batch_.take(0);

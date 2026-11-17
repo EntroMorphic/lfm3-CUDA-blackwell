@@ -290,6 +290,8 @@ class WorkerCore {
   WorkerCore(const std::string& model_directory,const std::string& trace_root,bool trace_root_requested,int cancellation_fd)
     : directory(model_directory),sampling_trace_root(trace_root),cancellation(cancellation_fd),
       cancellation_enabled(cancellation_fd>=0) {
+    // validation/image-cache-v1 C3: what the engine's image cache holds, published for the in-process front end
+    image_cache_.set_observer([](const std::string& key,bool kept) {lfm::image::shared_held_images().kept(key,kept);});
     if(trace_root_requested && (sampling_trace_root.empty() || !std::filesystem::create_directory(sampling_trace_root)))
       throw std::runtime_error("sampling trace root must be a new directory");
     const auto model=read_json(directory+"/config.json");
@@ -384,7 +386,7 @@ class WorkerCore {
   void set_image_cache_mb(int mb) {
     if(mb<0 || mb>65536) throw std::runtime_error("image cache must be 0..65536 MiB");
 #ifdef LFM3_NATIVE_GEMM
-    image_cache_.set_budget(size_t(mb)<<20);
+    image_cache_.set_budget(size_t(mb)<<20);  // (its observer, set at construction, publishes what it holds: C3)
 #endif
   }
 #endif
@@ -701,7 +703,7 @@ class WorkerCore {
     } else {
       for(const auto& p:prompts) lfm3_speech::check_audio_spans(p,{});
     }
-    std::vector<lfm::image::PixelValues> images;  // decoded, preprocessed and checked (spans included) likewise
+    std::vector<std::shared_ptr<const lfm::image::PixelValues>> images;  // decoded, preprocessed and checked (spans included) likewise
     std::vector<std::string> image_keys;  // validation/image-cache-v1: each image's cache key (empty: not cached)
     std::vector<std::shared_ptr<const lfm3_speech::ImageRows>> image_rows;  // the cache's rows (null: encode)
     if(request.has("images")) {
@@ -715,21 +717,21 @@ class WorkerCore {
         const std::string& key=a.string();
         // validation/image-cache-v1: these exact bytes encoded before: their rows, no decode or encode
         if(auto rows=caching?image_cache_.find(key):nullptr) {
-          lfm::image::PixelValues stub;
-          stub.grid_h=rows->grid_h;stub.grid_w=rows->grid_w;stub.tokens=rows->tokens;
-          stub.row_size=lfm3_vision::Encoder::kPatchDim;
+          auto stub=std::make_shared<lfm::image::PixelValues>();
+          stub->grid_h=rows->grid_h;stub->grid_w=rows->grid_w;stub->tokens=rows->tokens;
+          stub->row_size=lfm3_vision::Encoder::kPatchDim;
           images.push_back(std::move(stub));
           image_rows.push_back(std::move(rows));
         } else if(const auto pixels=lfm::image::shared_pixel_handoff().find(key)) {
-          images.push_back(*pixels);  // image-queue-v1 part 2: decoded by the in-process server's handler thread
+          images.push_back(pixels);  // image-queue-v1 part 2: decoded by the in-process server's handler thread (shared)
           image_rows.push_back(nullptr);
         } else {
           const std::string bytes=lfm::base64::decode(key);
-          images.push_back(lfm::image::preprocess(lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size(),limits)));
+          images.push_back(std::make_shared<const lfm::image::PixelValues>(lfm::image::preprocess(lfm::image::load_rgb(reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size(),limits))));
           image_rows.push_back(nullptr);
         }
         image_keys.push_back(caching?key:std::string());
-        image_tokens.push_back(size_t(images.back().tokens));
+        image_tokens.push_back(size_t(images.back()->tokens));
       }
       lfm3_speech::check_image_spans(prompts[0],image_tokens);
     } else {
@@ -804,7 +806,7 @@ class WorkerCore {
     std::vector<lfm3_speech::ChunkInfo> info;
     lfm3_speech::Result r;
     bool truncated=false;
-    try {r=lfm3_speech::run_chunks(*speech_session,job.prompts,o,job.chunked,info,kSpeechStepBudget,&truncated);}
+    try {r=lfm3_speech::run_chunks(*speech_session,job.prompts,std::move(o),job.chunked,info,kSpeechStepBudget,&truncated);}
     catch(const lfm3_speech::Cancelled&) {
       out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"cancelled\":true}\n"<<std::flush;return;
     }
@@ -845,12 +847,12 @@ class WorkerCore {
     o.cancelled=[this,row] {return batch_rows[size_t(row)].cancel;};
     if(job.stream) observe(o,"\"ticket\":"+std::to_string(ticket)+",");
     BatchRow& b=batch_rows[size_t(row)];
-    b.run=std::make_unique<lfm3_speech::ChunkRun>(job.prompts,o,job.chunked,kSpeechStepBudget);
+    b.run=std::make_unique<lfm3_speech::ChunkRun>(job.prompts,std::move(o),job.chunked,kSpeechStepBudget);  // moved: C4
     b.ticket=ticket,b.stream=job.stream,b.cancel=false;
     try {
       const std::vector<int>* prompt=nullptr;lfm3_speech::Options chunk;
       b.run->next(prompt,chunk);
-      speech_batch->admit(row,*prompt,chunk);
+      speech_batch->admit(row,*prompt,std::move(chunk));
     } catch(...) {b=BatchRow{};throw;}
     out<<"{\"rpc_id\":"<<rpc_id<<",\"ok\":true,\"ticket\":"<<ticket<<",\"row\":"<<row<<"}\n"<<std::flush;
 #endif
@@ -880,7 +882,7 @@ class WorkerCore {
         }
         b.run->done(speech_batch->take(r));
         const std::vector<int>* prompt=nullptr;lfm3_speech::Options chunk;
-        if(b.run->next(prompt,chunk)) {speech_batch->admit(r,*prompt,chunk);continue;}  // its next chunk, same row
+        if(b.run->next(prompt,chunk)) {speech_batch->admit(r,*prompt,std::move(chunk));continue;}  // its next chunk, same row
         const auto result=b.run->take();
         const auto fields=speech_fields(result,b.run->info(),b.run->truncated(),b.stream);
         b=BatchRow{};

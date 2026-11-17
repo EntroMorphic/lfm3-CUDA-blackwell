@@ -207,3 +207,17 @@ Thor time for this pass).
 Host suites after the fixes (plain, ASan+UBSan, TSan; every `tests/test_lfm3_http_*.py` and `tests/test_lru_bytes.py`):
 **619 passed, 2 skipped** (36 min; 3 warnings, unhandled exceptions in client threads of existing tests whose connection closed without a reply). `test_lru_bytes.py` now also runs a plain build. Its byte-counting checks run in the plain and ASan
 builds; TSan's runtime owns `operator new`, so that build checks the threads only.
+
+## Red-team fixes C3-C5: rules, set before the code (2026-11-17)
+1. **Exact:** image-cache rule 1's check (`tools/check_lfm3_image_cache.py`) 32 of 32 on the new build; the 11
+   stage-0 requests through `lfm3-speech` byte-identical to `vimg-e2e-a4`; the host suites (plain, ASan+UBSan, TSan)
+   all passing.
+2. **C3:** after 30 distinct 4K images have been sent (more than the engine's budget holds), re-sending the first
+   image decodes on the handler thread, not the engine's (`decode` vs `handoff` in the engine's log, or the harness's
+   `--image-log` on the host), and image-queue rule 2's stall measured in that state is within 0.1 s of the cache-hit
+   stall (window 4: 0.28 s), not the cache-off one (0.66 s).
+3. **C4:** after 16 distinct 4K image requests have finished, the engine process's device memory beyond its cache
+   budget and its host RSS are no higher than after the first one has finished, plus 64 MiB; compute-sanitizer
+   memcheck on `lfm3-speech` with image hits, misses and evictions: 0 errors, no leaks.
+4. **C5:** a fault-injection build (keep allocation forced to fail) serves the request, replies identically to the
+   cache-off reply, keeps the server up, and caches nothing.

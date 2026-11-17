@@ -169,7 +169,7 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
     if (!f) throw std::runtime_error("cannot read " + path);
     const std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
     try {
-      o.images.push_back(lfm::image::preprocess(lfm::image::load_rgb(bytes.data(), bytes.size())));
+      o.images.push_back(std::make_shared<const lfm::image::PixelValues>(lfm::image::preprocess(lfm::image::load_rgb(bytes.data(), bytes.size()))));
     } catch (const std::exception& e) {
       throw std::runtime_error(path + ": " + e.what());
     }
@@ -230,7 +230,7 @@ Job prepare(const char* model_dir, const char* request_path, const std::string& 
           media.push_back({lfm::lfm3_text::kAudioToken, clip_tokens.at(clip_at++)});
         } else if (part.image) {
           read_image(part.data);
-          media.push_back({lfm::lfm3_text::kImageToken, size_t(o.images.back().tokens)});
+          media.push_back({lfm::lfm3_text::kImageToken, size_t(o.images.back()->tokens)});
         }
     const auto chats = split ? lfm::speech_text::sentence_requests(messages)
                              : std::vector<std::vector<lfm::lfm3_text::Message>>{messages};
@@ -303,8 +303,8 @@ void write_outputs(const Job& job, const lfm3_speech::Result& r, const std::vect
   }
   if (job.record_image)
     for (size_t k = 0; k < o.images.size(); ++k)
-      write_raw(stem + ".image" + std::to_string(k) + ".pixel_values.f32", o.images[k].values.data(),
-                o.images[k].values.size());
+      write_raw(stem + ".image" + std::to_string(k) + ".pixel_values.f32", o.images[k]->values.data(),
+                o.images[k]->values.size());
   std::ofstream f(stem + ".json");
   f << "{\"mode\":" << lfm::lfm3_text::json_string(mode) << ",\"prompt\":";
   print_ids(f, r.prompt);

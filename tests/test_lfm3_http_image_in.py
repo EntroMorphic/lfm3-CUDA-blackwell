@@ -236,23 +236,38 @@ def test_handed_over_pixels_are_exactly_the_engines_own(harness_binary, tmp_path
 
 
 def test_a_resent_image_skips_the_front_ends_decode_and_changes_nothing(harness_binary, tmp_path):
-    # image-cache-v1: the front end keeps each decoded image's token count under its full bytes. The same bytes again:
-    # no decode on the handler (so nothing handed over: the engine, here a fake without the GPU cache, decodes);
-    # one byte different: a different image, decoded again.
+    # image-cache-v1: the front end keeps each decoded image's token count under its full bytes; it skips the decode
+    # of the same bytes only while the engine holds their rows (C3), here a fake engine with a cache that does (the
+    # engine finds its rows: "cached"); one byte different: a different image, decoded again.
     log = tmp_path / "images.log"
     a = image(640, 480, noise=True)
     raw = bytearray(base64.b64decode(a))
     raw[-20] ^= 1  # inside the IEND chunk's CRC: the same picture's bytes but one, refused as corrupt
     corrupt = base64.b64encode(bytes(raw)).decode()
     b = image(641, 480, noise=True)
-    with running(harness_binary, "--image-handoff", "on", "--image-log", str(log)) as h:
+    with running(harness_binary, "--image-handoff", "on", "--image-log", str(log), "--engine-cache-mb", "64") as h:
         first, n1 = prompt_length(h, ask([a]))
         again, n2 = prompt_length(h, ask([a]))
         assert n1 == n2 and first["text"] == again["text"]
         prompt_length(h, ask([b]))
         for _ in range(2):  # a refused image is never kept: refused again, the same way
             assert h.call("POST", "/speech", ask([corrupt]))[0] == 400
-    assert _log_lines(log) == ["handoff", "decode", "handoff"]
+    assert _log_lines(log) == ["handoff", "cached", "handoff"]
+
+
+def test_an_image_the_engine_does_not_hold_is_decoded_by_the_front_end_not_the_engine(harness_binary, tmp_path):
+    # image-cache-v1 C3: the front end knows the image's count, but the engine has no rows for it (no engine cache;
+    # or evicted: a cache that holds one of these images at a time). The front end decodes it again and hands it
+    # over: the engine thread never decodes ("decode" never appears), and replies are unchanged.
+    a, b = image(640, 480, noise=True), image(641, 480, noise=True)
+    for extra, sends, want in ((["--engine-cache-mb", "0"], [a, a], ["handoff", "handoff"]),
+                               (["--engine-cache-mb", "3"], [a, a], ["handoff", "cached"]),  # one image fits ...
+                               (["--engine-cache-mb", "3"], [a, b, a], ["handoff", "handoff", "handoff"])):  # ... not two
+        log = tmp_path / f"images{len(want)}-{extra[1]}-{len(sends)}.log"
+        with running(harness_binary, "--image-handoff", "on", "--image-log", str(log), *extra) as h:
+            texts = [prompt_length(h, ask([x]))[0]["text"] for x in sends]
+        assert _log_lines(log) == want, (extra, _log_lines(log))
+        assert texts[0] == texts[-1]
 
 
 def test_image_cache_zero_keeps_nothing(harness_binary, tmp_path):
