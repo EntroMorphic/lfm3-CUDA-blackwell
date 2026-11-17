@@ -700,3 +700,13 @@ Not changed:
 **Rerun safety:** each build directory records the hash of the source tree it was built from (`tree.sha256`). A build
 is reused when its binary exists and the record matches the current sources, and rebuilt otherwise; `FORCE_BUILD=1`
 rebuilds all. Window 8's builds carry no record, so the first rerun rebuilds them once.
+
+## Host suites after the red-team fixes (2026-11-17, workstation): PASS
+Run from a copy of this branch with the checkpoint beside it, so no suite skips for a missing checkpoint:
+`tests` and `audit/test_host_contracts.py`, in their plain, ASan+UBSan and TSan builds.
+- **2,433 passed, 2 skipped, 1 failed, in 57 minutes.**
+- The failure is the known pre-existing workstation one: `test_every_validation_prompt_matches_hf_ids`, which fails
+  on main too (transformers 4.57.6 cannot load the checkpoint's remote code).
+- The 2 skips are `test_lfm3_http_native.py`'s memory tests, which run only on the uninstrumented build.
+- This includes all the HTTP suites (audio-in, image-in, speech, stream, batch, native, framing, the cancellation and
+  batch gates) and the audio-input host suite.
