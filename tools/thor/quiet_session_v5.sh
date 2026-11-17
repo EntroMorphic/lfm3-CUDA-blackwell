@@ -4,7 +4,7 @@
 # memory cgroup has a 96 GiB limit, hit 33,326 times (memory.events "max"), with ~43 GB of page cache charged to it.
 # Pre-registered reading: the hypothesis holds if both container runs stall (>= 5 of 630 each) with cg_events_max rising
 # inside the stall windows, and the host run has none; anything else, it does not, and the README says so.
-# Order container, host, container (state drift). Usage (Thor host): quiet_session_v5.sh OUT_TAG
+# Order container, host, container (state drift). Then tcgen05-gemm-v1's rule 4b off/on reruns. Usage (Thor host): quiet_session_v5.sh OUT_TAG
 set -uo pipefail
 O=${1:?OUT_TAG}
 export LFM3_WORKSPACE=${LFM3_WORKSPACE:?set LFM3_WORKSPACE}
@@ -26,5 +26,8 @@ for run in container-1 host container-2; do
   STALL_HOST=$H bash $W/liquid-CUDA/tools/thor/stall_probe.sh vimg-a5 $O-$run > probe-$run.log 2>&1
   grep -E "requests" probe-$run.log; grep -c "^STALL" probe-$run.log; grep "^STALL" probe-$run.log | head -4 | cut -c1-300
 done
+s=$B/src-tcgen05/tools/thor/quiet_tcgen05_4b_offon.sh  # tcgen05-gemm-v1 rule 4b, off then on (its agent's script)
+echo "== $(basename $s) $(date +%T)"
+if [ -f $s ]; then bash $s > $(basename $s .sh).log 2>&1; echo "exit $?"; tail -8 $(basename $s .sh).log; else echo "MISSING $s"; fi
 bash $W/liquid-CUDA/tools/thor/power_state.sh power-end.json power-start.json > /dev/null || echo "VOID power changed"
 echo "QUIET-V5-FINISHED $(date +%T)"
