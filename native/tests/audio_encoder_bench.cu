@@ -7,7 +7,9 @@
 // FNV-1a hash is recorded too (the front-end round's byte-identity reference; equal across runs or the tool fails).
 // --fp64: also the GPU's FMA throughput in FP64 and FP32 (a kernel of independent FMA chains), for the front-end
 // round's design (validation/audio-frontend-v1).
-// Usage: audio-encoder-bench MODEL_DIR OUT.json [--repeat R] [--fp64] NAME=WAV...
+// Usage: audio-encoder-bench MODEL_DIR OUT.json [--repeat R] [--fp64] [--mel-threads N] NAME=WAV...
+//   --mel-threads: log_mel's thread count (default lfm::audio_features::kMelThreads); the front end itself is the
+//   process default (LFM3_AUDIO_FEATURES: dft, exact-f1, exact-f2; validation/audio-frontend-v1), recorded in the JSON.
 // Timing figures are only meaningful on a quiet Thor (memory: timing checks need a quiet machine).
 #define LFM3_RUNTIME_ONLY 1
 #include "../src/lfm3_main.cu"
@@ -97,7 +99,7 @@ int main(int argc, char** argv) try {
     return 2;
   }
   const std::string model = argv[1], out_path = argv[2];
-  int repeat = 5;
+  int repeat = 5, mel_threads = lfm::audio_features::kMelThreads;
   bool fp64 = false;
   std::vector<std::pair<std::string, std::string>> clips;
   for (int i = 3; i < argc; ++i) {
@@ -107,6 +109,9 @@ int main(int argc, char** argv) try {
       size_t used = 0;
       repeat = std::stoi(v, &used);
       if (used != v.size() || repeat < 1 || repeat > 1000) throw std::runtime_error("--repeat: an integer 1-1000");
+    } else if (a == "--mel-threads" && i + 1 < argc) {
+      mel_threads = std::stoi(argv[++i]);
+      if (mel_threads < 1 || mel_threads > 64) throw std::runtime_error("--mel-threads: 1-64");
     } else if (a == "--fp64") {
       fp64 = true;
     } else {
@@ -118,7 +123,9 @@ int main(int argc, char** argv) try {
   if (clips.empty() && !fp64) throw std::runtime_error("nothing to do");
   std::ostringstream js;
   js.precision(9);
-  js << "{\"repeat\":" << repeat << ",\"clips\":[";
+  const char* features = std::getenv("LFM3_AUDIO_FEATURES");
+  js << "{\"repeat\":" << repeat << ",\"mel_threads\":" << mel_threads << ",\"audio_features\":\"" << (features ? features : "dft")
+     << "\",\"clips\":[";
   if (!clips.empty()) {
     auto weights = std::make_shared<lfm::Safetensors>(model + "/model.safetensors");
     lfm3_audio_in::Encoder encoder(weights, model);
@@ -131,12 +138,12 @@ int main(int argc, char** argv) try {
       const size_t n = audio.samples.size(), tokens = lfm::audio_features::tokens(n);
       Buffer<__nv_bfloat16> out(tokens * lfm3_audio_in::Encoder::kOut);
       std::vector<double> mel_s, wall_s, gpu_s;
-      std::vector<float> mel = lfm::audio_features::log_mel(audio.samples);  // untimed
+      std::vector<float> mel = lfm::audio_features::log_mel(audio.samples, mel_threads);  // untimed
       const uint64_t hash = fnv1a(mel);
       encoder.encode(mel, out.p);  // untimed
       for (int r = 0; r < repeat; ++r) {
         const auto t0 = std::chrono::steady_clock::now();
-        mel = lfm::audio_features::log_mel(audio.samples);
+        mel = lfm::audio_features::log_mel(audio.samples, mel_threads);
         mel_s.push_back(std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count());
         if (fnv1a(mel) != hash) throw std::runtime_error(clips[c].first + ": log_mel differs between runs");
         cuda_check(cudaDeviceSynchronize());
