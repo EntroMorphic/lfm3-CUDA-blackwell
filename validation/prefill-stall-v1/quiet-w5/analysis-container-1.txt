@@ -1,0 +1,37 @@
+630 requests, median prefill 0.033 s, stalls (> median + 1 s): 26
+STALL bd1b3a8ea981bd9a-s3 prefill 3.575: {'cg_pgfault': 10783897, 'proc_minflt': 10783897, 'proc_utime': 40, 'proc_stime': 323}
+STALL bd1b3a8ea981bd9a-s7 prefill 3.826: {'cg_pgfault': 11467300, 'proc_minflt': 11467300, 'proc_utime': 43, 'proc_stime': 347}
+STALL bd1b3a8ea981bd9a-s11 prefill 3.594: {'pgmajfault': 9, 'cg_pgfault': 10858538, 'proc_minflt': 10858538, 'proc_utime': 40, 'proc_stime': 326}
+STALL bd1b3a8ea981bd9a-s15 prefill 3.636: {'cg_file': 122880, 'cg_pgfault': 10645984, 'proc_minflt': 10645984, 'proc_utime': 42, 'proc_stime': 331}
+STALL 9ca6f2752696d588-s4 prefill 3.447: {'cg_pgfault': 10417790, 'proc_minflt': 10417790, 'proc_utime': 34, 'proc_stime': 315}
+STALL 9ca6f2752696d588-s8 prefill 3.489: {'cg_pgfault': 10519609, 'proc_minflt': 10519609, 'proc_utime': 34, 'proc_stime': 322}
+STALL 9ca6f2752696d588-s12 prefill 3.434: {'cg_pgfault': 10264126, 'proc_minflt': 10264126, 'proc_utime': 42, 'proc_stime': 310}
+STALL 862552c0794598cc-s1 prefill 3.578: {'cg_pgfault': 10593284, 'proc_minflt': 10593284, 'proc_utime': 43, 'proc_stime': 326}
+STALL aae98c822383deec-s3 prefill 3.737: {'pgmajfault': 58, 'thp_fault_alloc': 22, 'cg_anon': -9375744, 'cg_file': 96997376, 'cg_workingset_refault_file': 22992, 'cg_pgfault': 10999102, 'cg_thp_fault_alloc': 22, 'proc_minflt': 10946698, 'proc_utime': 42, 'proc_stime': 339}
+STALL d89fc0474d13fbc9-s9 prefill 4.083: {'cg_file': 712704, 'cg_pgfault': 12103646, 'proc_minflt': 12103646, 'proc_utime': 45, 'proc_stime': 368}
+STALL 5eb364b95f7540fc-s10 prefill 4.084: {'cg_anon': 12288, 'cg_file': 688128, 'cg_pgfault': 12105242, 'proc_minflt': 12105242, 'proc_utime': 43, 'proc_stime': 371}
+STALL f978117507e67b07-s1 prefill 4.063: {'cg_file': 737280, 'cg_pgfault': 12026246, 'proc_minflt': 12026246, 'proc_utime': 36, 'proc_stime': 374}
+STALL b8eb8bb81ddacadc-s10 prefill 3.650: {'cg_pgfault': 10791201, 'proc_minflt': 10791201, 'proc_utime': 48, 'proc_stime': 331}
+STALL 3e39fa84d626fa2b-s6 prefill 3.878: {'cg_pgfault': 11365603, 'proc_minflt': 11365603, 'proc_utime': 47, 'proc_stime': 350}
+STALL 3e39fa84d626fa2b-s15 prefill 3.752: {'cg_pgfault': 10994655, 'proc_minflt': 10994655, 'proc_utime': 37, 'proc_stime': 345}
+STALL 6bee531d0d92a9b8-s15 prefill 3.700: {'cg_file': 737280, 'cg_pgfault': 9537443, 'proc_minflt': 9537443, 'proc_utime': 38, 'proc_stime': 308}
+STALL 89b56321958b05f6-s14 prefill 4.014: {'cg_file': 712704, 'cg_pgfault': 11767735, 'proc_minflt': 11767735, 'proc_utime': 43, 'proc_stime': 368}
+STALL a11b81e7e1964b19-s7 prefill 3.686: {'cg_pgfault': 10989192, 'proc_minflt': 10989192, 'proc_utime': 35, 'proc_stime': 339}
+STALL e6fb159b4169439c-s15 prefill 3.539: {'cg_file': 643072, 'cg_pgfault': 10361914, 'proc_minflt': 10361914, 'proc_utime': 36, 'proc_stime': 324}
+STALL fb35e54ca9797fb4-s1 prefill 4.081: {'cg_file': 737280, 'cg_pgfault': 11968039, 'proc_minflt': 11968039, 'proc_utime': 34, 'proc_stime': 381}
+STALL fb35e54ca9797fb4-s6 prefill 3.835: {'cg_pgfault': 11357958, 'proc_minflt': 11357958, 'proc_utime': 38, 'proc_stime': 354}
+STALL b84b27b04327388c-s5 prefill 3.915: {'cg_file': 716800, 'cg_pgfault': 11599266, 'proc_minflt': 11599266, 'proc_utime': 39, 'proc_stime': 358}
+STALL c4ac8a6c0846cd87-s11 prefill 3.754: {'cg_pgfault': 11115600, 'proc_minflt': 11115600, 'proc_utime': 44, 'proc_stime': 342}
+STALL 34bc0730a6cf62ed-s2 prefill 3.393: {'cg_file': 479232, 'cg_pgfault': 10036752, 'proc_minflt': 10036752, 'proc_utime': 42, 'proc_stime': 309}
+STALL 34bc0730a6cf62ed-s8 prefill 3.708: {'cg_file': 454656, 'cg_pgfault': 10975710, 'proc_minflt': 10975710, 'proc_utime': 40, 'proc_stime': 337}
+STALL 1c901dde793bb219-s9 prefill 3.545: {'cg_pgfault': 10387820, 'proc_minflt': 10387820, 'proc_utime': 32, 'proc_stime': 328}
+normal 94d8b7dfbb1d66ab-s1 prefill 0.034: {'pgmajfault': 4, 'cg_file': 4390912, 'cg_workingset_refault_file': 560, 'cg_pgfault': 12944, 'proc_minflt': 2798, 'proc_majflt': 4, 'proc_utime': 6, 'proc_stime': 2}
+normal 1c15e59f2aadf6ca-s2 prefill 0.077: {'cg_file': 802816, 'cg_pgfault': 7, 'proc_minflt': 7, 'proc_utime': 16}
+normal 8326f130f2a7d20f-s3 prefill 0.081: {'proc_minflt': 1, 'proc_utime': 13}
+normal bd1b3a8ea981bd9a-s5 prefill 0.033: {'proc_utime': 12}
+normal 862552c0794598cc-s13 prefill 0.033: {'proc_utime': 17}
+normal bfa0a874c8eb9591-s14 prefill 0.033: {'proc_utime': 17}
+normal d89fc0474d13fbc9-s1 prefill 0.031: {'cg_file': 618496, 'proc_utime': 16}
+normal 5eb364b95f7540fc-s3 prefill 0.032: {'proc_utime': 9}
+normal 92ff9bf8ee5f93e1-s5 prefill 0.033: {'proc_minflt': 3, 'proc_utime': 12}
+normal f978117507e67b07-s7 prefill 0.032: {'proc_utime': 12}

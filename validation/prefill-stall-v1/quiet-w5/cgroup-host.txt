@@ -1,0 +1,14 @@
+/sys/fs/cgroup/system.slice/docker-6730da2907934c7d8d270f48a1e7f54ce7139f6ce0e0db2c7d33739c3144a074.scope
+103079215104
+low 0
+high 0
+max 251534
+oom 270
+oom_kill 3
+oom_group_kill 0
+low 0
+high 0
+max 251534
+oom 270
+oom_kill 3
+oom_group_kill 0

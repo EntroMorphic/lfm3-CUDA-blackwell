@@ -1,0 +1,11 @@
+630 requests, median prefill 0.033 s, stalls (> median + 1 s): 0
+normal 94d8b7dfbb1d66ab-s1 prefill 0.022: {'proc_minflt': 555, 'proc_utime': 11, 'proc_stime': 1}
+normal 1c15e59f2aadf6ca-s2 prefill 0.034: {'proc_minflt': 1, 'proc_utime': 12}
+normal 8326f130f2a7d20f-s3 prefill 0.033: {'proc_utime': 11}
+normal bd1b3a8ea981bd9a-s4 prefill 0.034: {'proc_utime': 11}
+normal 862552c0794598cc-s5 prefill 0.033: {'proc_utime': 14}
+normal bfa0a874c8eb9591-s6 prefill 0.034: {'proc_utime': 9, 'proc_stime': 1}
+normal e19c7e05dbe3eccf-s7 prefill 0.033: {'proc_utime': 17}
+normal 0108df25767a33c2-s8 prefill 0.033: {'proc_minflt': 2, 'proc_utime': 12}
+normal 01131ad9f2474640-s9 prefill 0.033: {'proc_utime': 17, 'proc_stime': 1}
+normal e859827a61b9f3ec-s10 prefill 0.033: {'proc_utime': 10}

@@ -56,3 +56,21 @@ Window 5 began at 01:12:57; a tcgen05 racecheck (1,024-token text, `build/tgemm-
 01:12:58-01:19:56, overlapping the first ~7 min of the container-1 probe. Since load has hidden the stall before
 (stall-v4), container-1 is read only on requests whose prefill starts after 01:20:00; container-2 (after the host
 run) is the clean container run. The pre-registered reading in `tools/thor/quiet_session_v5.sh` otherwise stands.
+
+## Window 5 results (2026-11-17 01:13-02:31, quiet): the cgroup-limit hypothesis **falsified**; container vs host **confirmed** (`quiet-w5/`)
+| run | where | stalls of 630 | cgroup `memory.events max` during the run |
+|---|---|---|---|
+| container-1 | lfm3-profile-v1 | **26** (all 26 after 01:20, none during the racecheck overlap) | 251,534 -> 251,534 |
+| host | Thor host, same binary | **0** | (not in the cgroup) |
+| container-2 | lfm3-profile-v1 | **30** | 251,534 -> 251,534 |
+Each stall again 10.6-11.5 M minor faults (the cgroup's `pgfault` equal to the process's) and 3.2-3.6 s of kernel
+time. The container's memory stayed far below its limit (file 4.5-5.7 GB, anon < 0.25 GB), its limit was never hit,
+and its in-cgroup reclaim (`pgscan`, `pgsteal`) did not move once in the window. By the pre-registered reading the
+hypothesis does not hold. The container/host split is now 56 of 1,260 against 0 of 1,890 (quiet-w4 and w5's host runs).
+**Ruled out since**, by direct comparison: `libcuda.so.1` (same sha256 inside and out), the pinned CUDA libraries
+(same sha256), glibc (2.39 both), the binary and model (the same files), THP (`always` both), CPU limits (none).
+**One difference found**: RLIMIT_MEMLOCK is 16 GB on the host and **8 MiB (soft and hard) in the container**, root
+included (Docker grants no CAP_IPC_LOCK). The engine pins host memory (`codec.cuh` `cudaMallocHost`) and the driver
+pins pageable buffers for copies; a pin that fails or falls back under 8 MiB would fit 11 M repeated minor faults
+in kernel time with no memory growth. Window 6 (`tools/thor/quiet_session_v6.sh`, its reading written in the
+script before the data) runs the host at 8 MiB, the default, 8 MiB.
