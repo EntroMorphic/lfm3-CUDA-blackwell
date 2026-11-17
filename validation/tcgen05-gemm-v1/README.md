@@ -114,3 +114,15 @@ M in {256, 257, 258, 4096}, not 32,768 (its FP32 output pair would be 33.5 GB).
   timing rule measured on a contended machine. Rerun quiet with the batch-server check.
 - Coverage: most speech requests have short prompts (< 257 tokens) and never reach tcgen05; the vision encoder (every
   image), image prompts, the text gate's longer prompts and the server's image checks do.
+
+## Amendment 1 (2026-11-16, before window 4; Tripp approved): rule 4a's latency gate
+- **Original bar, kept as a reported figure:** every call's latency at most 10x the problem's solo median.
+- **The gate becomes:** every call's latency at most **10x the same problem's median under the soak** (the 4 streams
+  sharing the GPU), per problem. The ratio to the solo median is still reported (count over 10x, worst ratio).
+- **What informed it:** a 30-second functional dry run of `lfm3-tcgen05-soak` on a **shared** GPU (another engineer's
+  work running; 17:40), not the soak itself. 10,459 calls, 0 outputs differing, no error or trap. Each problem's
+  median under the soak was ~4x its solo time (four streams queueing for the SMs), its p99 11-13x; **278 calls
+  (2.7%) were over 10x solo, worst 19.3x**; against each problem's own soak median the worst call was **4.75x**. A
+  blocked tensor-memory allocation, the risk this rule exists for, would show orders of magnitude beyond either; the
+  solo bar measured ordinary queueing. The soak's problems were resized before this run (each ~1 ms alone; the LM head
+  at 300 rows, 5.6 ms alone, removed) after a first dry run had shown it as the long pole.

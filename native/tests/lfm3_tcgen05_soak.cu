@@ -3,8 +3,9 @@
 // 256, same shapes family) and the engine's attention products (batched Q·Kᵀ with FP32 scores, P·V with B stored
 // K x N), so tcgen05 kernels holding tensor memory meet each other and the mma.sync kernels on the SMs.
 // Pass: every output bitwise equal to the same problem run alone; no launch error or trap; every call's latency (CUDA
-// events around it on its stream) at most 10x the problem's solo median. All problems take ~1 ms alone, so
-// queueing behind the 3 other streams stays well inside 10x; a stall (a blocked tensor-memory allocation) would not.
+// events around it on its stream) at most 10x the same problem's median under the soak (README amendment 1; the
+// original bar, 10x the solo median, is reported: calls over it and the worst ratio). All problems take ~1 ms alone;
+// queueing behind the 3 other streams is a few times that, while a stall (a blocked tensor-memory allocation) is not.
 // Built with -DLFM_GEMM_TCGEN05 and gemm_tcgen05.o. Needs a quiet Thor.
 //   lfm3-tcgen05-soak [DURATION_SECONDS=1200]   progress lines and a final JSON summary on stdout; exit 1 on failure
 #include <cuda_bf16.h>
@@ -206,10 +207,10 @@ int main(int argc, char** argv) try {
       ++calls;
       if (c.tcgen05) ++tc_calls;
       if (h) { ++mismatched; std::printf("{\"mismatch\":\"%s\",\"thread\":%d,\"words\":%llu}\n", c.name.c_str(), tid, h); std::fflush(stdout); }
-      if (ratio > 10) { ++slow; std::printf("{\"slow\":\"%s\",\"thread\":%d,\"ms\":%.3f,\"solo_ms\":%.3f}\n", c.name.c_str(), tid, ms, c.solo_ms); std::fflush(stdout); }
+      if (ratio > 10) ++slow;  // the original bar (10x solo): reported, not the gate (amendment 1)
       std::lock_guard<std::mutex> lock(mu);
       if (ratio > worst_ratio) { worst_ratio = ratio; worst_case = c.name; }
-      if (lat[i].size() < 200000) lat[i].push_back(ms);
+      lat[i].push_back(ms);  // every call (the gate needs all of them)
     }
     for (void* o : outs) cudaFree(o);
     cudaStreamDestroy(s);
@@ -232,20 +233,28 @@ int main(int argc, char** argv) try {
   stop = true;
   for (auto& t : pool) t.join();
   check(cudaDeviceSynchronize(), "end");
+  // The gate (amendment 1): per problem, every call at most 10x that problem's median under the soak.
+  double worst_soak = 0;
+  std::string worst_soak_case;
+  unsigned long long over_soak = 0;
   for (size_t i = 0; i < cases.size(); ++i) {
     auto v = lat[i];
     if (v.empty()) continue;
     std::sort(v.begin(), v.end());
+    const double median = v[v.size() / 2];
+    for (float x : v) over_soak += x > 10 * median;
+    if (v.back() / median > worst_soak) { worst_soak = v.back() / median; worst_soak_case = cases[i].name; }
     std::printf("{\"case\":\"%s\",\"calls\":%zu,\"solo_ms\":%.4f,\"soak_median_ms\":%.4f,\"soak_p99_ms\":%.4f,\"soak_max_ms\":%.4f,"
                 "\"max_over_solo\":%.2f,\"max_over_soak_median\":%.2f}\n",
                 cases[i].name.c_str(), v.size(), cases[i].solo_ms, v[v.size() / 2], v[v.size() * 99 / 100], v.back(),
                 v.back() / cases[i].solo_ms, v.back() / v[v.size() / 2]);
   }
-  const bool pass = mismatched == 0 && slow == 0 && calls > 0;
+  const bool pass = mismatched == 0 && over_soak == 0 && calls > 0;
   std::printf("{\"summary\":\"tcgen05-soak\",\"seconds\":%.0f,\"threads\":%d,\"calls\":%llu,\"tcgen05_calls\":%llu,\"mismatched\":%llu,"
-              "\"slow_over_10x\":%llu,\"worst_ratio\":%.2f,\"worst_case\":\"%s\",\"pass\":%s}\n",
-              duration, kThreads, calls.load(), tc_calls.load(), mismatched.load(), slow.load(), worst_ratio, worst_case.c_str(),
-              pass ? "true" : "false");
+              "\"over_10x_soak_median\":%llu,\"worst_over_soak_median\":%.2f,\"worst_soak_case\":\"%s\","
+              "\"reported_over_10x_solo\":%llu,\"reported_worst_over_solo\":%.2f,\"reported_worst_solo_case\":\"%s\",\"pass\":%s}\n",
+              duration, kThreads, calls.load(), tc_calls.load(), mismatched.load(), over_soak, worst_soak, worst_soak_case.c_str(),
+              slow.load(), worst_ratio, worst_case.c_str(), pass ? "true" : "false");
   return pass ? 0 : 1;
 } catch (const std::exception& e) {
   std::printf("{\"fatal\":\"exception\",\"error\":\"%s\"}\n", e.what());

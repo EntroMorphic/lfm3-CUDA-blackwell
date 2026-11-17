@@ -2,7 +2,7 @@
 # validation/tcgen05-gemm-v1 rule 4 (tensor-memory soak), for an unattended quiet window, on the build with the
 # tcgen05 path (tgemm-on1):
 #   4a. lfm3-tcgen05-soak, 1,200 s: 4 streams of tcgen05, mma.sync and attention GEMMs; bitwise against solo, no
-#       error, every call within 10x its solo median;
+#       error, every call within 10x the same problem's median under the soak (README amendment 1; 10x solo reported);
 #   4b. tools/check_lfm3_tcgen05_soak.py, 3,600 s, 12 clients, text share 0.25: the audio soak of audio-assurance-v1 /
 #       text-wait-v1 with the 11 image stage-0 requests and three long text prompts (~300, 1,500, 3,900 tokens) added;
 #       its pass rule (every reply identical to its reference, no 5xx or transport error, processes alive, memory flat
