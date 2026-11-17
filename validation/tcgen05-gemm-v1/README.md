@@ -167,3 +167,25 @@ Analysis (from `soak-4b.json`, `soak-4b.samples.jsonl` and the 30 s `host-memory
 - To settle it (proposed, not run): the same 4b soak on `tgemm-off1` in a quiet window (60 min + references), and,
   if it passes there, once more on `tgemm-on1`; reported beside it, the 10 readings of each checkpoint (the harness
   keeps only median and spread) to see what moves by 500 MiB at idle early in the soak.
+
+## Rule 4b off/on pair: how it will be read (set 2026-11-16, before the data; Tripp's window 5)
+`tools/thor/quiet_tcgen05_4b_offon.sh`: the window-4 soak unchanged (same harness, cases, 3,600 s, 12 clients, text
+share 0.25, same pass rule and 64 MiB bar), first on `tgemm-off1` (the same sources built without the tcgen05 path),
+then on `tgemm-on1`, quiet, one after the other. Added, recorded only: every host-memory reading the harness takes
+(the 10 idle readings of each checkpoint and the 30 s load samples) with free, buff/cache (Buffers + Cached +
+SReclaimable) and the container's memory cgroup (`memory.current`, `memory.max`, anon, file, pgscan, pgsteal) beside
+it (`OUT.readings.jsonl`); context from Tripp: lfm3-profile-v1's cgroup sits at its 96 GiB limit with ~43 GB of page
+cache charged, so in-cgroup reclaim may move the host figure at idle.
+Reading of the pair (each run passes or fails by the harness's own rule):
+| OFF | ON | reading |
+|---|---|---|
+| FAIL | FAIL | the harness or the server, not tcgen05; rule 4b stays FAIL for this build as measured, attributed to them |
+| PASS | FAIL | tcgen05 is implicated: rule 4b FAIL, attributed to the tcgen05 path, investigated before any integration |
+| FAIL | PASS | not tcgen05: the clause fails without it; ON's pass is recorded; rule 4b PASS on the rerun, with the window-4 failure and OFF's kept in the record |
+| PASS | PASS | the window-4 failure did not reproduce on either build; rule 4b PASS on the rerun, window 4's failure kept in the record |
+Whatever the outcome, I also report, from the per-reading records: whether each checkpoint's within-checkpoint spread
+moves with free / buff-cache / the cgroup's file pages (reclaim) rather than with anon memory, and the same for the
+growth between checkpoints. A single pair is one sample each: when one run passes and the other fails only on the
+idle-memory clause and their `host_used_less_client` growth figures differ by less than 64 MiB (the bar's own
+size), the pair is reported as **not decisive** instead of being read by the table, and the rule-4b verdict stays
+FAIL. Order effect (OFF first) noted.

@@ -10,11 +10,16 @@ transport error, both processes alive, memory flat at idle, exit 0), with its ca
     (the language model's prefill at M >= 257, on tcgen05, beside speech decode and image encodes).
 These ride the soak's case draw (unstreamed, streamed, dropped), so speech streams, images and long prefills run
 concurrently; each completed reply is compared with the same request served alone.
+Also written, beside OUT_JSON: OUT.readings.jsonl, every host-memory reading the harness takes (each checkpoint's 10
+idle readings on the main thread; the load sampler's on its thread) with /proc/meminfo (free, buff/cache) and the
+container's memory cgroup (memory.current, memory.max, anon/file/pgscan/pgsteal) beside it. The pass rule is unchanged.
 Usage: check_lfm3_tcgen05_soak.py SERVER MODEL_DIR BUILD_DIR LIBRI_WAV_DIR IMAGE_ROUND_DIR OUT_JSON [SECONDS [CLIENTS [TEXT_SHARE]]]
 """
 import importlib.util
 import json
 import sys
+import threading
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -43,10 +48,54 @@ def extra_cases(image_round):
     return out
 
 
+MEMINFO_KEYS = ("MemTotal", "MemFree", "MemAvailable", "Buffers", "Cached", "SReclaimable", "Active(file)",
+                "Inactive(file)", "AnonPages", "Shmem")
+CGROUP_STAT_KEYS = ("anon", "file", "file_mapped", "shmem", "active_file", "inactive_file", "pgscan", "pgsteal")
+
+
+def memory_context():
+    """/proc/meminfo (free, buff/cache = Buffers + Cached + SReclaimable) and this container's memory cgroup."""
+    m = {l.split(":")[0]: int(l.split()[1]) * 1024 for l in Path("/proc/meminfo").read_text().splitlines()}
+    out = {k: m.get(k) for k in MEMINFO_KEYS}
+    out["free"] = m["MemFree"]
+    out["buff_cache"] = m["Buffers"] + m["Cached"] + m.get("SReclaimable", 0)
+    cg = Path("/sys/fs/cgroup")
+    for name in ("memory.current", "memory.max"):
+        try:
+            v = (cg / name).read_text().strip()
+            out["cgroup_" + name.split(".")[1]] = int(v) if v.isdigit() else v
+        except OSError:
+            out["cgroup_" + name.split(".")[1]] = None
+    try:
+        stat = dict(l.split() for l in (cg / "memory.stat").read_text().splitlines())
+        out["cgroup_stat"] = {k: int(stat[k]) for k in CGROUP_STAT_KEYS if k in stat}
+    except (OSError, ValueError):
+        out["cgroup_stat"] = None
+    return out
+
+
+def log_every_reading(path):
+    """Every host_used() the harness takes (the checkpoints' 10 idle readings run on the main thread, the 30 s load
+    sampler on its own thread), with the memory context beside it, one JSON line each in PATH."""
+    original = soak.host_used
+    lock = threading.Lock()
+    f = open(path, "w")
+
+    def host_used():
+        v = original()
+        rec = dict(wall=time.time(), thread=threading.current_thread().name, host_used=v, **memory_context())
+        with lock:
+            f.write(json.dumps(rec) + "\n")
+            f.flush()
+        return v
+    soak.host_used = host_used
+
+
 def main(binary, model, build, libri, image_round, out_json, *rest):
     original = soak.check.cases
     extras = extra_cases(image_round)
     soak.check.cases = lambda b, l: list(original(b, l)) + extras
+    log_every_reading(Path(out_json).with_suffix(".readings.jsonl"))
     print(f"cases: {len(original(build, libri))} speech + {len(extras)} image and long-text", flush=True)
     return soak.main(binary, model, build, libri, out_json, *rest)
 
