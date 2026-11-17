@@ -353,3 +353,22 @@ Each gets: cherry 3 times unstreamed and once streamed; two, twice; then `GET /h
   decode). `on` must also equal `off`.
 
 **Expected runtime:** builds ~25 min, exactness ~30 min, C3/C4/C5 ~15 min, memchecks ~1-3 h, stall ~20 min.
+
+## C3-C5 Thor results (quiet window 10, 2026-11-17 15:01-15:31; `quiet-w10-c3c5/`)
+Builds: `vimg-srv-c3` (server `f653f8d0`, worker `66aeeed4`), the fault build `vimg-srv-c3f` (`aee511fb`; the
+injected string in it only), `vimg-c3/lfm3-speech` (`b281be64`); no cuBLAS.
+
+| rule | verdict | figures |
+|---|---|---|
+| 1 exact | **PASS** | `lfm3-speech`: 67 of 67 files identical to `vimg-e2e-a4`; `check_lfm3_image_cache.py`: **32 of 32**; host suites passed before the run |
+| 2 C3, where the evicted image is decoded | **NOT MEASURED** (instrument failure) | its own control failed: the never-seen image (must decode on a handler) showed 0.00 s on every non-engine thread. The server runs each connection on a detached thread that exits with the request (`lfm3_http.hpp:2534`), so its CPU is gone from `/proc/PID/task` before the second reading |
+| 2 C3, the stall | **FAIL as written**, as predicted before the run | C3 state **0.625 s** against the bar 0.28 +/- 0.10; this window's hit 0.256, cache off 0.616 (window 3: 0.66; before image-queue part 2, the engine decoding: 1.06) |
+| 2 C3, second check (set before the run) | yes | C3 state 0.625 <= cache off 0.616 + 0.10: the engine thread is not decoding (that would add ~0.4 s) |
+| 3 C4 memory | **PASS** | after 1 vs 16 distinct 4K requests: RSS +380.2 MiB, the caches' keys +377.1, **excess +3.1 MiB** (bar 64); device stand-in +2.5 MiB against rows +116.0. Control, the pre-fix `vimg-srv-c2`: excess **+797.3 MiB** |
+| 3 C4 memcheck, `lfm3-speech` | **PASS** | 0 errors, 0 bytes leaked; 25 of 25 outputs identical to the plain run (the runner's comparison could not write into the root-owned directory; rerun on the host the same evening, written beside it) |
+| 3 C4 memcheck, the server | **FAIL as written** | 0 errors (`ERROR SUMMARY: 0 errors`), all 200, texts equal to plain; but exit **15**, not 0 (plain: exit 0). Suspected, not verified: the server blocks SIGTERM in `main` and `sigwait`s; threads the sanitizer starts first do not block it, so SIGTERM kills the process by default action |
+| 4 C5 | **FAIL as written** (instrument) | the fault build equals cache off and `lfm3-speech`, stays up; re-sends' prefill 0.592/0.592 s (cache-on miss 0.614, hit 0.228): **nothing was served from the cache**. The gate's other half (decoded on a handler again) used the same failed thread-CPU reading |
+
+Next (a later window): the thread-CPU reading from `/proc/PID/stat` (the process total, which keeps exited threads'
+time) minus the engine thread; C3's location and C5 rerun with it, their gates unchanged; the server under memcheck
+with every thread's blocked-signal mask (`SigBlk`) recorded before the SIGTERM, to test the suspected cause.
