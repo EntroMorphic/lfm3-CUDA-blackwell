@@ -249,3 +249,42 @@ the validated builds', read end to end:
   kind" for three-wire).
 **Rule 6: PASS** (no coherency fault; the off-image replies are the model's, identical to the validated build's and,
 where HF's FP32 reply is recorded, to HF's).
+
+## Rule 4b off/on pair results (window 5, 2026-11-17 02:31-05:04, quiet; `build/quiet-w5-tcgen05-4b/`)
+| | OFF (`tgemm-off1`) | ON (`tgemm-on1`) |
+|---|---|---|
+| harness verdict | **PASS** (exit 0) | **FAIL** (exit 1) |
+| replies | 3,440, all 200, 0 differ, 0 errors | 3,420, all 200, 0 differ, 0 errors |
+| crowd after | 56 / 56 identical, both kinds | 56 / 56 identical, both kinds |
+| server RSS, idle growth | -29.1 MiB (pass) | +7.4 MiB (pass) |
+| `host_used_less_client`, idle checkpoints (MiB) | 13,787.5 / 13,826.8 / 13,838.4 / 13,844.8 | 13,775.3 / 13,914.8 / 13,853.1 / 13,845.8 |
+| its growth (bar 64) | **+57.3 (pass)** | **+70.5 (FAIL)** |
+| within-checkpoint spreads (MiB) | 5.0 / **502.7** / 3.8 / 3.2 | 14.4 / 5.7 / 2.3 / 0.2 |
+| checkpoint drains (s) | 45.2 / 22.2 / 64.4 / 4.8 | 43.8 / 83.4 / 93.8 / 92.8 |
+| 429 retries | 58,825 | 71,145 (+21%) |
+| client RSS (reported, not gated) | +69.5 MiB | +61.8 MiB |
+The clause that failed on ON: the idle host-memory figure (`host_used_less_client`), +70.5 MiB against 64; every
+other clause passed.
+
+**Reading, by the table set before the data:** OFF PASS / ON FAIL would implicate tcgen05, but the not-decisive clause
+applies exactly: one run passes and the other fails *only* on the idle-memory clause, and their growth figures
+differ by **13.2 MiB** (70.5 - 57.3), less than 64. **The pair is not decisive; rule 4b stays FAIL.**
+
+Per-reading data (`{off,on}/soak-4b.readings.jsonl`; summary by `readings_summary.py`):
+- **The ~500 MiB idle swing is not reclaim, and is outside the container's cgroup.** In OFF's checkpoint 2, 7 readings
+  sit at 14,350 MiB used and the last 3 at 13,848: `MemFree` steps up by 502 MiB at one reading while buff/cache
+  (19,380 MiB), AnonPages, Shmem, and the container cgroup's `memory.current`, anon and file pages stay constant and
+  pgscan / pgsteal do not move (no reclaim in either run; the cgroup is far below its 96 GiB limit, 6.3-6.6 GB).
+  Memory that is not page cache, not process anonymous memory and not charged to the container was released at idle:
+  on Thor, driver (GPU) memory taken from system memory. Window 4's first two checkpoints showed the same signature (503
+  and 496 MiB). It occurs on the OFF build too.
+- **The growth between checkpoints has the same form on both builds:** the cgroup's anon rises ~170 MiB from the first
+  checkpoint to the second (OFF 432 -> 598, ON 421 -> 602) and then holds (OFF 645, 601; ON 590, 591), with host-wide
+  AnonPages moving alike (OFF 1,968 -> 2,135; ON 1,956 -> 2,138).
+- **The end states are equal:** the last checkpoints read 13,844.8 (OFF) and 13,845.8 MiB (ON), 1.0 MiB apart; ON's
+  larger growth figure comes from its first checkpoint sitting 12.2 MiB lower and a high second checkpoint (13,914.8).
+- 429 retries, +21% on ON with 20 fewer replies: noted, not explained by this data. The counts track how long the 12
+  clients spend retrying a full queue; ON's checkpoint drains were longer (83-94 s against 5-64 s), so long requests
+  (the 130 s budget-truncated TTS case, the 4K images) were in flight at different times. One sample per build.
+**Status:** rule 4b FAIL as measured (window 4: ON +83.0 MiB; window 5: OFF +57.3 pass, ON +70.5 fail, not decisive).
+The per-reading data show nothing specific to tcgen05; I do not claim more than the table allows.
