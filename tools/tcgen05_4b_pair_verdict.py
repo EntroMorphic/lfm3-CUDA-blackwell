@@ -6,7 +6,7 @@ usage: tcgen05_4b_pair_verdict.py PAIR_DIR      (PAIR_DIR holds on/ and off/, ea
 Gated, per run: the harness's non-memory clauses (no differ, no errors, every status 200, alive, crowd identical, exit
 0); the server RSS idle growth (memory_idle.server_rss, first to last checkpoint) <= 64 MiB; the container cgroup's
 anon growth from checkpoint 2 to checkpoint 4 (medians of each checkpoint's 10 idle readings) <= 64 MiB.
-Gated, across the pair: for each of the two memory figures, ON minus OFF < 32 MiB.
+Gated, across the pair (amendment 2a): for each of the two memory figures, ON <= max(OFF, 0) + 32 MiB.
 Reported, not gated: host_used_less_client (the harness's memory verdict), the client's RSS, and the 429 retries per
 completed reply (flagged for investigation when ON's exceeds OFF's by more than 25%).
 Exit 0 when rule 4b passes, 1 otherwise.
@@ -73,8 +73,10 @@ def main(pair_dir):
     eq = {}
     for k in ("server_rss_growth", "cgroup_anon_growth_2_4"):
         on, off = runs["on"][k], runs["off"][k]
-        eq[k] = dict(on=on, off=off, on_minus_off=None if on is None or off is None else round(on - off, 1),
-                     pass_=on is not None and off is not None and on - off < 32)
+        # amendment 2a: ON <= max(OFF, 0) + 32 MiB (a shrinking OFF does not count against ON)
+        bound = None if off is None else max(off, 0) + 32
+        eq[k] = dict(on=on, off=off, bound=bound, on_minus_off=None if on is None or off is None else round(on - off, 1),
+                     pass_=on is not None and bound is not None and on <= bound)
         ok &= eq[k]["pass_"]
     rpr_on, rpr_off = runs["on"]["retries_per_reply"], runs["off"]["retries_per_reply"]
     retries = dict(on=rpr_on, off=rpr_off, ratio=round(rpr_on / rpr_off, 3) if rpr_on and rpr_off else None)

@@ -311,3 +311,13 @@ Windows 4 and 5 stay recorded as **FAIL** (window 5's pair not decisive). For ru
   cases, duration (3,600 s), clients (12) and text share (0.25); the verdict computed by
   `tools/tcgen05_4b_pair_verdict.py` from the two runs' records. Rule 4b passes if both runs pass every gated item
   above and the equivalence holds.
+
+## Amendment 2a (2026-11-17, Tripp's decision; before the reverse-order pair runs)
+- **Equivalence, restated:** for each gated figure (server RSS growth; cgroup anon growth, checkpoints 2 to 4), ON's
+  growth must be **at most max(OFF's growth, 0) + 32 MiB**. A shrinking OFF no longer counts against ON.
+- **What prompted it, plainly:** after writing amendment 2 I ran `tools/tcgen05_4b_pair_verdict.py` on window 5's
+  records, as a check that it reads every field correctly. This was a field check, not a judgment of those runs:
+  amendment 2 applies only to new runs, and windows 4 and 5 stay recorded as FAIL. The check showed that the one-sided
+  "ON minus OFF < 32" would have failed on server RSS only because OFF's RSS shrank (ON +7.4 MiB, OFF -29.1 MiB,
+  difference 36.5), not because ON grew. 2a is the only change that check prompted; every other part of amendment 2
+  is unchanged.

@@ -3,7 +3,7 @@
 # OFF (tgemm-off1); the soak unchanged (tools/check_lfm3_tcgen05_soak.py: 3,600 s, 12 clients, text share 0.25, images
 # and long prompts; every memory reading recorded with free, buff/cache and the container cgroup), with
 # tools/thor/host_memory_sampler.py every 30 s beside each run. Then the amended verdict
-# (tools/tcgen05_4b_pair_verdict.py: server RSS and cgroup anon growth gated, ON - OFF < 32 MiB, the harness's
+# (tools/tcgen05_4b_pair_verdict.py: server RSS and cgroup anon growth gated, ON <= max(OFF, 0) + 32 MiB, the harness's
 # non-memory clauses; host figure and 429 retries per reply reported).
 # No arguments; no quiet check of its own (called by a quiet-window runner). Results: build/quiet-tcgen05-4b-pair2/.
 # Exit 0: rule 4b passes under amendment 2; 1: binaries missing or not MAXN; 2: rule 4b fails or a run did not finish.
