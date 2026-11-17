@@ -659,3 +659,17 @@ Not changed:
 - fairness of the timed lock between text and audio (each hold is short);
 - CPU oversubscription (2 slots × 4 threads, plus the image slots and the engine). That is what the stall rule
   measures in the quiet window.
+
+## Where it stands (2026-11-17, session ending)
+- **Red-team (rule 7):** done. One medium defect and five smaller ones found and fixed (`e1c80be`), listed above.
+  Not changed: lock fairness, and CPU oversubscription (measured by the stall rule).
+- **After the fixes:** `test_lfm3_http_audio_in.py` 81/81 (plain, ASan+UBSan, TSan). The memory tool was
+  smoke-tested on the HTTP harness: 16/16 served, PASS. The stall tool's timing logic could not be smoke-tested (the
+  fake engine does not pace its events); its startup, streaming and parsing ran.
+- **Remaining:**
+  - the wider host suites after the fixes (image-in, the speech suites, native, framing, the gates, audio-input host)
+    were about half run, with no failure seen when the session ended. Rerun them;
+  - everything in amendment 3 on Thor.
+- **`tools/thor/quiet_audio_rest.sh`:** written, `bash -n` clean on Thor, and synced with the fixed sources to
+  `build/audio-src-b`; the base sources (`a350659`) are in `build/audio-src-base`. Not run. It builds its own
+  binaries at the start of the window.
