@@ -332,3 +332,16 @@ before the stop (the log ends at the sanitizer banner).
 **Rule 3 status: every check run is clean with outputs identical and the controls detected; the racecheck x 4,096-
 token prefill cell is not completed (infeasible on this machine: >110 GiB and growing).** The 1,024-token racecheck
 (clean) stays information only, per Tripp's decision; the cell is left for Tripp.
+
+## Amendment 3 (2026-11-17, Tripp's decision): rule 3's text-prefill racecheck at 2,048 tokens
+- **The 4,096-token racecheck is recorded NOT COMPLETED, infeasible on Thor:** in lfm3-profile-v1 the memory cgroup's
+  OOM killer stopped it at 100 GB of anonymous memory (96 GiB limit); on the host (125 GB, no cgroup) the 8 GB guard
+  stopped it after 781 s, MemAvailable 118.3 -> 95.4 -> 70.3 -> 46.0 -> 21.8 -> 6.9 GiB at 0/2/5/8/11/13 minutes
+  (over 110 GiB used, ~8 GiB a minute, no plateau).
+- **The racecheck gate becomes the largest prefill that fits: 2,048 tokens** (M = 2,048: the LM prefill's
+  projections on tcgen05 over many 256-row tiles). Racecheck's hazards are shared-memory races within a block, which
+  the number of tiles does not change. memcheck, synccheck and initcheck keep their 4,096-token results (clean).
+- **The 1,024-token result stays information only.**
+- Run on the host with the same guard (SIGTERM, recorded NOT COMPLETED, if MemAvailable drops under 8 GB), after
+  quiet window 7 finishes, by `tools/thor/tgemm_host_race2048.sh` (a waiter: window 7's QUIET-V7-FINISHED, then no
+  compute-sanitizer running); results in `build/tgemm-r3-host2048/`.
