@@ -179,6 +179,65 @@ def generate(server, body):
         post(f"/sessions/{created['session_id']}/close", {})
 
 
+def describe(want, got):
+    """Which top-level keys differ; for lists, the lengths and the first index that differs."""
+    if not isinstance(got, dict) or not isinstance(want, dict):
+        return dict(got_type=type(got).__name__)
+    out = {}
+    for k in sorted(set(want) | set(got)):
+        a, b = want.get(k), got.get(k)
+        if a == b:
+            continue
+        if isinstance(a, list) and isinstance(b, list):
+            i = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
+            out[k] = dict(want_len=len(a), got_len=len(b), first_differ=i)
+        else:
+            out[k] = dict(want=str(a)[:200], got=str(b)[:200])
+    return out
+
+
+def crowd_round(server, cases, alone, same_stream, differ_path):
+    """The cases all at once, unstreamed then streamed. Per kind: identical count, differing names, and for each
+    difference its status, the retries spent and which fields differ; differing replies go to differ_path."""
+    crowd = {}
+    for streamed in (False, True):
+        tries = {}
+
+        def call(c):
+            n = 0
+            while True:
+                r = server.stream(c[2]) if streamed else server.post(c[2])
+                n += 1
+                if r[0] != 429 or n >= 3000:
+                    tries[c[0]] = n
+                    return r
+                time.sleep(0.01)
+
+        with concurrent.futures.ThreadPoolExecutor(len(cases)) as pool:
+            got = list(pool.map(call, cases))
+        detail = []
+        for c, r in zip(cases, got):
+            name = c[0]
+            if streamed:
+                if same_stream(name, r[0], r[1]):
+                    continue
+                d = dict(name=name, status=r[0], tries=tries[name], events=len(r[1] or []))
+                reply = r[1]
+            else:
+                if r[0] == 200 and strip(r[1]) == alone[name]:
+                    continue
+                d = dict(name=name, status=r[0], tries=tries[name],
+                         fields=describe(alone[name], strip(r[1]) if isinstance(r[1], dict) else r[1]))
+                reply = r[1]
+            detail.append(d)
+            with open(differ_path, "a") as f:
+                f.write(json.dumps(dict(d, streamed=streamed, reply=reply)) + "\n")
+        kind = "streamed" if streamed else "unstreamed"
+        crowd[kind] = dict(identical=len(cases) - len(detail), differ=[d["name"] for d in detail], detail=detail)
+        print(f"crowd {kind}: {crowd[kind]['identical']}/{len(cases)} identical {[(d['name'], d['status'], d['tries']) for d in detail]}", flush=True)
+    return crowd
+
+
 def text_key(reply):
     return reply.get("generated_ids"), reply.get("text")
 
@@ -394,18 +453,14 @@ def main(binary, model, build, libri, out_json, seconds=7200, clients=12, text_s
     alive = all(s["server_alive"] for s in samples)
     report["alive_throughout"] = alive
 
-    # 4. the crowd after the soak
-    crowd = {}
-    for streamed in (False, True):
-        with concurrent.futures.ThreadPoolExecutor(len(cases)) as pool:
-            if streamed:
-                got = list(pool.map(lambda c: batch.stream(server, c[2]), cases))
-                bad = [c[0] for c, r in zip(cases, got) if not same_stream(c[0], r[0], r[1])]
-            else:
-                got = list(pool.map(lambda c: batch.post(server, c[2]), cases))
-                bad = [c[0] for c, r in zip(cases, got) if not (r[0] == 200 and strip(r[1]) == alone[c[0]])]
-        crowd["streamed" if streamed else "unstreamed"] = dict(identical=len(cases) - len(bad), differ=bad)
-    report["crowd_after"] = crowd
+    # 4. the crowd after the soak (CROWD_ROUNDS, default 1; every round is gated)
+    rounds = []
+    for _ in range(int(os.environ.get("CROWD_ROUNDS", "1"))):
+        rounds.append(crowd_round(server, cases, alone, same_stream, out.with_suffix(".crowd-differ.jsonl")))
+    crowd = {kind: dict(identical=min(r[kind]["identical"] for r in rounds),
+                        differ=sorted({n for r in rounds for n in r[kind]["differ"]}),
+                        detail=[d for r in rounds for d in r[kind]["detail"]]) for kind in rounds[0]}
+    report["crowd_after"], report["crowd_rounds"] = crowd, len(rounds)
     code, stderr = server.stop()
     report.update(server_exit=code, server_stderr=stderr[-2000:])
     report["pass_"] = pass_ = bool(
