@@ -100,7 +100,14 @@ The control reproduces, and both uid 1000 runs stall (>= 5 each): by the pre-reg
 faults each (`proc_minflt` = the cgroup's `pgfault`), 1.5-3.7 s of kernel time. The container is now 116 of 3,150
 across five quiet runs; the host 0 of 3,780. Remaining differences: seccomp, the memory cgroup's place in the
 hierarchy, the mount namespace (overlayfs for `/pinned-cuda` and the nvidia libraries) and the nvidia runtime's
-device setup. The catcher (inside the container as uid 1000, host gdb attached) started 12:42; its result follows.
+device setup. **The catcher** (inside the container as uid 1000, host gdb attached, 12:42-13:08): 4 catches, each 0.1 s, the
+engine exited 0. In all four the faulting thread (the main thread, tid 972316) was stopped at **the same instruction,
+`0xfffe9f4f3344`**; the three other threads at `0xffffa7f30bdc` (waiting). Host gdb could not read symbols across
+the PID namespace and the container has no gdb, so the PC is not yet tied to a library. One PC repeated through
+~11 M minor faults reads as a fault-retry storm (the kernel resolves the fault, the mapping is invalidated, the same
+instruction faults again), not code that walks new memory. Host state at the catches: `nr_foll_pin_acquired`
+7.5 M (6,704 more than released), CMA 512 MiB (464 MiB free), 117 GiB available, no reclaim pressure. Window 11
+(`tools/thor/quiet_session_v11.sh`) runs the catcher again with frame-0 PCs resolved against `/proc/PID/maps`.
 
 **Correction (window 5 onward):** the `memlock` figure in `limits.txt` for container runs is the host shell's
 (`ulimit -l` runs in `stall_probe.sh`, outside `docker exec`), so it reads 16,098,844 KiB. The container's own limit
