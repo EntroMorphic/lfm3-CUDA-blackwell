@@ -18,6 +18,9 @@
   same image was sent recently, by anyone holding the token. Run with `--image-cache-mb 0` where clients must not
   learn about each other's images.
 
+As a systemd user service (`deploy/`, [docs/service.md](docs/service.md)) it is the same server: loopback only, the
+same token file, and with `--warmup` nothing of the warm-up's requests is left in a session or a cache.
+
 Exposing the server beyond loopback (for example through a reverse proxy) is outside what has been validated.
 
 ## Reporting a vulnerability

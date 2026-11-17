@@ -1,0 +1,42 @@
+# liquid-lfm3-server as an always-on, pre-warmed systemd user service (validation/always-on-v1; docs/service.md).
+# A template: deploy/install-user-service.sh replaces each @NAME@ and installs the result as
+# ~/.config/systemd/user/liquid-lfm3.service. Not usable as it is.
+
+[Unit]
+Description=liquid-lfm3-server: LFM3-Omni-2B on loopback HTTP, warmed up before it reports ready
+Documentation=file://@REPO@/docs/service.md
+# at most 5 starts in 10 minutes; past that, systemd stops trying (a warm-up that fails every time)
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+# notify: the unit is "active" only once the server is warm. The server sends sd_notify's READY=1 itself, to
+# $NOTIFY_SOCKET, right after its ready line (lfm/lfm3_warmup.hpp: no libsystemd).
+Type=notify
+NotifyAccess=main
+# --warmup: one request of each kind (text, TTS, a 4K image, audio in) before ready; a failure exits 1 (restarted).
+# Loopback only: the server binds 127.0.0.1 and has no option to bind anything else (lfm/lfm3_http.hpp, Server).
+# The bearer token: the default file ~/.config/liquid-lfm3/token (mode 0600, created on the first start), which
+# tools/lfm3_token.py reads for clients.
+ExecStart="@SERVER@" --experimental "@MODEL_DIR@" --port @PORT@ --warmup@EXTRA_ARGS@
+# the CUDA libraries the binary was built against, if they are not on the loader's default path (install's
+# --library-path; the line is dropped without it)
+Environment="LD_LIBRARY_PATH=@LIBRARY_PATH@"
+# Restart when it fails (a non-zero exit, a crash by signal, a failed warm-up) ...
+Restart=on-failure
+# ... and also when it exits 0 without being asked to by systemd: the server's own SIGTERM handling exits 0, so a
+# SIGTERM from outside systemd (validation/always-on-v1 rule 5's stand-in for a crash) would otherwise leave it down.
+# `systemctl --user stop` is never followed by a restart, whatever the exit status.
+RestartForceExitStatus=0
+RestartSec=5
+# loading the checkpoint and the warm-up
+TimeoutStartSec=900
+# Stop: SIGTERM only. The server stops admission, cancels running generations at their next token and exits 0.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+# Never SIGKILL: the project forbids SIGKILL on CUDA processes. If the server has not exited 30 s after SIGTERM,
+# systemd gives up waiting and marks the unit failed, and the process is left running for a person to look at.
+SendSIGKILL=no
+
+[Install]
+WantedBy=default.target

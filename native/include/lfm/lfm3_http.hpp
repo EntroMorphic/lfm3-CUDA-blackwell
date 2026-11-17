@@ -543,9 +543,33 @@ class Service {
   Service& operator=(const Service&) = delete;
 
   const Settings& settings() const { return settings_; }
+  const Policy& policy() const { return policy_; }
+  // /health: 200 once the engine is up, not failed or stopping, and (validation/always-on-v1, --warmup) warmed up
   bool ready() {
     std::lock_guard g(lock_);
-    return !failed_ && !stopping_;
+    return !failed_ && !stopping_ && !warming_;
+  }
+  // validation/always-on-v1 (--warmup only): while warming, /health answers 503, every POST 503 warming_up (the HTTP
+  // layer refuses it; the warm-up's own requests call this Service directly), and the front end's image cache keeps
+  // nothing (budget 0), so the warm-up's image leaves no entry a client could hit. Off: the cache's configured budget.
+  // Never set without --warmup.
+  void set_warming(bool on) {
+    image_token_cache_.set_budget(on ? 0 : size_t(settings_.image_cache_mb) << 20);
+    warming_ = on;
+  }
+  bool warming() const { return warming_; }
+  // What the warm-up leaves behind (validation/always-on-v1 rule 3): requests waiting in either queue, and the front
+  // end's image cache entries.
+  size_t queued() {
+    std::lock_guard q(queue_lock_);
+    return queue_.size() + speech_queue_.size();
+  }
+  size_t image_cache_entries() { return image_token_cache_.size(); }
+  // Runs `task` once on the engine-owner thread, as a session operation is run (between speech steps), and waits for
+  // it. A throw fails the service closed, as any engine failure does. For state only that thread may touch (the
+  // engine's image cache budget, after the warm-up).
+  void engine_task(std::function<void()> task) {
+    submit([task = std::move(task)] { task(); return std::string(); }, [] {}, nullptr);
   }
   bool failed() {
     std::lock_guard g(lock_);
@@ -2083,6 +2107,7 @@ class Service {
   std::map<std::string, Session> sessions_;
   bool failed_ = false, cleanup_failed_ = false;
   std::atomic<bool> stopping_{false};
+  std::atomic<bool> warming_{false};  // set_warming (--warmup only)
   std::timed_mutex frontend_lock_;
   static constexpr int kImageDecodeSlots = 2;  // images decoded at once (decode_images)
   std::mutex image_slots_lock_;
@@ -2439,6 +2464,8 @@ class Connection {
       std::string().swap(buffer_);
       const Json& request = *parsed;
       std::string result;
+      // validation/always-on-v1: no client request while the server warms up (--warmup); /health says 503 meanwhile
+      if (service_.warming()) throw ApiError(503, "warming_up");
       if (r.path == "/sessions") result = service_.create(request);
       else if (r.path == "/generate") result = service_.generate(std::move(parsed), [this] { return reset_by_peer(); });
       else if (r.path == "/generate_batch") result = service_.generate_batch(std::move(parsed));

@@ -37,3 +37,19 @@ for its first token. Where those seconds go has not been measured.
    listens on 127.0.0.1 only. Host check: `systemd-analyze --user verify` on the unit.
 6. **Nothing else changes**: without `--warmup`, the server is byte-identical in behaviour (every existing host suite
    passes: plain, ASan+UBSan, TSan); the stall, crowd and image checks need no change.
+
+## Notes on measuring the rules as written (2026-11-17, with the code; the rules above are unchanged)
+- **Rules 0-1, text's "time to first token".** `/generate` does not stream, so a client cannot see its first token.
+  `tools/measure_lfm3_first_request.py` measures it as the whole reply of the same request at `max_new_tokens` 1 (the
+  prefill and the first token; the session's create and close are outside the timing). The `/speech` kinds are
+  streamed and timed to their first audio (TTS), text (image) or either (audio in) event.
+- **Rule 5, "after the engine is killed (SIGTERM ...), it is back".** The server exits 0 on SIGTERM, and systemd's
+  `Restart=on-failure` does not restart a unit whose process exited 0. As written the rule needs the unit to restart on
+  exit 0 too: `deploy/liquid-lfm3.service` adds `RestartForceExitStatus=0` (`systemctl --user stop` still never
+  restarts it). Without that line the rule cannot be met.
+- **Rule 3, RSS "after the same four requests".** The warm-up's requests are generated inside the server; the tool
+  rebuilds them (the same bodies, the same clip byte for byte, the same image pixels in its own PNG encoding; checked
+  against the server's generator on the host, tests/test_lfm3_http_warmup.py) and sends them to a cold server.
+- **Rule 2 and rule 5 on Thor.** The exactness checks start the server by path with fixed arguments; with `--warmup`
+  they are run with SERVER pointing at a two-line wrapper that execs the binary with `--warmup` added. Rule 5 needs the
+  binary to run on the host (the unit cannot reach a process started by `docker exec` with SIGTERM); see docs/service.md.

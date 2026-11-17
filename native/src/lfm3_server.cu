@@ -5,6 +5,14 @@
 //   liquid-lfm3-server --experimental MODEL_DIRECTORY [--token-file FILE] [--port N] [--request-timeout S]
 //                      [--socket-timeout S] [--session-idle-timeout S] [--engine-timeout S] [--total-capacity N]
 //                      [--max-sessions N] [--queue-size N] [--handlers N] [--speech-rows N] [--image-cache-mb N]
+//                      [--warmup]
+// --warmup (validation/always-on-v1; off by default, and without it nothing changes): before the ready line, one
+// request of each kind (text, TTS streamed, a 4K image, audio in) through the server's own front end and engine, with
+// generated inputs, the replies discarded (lfm/lfm3_warmup.hpp). Meanwhile the server listens: /health answers 503 and
+// every POST 503 warming_up. Then one JSON line on stderr (startup and each request's seconds), and the ready line
+// with "warmup_seconds" added. The warm-up leaves no session, no queued request and nothing in either image cache. A
+// warm-up failure is written to stderr and exits 1. Under systemd (NOTIFY_SOCKET set, with or without --warmup) the
+// ready line is followed by sd_notify's READY=1 (deploy/liquid-lfm3.service).
 // --image-cache-mb (0..65536, default 512; 0: none): validation/image-cache-v1's budget for each side's image cache (the
 // front end's token counts, the engine's encoder rows on the GPU), keyed by an image's full bytes
 // --speech-rows (1..16, the most validated; default 8): /speech requests generated at once in the engine's speech batch
@@ -20,6 +28,7 @@
 #define LFM3_WORKER_CORE_ONLY
 #include "lfm3_worker.cu"
 #include <lfm/lfm3_http.hpp>
+#include <lfm/lfm3_warmup.hpp>
 
 #include <csignal>
 #include <cstdlib>
@@ -83,6 +92,20 @@ int main(int argc,char** argv) try {
   // +4.7 MiB, flat). Allocation only: no output changes. MALLOC_MMAP_THRESHOLD_ in the environment still wins.
   if(!std::getenv("MALLOC_MMAP_THRESHOLD_") && mallopt(M_MMAP_THRESHOLD,128*1024)!=1)
     throw std::runtime_error("mallopt(M_MMAP_THRESHOLD) failed");
+  // --warmup, the one option without a value: taken out before the pairs are read (an option's value is skipped, so a
+  // value spelled "--warmup" stays a value)
+  bool warmup=false;
+  std::vector<char*> args(argv,argv+argc);
+  for(size_t i=3;i<args.size();) {
+    if(std::string(args[i])=="--warmup") {
+      if(warmup) throw std::runtime_error("duplicate option --warmup");
+      warmup=true;
+      args.erase(args.begin()+long(i));
+    } else {
+      i+=2;
+    }
+  }
+  argc=int(args.size());argv=args.data();
   if(argc<3 || argc%2!=1 || std::string(argv[1])!="--experimental")
     throw std::runtime_error("usage: liquid-lfm3-server --experimental MODEL_DIRECTORY [--token-file FILE] [--port N] ...");
   const std::string directory=argv[2];
@@ -123,7 +146,9 @@ int main(int argc,char** argv) try {
 
   CoreBackend backend(directory);
   backend.core().set_speech_rows(speech_rows);
-  backend.core().set_image_cache_mb(settings.image_cache_mb);
+  // --warmup: the engine's image cache keeps nothing until the warm-up has run (its image is never cached), then gets
+  // its budget on the engine-owner thread (lfm/lfm3_warmup.hpp)
+  backend.core().set_image_cache_mb(warmup?0:settings.image_cache_mb);
   lfm::http::Policy policy;
   policy.vocabulary=backend.core().vocabulary();
   policy.suppress=backend.core().suppressed_tokens();
@@ -144,14 +169,22 @@ int main(int argc,char** argv) try {
   auto server=std::make_unique<lfm::http::Server>(*service,token,port);
   token.assign(token.size(),'\0');
   // First SIGTERM/SIGINT: orderly shutdown. A second one: exit now.
+  std::atomic<bool> stopped{false};  // read by the --warmup start only
   std::thread waiter([&] {
     int received=0;
     sigwait(&signals,&received);
+    stopped=true;
     server->stop();
     sigwait(&signals,&received);
     std::_Exit(1);
   });
+  if(warmup) {
+    const int image_cache_mb=settings.image_cache_mb;
+    std::_Exit(lfm::http::warmup::serve_with_warmup(*service,*server,
+        [&backend,image_cache_mb] {backend.core().set_image_cache_mb(image_cache_mb);},stopped,"liquid-lfm3-server"));
+  }
   std::cout<<"{\"ready\":true,\"port\":"<<server->port()<<"}\n"<<std::flush;
+  lfm::http::warmup::notify_ready();  // a systemd Type=notify unit only (NOTIFY_SOCKET set); nothing otherwise
   server->serve();
   // Admission is closed: fail queued work, cancel running generations at their next token boundary,
   // wait for the engine owner, then give handlers one socket timeout to deliver their replies.
