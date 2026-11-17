@@ -86,3 +86,31 @@ under concurrent load, while prefill and image encoding get faster?
 - Tensor maps are kernel parameters: a CUDA graph capturing a tcgen05 call fixes its pointers like any other kernel's.
   The engine's decode graphs (M <= 64) never take this path; recorded, not tested here.
 - The 10 s watchdog could fire on a preempted kernel only under extreme time-slicing; the soak watches for it.
+
+## Results so far (2026-11-16)
+Builds (`tools/thor/build_tcgen05_engine.sh`, the same sources ON and OFF; `lfm3-batch` and `lfm3-tcgen05-soak` added
+later from unchanged sources): `tgemm-on1` (lfm3-speech `7e3da591...`, server `0193b11b...`, worker `eb71d809...`,
+lfm3-vision-check `0cd39878...`), `tgemm-off1`. The engine's `gemm_2cta` SASS is identical to the probe's b4 (2,292
+and 2,228 instruction lines, BF16 and FP32 out). Host suite on the workstation: 1,646 passed, 703 skipped, 0 failed.
+
+**Rule 1: PASS.** `lfm3-tcgen05-gemm-check`: 353 of 353 cases, 0 elements differing with the path on against off.
+Every engine case at M >= 257 made exactly one tcgen05 launch; M = 256 and the five refused problems (gate_proj
+N = 16, ldc != n, M = 256, batched Q·Kᵀ, P·V K x N) made none. Recorded deviation: the LM head (N = 128,000) ran at
+M in {256, 257, 258, 4096}, not 32,768 (its FP32 output pair would be 33.5 GB).
+
+**Rule 2: every byte identical; two checks to rerun quiet for their non-exactness parts.**
+(`tools/thor/tcgen05_gemm_rule2.sh tgemm-on1 tgemm-r2`, shared GPU, 15:19-17:37)
+- speech regression 36 of 36 (and again 36 of 36 in the server phase); audio-in 360 of 360 and 93 of 93; e2e 90 of
+  90; split 90 of 90; vision stage files 713 of 713 against `vspeed-rule1-a2` (rule-1 thresholds pass as before:
+  ratios 0.023-0.112, cosine 0.9999966); image stage-0 67 of 67 files against `vimg-e2e-a4` (arrays byte for byte,
+  reply tokens); concurrent engine exactness 41 of 41; audio-in through the server PASS; TTS through the server PASS;
+  text gate passed, control `7ea05068...`; images through the server PASS (alone, streamed, concurrent).
+- **Batch-server check: did not complete.** It stopped in its first phase, on the *reference* server
+  (`server-stream-v3`, an old build without tcgen05), with `503 worker_unavailable` for `budget-truncated-s1`; the
+  build under test was never reached. Most likely the shared GPU (images-speed-v1 ran these on a quiet machine). Rerun
+  quiet, after window 3.
+- **Stream check: exactness PASS, timing FAIL.** Every case exact (rule 1), rule 2 pass; its rule 3 (the cost of
+  streaming, median streamed / plain) 1.083 against its bar, with plain runs swinging 10.1-17.3 s on the shared GPU: a
+  timing rule measured on a contended machine. Rerun quiet with the batch-server check.
+- Coverage: most speech requests have short prompts (< 257 tokens) and never reach tcgen05; the vision encoder (every
+  image), image prompts, the text gate's longer prompts and the server's image checks do.

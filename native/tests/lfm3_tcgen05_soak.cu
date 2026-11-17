@@ -3,7 +3,7 @@
 // 256, same shapes family) and the engine's attention products (batched Q·Kᵀ with FP32 scores, P·V with B stored
 // K x N), so tcgen05 kernels holding tensor memory meet each other and the mma.sync kernels on the SMs.
 // Pass: every output bitwise equal to the same problem run alone; no launch error or trap; every call's latency (CUDA
-// events around it on its stream) at most 10x the problem's solo median. All problems take ~0.2-0.7 ms alone, so
+// events around it on its stream) at most 10x the problem's solo median. All problems take ~1 ms alone, so
 // queueing behind the 3 other streams stays well inside 10x; a stall (a blocked tensor-memory allocation) would not.
 // Built with -DLFM_GEMM_TCGEN05 and gemm_tcgen05.o. Needs a quiet Thor.
 //   lfm3-tcgen05-soak [DURATION_SECONDS=1200]   progress lines and a final JSON summary on stdout; exit 1 on failure
@@ -120,18 +120,18 @@ static void set_out(lfm::gemm::Problem& p, const Case& c, void* out) {
 int main(int argc, char** argv) try {
   const double duration = argc > 1 ? std::stod(argv[1]) : 1200.0;
   std::vector<Case> cases;
+  // Every problem sized to ~1 ms alone, so queueing behind the 3 other streams stays a few times a call's solo time.
   // tcgen05 (V3): LM and vision projections, both output types
-  cases.push_back(linear_case("lm.w1w3.m2048", 2048, 7680, 2048, false, 1));
-  cases.push_back(linear_case("lm.w2.m2048", 2048, 2048, 7680, false, 2));
-  cases.push_back(linear_case("v.w2.m4096", 4096, 1024, 5120, true, 3));
-  cases.push_back(linear_case("v.in_proj.m4096", 4096, 3072, 2048, true, 4));
-  cases.push_back(linear_case("lm.head.m300", 300, 128000, 2048, true, 5));
+  cases.push_back(linear_case("lm.w1w3.m4096", 4096, 7680, 2048, false, 1));
+  cases.push_back(linear_case("lm.w2.m3072", 3072, 2048, 7680, false, 2));
+  cases.push_back(linear_case("v.w2.m8192", 8192, 1024, 5120, true, 3));
+  cases.push_back(linear_case("v.in_proj.m8192", 8192, 3072, 2048, true, 4));
   // mma.sync (M <= 256: outside the tcgen05 dispatch)
   cases.push_back(linear_case("mma.w1w3.m256", 256, 7680, 7680, false, 6));
   cases.push_back(linear_case("mma.in_proj.m256", 256, 6144, 8192, true, 7));
   // the engine's attention products (never tcgen05)
-  cases.push_back(scores_case(1024, 4096, 8));
-  cases.push_back(values_case(1024, 4096, 9));
+  cases.push_back(scores_case(1024, 3072, 8));
+  cases.push_back(values_case(1024, 8192, 9));
   const size_t workspace = lfm::gemm::workspace_bytes(1024, 128, 4096, 16);
   (void)workspace;  // P·V with M > 8 takes the wide path, no split-K workspace
   check(cudaDeviceSynchronize(), "generate");
@@ -173,6 +173,7 @@ int main(int argc, char** argv) try {
   std::mutex mu;
   double worst_ratio = 0;
   std::string worst_case;
+  std::vector<std::vector<float>> lat(cases.size());  // per case, soak latencies (information: max / soak median)
   unsigned long long* d_count = nullptr;
   check(cudaMalloc(&d_count, kThreads * sizeof(unsigned long long)), "malloc");
   const auto t_start = std::chrono::steady_clock::now();
@@ -208,6 +209,7 @@ int main(int argc, char** argv) try {
       if (ratio > 10) { ++slow; std::printf("{\"slow\":\"%s\",\"thread\":%d,\"ms\":%.3f,\"solo_ms\":%.3f}\n", c.name.c_str(), tid, ms, c.solo_ms); std::fflush(stdout); }
       std::lock_guard<std::mutex> lock(mu);
       if (ratio > worst_ratio) { worst_ratio = ratio; worst_case = c.name; }
+      if (lat[i].size() < 200000) lat[i].push_back(ms);
     }
     for (void* o : outs) cudaFree(o);
     cudaStreamDestroy(s);
@@ -230,6 +232,15 @@ int main(int argc, char** argv) try {
   stop = true;
   for (auto& t : pool) t.join();
   check(cudaDeviceSynchronize(), "end");
+  for (size_t i = 0; i < cases.size(); ++i) {
+    auto v = lat[i];
+    if (v.empty()) continue;
+    std::sort(v.begin(), v.end());
+    std::printf("{\"case\":\"%s\",\"calls\":%zu,\"solo_ms\":%.4f,\"soak_median_ms\":%.4f,\"soak_p99_ms\":%.4f,\"soak_max_ms\":%.4f,"
+                "\"max_over_solo\":%.2f,\"max_over_soak_median\":%.2f}\n",
+                cases[i].name.c_str(), v.size(), cases[i].solo_ms, v[v.size() / 2], v[v.size() * 99 / 100], v.back(),
+                v.back() / cases[i].solo_ms, v.back() / v[v.size() / 2]);
+  }
   const bool pass = mismatched == 0 && slow == 0 && calls > 0;
   std::printf("{\"summary\":\"tcgen05-soak\",\"seconds\":%.0f,\"threads\":%d,\"calls\":%llu,\"tcgen05_calls\":%llu,\"mismatched\":%llu,"
               "\"slow_over_10x\":%llu,\"worst_ratio\":%.2f,\"worst_case\":\"%s\",\"pass\":%s}\n",

@@ -28,9 +28,10 @@ python3 - $B $B/$O <<'PY' || fail "requests"
 import json, sys
 B, O = sys.argv[1:]
 src = json.load(open(f"{B}/speech-e2e-v1/requests/il-fridge-s1.req.json"))["prompt_ids"]
-for n in (4096, 32768):
-    ids = (src * (n // len(src) + 1))[:n]
-    json.dump({"prompt_ids": ids, "mode": "text", "max_new_tokens": 1, "seed": 1, "capacity": n + 256}, open(f"{O}/prefill-{n}.req.json", "w"))
+# The model's context limit is 32,768 positions: the "32,768" case is 32,767 prompt tokens + 1 new in capacity 32,768.
+for n, prompt, cap in ((4096, 4096, 4352), (32768, 32767, 32768)):
+    ids = (src * (prompt // len(src) + 1))[:prompt]
+    json.dump({"prompt_ids": ids, "mode": "text", "max_new_tokens": 1, "seed": 1, "capacity": cap}, open(f"{O}/prefill-{n}.req.json", "w"))
 p = json.load(open(f"{B}/cli-demo/out2.json"))["input_ids"]
 json.dump(dict(capacity=4096, prompts=[p], batch=32, max_new_tokens=256, temperature=0, stop=[], warmup=True), open(f"{O}/rate-32.json", "w"))
 PY
