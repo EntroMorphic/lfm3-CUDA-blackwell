@@ -192,3 +192,20 @@ The host run had 0 catches again, so 0 stalls.
 - **Attempt 2:** the same test container with one addition, `--device /dev/nvidia-uvm`. Docker creates the node and allows it in the container's device cgroup.
   - The precondition, prediction and falsification are unchanged.
   - If it holds, the fix is a container created with `--device /dev/nvidia-uvm`, or the service on the host.
+
+## The UVM test, attempt 2 (2026-11-17 20:37-22:09, quiet; `build/quiet-uvm/`): **the prediction holds; the stall is the missing UVM**
+| Run | Container | `/dev/nvidia-uvm` mapped (60 s in) | Stalls (prefill > median + 1 s) | Median prefill | Span of the 630 requests |
+|---|---|---|---|---|---|
+| control | `lfm3-profile-v1` | 0 | **24** (3.6-3.9 s each, ~11 M minor faults each) | 0.033 s | 1,535 s |
+| test 1 | `lfm3-uvm-test-v1` | 1 | **0** | 0.033 s | 2,530 s (see below) |
+| test 2 | `lfm3-uvm-test-v1` | 1 | **0** | 0.033 s | 1,436 s |
+
+- **Setup:** uid 1000, `vimg-a5/lfm3-speech`, all 630 requests done with 0 failed in each run. `/dev/nvidia-uvm` opened in the test container (`--device /dev/nvidia-uvm`) and was refused (EPERM) in the control.
+- **By the pre-registered reading:** the test container maps UVM and has at most 2 stalls per run (it has 0 and 0); the control does not map UVM and stalls as before (24). **The cause is established:** in `lfm3-profile-v1`, CUDA runs without UVM, and that is what makes the doorbell write fault.
+- **Test 2's span** is 99 s shorter than the control's, about the control's 24 stalls at ~3.7 s each.
+- **Test 1 was slow for another reason, not explained:** between outputs it had gaps of up to 18 s (the control's largest is 7 s, test 2's 4 s), with normal prefills and 0 stalls. Nothing else was scheduled on Thor in that window. It does not bear on the stall count; it is recorded as found.
+
+**The fix:** run the engine with UVM available. For a container that means `--device /dev/nvidia-uvm` (this Thor's nvidia runtime does not pass it). The always-on service runs on the host, which has UVM.
+- **Recreating `lfm3-profile-v1` is Tripp's call.** Until then, timing measured in it can carry the stall.
+- **Still open:** how `lfm3-profile-v1` got a `/dev/nvidia-uvm` node it may not open. The reboot tonight checks whether the major number moves.
+- The test container is stopped, not removed.
