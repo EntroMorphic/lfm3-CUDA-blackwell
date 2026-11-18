@@ -160,3 +160,21 @@ The image's 2nd request, a hit on the 1st's photograph, is 0.297-0.302 s. Engine
 - The script now stops the crash checks unless the PID is a live `liquid-lfm3` process.
 
 **Not measured in run 1:** crashes 2 and 3, the stop with a request in flight, the final start. Run 2, on a build with the fix, does all of rule 5 again, boot aside.
+
+## Rule 5, run 2 (2026-11-17 23:08-23:09, host, the fixed build; `build/always-on-rule5-run2/`)
+- **Build:** `build/sig-srv2`, main 67c0617 (`SO_REUSEADDR`), installed at `~/.local/lib/liquid-lfm3/000aa16aa5cc/`. Install and verify clean.
+- **Start:** warm and active after 8.12 s; listening on 127.0.0.1:8080 only.
+- **Three SIGTERM crash stand-ins:** every one restarted and came back warm, so the run-1 bug is fixed. As written, **FAIL by 0.14-0.20 s**: warm again after 14.32, 14.35 and 14.38 s, against rule 4's startup + 10 s = 14.18 s.
+  - **Where the time goes** (journal): the exit about 0.45 s after the signal; the unit's `RestartSec=5` (5.1 s); then the startup, 8.75-8.79 s.
+  - **Unexplained:** startup was 8.1-8.8 s here against 4.94 s on run 1's start an hour earlier and 4.18 s in window 15. The warm-up's **text** request took 4.4-5.0 s here against 1.4 s on run 1. The other three kinds took about the same. The power state was identical: MAXN, clocks locked. Not yet investigated: a diagnostic comparing the old and new binary was stopped for the night.
+- **Stop with a streamed TTS request in flight: PASS.**
+  - `systemctl --user stop` exited 0 after 0.45 s.
+  - The unit's result: success, exit status 0.
+  - The client got 200 and its first audio, then a `done` event with `"cancelled":true`.
+  - No server process was left.
+- **Left running:** started again, enabled and active.
+
+**Open, for the morning:**
+1. Why the text warm-up went from 1.4 s to 5 s.
+2. Whether to cut `RestartSec` from 5 s to 1 s. That is a change to the unit, not to the bar; `StartLimitBurst` still guards crash loops. If so, record it as a change, then run the crash checks again.
+3. The boot check: Tripp reboots.
