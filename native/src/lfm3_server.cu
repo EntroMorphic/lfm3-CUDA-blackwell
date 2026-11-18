@@ -29,8 +29,10 @@
 #include "lfm3_worker.cu"
 #include <lfm/lfm3_http.hpp>
 #include <lfm/lfm3_warmup.hpp>
+#include <lfm/stop_signals.hpp>
 
 #include <csignal>
+#include <future>
 #include <cstdlib>
 #include <malloc.h>
 #include <pthread.h>
@@ -170,7 +172,11 @@ int main(int argc,char** argv) try {
   token.assign(token.size(),'\0');
   // First SIGTERM/SIGINT: orderly shutdown. A second one: exit now.
   std::atomic<bool> stopped{false};  // read by the --warmup start only
+  // A thread started without the block (a sanitizer's) forwards to this one (lfm/stop_signals.hpp).
+  std::promise<void> waiting;
   std::thread waiter([&] {
+    lfm::stop_signals::become_waiter(signals);
+    waiting.set_value();
     int received=0;
     sigwait(&signals,&received);
     stopped=true;
@@ -178,6 +184,7 @@ int main(int argc,char** argv) try {
     sigwait(&signals,&received);
     std::_Exit(1);
   });
+  waiting.get_future().get();
   if(warmup) {
     const int image_cache_mb=settings.image_cache_mb;
     std::_Exit(lfm::http::warmup::serve_with_warmup(*service,*server,

@@ -6,6 +6,7 @@ build variant (plain, ASan+UBSan, TSan) runs every scenario; a sanitizer report 
 Every JSON response is also checked byte for byte against Python's json.dumps of its own content.
 """
 import contextlib
+import ctypes
 import json
 import os
 from pathlib import Path
@@ -562,6 +563,61 @@ def test_listener_closes_and_second_signal_exits(harness_binary):
         assert h.process.poll() is None  # still waiting for the engine call
         started = time.monotonic()
         h.process.send_signal(signal.SIGTERM)
+        assert h.process.wait(timeout=5) == 1 and time.monotonic() - started < 2
+        thread.join(10)
+    finally:
+        h.process.kill()
+
+
+# lfm/stop_signals.hpp: a thread started without the SIGTERM/SIGINT block (a sanitizer's; image-cache-v1 window 13)
+# that receives the signal forwards it to the waiting thread, so the stop is the orderly one, not the default action.
+SYS_TGKILL = {"x86_64": 234, "aarch64": 131}[os.uname().machine]
+
+
+def tgkill(pid, tid, sig):
+    libc = ctypes.CDLL(None, use_errno=True)
+    if libc.syscall(SYS_TGKILL, pid, tid, int(sig)) != 0:
+        raise OSError(ctypes.get_errno(), "tgkill")
+
+
+def unmasked_harness(binary, tmp_path, *options):
+    tid_file = tmp_path / "unmasked.tid"
+    h = Harness(binary, "--unmasked-thread-file", tid_file, *options)
+    tid = int(tid_file.read_text())
+    assert tid != h.process.pid
+    blocked = int(next(line for line in Path(f"/proc/{h.process.pid}/task/{tid}/status").read_text().splitlines()
+                       if line.startswith("SigBlk:")).split()[1], 16)
+    assert blocked & (1 << (signal.SIGTERM - 1)) == 0  # the thread really does not block SIGTERM
+    return h, tid
+
+
+@pytest.mark.parametrize("sig", [signal.SIGTERM, signal.SIGINT])
+def test_stop_signal_on_an_unmasked_thread_is_the_orderly_stop(harness_binary, tmp_path, sig):
+    h, tid = unmasked_harness(harness_binary, tmp_path)
+    try:
+        assert h.call("GET", "/health", auth=False)[0] == 200
+        thread, result = in_thread(h.call, "POST", "/sessions", {"capacity": 64})
+        thread.join(30)
+        tgkill(h.process.pid, tid, sig)
+        code = h.process.wait(timeout=30)
+        stderr = h.process.stderr.read().decode()
+        assert code == 0 and not stderr, (code, stderr)  # without forwarding: killed by the signal (code -sig)
+    finally:
+        h.process.kill()
+
+
+def test_second_signal_on_an_unmasked_thread_still_exits_at_once(harness_binary, tmp_path):
+    h, tid = unmasked_harness(harness_binary, tmp_path, "--create-delay-ms", "8000")
+    try:
+        thread, _ = in_thread(h.call, "POST", "/sessions", {"capacity": 64})
+        time.sleep(0.5)
+        tgkill(h.process.pid, tid, signal.SIGTERM)
+        time.sleep(0.5)
+        with pytest.raises(ConnectionRefusedError):
+            socket.create_connection(("127.0.0.1", h.port), timeout=2)
+        assert h.process.poll() is None  # orderly: still waiting for the engine call
+        started = time.monotonic()
+        tgkill(h.process.pid, tid, signal.SIGTERM)
         assert h.process.wait(timeout=5) == 1 and time.monotonic() - started < 2
         thread.join(10)
     finally:

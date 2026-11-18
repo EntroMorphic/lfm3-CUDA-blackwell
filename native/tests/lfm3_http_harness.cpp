@@ -8,20 +8,24 @@
 //                     [--speech-rows N (default 2; 0: one /speech at a time through op "speech")] [--fail-op OP] [--fail-after N] [--port N] [--request-timeout S] [--socket-timeout S]
 //                     [--session-idle-timeout S] [--total-capacity N] [--max-sessions N] [--queue-size N]
 //                     [--handlers N] [--text-slice N] [--trace-ops FILE (each engine call's op, one per line)]
-//                     [--warmup] [--warmup-inputs DIR]
+//                     [--warmup] [--warmup-inputs DIR] [--unmasked-thread-file FILE]
 // --warmup: liquid-lfm3-server's (validation/always-on-v1, lfm/lfm3_warmup.hpp), the same code: the four requests
 // through this Service and the fake engine before the ready line; --engine-cache-mb's budget is 0 until it has run.
 // --warmup-inputs DIR: writes the warm-up's generated image and clip (DIR/warmup.png, DIR/warmup.wav) for the tests.
+// --unmasked-thread-file FILE: starts a thread that does not block SIGTERM/SIGINT (as a sanitizer's thread) and writes
+// its thread id to FILE before the ready line, for the stop-signal forwarding test (lfm/stop_signals.hpp).
 // Token from LFM3_SERVER_TOKEN. Prints {"ready":true,"port":N}. SIGTERM exits like liquid-lfm3-server.
 #include <lfm/lfm3_http.hpp>
 #include <lfm/lfm3_warmup.hpp>
 #include <lfm/speech_run.hpp>
+#include <lfm/stop_signals.hpp>
 #include <lfm/lfm3_text_request.hpp>
 #include <lfm/text_batch_cancellation.hpp>
 #include <lfm/text_cancellation.hpp>
 #include <lfm/text_sessions.hpp>
 
 #include <csignal>
+#include <future>
 #include <iostream>
 #include <pthread.h>
 #include <sstream>
@@ -455,7 +459,7 @@ int main(int argc, char** argv) try {
   int speech_truncate = 0;
   std::string stream_fault;
   int stream_piece_bytes = 4, speech_rows = 2;
-  std::string trace_ops, warmup_inputs;
+  std::string trace_ops, warmup_inputs, unmasked_thread_file;
   for (int i = 2; i < argc; i += 2) {
     const std::string o = argv[i], v = argv[i + 1];
     if (o == "--mode") mode = v;
@@ -477,6 +481,7 @@ int main(int argc, char** argv) try {
     else if (o == "--speech-rows") speech_rows = std::stoi(v);
     else if (o == "--trace-ops") trace_ops = v;
     else if (o == "--warmup-inputs") warmup_inputs = v;
+    else if (o == "--unmasked-thread-file") unmasked_thread_file = v;
     else if (o == "--fail-after") fail_after = std::stoi(v);
     else if (o == "--port") port = std::stoi(v);
     else if (o == "--request-timeout") settings.request_timeout = std::stod(v);
@@ -539,7 +544,10 @@ int main(int argc, char** argv) try {
   auto service = std::make_unique<lfm::http::Service>(engine, tokenizer, policy, settings);
   auto server = std::make_unique<lfm::http::Server>(*service, token, port);
   std::atomic<bool> stopped{false};
+  std::promise<void> waiting;
   std::thread waiter([&] {
+    lfm::stop_signals::become_waiter(signals);
+    waiting.set_value();
     int received = 0;
     sigwait(&signals, &received);
     stopped = true;
@@ -547,6 +555,18 @@ int main(int argc, char** argv) try {
     sigwait(&signals, &received);
     std::_Exit(1);
   });
+  waiting.get_future().get();
+  if (!unmasked_thread_file.empty()) {  // a thread without the signal block, as a sanitizer's (lfm/stop_signals.hpp)
+    std::promise<pid_t> started;
+    std::thread([&started] {
+      sigset_t none;
+      sigemptyset(&none);
+      pthread_sigmask(SIG_SETMASK, &none, nullptr);
+      started.set_value(pid_t(::syscall(SYS_gettid)));
+      for (;;) ::pause();
+    }).detach();
+    std::ofstream(unmasked_thread_file) << started.get_future().get() << "\n";
+  }
   if (warmup)
     std::_Exit(lfm::http::warmup::serve_with_warmup(
         *service, *server, [&engine, engine_cache_mb] { engine.engine_cache_.set_budget(size_t(engine_cache_mb) << 20); },
