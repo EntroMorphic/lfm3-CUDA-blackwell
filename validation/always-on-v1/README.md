@@ -128,3 +128,15 @@ The image's 2nd request, a hit on the 1st's photograph, is 0.297-0.302 s. Engine
 - Rule 4: startup 4.18 s, with the behaviour host-tested.
 - Rule 6: PASS.
 - Rule 5: needs the host run and Tripp's `enable-linger`.
+
+## Rule 2, the text part (2026-11-17 19:47-19:49; `build/always-on-warm-text/`): **PASS**
+**Check:** `tools/check_lfm3_warm_text.py` on window 15's build. Each of the soak's three text bodies is the first request on a fresh server with `--warmup` and on a fresh server without it, six servers in all. The `/generate` replies are compared field by field: text, generated_ids, finish_reason, consumed and reused tokens, seed, do_sample, cancelled, cache_valid, gpu_batching.
+- **Run 1 (kept as `always-on-warm-text-run1-session-id/`): DIFFER, a tool fault.** The only field that differed was `session_id`, a random id per session, which is not output. The fake server in the host test did not return it, so the test missed it.
+- **Fix:** the tool now ignores `session_id` along with timings, and the fake returns it.
+- **Run 2:** all 3 identical, every server exits 0.
+
+**always-on-v1 standing:**
+- Rule 0: proceed.
+- Rules 1, 2, 3 and 6: PASS (rule 1 as amended).
+- Rule 4: startup 4.18 s.
+- Rule 5: to do. It needs the host run and Tripp's `enable-linger`.
