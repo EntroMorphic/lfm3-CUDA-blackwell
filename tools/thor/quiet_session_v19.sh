@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Quiet window 19 (after window 18): validation/audio-handles-v1's rules on Thor. This script runs and records; the
+# Quiet window 19 (launched by hand after Thor's reboot for always-on-v1 rule 5): validation/audio-handles-v1's rules on Thor. This script runs and records; the
 # verdicts are read from its logs against the round's README. Sources: the audio-handles-v1 branch synced to
 # build/audio-src-h; the base server's sources (main at a350659) in build/audio-src-base.
 #   1. tools/thor/quiet_audio_rest.sh from build/audio-src-h, with its own names (QAR_OUT=quiet-w19-handles-rest,
@@ -33,7 +33,14 @@ done
 grep -q "audio_ref" $B/$S/native/src/lfm3_worker.cu 2>/dev/null || { echo "MISSING audio_ref in build/$S (not the audio-handles-v1 tree)"; missing=1; }
 [ $missing = 0 ] || { echo "NOT STARTED: inputs missing"; echo "QUIET-V19-FINISHED $(date +%T)"; exit 1; }
 
-until grep -q "^QUIET-V18-FINISHED\|^NOT QUIET" $B/quiet-w18.log 2>/dev/null; do sleep 60; done
+# the always-on service (always-on-v1), if running, is stopped for this window and started again when it ends, however
+# it ends (a running server is "busy" to every timing check)
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+SVC=0
+if systemctl --user is-active --quiet liquid-lfm3 2>/dev/null; then
+  systemctl --user stop liquid-lfm3 && SVC=1 && echo "stopped liquid-lfm3 for this window $(date +%T)"
+fi
+trap '[ $SVC = 1 ] && systemctl --user start liquid-lfm3 && echo "started liquid-lfm3 again $(date +%T)"' EXIT
 busy() { pgrep -af "[l]fm3-speech|[l]iquid-lfm3|[c]ompute-sanitizer|[l]fm3-vision-check|[a]udio-encoder-bench|[v]envs/hf-|[n]sys|[t]cgen05_gemm|[t]cgen05-soak|[t]gemm_host_race|[f]rontend-|[n]vcc|[c]make --build|[n]inja" | grep -v "quiet_" | head -3; }
 wait_quiet() {  # 3 quiet checks in a row, 30 s apart, within $1 checks
   local quiet=0 i
