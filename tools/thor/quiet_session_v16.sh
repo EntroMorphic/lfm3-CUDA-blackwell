@@ -25,7 +25,7 @@ T=$C/$S/tools
 step() { echo "== $1 $(date +%T)"; }
 
 missing=0
-for f in $B/$S/native/tests/audio_parse_bench.cpp $B/$S/tools/measure_lfm3_audio_stall.py $B/$S/tools/check_lfm3_image_server.py \
+for f in $B/$S/native/tests/audio_parse_bench.cpp $B/$S/tools/measure_lfm3_audio_stall.py $B/$S/tools/check_lfm3_image_server.py $B/racecheck-pinned-libs-v1 \
          $B/$OLD/liquid-lfm3-server $B/$E2E/out $B/$J90 $W/data/librispeech/wav/4507-16021-0047.wav; do
   [ -e $f ] || { echo "MISSING $f"; missing=1; }
 done
@@ -96,7 +96,8 @@ step "4. nsys trace of one 90-second stall run at 8 rows (host)"
 if command -v nsys > /dev/null; then
   printf '[{"name": "joined90", "wav": "%s"}]\n' $B/$J90 > clips-90-host.json
   run_nsys() {
-    nsys profile --trace=cuda,nvtx,osrt "$@" --output nsys-stall-90 --force-overwrite true \
+    # the host has no CUDA 13.5 runtime on its default path: the pinned libraries, as window 14's host run
+    LD_LIBRARY_PATH=$B/racecheck-pinned-libs-v1:/usr/lib/aarch64-linux-gnu/nvidia nsys profile --trace=cuda,nvtx,osrt "$@" --output nsys-stall-90 --force-overwrite true \
       python3 $B/$S/tools/measure_lfm3_audio_stall.py $B/$SRV/liquid-lfm3-server $W/models/LFM3-Omni-2B $B/$O/clips-90-host.json 8 \
       $B/$O/nsys-stall-90.json 1 > nsys.log 2>&1
   }
