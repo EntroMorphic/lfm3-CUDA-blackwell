@@ -710,3 +710,79 @@ Run from a copy of this branch with the checkpoint beside it, so no suite skips 
 - The 2 skips are `test_lfm3_http_native.py`'s memory tests, which run only on the uninstrumented build.
 - This includes all the HTTP suites (audio-in, image-in, speech, stream, batch, native, framing, the cancellation and
   batch gates) and the audio-input host suite.
+
+## Quiet window 12 (2026-11-17, run by Tripp; QUIET-V12-FINISHED 17:40:06): rule 3 **FAIL**; images FAIL (stale reference); the rest PASS
+`quiet_audio_rest.sh`, results on Thor in `build/quiet-audio-rest/` (log `build/quiet-w12.log`). Recorded from the
+coordinator's report; this session did not read Thor.
+
+**PASS:**
+- the concurrent engine: conc8, conc8-staggered and conc16-staggered, 41 of 41 identical each;
+- the batch server, the stream check, the TTS server check (`speech-check`), the audio-in server check;
+- e2e and split, 90 of 90 identical each;
+- lfm3-speech's regression refusals;
+- **the memory bound:** growth 309 MiB with 16 distinct 90 s clips at once (bound 1,024 MiB).
+
+**FAIL, images through the server: the reference is stale, not the server (not yet confirmed by a rerun).**
+- The runner checked against `vimg-e2e-a1`. The current reference is `vimg-e2e-a4`, from after images-speed-v1 moved
+  the vision encoder to the tensor cores; window 10 passed against a4.
+- 7 of 11 cases failed: china, gray, mirror, noise, rgba, small, tall. They failed alike unstreamed, streamed and
+  concurrent.
+- Those 7 are exactly the cases whose text differs between `vimg-e2e-a1/out` and `vimg-e2e-a4/out`. The 4 that passed
+  (cherry, flower, two, wide) are identical in both.
+- **Fixed:** the runner now checks against `vimg-e2e-a4`. The coordinator is queueing an exactness rerun against a4 on
+  `audio-fe-w-srv`.
+
+**FAIL, rule 3 (the stall), as written.** Each stall is the median worst gap with the clip minus without, in seconds.
+The bar is the clip's encoder alone + its language-model prefill + 10 ms:
+
+| rows | clip | base server (rule 0's record) | new server | bar | verdict |
+|---|---|---|---|---|---|
+| 8 | short (2.1 s) | 0.0595 | 0.0376 | 0.0392 | PASS |
+| 8 | median (5.8 s) | 0.1103 | 0.0501 | 0.0488 | FAIL (+1.3 ms) |
+| 8 | typical (10.4 s) | 0.1730 | 0.0693 | 0.0649 | FAIL (+4.4 ms) |
+| 8 | long (35 s) | 0.4972 | 0.1440 | 0.1327 | FAIL (+11.3 ms) |
+| 8 | 90 s | 1.2342 | 0.3555 | 0.3020 | FAIL (+53.5 ms) |
+| 16 | short | 0.0509 | 0.0323 | 0.0392 | PASS |
+| 16 | median | 0.1009 | 0.0437 | 0.0488 | PASS |
+| 16 | typical | 0.1671 | 0.0592 | 0.0649 | PASS |
+| 16 | long | 0.4900 | 0.1384 | 0.1327 | FAIL (+5.7 ms) |
+| 16 | 90 s | 1.2297 | 0.3533 | 0.3020 | FAIL (+51.3 ms) |
+
+- The handler-thread front end cut the stall about 3.5× (1.23 → 0.355 s at 90 s).
+- But 6 of the 10 cells exceed the bar. The bar stays as written: **rule 3 fails.**
+- Above the encoder and the prefill, the unexplained part (the excess plus the bar's 10 ms) grows with the clip:
+  about 11, 14, 16–21 and 61–63 ms at 5.8, 10.4, 35 and 90 s.
+- Rule 0's record: the base server's 90 s stall was 1.23 s at both row counts, far above its 50 ms test. Building
+  part 2 was justified.
+
+**Hypotheses for the remaining gap (not yet tested):**
+1. **CPU contention from the handler-thread front end.**
+   - F2's `log_mel` runs on 4 threads (0.17 s for 90 s of audio), at the same time as the engine thread steps the
+     other rows. The engine thread's host sampling and launches compete for cores, and up to 2 clips can run at once
+     (8 threads).
+   - That would slow steps during the feature computation, before admission. It would grow with clip length and
+     would not appear in the bar, which was measured alone.
+   - It is the red-team's unmeasured finding 7.
+2. **Per-byte work still on the engine thread at admission.**
+   - The in-process backend hands WorkerCore the request as one JSON line, about 3.8 MB of base64 for 90 s.
+   - The engine thread parses that line, decodes the base64, parses the WAV and converts the samples
+     (`parse_speech`) before it finds the features.
+   - That is linear in the clip, roughly tens of ms at 90 s on one Thor core, and is not in the bar either.
+3. **Smaller suspects:**
+   - copying the clip's samples into `Options`;
+   - loading the prefilled row into the batch (`dec_.load`, proportional to the prompt);
+   - scratch allocation in the encoder under the server's memory state.
+
+**Measurements wanted next** (quiet; diagnostic, no rule):
+- a trace (nsys/NVTX, as for the prefill-stall investigation) of one 90 s admission at 8 rows. It would split the
+  60 ms between the engine thread's host work (parse and decode), the GPU (encoder and prefill), and slower steps
+  while the handler computes features;
+- the stall at 90 s with the handler's `log_mel` on 1 thread against 4 (hypothesis 1). That needs a
+  `LFM3_MEL_THREADS` switch, which does not exist yet;
+- a host microbenchmark on Thor of `parse_speech`'s per-clip work for the 90 s request (JSON parse and
+  `clip_from_base64`), single-threaded (hypothesis 2).
+
+**Not in the coordinator's report** (to confirm from `build/quiet-audio-rest/`):
+- the text gate;
+- the regression's 36 SAME count;
+- the audio-in files (360 + 93, with F2's 5 expected differences).

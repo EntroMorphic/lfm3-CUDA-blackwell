@@ -137,7 +137,8 @@ rm -rf $B/$O/text-gate
 $X python3 $CT/check_lfm3_native_server.py --checkpoint $M --server $C/$SV/liquid-lfm3-server --worker $C/$SV/liquid-lfm3-worker \
   --control-result /workspace/tmp/control-codecfree-remediated-001/output.json --output $C/$O/text-gate > text-gate.log 2>&1
 gate $? "text gate"
-$X python3 $CT/check_lfm3_image_server.py $C/$SV/liquid-lfm3-server $M $C/vimg-e2e-a1 $C/$O/image-server.json > image-server.log 2>&1
+# images-speed-v1 (the vision encoder on the tensor cores) made vimg-e2e-a4 the reference; a1 is stale (quiet window 12)
+$X python3 $CT/check_lfm3_image_server.py $C/$SV/liquid-lfm3-server $M $C/vimg-e2e-a4 $C/$O/image-server.json > image-server.log 2>&1
 gate $? "images through the server"
 
 bash $HERE/power_state.sh power-end.json power-start.json > /dev/null || nr "VOID: the power state changed during the run"
