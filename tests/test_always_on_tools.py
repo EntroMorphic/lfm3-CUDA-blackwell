@@ -205,3 +205,13 @@ def test_image_third_makes_the_third_image_a_miss(tmp_path, build):
         firsts = [x["ttft"] for x in s["requests"]["image"]]
         assert firsts[1] < 0.3 < firsts[2]  # 2nd a hit (the 1st's image), 3rd a miss
     assert r["rule1"]["passed"] is True
+
+
+def test_warm_text_check_compares_cold_and_warm_first_replies(tmp_path):
+    import check_lfm3_warm_text as warm_text
+    server = wrapper(tmp_path / "server", {"FAKE_COLD": "0.05"})
+    out = tmp_path / "out.json"
+    assert warm_text.main([server, str(tmp_path), str(out)]) == 0
+    r = json.loads(out.read_text())
+    assert r["passed"] is True and len(r["rows"]) == 3
+    assert all(row["identical"] and row["exits_clean"] == [True, True] for row in r["rows"])
