@@ -92,8 +92,24 @@ inline const std::vector<float>& mel_filters() {
   return filters;
 }
 
-// Threads one clip's features use by default (validation/audio-frontend-v1: fixed before rule 2's measurement).
+// Threads one clip's features use by default (validation/audio-frontend-v1: fixed before rule 2's measurement, kept by
+// it).
 inline constexpr int kMelThreads = 4;
+// The process's thread count for log_mel: kMelThreads, or LFM3_MEL_THREADS (an integer 1..64, read once; anything else
+// is refused). A diagnostic switch (audio-frontend-v1, quiet window 16: the stall with 1 thread against 4); the
+// features do not depend on it (rule 1).
+inline int mel_threads() {
+  static const int n = [] {
+    const char* v = std::getenv("LFM3_MEL_THREADS");
+    if (!v || !*v) return kMelThreads;
+    const std::string s = v;
+    const bool digits = s.size() <= 2 && std::all_of(s.begin(), s.end(), [](char c) { return c >= '0' && c <= '9'; });
+    const int k = digits ? std::stoi(s) : 0;
+    if (k < 1 || k > 64) throw std::runtime_error("LFM3_MEL_THREADS: an integer 1..64");
+    return k;
+  }();
+  return n;
+}
 // How the features are computed (validation/audio-frontend-v1):
 // - kDft: today's direct sums in double (rule 1's bytes; the fallback);
 // - kFft: amendment 1's double FFT, rounded as computed (failed amended rule 1; kept as the audited candidate);
@@ -635,7 +651,7 @@ inline void log_mel_frames(const float* x, size_t T, size_t t0, size_t t1, float
 
 // The clip's features, [128][frames(n)] (row-major: mel-major, as HF's input_features[0]), computed on up to
 // `threads` threads (the calling thread included; at least 64 frames each). The result does not depend on `threads`.
-inline std::vector<float> log_mel(const std::vector<float>& samples, int threads = kMelThreads,
+inline std::vector<float> log_mel(const std::vector<float>& samples, int threads = mel_threads(),
                                   Transform transform = default_transform()) {
   if (samples.empty()) throw std::runtime_error("audio features: empty clip");
   if (threads < 1) throw std::runtime_error("audio features: threads < 1");

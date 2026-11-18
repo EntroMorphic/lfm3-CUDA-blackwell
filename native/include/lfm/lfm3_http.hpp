@@ -891,7 +891,7 @@ class Service {
       }
   }
   // validation/audio-frontend-v1: each audio clip's features (lfm::audio_features::log_mel) computed on the request's
-  // own handler thread, at most kAudioFeatureSlots clips at a time (each on up to kMelThreads threads), and left for
+  // own handler thread, at most kAudioFeatureSlots clips at a time (each on up to mel_threads() threads), and left for
   // the in-process engine, so the thread that steps every row no longer computes them. It runs after encode_speech
   // (red-team finding 1): a request the front end refuses is refused exactly as before, at the cost it had before; the
   // clips are the engine request's own (s.audio_clips: spans of s.audio_json, no copies). A clip whose features are

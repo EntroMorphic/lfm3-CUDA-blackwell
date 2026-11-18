@@ -782,7 +782,37 @@ The bar is the clip's encoder alone + its language-model prefill + 10 ms:
 - a host microbenchmark on Thor of `parse_speech`'s per-clip work for the 90 s request (JSON parse and
   `clip_from_base64`), single-threaded (hypothesis 2).
 
-**Not in the coordinator's report** (to confirm from `build/quiet-audio-rest/`):
-- the text gate;
-- the regression's 36 SAME count;
-- the audio-in files (360 + 93, with F2's 5 expected differences).
+**Also PASS** (confirmed by the coordinator from `build/quiet-audio-rest/`):
+- **the text gate:** `text-gate.log` "status": "passed" (startup 0.888 s; stage shutdown;
+  `post_contention_both_sessions_exact` true; exit status 0);
+- **lfm3-speech's regression:** 36 SAME; the 5-chunk long cases all ended by EOS; every REFUSE case refused;
+- **the audio-in stage files:** the dump differs only in F2's 5 expected files (8455-210777-0002's mel,
+  8555-292519-0007's mel, down, encoded and features), nothing is missing; the edge cases are 93 of 93 identical; the
+  gate did not fail.
+
+With the image check's stale reference fixed, rule 6 has passed in full except images through the server, which waits
+on the rerun against `vimg-e2e-a4`. Rule 3 fails as recorded.
+
+## For the stall's remaining gap (2026-11-17): a switch, a benchmark and quiet window 16's script (diagnostic only)
+- **`LFM3_MEL_THREADS`:** an integer 1..64, read once by every binary; anything else is refused with its name. It sets
+  `log_mel`'s default thread count (`lfm::audio_features::mel_threads()`, default `kMelThreads` = 4).
+  - The features do not depend on it (rule 1).
+  - Host tests, plain, ASan+UBSan and TSan, 73 of 73: `test_audio_input_host.py::test_mel_threads_switch` checks
+    1, 4, 12 and 64 threads give byte-identical features with the count taken, and that "0", "65", "x", "4x", " 4"
+    and "-1" are refused.
+  - `audio-input-tool mel` now reports the thread count it used.
+- **`native/tests/audio_parse_bench.cpp`:** the engine thread's per-clip work before it finds the features, on one
+  thread: `Json::parse` of the engine request line carrying the clip, `clip_from_base64` with the token count, and the
+  cache lookup.
+  - On the workstation (x86, not Thor; indicative only), the 35 s clip took 12.5 ms: parse 4.8 ms, decode 7.6 ms,
+    lookup 0.06 ms.
+  - Scaled to 90 s, about 30 ms: the same order as the gap above the bar (hypothesis 2).
+- **`tools/thor/quiet_session_v16.sh`** (written and checked with `bash -n` and shellcheck; not launched; Tripp
+  launches it). It waits for `QUIET-V15-FINISHED`, uses window 15's `busy()` and `wait_quiet`, records and decides
+  nothing, and writes `build/quiet-w16-audio/`:
+  0. builds `audio-fe-v16-srv` (the server with the switch) and `audio-fe-v16-parse`, both from `build/audio-src-b`;
+  1. images through the server on `audio-fe-w-srv` against `vimg-e2e-a4` (exactness);
+  2. the 90 s stall at 8 rows with `LFM3_MEL_THREADS` 4, 1, 4 (3 repeats each);
+  3. `audio-parse-bench` on the 90 s and 35 s clips (20 repeats);
+  4. an nsys trace (host) of one 90 s stall run at 8 rows, with CUDA, NVTX and OS-runtime traces, and CPU sampling
+     where permitted.

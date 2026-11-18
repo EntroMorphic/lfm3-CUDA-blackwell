@@ -213,6 +213,33 @@ def test_correctly_rounded_features_agree_across_paths_and_threads(tool, tmp_pat
     assert r["ok"]
 
 
+def test_mel_threads_switch(tool, tmp_path):
+    """LFM3_MEL_THREADS (audio-frontend-v1, a diagnostic switch): log_mel runs on that many threads, the features
+    byte-identical at any count; anything but an integer 1..64 is refused with its name."""
+    rng = np.random.default_rng(11)
+    q = (np.clip(0.2 * rng.standard_normal(48_000), -1, 1) * 32767).astype("<i2")
+    wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
+
+    def mel(value):
+        env = {k: v for k, v in os.environ.items() if k != "LFM3_MEL_THREADS"}
+        if value is not None:
+            env["LFM3_MEL_THREADS"] = value
+        out = tmp_path / f"mel-{value}.f32"
+        return subprocess.run([*command(tool), "mel", str(wav), str(out)], capture_output=True, text=True, env=env,
+                              timeout=600), out
+    r, base = mel(None)
+    assert r.returncode == 0, r.stderr
+    assert json.loads(r.stdout)["threads"] == 4  # kMelThreads
+    for value, threads in (("1", 1), ("4", 4), ("12", 12), ("64", 64)):
+        r, out = mel(value)
+        assert r.returncode == 0, r.stderr
+        assert json.loads(r.stdout)["threads"] == threads
+        assert out.read_bytes() == base.read_bytes(), value
+    for value in ("0", "65", "x", "4x", " 4", "-1"):
+        r, _ = mel(value)
+        assert r.returncode != 0 and "LFM3_MEL_THREADS" in r.stderr, (value, r.returncode, r.stderr)
+
+
 def test_base64_encode_matches_python(tmp_path):
     """lfm::base64::encode (the worker's WAV and streamed-audio encoder) against Python's, and through the strict
     decoder back to the bytes."""

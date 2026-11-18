@@ -2,7 +2,7 @@
 //   audio-input-tool wav FILE...      -> {"ok":true,"rate":R,"samples":N,"sum":S} or {"ok":false,"error":"..."}
 //   audio-input-tool b64 FILE...      -> {"ok":true,"hex":"..."} or {"ok":false,"error":"..."} (FILE holds the text)
 //   audio-input-tool mel WAV OUT.f32  -> writes lfm::audio_features::log_mel of the clip ([128][frames] float32) and
-//                                        prints {"frames":T,"tokens":N}
+//                                        prints {"frames":T,"tokens":N,"threads":K} (K: log_mel's thread count, LFM3_MEL_THREADS)
 //   audio-input-tool mel-threads WAV  -> log_mel at 1 to 12 threads and from 8 callers at once, each byte-identical to
 //                                        the 1-thread result (validation/audio-frontend-v1); {"ok":true,"frames":T}
 #include <lfm/audio_features.hpp>
@@ -70,7 +70,8 @@ int main(int argc, char** argv) try {
     std::ofstream f(argv[3], std::ios::binary);
     f.write(reinterpret_cast<const char*>(mel.data()), std::streamsize(mel.size() * sizeof(float)));
     std::cout << "{\"frames\":" << lfm::audio_features::frames(a.samples.size())
-              << ",\"tokens\":" << lfm::audio_features::tokens(a.samples.size()) << "}\n";
+              << ",\"tokens\":" << lfm::audio_features::tokens(a.samples.size())
+              << ",\"threads\":" << lfm::audio_features::mel_threads() << "}\n";
     return f ? 0 : 1;
   }
   for (int i = 2; i < argc; ++i) {
