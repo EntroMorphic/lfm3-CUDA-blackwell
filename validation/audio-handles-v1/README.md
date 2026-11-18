@@ -58,3 +58,51 @@ measurement first:
 2. run them on cores the engine thread does not use;
 3. the cheaper direct DFT, which is not correctly rounded. That would reverse audio-frontend-v1 amendment 2's decision
    and is **Tripp's call**.
+
+## The code (2026-11-17, after the rules)
+- `lfm::audio_features::FeatureCache` (`audio_features.hpp`):
+  - each entry holds a handle (a 64-bit counter, assigned when the entry is created and never reused) and the clip's
+    sample count beside its features;
+  - `resolve(handle)` returns the features and sample count only while some lease holds the entry;
+  - `clip_of(handle)` is for tests.
+- `Service::compute_audio_features` (`lfm3_http.hpp`): when every clip of a request has a lease, the request gets
+  `audio_refs_json`, and `audio_field` puts `"audio_ref": [handles]` into the engine request in place of `"audio"`.
+  Otherwise the base64 goes as before, for every clip. `LFM3_AUDIO_AHEAD_SKIP=k` (diagnostic, an integer 0..63)
+  leaves a request's k-th clip out, for rule 1's mixed requests.
+- `WorkerCore::parse_speech` (`lfm3_worker.cu`):
+  - takes `"audio_ref"`, resolving each handle;
+  - an unknown or expired handle is refused ("unknown audio handle N"), as is a request carrying both `"audio"` and
+    `"audio_ref"`;
+  - it fills `Options::audio_lengths` (sample counts) and `audio_features`, and no samples.
+- The speech engine (`lfm3_speech.cuh`): the sample counts come from `audio_clip_length()` (samples or
+  `audio_lengths`). A request by handle must have every clip's features and no samples, or it is refused.
+- The out-of-process worker and lfm3-speech never see `"audio_ref"`: `Policy::audio_features_ahead` is on in
+  liquid-lfm3-server only.
+- Tools:
+  - `tools/nsys_audio_admission.py` reads rule 3's reported figure from a trace. On window 16's trace it gives 35.3 ms,
+    as found by hand;
+  - `tools/thor/quiet_audio_rest.sh` takes `QAR_OUT` and `QAR_TAG`, so window 19 runs it from this tree without
+    touching window 12's builds or results;
+  - `tools/thor/quiet_session_v19.sh` (not launched).
+
+## Rule 4's red-team of the handle lifetime (2026-11-17): the cases checked, and how
+| case | how checked | finding |
+|---|---|---|
+| A handle sent while its request's lease is gone | Code. The engine request is framed and passed to the in-process engine in one synchronous call (`backend_.call`) from code that holds the request: `speech()`'s `request`, `speech_stream()`'s, and the batch scheduler's ticket (`t->request`) for `speech_admit`. `parse_speech` resolves every handle inside that call. | Sound: a handle is only ever resolved while its lease lives |
+| The engine's use after the request ends | Code. `resolve` copies the features' `shared_ptr` into `Options`. The encoder reads them at admission, inside the same call. | Sound: no use of the entry after resolution |
+| A handle outliving its request | Unit test (`audio-input-tool cache-handles`, all three builds). After the last lease is released, `resolve` and `clip_of` return nothing. | Refused, as required |
+| An unknown handle | Unit test (handles 0 and 2^64−1). In `parse_speech`, any id ≤ 0 or unresolved is refused with its number. | Refused, never recomputed |
+| A handle naming another clip | Unit test: handles are never reused (a clip put again after release gets a new one). HTTP harness: the fake engine checks every handle's features against `log_mel` of the clip the handle names (`clip_of`), including two clips differing only in their last sample, sent at once 14 times. | Sound |
+| The same clip in requests at once, or twice in one | Unit test: one entry, one handle, two leases, freed after the last. HTTP tests: the same clip in requests at once, and two clips in one request. | Sound |
+| A request cancelled after its handles were sent | HTTP test `test_features_are_dropped_when_a_request_ends_however_it_ends`: a refused request, a client gone while queued, a 504 deadline, a stream dropped mid-reply; then a request alone finds exactly its own entry, by handle ("entries 1 refs"). | Sound: entries released |
+| Concurrency | Unit test under TSan: 8 threads, put, resolve and `clip_of` over shared clips, 2,000 times each. `Lease::handle()` reads the handle without the lock; it is written once, under the lock, before any lease on the entry exists, so the lock orders the write before every read. | No race reported |
+| Exceptions | Code. `put` erases a half-made entry if indexing its handle throws. The `Lease` constructor and `handle()` cannot throw. | Sound |
+| A malformed request to the engine | Code. `"audio"` and `"audio_ref"` together are refused, as is a request by handle with samples or with a clip lacking features (`lfm3_speech.cuh`). | Refused |
+| The out-of-process worker sent a handle | Code. It never is: the policy is off outside liquid-lfm3-server. If one arrived, its empty cache makes it an unknown handle. | Refused |
+| Mixed requests | HTTP test: with a clip left out, the whole request goes as base64 with the same prompt, and the fake engine still checks the held clip's features. | Sound |
+
+**Not changed:**
+- a request by handle still keeps its clips' base64 in `Speech::audio_json` until it ends (memory as audio-frontend-v1
+  measured it: growth 309 MiB for 16 × 90 s);
+- this pass was mine, not an independent reviewer's. Rule 4 asks for "a red-team pass on the handle lifetime"; an
+  independent one can follow if Tripp wants it.
