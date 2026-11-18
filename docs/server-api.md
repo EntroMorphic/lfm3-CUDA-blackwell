@@ -9,6 +9,9 @@
 - Bodies are at most 4 MiB, parsed strictly: duplicate keys, non-finite numbers, invalid UTF-8, nesting over 64 and
   unknown fields are refused with a 400 naming the problem.
 - `SIGTERM` stops admission, cancels running generations at their next token, and exits 0.
+- `--warmup` (off by default): one request of each kind before the ready line, which then also carries
+  `"warmup_seconds"`; meanwhile `GET /health` is 503 and every `POST` 503 `warming_up`. A failed warm-up exits 1.
+  Running as a systemd service: [service.md](service.md).
 
 The authoritative contract is the comment above each handler in `native/include/lfm/lfm3_http.hpp`.
 

@@ -8,8 +8,13 @@
 //                     [--speech-rows N (default 2; 0: one /speech at a time through op "speech")] [--fail-op OP] [--fail-after N] [--port N] [--request-timeout S] [--socket-timeout S]
 //                     [--session-idle-timeout S] [--total-capacity N] [--max-sessions N] [--queue-size N]
 //                     [--handlers N] [--text-slice N] [--trace-ops FILE (each engine call's op, one per line)]
+//                     [--warmup] [--warmup-inputs DIR]
+// --warmup: liquid-lfm3-server's (validation/always-on-v1, lfm/lfm3_warmup.hpp), the same code: the four requests
+// through this Service and the fake engine before the ready line; --engine-cache-mb's budget is 0 until it has run.
+// --warmup-inputs DIR: writes the warm-up's generated image and clip (DIR/warmup.png, DIR/warmup.wav) for the tests.
 // Token from LFM3_SERVER_TOKEN. Prints {"ready":true,"port":N}. SIGTERM exits like liquid-lfm3-server.
 #include <lfm/lfm3_http.hpp>
+#include <lfm/lfm3_warmup.hpp>
 #include <lfm/speech_run.hpp>
 #include <lfm/lfm3_text_request.hpp>
 #include <lfm/text_batch_cancellation.hpp>
@@ -421,6 +426,20 @@ class FakeEngine final : public lfm::http::Backend {
 }  // namespace
 
 int main(int argc, char** argv) try {
+  // --warmup takes no value: taken out before the pairs are read, as liquid-lfm3-server does
+  bool warmup = false;
+  std::vector<char*> args(argv, argv + argc);
+  for (size_t i = 2; i < args.size();) {
+    if (std::string(args[i]) == "--warmup") {
+      if (warmup) throw std::runtime_error("duplicate option --warmup");
+      warmup = true;
+      args.erase(args.begin() + long(i));
+    } else {
+      i += 2;
+    }
+  }
+  argc = int(args.size());
+  argv = args.data();
   if (argc < 2 || argc % 2 != 0) throw std::runtime_error("usage: lfm3-http-harness CHECKPOINT_DIR [--option value]...");
   const std::string directory = argv[1];
   lfm::http::Settings settings;
@@ -436,7 +455,7 @@ int main(int argc, char** argv) try {
   int speech_truncate = 0;
   std::string stream_fault;
   int stream_piece_bytes = 4, speech_rows = 2;
-  std::string trace_ops;
+  std::string trace_ops, warmup_inputs;
   for (int i = 2; i < argc; i += 2) {
     const std::string o = argv[i], v = argv[i + 1];
     if (o == "--mode") mode = v;
@@ -457,6 +476,7 @@ int main(int argc, char** argv) try {
     else if (o == "--speech-stream-piece-bytes") stream_piece_bytes = std::stoi(v);
     else if (o == "--speech-rows") speech_rows = std::stoi(v);
     else if (o == "--trace-ops") trace_ops = v;
+    else if (o == "--warmup-inputs") warmup_inputs = v;
     else if (o == "--fail-after") fail_after = std::stoi(v);
     else if (o == "--port") port = std::stoi(v);
     else if (o == "--request-timeout") settings.request_timeout = std::stod(v);
@@ -506,7 +526,11 @@ int main(int argc, char** argv) try {
   engine.image_input_ = speech && image_input;
   if (!image_log.empty()) engine.image_log_.open(image_log);
   engine.engine_cache_.set_observer([](const std::string& key, bool kept) { lfm::image::shared_held_images().kept(key, kept); });
-  engine.engine_cache_.set_budget(size_t(engine_cache_mb) << 20);
+  engine.engine_cache_.set_budget(warmup ? 0 : size_t(engine_cache_mb) << 20);
+  if (!warmup_inputs.empty()) {
+    std::ofstream(warmup_inputs + "/warmup.png", std::ios::binary) << lfm::http::warmup::png_4k();
+    std::ofstream(warmup_inputs + "/warmup.wav", std::ios::binary) << lfm::http::warmup::wav_clip();
+  }
   if (!handoff_log.empty()) engine.handoff_log_.open(handoff_log);
   if (!trace_ops.empty()) {
     engine.trace_.open(trace_ops);
@@ -514,14 +538,21 @@ int main(int argc, char** argv) try {
   }
   auto service = std::make_unique<lfm::http::Service>(engine, tokenizer, policy, settings);
   auto server = std::make_unique<lfm::http::Server>(*service, token, port);
+  std::atomic<bool> stopped{false};
   std::thread waiter([&] {
     int received = 0;
     sigwait(&signals, &received);
+    stopped = true;
     server->stop();
     sigwait(&signals, &received);
     std::_Exit(1);
   });
+  if (warmup)
+    std::_Exit(lfm::http::warmup::serve_with_warmup(
+        *service, *server, [&engine, engine_cache_mb] { engine.engine_cache_.set_budget(size_t(engine_cache_mb) << 20); },
+        stopped, "lfm3-http-harness"));
   std::cout << "{\"ready\":true,\"port\":" << server->port() << "}\n" << std::flush;
+  lfm::http::warmup::notify_ready();
   server->serve();
   service->close();
   server->drain(lfm::http::seconds(settings.socket_timeout));

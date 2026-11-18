@@ -111,6 +111,7 @@ validation round, and the job scripts that run them on the target machine. Pytho
 | [`check_lfm3_text_wait_speed.py`](check_lfm3_text_wait_speed.py) | Rule 5 of validation/text-wait-v1: nothing slower alone (end to end, through the server; Thor quiet). |
 | [`lfm3_http_diff.py`](lfm3_http_diff.py) | Request-validation parity: tools/lfm3_server.py against the native HTTP layer (lfm/lfm3_http.hpp). |
 | [`diag_lfm3_server_memory.py`](diag_lfm3_server_memory.py) | Where does liquid-lfm3-server's memory grow? |
+| [`measure_lfm3_first_request.py`](measure_lfm3_first_request.py) | validation/always-on-v1 rules 0, 1, 3 (RSS) and 4 (startup): each kind's 1st, 2nd and 3rd time to first token on fresh servers, cold and with `--warmup` (Thor, quiet). |
 
 ## Speech out
 

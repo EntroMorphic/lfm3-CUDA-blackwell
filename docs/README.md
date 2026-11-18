@@ -5,6 +5,7 @@
 | [architecture.md](architecture.md) | How the engine is put together: components, multimodal prompts, precision policy |
 | [building.md](building.md) | Toolchain, build targets and options, reference environments |
 | [server-api.md](server-api.md) | `liquid-lfm3-server`: endpoints, request and reply fields, streaming |
+| [service.md](service.md) | Running the server as an always-on, pre-warmed systemd user service (`--warmup`, `deploy/`) |
 | [validation.md](validation.md) | How rounds, rules and evidence work |
 | [../validation/README.md](../validation/README.md) | Index of every validation round |
 | [../audit/](../audit/) | Engineering notes from the text-serving bring-up (forward pass, sanitizers, batching, cancellation, soak) |
