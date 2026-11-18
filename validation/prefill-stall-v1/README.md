@@ -138,3 +138,34 @@ queued), not a copy. The process maps `/dev/nvidia0` write-only twice (64 KiB ea
 minor faults at ~0.3 us each, all kernel time). The address it writes is not yet known. Window 14
 (`tools/thor/quiet_session_v14.sh`) records the registers at the catch and resolves `x0` to its mapping, and compares
 the container's device mappings with a host run's.
+
+## Window 14 results (2026-11-17 17:46-18:36, quiet), plus checks the same evening: **the container cannot open `/dev/nvidia-uvm`** (`quiet-w14-catch/`)
+**The store writes the doorbell.** In all 4 container catches (uid 1000), `x0 = 0xffffa0530090`, which sits in
+`/dev/nvidia0 -w-s 0xffffa0530000-0xffffa0540000` at offset `0x90`; `x1` holds that mapping's base. The faulting
+`str w2, [x0]` is the driver's 32-bit write to the GPU's write-only doorbell page.
+
+**Host and container mappings differ in one line.** Maps snapshots at 120 s, the same engine and requests:
+
+| Mapping | Container | Host |
+|---|---|---|
+| `/dev/nvidiactl`, `/dev/zero`, `/dev/nvidia0 -w-s 64 KiB` x2 | the same counts and sizes | the same |
+| `/dev/nvidia-uvm rw-s 2048 KiB` | **absent** | 1 |
+
+The host run had 0 catches again, so 0 stalls.
+
+**Checks after the window (read-only):**
+- The container has the node `/dev/nvidia-uvm` (c 488:0, mode 666), but `open(O_RDWR)` on it fails with **EPERM**, as uid 1000 and as root. `/dev/nvidia0` and `/dev/nvidiactl` open. EPERM on a mode-666 node means the container's device cgroup refuses it.
+- libcuda is the same file inside and out (sha256 `fab2598e...`), so the driver takes a different path in the container because it has no UVM, not because it is another library.
+- The container `lfm3-profile-v1` was created 2026-11-06 (`--runtime nvidia`, a GPU device request, no device-cgroup rules of its own, not privileged). Thor last booted 2026-11-14 21:12.
+- `/dev/nvidia-uvm`'s major is assigned at module load (now 488). **Likely, not shown:** the container's device allowlist was fixed at creation with the major of that boot, and after the reboot no longer covers the new one. Not checked: the container's BPF device program, and whether stalls appeared before the 2026-11-14 boot.
+
+**Reading:**
+- In the container, CUDA runs without UVM. That is the one difference found between the runs that stall (container: 116 of 3,150 requests) and those that don't (host: 0 of 3,780).
+- The stall is a write to the doorbell page that traps.
+- Not yet shown: that giving the container UVM ends the stalls.
+
+**The test that would show it** (a container setting: Tripp's call, not made):
+- Run the window-8 stall reproduction in a fresh container from the same image, with the same mounts and runtime, so the GPU device allowlist is computed for this boot. The one difference to the current container is that `/dev/nvidia-uvm` opens.
+- Prediction: 0 stalls, or the stall count drops to the host's, and the maps show `/dev/nvidia-uvm`.
+- If it holds, the fix is to recreate the container, or to run the service on the host (always-on-v1 rule 5 already needs the host).
+- Until then, every timing taken in `lfm3-profile-v1` since the reboot carries the stall. That includes window 15's first-request times, whose individual requests can include a stall.
