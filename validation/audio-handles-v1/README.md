@@ -106,3 +106,25 @@ measurement first:
   measured it: growth 309 MiB for 16 × 90 s);
 - this pass was mine, not an independent reviewer's. Rule 4 asks for "a red-team pass on the handle lifetime"; an
   independent one can follow if Tripp wants it.
+
+## Rule 4, host suites (2026-11-17, workstation): PASS
+`tests` and `audit/test_host_contracts.py`, in full, plain, ASan+UBSan and TSan, from a copy of this branch with the
+checkpoint beside it: **2,442 passed, 2 skipped, 1 failed** (53 minutes).
+- The failure is the known pre-existing `test_speech_text.py::test_every_validation_prompt_matches_hf_ids`
+  (transformers 4.57.6 cannot load the checkpoint's remote code; it fails on main too).
+- The 2 skips are `test_lfm3_http_native.py`'s memory tests, which run only on the uninstrumented build.
+- New in this round:
+  - `test_audio_input_host.py::test_feature_cache_handles` (the handle lifetime unit test, all three builds);
+  - `test_lfm3_http_audio_in.py::test_a_request_with_a_clip_left_out_sends_base64_with_the_same_prompt`;
+  - the eviction test now checks that the probe's own clip came by handle.
+  - The audio-in HTTP suite alone: 84 of 84.
+
+## What runs on Thor, not yet run
+`tools/thor/quiet_session_v19.sh` (waits for `QUIET-V18-FINISHED`; window 15's `busy()` and `wait_quiet`):
+- rule 3 as written;
+- rule 5's list (through `quiet_audio_rest.sh` with its own names);
+- rule 1's exactness: audio-in with each front end, mixed requests, 8 and 32 at once;
+- rule 4's memcheck on the server path;
+- rule 3's reported figure from an nsys trace.
+
+It needs this branch synced to `build/audio-src-h` and the base sources in `build/audio-src-base` (already there).
