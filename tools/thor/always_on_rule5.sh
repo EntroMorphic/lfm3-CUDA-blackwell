@@ -10,13 +10,15 @@
 #   4. systemctl --user stop with a streamed TTS request in flight: stop exits 0 within 30 s, the unit's result success,
 #      the request ended (a cancelled done event, or the connection closed);
 #   5. starts it again and leaves it running (the always-on service).
-# Usage (Thor host): always_on_rule5.sh   (results: build/always-on-rule5/)
+# Run 1 (22:10) found the server could not rebind its port after a crash (TIME_WAIT; fixed: SO_REUSEADDR), and this
+# script's pid read of 0 sent kill -TERM 0 (its own process group); a pid that is not a live server now stops the run.
+# Usage (Thor host): [RULE5_SRC=BINARY] [RULE5_OUT=NAME] always_on_rule5.sh   (from the synced tree it belongs to)
 set -uo pipefail
-W=${LFM3_WORKSPACE:-$HOME/Projects/000-research/lfm3-omni-2B}; R=$W/liquid-CUDA; B=$R/build; O=always-on-rule5
-SRC=$B/sig-srv/liquid-lfm3-server; LIBS=$B/racecheck-pinned-libs-v1:/usr/lib/aarch64-linux-gnu/nvidia
+W=${LFM3_WORKSPACE:-$HOME/Projects/000-research/lfm3-omni-2B}; R=$W/liquid-CUDA; B=$R/build; O=${RULE5_OUT:-always-on-rule5}
+HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+SRC=${RULE5_SRC:-$B/sig-srv/liquid-lfm3-server}; LIBS=$B/racecheck-pinned-libs-v1:/usr/lib/aarch64-linux-gnu/nvidia
 BOUND=14.18
 export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
-until grep -q "^QUIET-UVM-FINISHED" $B/quiet-uvm.log 2>/dev/null; do sleep 60; done
 [ "$(loginctl show-user $USER -p Linger --value)" = yes ] || { echo "FAIL: linger is off"; echo "RULE5-FINISHED $(date +%T)"; exit 1; }
 busy() { pgrep -af "[l]fm3-speech|[l]iquid-lfm3|[c]ompute-sanitizer|[n]sys|[n]vcc|[c]make --build" | grep -v "quiet_" | head -3; }
 [ -z "$(busy)" ] || { echo "FAIL: not quiet: $(busy)"; echo "RULE5-FINISHED $(date +%T)"; exit 1; }
@@ -25,7 +27,7 @@ mkdir -p $B/$O && cd $B/$O || exit 1
 echo "== 1. install $(date +%T)"
 sha=$(sha256sum $SRC | cut -c1-12); D=$HOME/.local/lib/liquid-lfm3/$sha
 mkdir -p $D && cp -p $SRC $D/liquid-lfm3-server && sha256sum $D/liquid-lfm3-server | tee binary.sha256
-bash $R/deploy/install-user-service.sh --server $D/liquid-lfm3-server --model $W/models/LFM3-Omni-2B --library-path $LIBS > install.log 2>&1
+bash $HERE/../../deploy/install-user-service.sh --server $D/liquid-lfm3-server --model $W/models/LFM3-Omni-2B --library-path $LIBS > install.log 2>&1
 echo "install exit $?"; head -3 install.log
 cp ~/.config/systemd/user/liquid-lfm3.service unit.service
 systemd-analyze --user verify ~/.config/systemd/user/liquid-lfm3.service > verify.log 2>&1; echo "verify exit $?; $(grep -c . verify.log) lines"
@@ -34,6 +36,7 @@ health() { curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://127.0.0.1:
 mainpid() { systemctl --user show -p MainPID --value liquid-lfm3; }
 
 echo "== 2. start $(date +%T)"
+systemctl --user reset-failed liquid-lfm3 2>/dev/null
 t0=$(date +%s.%N); systemctl --user start liquid-lfm3; rc=$?; t1=$(date +%s.%N)
 echo "start exit $rc, $(echo "$t1 - $t0" | bc) s to active; /health $(health); state $(systemctl --user is-active liquid-lfm3)"
 journalctl --user -u liquid-lfm3 --since "-2 min" --no-pager -o cat | grep '"warmup"' | tail -1 | tee warmup-1.json
@@ -42,7 +45,12 @@ grep -q "127.0.0.1:8080" listen.txt && [ "$(grep -c . listen.txt)" = 1 ] && echo
 
 echo "== 3. crash stand-ins: SIGTERM to the main process (bound $BOUND s) $(date +%T)"
 for i in 1 2 3; do
-  p=$(mainpid); t0=$(date +%s.%N); kill -TERM $p
+  p=$(mainpid)
+  # never kill a pid that is not this service's live server (run 1: a pid of 0 signalled this script's own group)
+  if ! [[ $p =~ ^[0-9]+$ ]] || [ "$p" -le 1 ] || ! grep -q liquid-lfm3 /proc/$p/comm 2>/dev/null; then
+    echo "crash $i: no live server (MainPID '$p'): stopping the crash checks"; break
+  fi
+  t0=$(date +%s.%N); kill -TERM $p
   while true; do
     q=$(mainpid)
     [ "$q" != "$p" ] && [ "$q" != 0 ] && [ "$(health)" = 200 ] && break

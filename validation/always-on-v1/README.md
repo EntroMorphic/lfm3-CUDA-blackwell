@@ -140,3 +140,23 @@ The image's 2nd request, a hit on the 1st's photograph, is 0.297-0.302 s. Engine
 - Rules 1, 2, 3 and 6: PASS (rule 1 as amended).
 - Rule 4: startup 4.18 s.
 - Rule 5: to do. It needs the host run and Tripp's `enable-linger`.
+
+## Rule 5, run 1 (2026-11-17 22:10, host; `build/always-on-rule5/`): **FAIL, a server bug found; the run then broke on a script bug**
+**Install:** `deploy/install-user-service.sh`.
+- Binary: `build/sig-srv`, main 064c1bb, copied to `~/.local/lib/liquid-lfm3/157506acd07b/`.
+- Libraries: the pinned CUDA libraries on `--library-path`.
+- Install exit 0, enabled, `systemd-analyze --user verify` clean.
+
+**Start:** `systemctl --user start` returned once warm, after **4.94 s**, and `/health` answered 200. The server's line: startup 4.937 s, warm-up 4.084 s (text 1.403, TTS 1.114, image 0.976, audio 0.592). It listens on **127.0.0.1:8080 only**.
+
+**Crash 1 (SIGTERM to the main process, 22:10:15):**
+- The server stopped cleanly (exit 0), and systemd scheduled the restart 5 s later, as the unit says.
+- **Every restart failed:** `cannot listen on 127.0.0.1: Address already in use`, five times 5 s apart, until systemd's start limit stopped it (22:10:44, "Start request repeated too quickly").
+- **Cause:** the listener did not set `SO_REUSEADDR`. The server closes its connections first, so they sit in TIME_WAIT on port 8080 for 60 s, and a new server cannot bind until they clear. Here, the `/health` checks were enough. Any service with recent clients would have failed to come back after a crash.
+- **Fix:** `SO_REUSEADDR` on the listener (`lfm/lfm3_http.hpp`). It does not let a second listener share a port (tested).
+- **New host test:** a harness restarted at once on the same port after serving requests. It fails without the fix with exactly this error, and passes with it.
+
+**The script then broke (my bug).** With no server running, `MainPID` read 0, and the next crash step ran `kill -TERM 0`, which signals the script's own process group. It ended there, silently. Nothing else was signalled: the group held only the script and its children.
+- The script now stops the crash checks unless the PID is a live `liquid-lfm3` process.
+
+**Not measured in run 1:** crashes 2 and 3, the stop with a request in flight, the final start. Run 2, on a build with the fix, does all of rule 5 again, boot aside.

@@ -622,3 +622,36 @@ def test_second_signal_on_an_unmasked_thread_still_exits_at_once(harness_binary,
         thread.join(10)
     finally:
         h.process.kill()
+
+
+def free_port():
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def test_restart_on_the_same_port_while_connections_are_in_time_wait(harness_binary):
+    # always-on-v1 rule 5: the server closes its connections first, so they sit in TIME_WAIT on its port; a server
+    # started again at once on that port (systemd's restart after a crash) must still bind
+    port = free_port()
+    h = Harness(harness_binary, "--port", port)
+    try:
+        for _ in range(3):
+            assert h.call("GET", "/health", auth=False)[0] == 200
+        h.stop()
+        h2 = Harness(harness_binary, "--port", port)
+        try:
+            assert h2.port == port and h2.call("GET", "/health", auth=False)[0] == 200
+        finally:
+            h2.stop()
+    finally:
+        h.process.kill()
+
+
+def test_a_second_server_cannot_take_a_listening_port(harness_binary):
+    # SO_REUSEADDR must not let two listeners share a port
+    port = free_port()
+    with running(harness_binary, "--port", port):
+        p = subprocess.run([str(harness_binary), str(CHECKPOINT), "--port", str(port)], capture_output=True, text=True,
+                           env=dict(os.environ, LFM3_SERVER_TOKEN=TOKEN), timeout=60)
+        assert p.returncode != 0 and "Address already in use" in p.stderr

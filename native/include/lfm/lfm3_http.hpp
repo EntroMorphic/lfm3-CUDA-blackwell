@@ -2527,6 +2527,14 @@ class Server {
     // the accept queue holds a crowd of clients arriving at once (http.server's 5 overflowed under concurrent speech,
     // and an overflowing queue can reset a connection: validation/speech-batch-v1); handlers bound the work, not this
     const int backlog = std::max(16, service.settings().handlers);
+    // SO_REUSEADDR: a server restarted on the same port binds even while the last one's closed connections sit in
+    // TIME_WAIT (60 s on Linux): always-on-v1 rule 5's first run, where every restart after a crash failed with
+    // EADDRINUSE until systemd's start limit. On Linux it never lets a second listener share a listening port.
+    const int reuse = 1;
+    if (::setsockopt(listener_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof reuse) != 0) {
+      ::close(listener_);
+      throw std::runtime_error(std::string("setsockopt(SO_REUSEADDR) failed: ") + std::strerror(errno));
+    }
     if (::bind(listener_, reinterpret_cast<sockaddr*>(&address), sizeof address) != 0 || ::listen(listener_, backlog) != 0) {
       ::close(listener_);
       throw std::runtime_error(std::string("cannot listen on 127.0.0.1: ") + std::strerror(errno));
