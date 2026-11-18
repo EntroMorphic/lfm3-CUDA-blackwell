@@ -406,3 +406,21 @@ So the cause suspected after window 10 holds. It's the server's signal design, n
 - C3 stall: FAIL as written (window 10), but the engine thread does not decode.
 - C4 memory: PASS. lfm3-speech memcheck: PASS. Server memcheck: 0 errors, exit gate pending the signal fix.
 - C5: PASS.
+
+## Server memcheck rerun with stop-signal forwarding (quiet window 17, 2026-11-17 19:36-19:42; `quiet-w17-memcheck/`): **PASS**
+- **Build:** main 064c1bb (`lfm/stop_signals.hpp`), built from `build/sig-src` (9487344).
+- **Test:** the same check as windows 10 and 13, with `--image-cache-mb 1`.
+
+| Run | Time | Errors | Replies | Engine cache | Exit | Threads | Not blocking SIGTERM | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| Plain | 7 s | n/a | all 200 | hits 2, misses 5, evictions 3, over budget 3 | 0 | 14 | 1 (the waiter) | PASS |
+| memcheck | 75 s | 0 | all 200, texts equal to plain | the same counts | **0** | 19 | 2, as in window 13 | **PASS** |
+
+The extra thread is still there under memcheck. A SIGTERM that lands on it is now forwarded to the waiter, so the shutdown is the orderly one.
+
+**C3-C5 standing:**
+- C3 location: PASS.
+- C3 stall: FAIL as written (window 10), but the engine thread does not decode.
+- C4 memory: PASS.
+- Both memchecks: PASS.
+- C5: PASS.
