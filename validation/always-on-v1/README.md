@@ -104,3 +104,27 @@ for its first token. Where those seconds go has not been measured.
 - **The bar is unchanged:** 10% or 50 ms, whichever is larger; median of 3 fresh servers.
 - **What I expect:** the warm 1st image within the bar of the 3rd miss. Window 15's sequence already suggests it: cold "seq" image 1st 1.140 s after the other kinds had warmed the server, against the warm 1st 1.073 s.
 - **Rule 0's reading is not affected:** cold alone, the first image was 2.305 s against the 1.07 s a miss costs on a warm server.
+
+## Rule 1 as amended (quiet window 18, 2026-11-17 19:43-19:45; `build/quiet-w18-always-on/`): **PASS**
+- **Build:** window 15's, unchanged.
+- **Tool:** main 07c4d17, with `--image-third` set to `quiet-w10-c3c5/images/fresh/c3-31.png` (3840 x 2160, never sent to these servers).
+- **Servers:** 3 fresh `--warmup` servers.
+- **Measurement:** time to first token in seconds, median over the 3 servers.
+
+| Kind | 1st | 3rd | Bound | Verdict |
+|---|---|---|---|---|
+| text | 0.0293 | 0.0286 | 0.050 | PASS |
+| TTS | 0.2424 | 0.2405 | 0.050 | PASS |
+| image (3rd a miss) | 1.0857 | 1.0749 | 0.1075 | PASS |
+| audio in | 0.0808 | 0.0802 | 0.050 | PASS |
+
+The image's 2nd request, a hit on the 1st's photograph, is 0.297-0.302 s. Engine prefill is 0.595-0.624 s on the 1st and the 3rd (misses) and 0.228 s on the 2nd (a hit).
+
+**always-on-v1 standing:**
+- Rule 0: proceed.
+- Rule 1: PASS as amended.
+- Rule 2: PASS for the checks run. The three soak text bodies are still to run.
+- Rule 3: PASS.
+- Rule 4: startup 4.18 s, with the behaviour host-tested.
+- Rule 6: PASS.
+- Rule 5: needs the host run and Tripp's `enable-linger`.
