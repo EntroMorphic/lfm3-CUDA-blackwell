@@ -89,7 +89,8 @@ def main(argv):
                 image_cost(body)
             time.sleep(STEP)
             if self.path == "/generate":
-                return self.send_json(200, {"text": "hi", "generated_ids": [1], "finish_reason": "length"})
+                return self.send_json(200, {"text": "hi", "generated_ids": [1], "finish_reason": "length",
+                                           "session_id": body.get("session_id")})
             timings = dict(prefill_seconds=COLD if kind in cold else STEP, generate_seconds=STEP)
             if not body.get("stream"):
                 return self.send_json(200, dict(cancelled=False, text="x", **timings))

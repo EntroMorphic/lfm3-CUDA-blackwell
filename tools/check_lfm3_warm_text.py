@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """validation/always-on-v1 rule 2, the text part: each of the soak's three text bodies (check_lfm3_audio_soak.TEXTS) as
 the first request after startup, on a fresh server with --warmup and on a fresh server without it; the /generate
-replies must be identical (text, generated_ids, finish_reason: everything but timings). Six fresh servers.
+replies must be identical (text, generated_ids, finish_reason: everything but timings and the session id). Six fresh servers.
 Exits 0 when all three are identical, 1 otherwise.
 Usage: check_lfm3_warm_text.py SERVER MODEL_DIR OUT_JSON [--server-arg ARG]...
 """
@@ -15,7 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_lfm3_audio_soak import TEXTS  # noqa: E402
 from measure_lfm3_first_request import Fresh, text_request  # noqa: E402
 
-TIMING_KEYS = {"seconds", "prefill_seconds", "generate_seconds", "queue_seconds"}
+# not output: timings, and the session's random id (a fresh session per request)
+IGNORED_KEYS = {"seconds", "prefill_seconds", "generate_seconds", "queue_seconds", "session_id"}
 
 
 def reply_of(binary, model, scratch, extra, body):
@@ -24,7 +25,7 @@ def reply_of(binary, model, scratch, extra, body):
         status, _, reply = text_request(f.s, body)
     finally:
         clean = f.stop()
-    return status, {k: v for k, v in reply.items() if k not in TIMING_KEYS}, clean
+    return status, {k: v for k, v in reply.items() if k not in IGNORED_KEYS}, clean
 
 
 def main(argv=None):
