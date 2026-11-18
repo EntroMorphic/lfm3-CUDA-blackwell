@@ -185,3 +185,10 @@ The host run had 0 catches again, so 0 stalls.
   - The control run maps no UVM and has stalls as before: 26-38 per 630 requests in windows 5-8 (uid 1000: 31 and 26).
 - **Falsified if:** the test container's runs map UVM and still have stalls in the control's range (10 or more per run).
 - **Anything in between** is recorded as unresolved.
+- **Attempt 1 (20:35, `quiet-uvm-void1/`): VOID by the precondition.**
+  - The fresh container, created by the nvidia runtime with the same configuration, has no `/dev/nvidia-uvm` node at all (ENOENT). `/dev/nvidia0` and `/dev/nvidiactl` open.
+  - So on this Thor the runtime does not pass UVM to a container. How `lfm3-profile-v1` came to have the node, but no permission on it, is not known.
+  - The container was removed, nothing ran in it, and nothing was measured.
+- **Attempt 2:** the same test container with one addition, `--device /dev/nvidia-uvm`. Docker creates the node and allows it in the container's device cgroup.
+  - The precondition, prediction and falsification are unchanged.
+  - If it holds, the fix is a container created with `--device /dev/nvidia-uvm`, or the service on the host.

@@ -22,7 +22,7 @@ if docker inspect $TC > /dev/null 2>&1; then echo "FAIL: $TC exists"; echo "QUIE
 echo "== create $TC $(date +%T)"
 docker run -d --name $TC --runtime nvidia --gpus all --network none --memory 103079215104 --workdir /workspace \
   -v $B/racecheck-pinned-libs-v1:/pinned-cuda:ro -v $W:/workspace -v /opt/nvidia/nsight-systems/2025.3.2:/opt/nsys:ro \
-  -e NVIDIA_DRIVER_CAPABILITIES=compute,utility -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia \
+  --device /dev/nvidia-uvm -e NVIDIA_DRIVER_CAPABILITIES=compute,utility -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia \
   -e PATH=/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin -e DEBIAN_FRONTEND=noninteractive \
   -e PIP_DISABLE_PIP_VERSION_CHECK=1 -e HF_HOME=/workspace/cache/huggingface -e PYTHONUNBUFFERED=1 \
   $IMG sleep infinity > create.log 2>&1; echo "create exit $?"
