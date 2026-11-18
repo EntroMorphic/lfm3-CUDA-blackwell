@@ -19,12 +19,16 @@ Parts (--parts, default a,b,c,d):
   b  each kind first on its own fresh server without --warmup: its 1st, 2nd and 3rd request (rule 0);
   c  --servers (3) fresh servers with --warmup, each as in a (rule 1: per kind, the median over servers of the 1st
      request within max(10%, 50 ms) of the median 3rd; rule 4: startup, from the server's own warm-up line);
+     with --image-third PNG (rule 1 as amended after window 15), each warm server's 3rd image request carries that
+     image instead: one of the same size the server has never seen, so the 3rd is an image-cache miss, as the 1st is
+     (the same photograph three times makes the 2nd and 3rd hits);
   d  idle RSS (rule 3): a fresh server without --warmup after the warm-up's own four requests (the same bodies, the same
      generated image's pixels and clip, rebuilt here), against a fresh --warmup server, each idle 10 s first.
 Rule 0's reading: proceed if any kind's 1st request (a or b) is slower than its 3rd by more than 1 s.
 Writes OUT_JSON; exits 1 on a failed request or a server that does not exit 0 on SIGTERM (never SIGKILL).
 Usage: measure_lfm3_first_request.py SERVER MODEL_DIR BUILD_DIR OUT_JSON [--parts a,b,c,d] [--servers N]
-                                     [--image-request PATH] [--audio-wav PATH] [--server-arg ARG]...
+                                     [--image-request PATH] [--image-third PNG] [--audio-wav PATH]
+                                     [--server-arg ARG]...
 """
 import argparse
 import base64
@@ -194,13 +198,25 @@ class Fresh:
         return code == 0
 
 
-def sequence(server, bodies, kinds, repeats=3):
-    """Each kind's 1st..repeats-th request, the kinds in order: {kind: [result, ...]}."""
+def with_image(body, png):
+    """BODY with each of its images replaced by PNG's bytes (base64), as a client sends an image."""
+    body = json.loads(json.dumps(body))
+    for m in body["messages"]:
+        if isinstance(m["content"], list):
+            for part in m["content"]:
+                if part.get("type") == "image":
+                    part["image"] = base64.b64encode(png).decode()
+    return body
+
+
+def sequence(server, bodies, kinds, repeats=3, third=None):
+    """Each kind's 1st..repeats-th request, the kinds in order: {kind: [result, ...]}. THIRD: {kind: body} for the
+    3rd request of that kind instead of its usual body."""
     out = {}
     for kind in kinds:
         out[kind] = []
         for i in range(repeats):
-            r = one(server, kind, bodies[kind])
+            r = one(server, kind, (third or {}).get(kind, bodies[kind]) if i == 2 else bodies[kind])
             out[kind].append(r)
             print(kind, i + 1, {k: (round(v, 4) if isinstance(v, float) else v) for k, v in r.items()}, flush=True)
     return out
@@ -246,6 +262,7 @@ def main(argv=None):
     ap.add_argument("--parts", default="a,b,c,d")
     ap.add_argument("--servers", type=int, default=3)
     ap.add_argument("--image-request")
+    ap.add_argument("--image-third", help="part c: a never-sent PNG of the same size for each warm server's 3rd image")
     ap.add_argument("--audio-wav")
     ap.add_argument("--server-arg", action="append", default=[], help="passed to every server (repeat it)")
     ap.add_argument("--settle", type=float, default=SETTLE, help=argparse.SUPPRESS)
@@ -261,12 +278,12 @@ def main(argv=None):
         out.write_text(json.dumps(report, indent=1))
 
     with tempfile.TemporaryDirectory() as scratch:
-        def run(extra, kinds, label):
+        def run(extra, kinds, label, third=None):
             nonlocal ok
             print(f"== {label}", flush=True)
             f = Fresh(a.server, a.model, scratch, [*a.server_arg, *extra])
             try:
-                f.record["requests"] = sequence(f.s, bodies, kinds)
+                f.record["requests"] = sequence(f.s, bodies, kinds, third=third)
             finally:
                 ok &= f.stop()
             ok &= not failed(f.record["requests"])
@@ -283,7 +300,11 @@ def main(argv=None):
                 report["b"]["servers"][kind] = {k: v for k, v in rec.items() if k != "requests"}
             save()
         if "c" in parts:
-            report["c"] = [run(["--warmup"], KINDS, f"c: warm server {i + 1}") for i in range(a.servers)]
+            third = None
+            if a.image_third:
+                third = dict(image=with_image(bodies["image"], Path(a.image_third).read_bytes()))
+                report["image_third"] = a.image_third
+            report["c"] = [run(["--warmup"], KINDS, f"c: warm server {i + 1}", third) for i in range(a.servers)]
             report["rule1"] = rule1(report["c"])
             startups = [s["warmup"]["startup_seconds"] for s in report["c"] if "startup_seconds" in s.get("warmup", {})]
             report["rule4_startup_seconds"] = dict(each=startups, median=statistics.median(startups) if startups else None)

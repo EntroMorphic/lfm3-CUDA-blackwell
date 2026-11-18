@@ -4,6 +4,8 @@ Not the server: no model, no GPU. It keeps what the tool observes: the command l
 (with "warmup_seconds" after a warm-up) and the warm-up's stderr line, POST /sessions, /generate, /sessions/ID/close,
 POST /speech streamed (NDJSON) and unstreamed, GET /health. Each kind (text, tts, image, audio) pays COLD seconds once,
 on its first request, unless --warmup paid them all before the ready line. FAKE_COLD (default 0.3) sets COLD.
+FAKE_IMAGE_MISS (default 0): an image whose bytes this server has not seen costs that many seconds more (an image cache,
+as the real server's: a repeat is a hit). The warm-up's image is never cached, as the server's is not.
 Usage: fake_lfm3_first_request_server.py --experimental MODEL_DIR --token-file FILE --port 0 [--warmup] [...]
 """
 import base64
@@ -19,6 +21,7 @@ from pathlib import Path
 
 COLD = float(os.environ.get("FAKE_COLD", "0.3"))
 STEP = 0.01
+IMAGE_MISS = float(os.environ.get("FAKE_IMAGE_MISS", "0"))
 
 
 def kind_of(path, body):
@@ -39,7 +42,16 @@ def main(argv):
     warmup = len(rest) != len(argv) - 3
     args = dict(zip(rest[0::2], rest[1::2]))
     token = Path(args["--token-file"]).read_text().strip()
-    cold, lock = {"text", "tts", "image", "audio"}, threading.Lock()
+    cold, lock, seen = {"text", "tts", "image", "audio"}, threading.Lock(), set()
+
+    def image_cost(body):
+        keys = [p["image"] for m in body.get("messages", []) if isinstance(m.get("content"), list) for p in m["content"]
+                if p.get("type") == "image"]
+        with lock:
+            miss = any(k not in seen for k in keys)
+            seen.update(keys)
+        if miss:
+            time.sleep(IMAGE_MISS)
 
     def pay(kind):
         with lock:
@@ -73,6 +85,8 @@ def main(argv):
                 return self.send_json(200, {"ok": True})
             kind = kind_of(self.path, body)
             pay(kind)
+            if kind == "image":
+                image_cost(body)
             time.sleep(STEP)
             if self.path == "/generate":
                 return self.send_json(200, {"text": "hi", "generated_ids": [1], "finish_reason": "length"})
@@ -101,6 +115,8 @@ def main(argv):
         for kind in ("text", "tts", "image", "audio"):
             t = time.monotonic()
             pay(kind)
+            if kind == "image":
+                time.sleep(IMAGE_MISS)  # its image is a miss, and is not kept
             steps.append(dict(kind=kind, seconds=round(time.monotonic() - t, 3)))
         seconds = round(time.monotonic() - t0, 3)
         print(json.dumps({"warmup": dict(startup_seconds=round(time.monotonic() - started, 3), warmup_seconds=seconds,

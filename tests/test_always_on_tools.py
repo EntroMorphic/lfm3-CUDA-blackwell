@@ -177,3 +177,31 @@ def test_the_warmup_replica_is_the_servers_requests():
     image = base64.b64decode(bodies["image"]["messages"][1]["content"][0]["image"])
     assert image.startswith(b"\x89PNG") and int.from_bytes(image[16:20], "big") == 3840
     # the pixels and the clip against the C++ generator: tests/test_lfm3_http_warmup.py (needs the harness)
+
+
+def test_rule1_with_the_same_image_compares_a_miss_with_hits(tmp_path, build):
+    # window 15: the same photograph three times; the 1st is a miss, the 2nd and 3rd hits, so rule 1 fails as written
+    server = wrapper(tmp_path / "server", {"FAKE_COLD": "0.3", "FAKE_IMAGE_MISS": "0.4"})
+    out = tmp_path / "out.json"
+    assert tool.main([server, str(tmp_path), str(build), str(out), "--parts", "c", "--servers", "2"]) == 0
+    r = json.loads(out.read_text())["rule1"]["per_kind"]
+    assert r["image"]["passed"] is False and r["image"]["first_median"] - r["image"]["third_median"] > 0.3
+    assert all(r[k]["passed"] for k in ("text", "tts", "audio"))
+
+
+def test_image_third_makes_the_third_image_a_miss(tmp_path, build):
+    # rule 1 as amended after window 15: the 3rd image is one the server has never seen
+    server = wrapper(tmp_path / "server", {"FAKE_COLD": "0.3", "FAKE_IMAGE_MISS": "0.4"})
+    third = tmp_path / "third.png"
+    third.write_bytes(tool.warmup_png()[:80])  # other bytes than the 1st image's
+    out = tmp_path / "out.json"
+    assert tool.main([server, str(tmp_path), str(build), str(out), "--parts", "c", "--servers", "2",
+                      "--image-third", str(third)]) == 0
+    r = json.loads(out.read_text())
+    assert r["image_third"] == str(third)
+    image = r["rule1"]["per_kind"]["image"]
+    assert image["passed"] is True and min(image["thirds"]) > 0.4  # the 3rd paid the miss
+    for s in r["c"]:
+        firsts = [x["ttft"] for x in s["requests"]["image"]]
+        assert firsts[1] < 0.3 < firsts[2]  # 2nd a hit (the 1st's image), 3rd a miss
+    assert r["rule1"]["passed"] is True
