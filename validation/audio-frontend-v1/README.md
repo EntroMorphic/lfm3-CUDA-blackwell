@@ -816,3 +816,97 @@ on the rerun against `vimg-e2e-a4`. Rule 3 fails as recorded.
   3. `audio-parse-bench` on the 90 s and 35 s clips (20 repeats);
   4. an nsys trace (host) of one 90 s stall run at 8 rows, with CUDA, NVTX and OS-runtime traces, and CPU sampling
      where permitted.
+
+## Quiet window 16 (2026-11-17, QUIET-V16-FINISHED 19:35:12): diagnostic; rule 6's image item closes
+`tools/thor/quiet_session_v16.sh`, results copied to this worktree's `build/quiet-w16-audio/` (not committed: the
+trace alone is 270 MB).
+1. **Images through the server** on `audio-fe-w-srv` (window 12's build) against `vimg-e2e-a4`: **PASS** (exit 0).
+   - Window 12's failure was the stale `vimg-e2e-a1` reference, not the server.
+   - Rule 6's image item closes on this run: the same binary, the check's own pass, the current reference. The
+     reference was corrected after the failure was seen (recorded above), not chosen to pass.
+   - With it, **rule 6 passes in full.**
+2. **The 90 s stall at 8 rows** on `audio-fe-v16-srv`, 3 repeats each:
+   - `LFM3_MEL_THREADS` 4: 0.3539 s; 1: 0.3494 s; 4 again: 0.3551 s;
+   - the worst gap without the clip: 0.438–0.440 s in all three.
+   - **The thread count makes no difference:** hypothesis 1 as stated (thread contention) is falsified. The trace
+     below shows `log_mel`'s total CPU work still costs the decode steps, whatever the count.
+3. **The engine thread's parse and decode, one Thor CPU, 20 repeats:**
+
+   | clip | request line | parse | decode | lookup | total |
+   |---|---|---|---|---|---|
+   | 90 s | 3.84 MB | 9.5 ms | 16.9 ms | 0.3 ms | 26.8 ms |
+   | 35 s | — | 4.3 ms | 7.5 ms | — | 11.9 ms |
+
+   Hypothesis 2 explains about half the gap.
+4. **nsys**, one 90 s stall run at 8 rows. It ran on the host, outside the container, so the container's UVM effect
+   (prefill-stall-v1, window 14) is not in it. That run's stall: 0.3486 s.
+
+**What the trace shows.** Times are relative to the encoder's first kernel (`conv_in`). These are the engine thread's
+CUDA runtime calls and CPU samples (about 1 per ms).
+
+| from | to | what |
+|---|---|---|
+| … | −43.2 ms | decode steps, 25.8 ms each (median over 114 steps before) |
+| −43.2 | −7.8 | **35.4 ms of CPU work with no CUDA call:** `parse_speech`. Of 29 samples: 17 in `lfm::base64::decode` (`clip_from_base64`), 8 in `lfm::Json::quoted` (parsing the 3.8 MB string), 2 in WAV parsing and memcpy |
+| −6.7 | 0 | the encoder's scratch `cudaMalloc` (6.6 ms; in the bar's encoder figure) |
+| 0 | 157 | the encoder on the GPU (conv_in to to_bf16: 157 ms; with the malloc, the bench's 165.5 ms) |
+| 157 | 161 | the encoder's scratch freed |
+| 161 | 285 | the language-model prefill (a 123.6 ms `cudaMemcpy` waiting on it; the bar's prefill is about 126 ms) |
+| 285 | 291.7 | the row loaded into the batch, the codec reset |
+| 291.7 | … | decode steps, now 28.2 ms each (median over 27): the clip's own ASR row is in the batch |
+
+Before the admission, the handler's `log_mel` (F2, 4 threads, 665 samples in `fft_dd` and `exact_frames`) ran from
+−222 to −51 ms. The decode steps during it took 39.8 and 32.2 ms against 25.8: about **+20 ms**.
+
+**Accounting** (90 s, 8 rows). The stall is 0.354 s; the bar is 0.302 s. About 62 ms lies beyond the encoder and the
+prefill (the 52 ms excess plus the bar's 10 ms). Those 62 ms fall in one interval between audio events (0.44 s without
+the clip, 0.80 s with it):
+- **about 35 ms:** the engine thread's parse and decode of the clip (direct, in the trace);
+- **about 15–20 ms:** slower decode steps while the handler's `log_mel` runs. That is CPU or memory contention from
+  F2's double-double FFT. It is set by the total work, not the thread count, which is why 1 against 4 threads made no
+  difference (with 1 thread, the 0.68 s run still lies mostly inside the 0.8 s interval);
+- **about 5–10 ms:** the clip's own row in the batch slowing each later step by about 2.4 ms. That is inherent to
+  admitting a row, and the bar does not count it.
+
+## Proposal (2026-11-17, not implemented): the clip's bytes off the engine thread; its rules, set before any code
+**The change.** The obvious next change, and the larger part of the gap.
+- When every clip of a request has its features in the cache, the in-process server's engine request carries a
+  handle for each clip (`"audio_ref"`) instead of its base64.
+- The cache entry holds the features and the clip's sample count, the only thing the engine still needs from the
+  samples (the token count and the features' length check).
+- `WorkerCore::parse_speech` resolves each handle under its lease. It neither parses a multi-megabyte JSON string nor
+  decodes base64 or WAV.
+- A handle is assigned per cache entry and stays valid while the request's lease lives, so it cannot name another
+  clip.
+- An unknown handle is a refusal with its own message, never a silent recomputation; it is unreachable by
+  construction.
+- A request whose clips are not all in the cache, the out-of-process worker, and lfm3-speech all send and take the
+  base64 exactly as today.
+
+**Expected:** about 35 ms less of the 90 s clip's stall (about 12 ms at 35 s). That should bring rule 3's 8-row cells
+near or under the bar, except where `log_mel`'s contention lands in the interval. That part is not addressed here.
+
+**Rules, set before any code** (a round of its own, or amendment 4 to this round, as Tripp chooses):
+1. **Exactness:**
+   - the server's audio-in check (both front ends) and 8 and 32 requests at once: every reply byte-identical to
+     lfm3-speech's;
+   - the 360 + 93 stage files and the 2,620 corpus through lfm3-speech: unchanged (lfm3-speech does not use handles);
+   - a request mixing cached and uncached clips sends base64, and gives the same replies.
+2. **Rule 3 again, as written** (amendment 3's method, the same bar): at 8 and 16 rows, all five clips. A remaining
+   failure is recorded, and the contention part is then the next diagnostic.
+3. **The engine thread's admission work, reported** (nsys, as window 16): the CPU-only time before the encoder's first
+   kernel for the 90 s clip. Expected under 3 ms against 35.4.
+4. **Safety:**
+   - host suites in full (plain, ASan+UBSan, TSan), with tests for a handle outliving its request (refused), a request
+     cancelled after its handles were sent, and the same clip in requests at once;
+   - compute-sanitizer memcheck on the server path;
+   - a red-team pass on the handle lifetime.
+5. **Nothing else changes:** amendment 3's rule 6 list again; the out-of-process worker's protocol and replies
+   unchanged.
+
+**Also from the trace, not proposed yet:** reducing `log_mel`'s effect on the decode steps. Options:
+- lower its threads' scheduling priority;
+- run it on cores other than the engine thread's;
+- use the cheaper direct DFT path, which is not correctly rounded.
+
+Each needs a measurement first. The direct path would be a change to amendment 2's decision and is Tripp's call.
