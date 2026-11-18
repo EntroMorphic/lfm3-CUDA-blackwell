@@ -386,3 +386,23 @@ with every thread's blocked-signal mask (`SigBlk`) recorded before the SIGTERM, 
   SIGTERM, the suspected cause of window 10's exit 15 holds, and it's the server's signal design, not the image cache.
   The gate stays exit 0: a fix would be the server's (a handler that only wakes the waiting thread, so it doesn't matter
   which thread takes the signal), made and checked as a change of its own.
+
+## C3-C5 rerun (quiet window 13, 2026-11-17 17:41-17:45; `quiet-w13-c3c5/`), with the amended reading
+Window 10's builds and images, unchanged.
+| Check | Result | Reading |
+|---|---|---|
+| C3 location | **PASS** | other threads 0.45 s on the evicted re-send (hit control 0.05, never-seen control 0.47), engine 0.16 s (its miss 0.15); texts equal; decoded on a handler |
+| C5 (fault build) | **PASS** | all 6 checks pass: fault re-sends prefill 0.592 s (on: miss 0.612, hit 0.228), other-thread CPU 0.45-0.46 s (decoded on a handler every time), replies equal to the cache off and to lfm3-speech |
+| Server memcheck, `--image-cache-mb 1` | **FAIL as written (exit 15); 0 errors** | plain: exit 0, statuses 200, expected cache counts. memcheck: 0 errors, texts equal to plain, same cache counts, exit 15 |
+
+**Why memcheck exits 15.** Before the SIGTERM:
+- The plain server has 14 threads, and 1 does not block SIGTERM. That is the signal thread itself: while a thread waits in `sigwait`, Linux takes the waited signals out of its blocked mask.
+- Under memcheck there are 19 threads, and 2 do not block SIGTERM. The extra one is a thread the server didn't start with the mask. A process-directed SIGTERM can be delivered to that thread. Its action is the default one, so the process dies of signal 15 instead of shutting down in order.
+
+So the cause suspected after window 10 holds. It's the server's signal design, not the image cache. The fix is its own change: a SIGTERM/SIGINT handler that only forwards the signal to the waiting thread, so it doesn't matter which thread receives it. It is checked by the host suites and a memcheck rerun.
+
+**C3-C5 standing:**
+- C3 location: PASS.
+- C3 stall: FAIL as written (window 10), but the engine thread does not decode.
+- C4 memory: PASS. lfm3-speech memcheck: PASS. Server memcheck: 0 errors, exit gate pending the signal fix.
+- C5: PASS.
