@@ -169,3 +169,19 @@ The host run had 0 catches again, so 0 stalls.
 - Prediction: 0 stalls, or the stall count drops to the host's, and the maps show `/dev/nvidia-uvm`.
 - If it holds, the fix is to recreate the container, or to run the service on the host (always-on-v1 rule 5 already needs the host).
 - Until then, every timing taken in `lfm3-profile-v1` since the reboot carries the stall. That includes window 15's first-request times, whose individual requests can include a stall.
+
+## The UVM test, set before its data (2026-11-17 ~20:40; Tripp approved a throwaway container)
+- **Container:** a fresh `lfm3-uvm-test-v1`, a copy of `lfm3-profile-v1`'s configuration. `lfm3-profile-v1` itself is untouched.
+  - The same image ID (`sha256:2a9b0054...`) and `--runtime nvidia` with all GPUs.
+  - Network none, the 96 GiB memory limit, `sleep infinity`.
+  - The same three mounts (`/workspace` rw, `/pinned-cuda` ro, `/opt/nsys` ro) and the same environment.
+- **Runs:** window 8's probe (`tools/thor/stall_probe.sh vimg-a5`, the 630 dev TTS requests, as uid 1000, so the engine's maps are readable from the host; uid 1000 had 31 and 26 stalls in window 8).
+  - One control run in `lfm3-profile-v1`.
+  - Two runs in the test container.
+  - In each run, about 60 s in, the engine's `/proc/PID/maps` is checked for `/dev/nvidia-uvm`.
+- **Precondition:** in the test container `open("/dev/nvidia-uvm", O_RDWR)` succeeds. If it doesn't, the test is void and nothing is concluded.
+- **Prediction, if the missing UVM is the cause:**
+  - The test container's runs map `/dev/nvidia-uvm` and have at most 2 stalls each. The host had 0 in 3,780 requests.
+  - The control run maps no UVM and has stalls as before: 26-38 per 630 requests in windows 5-8 (uid 1000: 31 and 26).
+- **Falsified if:** the test container's runs map UVM and still have stalls in the control's range (10 or more per run).
+- **Anything in between** is recorded as unresolved.
