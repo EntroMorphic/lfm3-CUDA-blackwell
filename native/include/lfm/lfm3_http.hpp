@@ -829,6 +829,7 @@ class Service {
     // the clips' features computed ahead (compute_audio_features), held for the engine until the request ends
     std::vector<lfm::audio_features::FeatureCache::Lease> audio_features;
     std::vector<std::pair<size_t, size_t>> audio_clips;  // each clip's (offset, length) in audio_json (encode_speech)
+    std::string audio_refs_json;  // the clips' handles, when every clip's features are held (audio-handles-v1)
     bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
     bool stream = false;             // the reply as events while the engine generates (speech_stream)
   };
@@ -901,8 +902,10 @@ class Service {
   void compute_audio_features(Speech& s, Clock::time_point deadline, const std::function<bool()>& gone) {
     if (!policy_.audio_features_ahead) return;
     auto& cache = lfm::audio_features::shared_feature_cache();
-    for (const auto& [at, length] : s.audio_clips) {
+    for (size_t i = 0; i < s.audio_clips.size(); ++i) {
+      const auto [at, length] = s.audio_clips[i];
       const std::string_view clip(s.audio_json.data() + at, length);
+      if (int(i) == audio_ahead_skip()) continue;  // the diagnostic switch: this clip left to the engine (base64)
       if (auto lease = cache.lease_if_present(clip)) {
         s.audio_features.push_back(std::move(*lease));
         continue;
@@ -933,14 +936,45 @@ class Service {
         continue;
       }
       lfm::audio_features::FeatureCache::Features features;
+      size_t samples = 0;
       try {
-        features = std::make_shared<const std::vector<float>>(
-            lfm::audio_features::log_mel(lfm3_speech::clip_from_base64(std::string(clip))));
+        const auto pcm = lfm3_speech::clip_from_base64(std::string(clip));
+        samples = pcm.size();
+        features = std::make_shared<const std::vector<float>>(lfm::audio_features::log_mel(pcm));
       } catch (const std::exception&) {
         continue;  // not expected (encode_speech decoded this clip); the engine computes or refuses it as before
       }
-      s.audio_features.push_back(cache.put(clip, std::move(features)));
+      s.audio_features.push_back(cache.put(clip, std::move(features), samples));
     }
+    // validation/audio-handles-v1: every clip's features held, so the engine request carries the clips' handles, not
+    // their bytes; otherwise (a clip skipped) the base64 as before, for every clip of the request
+    if (!s.audio_clips.empty() && s.audio_features.size() == s.audio_clips.size()) {
+      s.audio_refs_json = "[";
+      for (size_t i = 0; i < s.audio_features.size(); ++i)
+        s.audio_refs_json += (i ? "," : "") + std::to_string(s.audio_features[i].handle());
+      s.audio_refs_json += "]";
+    }
+  }
+  // The engine request's audio: the handles when every clip's features are held (audio-handles-v1), else the clips'
+  // base64 (the out-of-process worker's way, and audio-in-v1's).
+  static void audio_field(Obj& frame, const Speech& s) {
+    if (!s.audio_refs_json.empty()) frame.raw("audio_ref", s.audio_refs_json);
+    else if (!s.audio_json.empty()) frame.raw("audio", s.audio_json);
+  }
+  // LFM3_AUDIO_AHEAD_SKIP (validation/audio-handles-v1, a diagnostic switch for rule 1's mixed requests): the ordinal
+  // (0..63) of a clip whose features are not computed ahead, so a request holding it sends base64. Unset: -1.
+  static int audio_ahead_skip() {
+    static const int k = [] {
+      const char* v = std::getenv("LFM3_AUDIO_AHEAD_SKIP");
+      if (!v || !*v) return -1;
+      const std::string t = v;
+      if (t.size() > 2 || !std::all_of(t.begin(), t.end(), [](char c) { return c >= '0' && c <= '9'; }))
+        throw std::runtime_error("LFM3_AUDIO_AHEAD_SKIP: an integer 0..63");
+      const int n = std::stoi(t);
+      if (n > 63) throw std::runtime_error("LFM3_AUDIO_AHEAD_SKIP: an integer 0..63");
+      return n;
+    }();
+    return k;
   }
   Speech validate_speech(const Json& item) const {
     const auto& o = object_of(item);
@@ -1301,7 +1335,7 @@ class Service {
       Obj frame;
       frame.str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
           .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split);
-      if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
+      audio_field(frame, *request);
       if (!request->images_json.empty()) frame.raw("images", request->images_json);
       const auto result = rpc(std::move(frame),
                               {{"speech", event}}, false, kMaxSpeechResponse, nullptr, kMaxSpeechFrame);
@@ -1387,7 +1421,7 @@ class Service {
         frame.str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
             .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split)
             .boolean("stream", true);
-        if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
+        audio_field(frame, *request);
         if (!request->images_json.empty()) frame.raw("images", request->images_json);
         const auto result = rpc(std::move(frame), {{key, event}}, false, kMaxBody, &progress, kMaxSpeechFrame);
         state.check(result);
@@ -1785,7 +1819,7 @@ class Service {
         Obj frame;
         frame.str("op", "speech_admit").num("ticket", t->id).raw("chunks", r.chunks_json).str("mode", r.mode)
             .num("max_new_tokens", r.count).num("seed", r.seed).boolean("chunked", r.split).boolean("stream", r.stream);
-        if (!r.audio_json.empty()) frame.raw("audio", r.audio_json);
+        audio_field(frame, r);
         if (!r.images_json.empty()) frame.raw("images", r.images_json);
         if (r.stream) t->state = std::make_unique<StreamState>(*this, r, t->lines);
         running_[t->id] = t;  // before the call: a failure fails it with the rest

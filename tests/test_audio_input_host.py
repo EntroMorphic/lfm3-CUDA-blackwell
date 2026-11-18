@@ -213,6 +213,13 @@ def test_correctly_rounded_features_agree_across_paths_and_threads(tool, tmp_pat
     assert r["ok"]
 
 
+def test_feature_cache_handles(tool):
+    """validation/audio-handles-v1: a handle names its own clip, features and sample count; it lives while any lease
+    holds its entry and is refused after; handles are never reused; concurrent requests (8 threads) keep their own."""
+    r = subprocess.run([*command(tool), "cache-handles", "-"], capture_output=True, text=True, timeout=600)
+    assert r.returncode == 0 and json.loads(r.stdout) == {"ok": True}, r.stderr
+
+
 def test_mel_threads_switch(tool, tmp_path):
     """LFM3_MEL_THREADS (audio-frontend-v1, a diagnostic switch): log_mel runs on that many threads, the features
     byte-identical at any count; anything but an integer 1..64 is refused with its name."""

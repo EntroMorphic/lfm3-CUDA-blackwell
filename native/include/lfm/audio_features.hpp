@@ -687,9 +687,17 @@ inline std::vector<float> log_mel(const std::vector<float>& samples, int threads
 // row. A Lease holds an entry until the request ends (the same clip in two requests: one entry, two leases). A clip
 // the engine does not find here (the out-of-process worker, lfm3-speech, a refused or expired request) is computed
 // by the engine as before: log_mel is a function of the clip, so a hit and a miss give the same bytes.
+//
+// Handles (validation/audio-handles-v1): each entry has a handle, a number assigned when the entry is created and never
+// reused in the process. The in-process server sends the engine a clip's handle instead of its base64 when the entry
+// has the clip's features and sample count; the engine resolves it (`resolve`). A handle resolves only while some
+// lease holds its entry: the sending request's lease lasts until the request ends, so a handle cannot outlive the
+// request that sent it, or name another clip.
 class FeatureCache {
   struct Entry {
     std::shared_ptr<const std::vector<float>> features;
+    size_t samples = 0;    // the clip's sample count (set with the features)
+    uint64_t handle = 0;   // assigned at creation, never reused
     int leases = 0;
   };
   using Map = std::map<std::string, Entry, std::less<>>;
@@ -709,6 +717,9 @@ class FeatureCache {
     Lease(const Lease&) = delete;
     Lease& operator=(const Lease&) = delete;
     ~Lease() { release(); }
+    explicit operator bool() const noexcept { return cache_ != nullptr; }
+    // the entry's handle (immutable while the entry exists, which this lease guarantees)
+    uint64_t handle() const noexcept { return cache_ ? it_->second.handle : 0; }
 
    private:
     friend class FeatureCache;
@@ -716,21 +727,55 @@ class FeatureCache {
     void release() noexcept {
       if (!cache_) return;
       std::lock_guard g(cache_->lock_);
-      if (--it_->second.leases == 0) cache_->entries_.erase(it_);
+      if (--it_->second.leases == 0) {
+        cache_->by_handle_.erase(it_->second.handle);
+        cache_->entries_.erase(it_);
+      }
       cache_ = nullptr;
     }
     FeatureCache* cache_ = nullptr;
     Map::iterator it_{};
   };
-  // Leaves `features` under `key` (kept as they are when the key already has features: the same clip, the same
-  // bytes). The map position comes first, so a failed allocation leaves no lease counted (red-team finding 3).
-  Lease put(std::string_view key, Features features) {
+  // Leaves `features` (of a clip of `samples` samples) under `key` (kept as they are when the key already has features:
+  // the same clip, the same bytes). The map position and the handle's index come first, so a failed allocation leaves
+  // no lease counted and no half-made entry (red-team finding 3).
+  Lease put(std::string_view key, Features features, size_t samples) {
     std::lock_guard g(lock_);
     auto it = entries_.find(key);
-    if (it == entries_.end()) it = entries_.emplace(std::string(key), Entry{}).first;
-    if (!it->second.features) it->second.features = std::move(features);
+    if (it == entries_.end()) {
+      it = entries_.emplace(std::string(key), Entry{}).first;
+      try {
+        it->second.handle = next_handle_;
+        by_handle_.emplace(next_handle_, it);
+        ++next_handle_;
+      } catch (...) {
+        entries_.erase(it);
+        throw;
+      }
+    }
+    if (!it->second.features) it->second.features = std::move(features), it->second.samples = samples;
     ++it->second.leases;
     return Lease(this, it);
+  }
+  // What a handle names while a lease holds its entry: the clip's features and sample count. Nothing otherwise (an
+  // unknown or expired handle, or an entry without features).
+  struct Resolved {
+    Features features;
+    size_t samples = 0;
+  };
+  std::optional<Resolved> resolve(uint64_t handle) const {
+    std::lock_guard g(lock_);
+    const auto h = by_handle_.find(handle);
+    if (h == by_handle_.end() || !h->second->second.features) return std::nullopt;
+    return Resolved{h->second->second.features, h->second->second.samples};
+  }
+  // The clip (its base64 text) a live handle names. For tests (the HTTP harness checks a handle's features against
+  // log_mel of its clip); the engine never needs it.
+  std::optional<std::string> clip_of(uint64_t handle) const {
+    std::lock_guard g(lock_);
+    const auto h = by_handle_.find(handle);
+    if (h == by_handle_.end()) return std::nullopt;
+    return h->second->first;
   }
   // A lease on the entry for `key` when its features are already there (the same clip in flight in another request,
   // or twice in one): nothing to compute. Otherwise nothing.
@@ -754,6 +799,8 @@ class FeatureCache {
  private:
   mutable std::mutex lock_;
   Map entries_;
+  std::map<uint64_t, Map::iterator> by_handle_;
+  uint64_t next_handle_ = 1;
 };
 // The process's cache: the in-process server's Service puts, its WorkerCore finds.
 inline FeatureCache& shared_feature_cache() {

@@ -675,6 +675,8 @@ class WorkerCore {
     if(prompts.empty() || (!chunked && prompts.size()!=1)) throw std::runtime_error("speech needs one prompt, or chunks");
     std::vector<std::vector<float>> clips;  // decoded and checked (spans included) before any engine state changes
     std::vector<lfm::audio_features::FeatureCache::Features> features;  // computed ahead by the in-process server
+    std::vector<size_t> audio_lengths;  // the clips by handle: their sample counts (audio-handles-v1)
+    if(request.has("audio") && request.has("audio_ref")) throw std::runtime_error("audio and audio_ref together");
     if(request.has("audio")) {
       if(!audio_in_ok) throw std::runtime_error("audio input is not supported by this checkpoint");
       if(request.at("audio").array().size()>kSpeechMaxClips) throw std::runtime_error("too many audio clips");
@@ -684,6 +686,22 @@ class WorkerCore {
         clips.push_back(lfm3_speech::clip_from_base64(a.string()));
         clip_tokens.push_back(lfm::audio_features::tokens(clips.back().size()));
         features.push_back(lfm::audio_features::shared_feature_cache().find(a.string()));  // validation/audio-frontend-v1
+      }
+      lfm3_speech::check_audio_spans(prompts[0],clip_tokens);
+    } else if(request.has("audio_ref")) {
+      // validation/audio-handles-v1: the in-process server's clips by handle (their features and sample counts held in
+      // the shared cache under the request's lease): no base64 to parse or decode on this thread
+      if(!audio_in_ok) throw std::runtime_error("audio input is not supported by this checkpoint");
+      if(request.at("audio_ref").array().size()>kSpeechMaxClips) throw std::runtime_error("too many audio clips");
+      if(chunked) throw std::runtime_error("chunks cannot take audio input");
+      std::vector<size_t> clip_tokens;
+      for(const auto& h:request.at("audio_ref").array()) {
+        const long long id=h.integer();
+        const auto r=id>0?lfm::audio_features::shared_feature_cache().resolve(uint64_t(id)):std::nullopt;
+        if(!r) throw std::runtime_error("unknown audio handle "+std::to_string(id));  // never recomputed from nothing
+        features.push_back(r->features);
+        audio_lengths.push_back(r->samples);
+        clip_tokens.push_back(lfm::audio_features::tokens(r->samples));
       }
       lfm3_speech::check_audio_spans(prompts[0],clip_tokens);
     } else {
@@ -707,7 +725,7 @@ class WorkerCore {
     }
     auto& o=job.o;
     o.mode=mode=="audio"?lfm::audio::Requested::Audio:mode=="text"?lfm::audio::Requested::Text:lfm::audio::Requested::Interleaved;
-    o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);o.audio_features=std::move(features);o.images=std::move(images);
+    o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);o.audio_features=std::move(features);o.audio_lengths=std::move(audio_lengths);o.images=std::move(images);
     return job;
   }
   // The streaming observers: progress lines, each prefixed with `tag` (e.g. "\"ticket\":7," for a batch row).

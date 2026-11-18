@@ -58,7 +58,7 @@ int main(int argc, char** argv) try {
     sink += lfm::audio_features::tokens(samples.size());
   });
   auto& cache = lfm::audio_features::shared_feature_cache();
-  const auto lease = cache.put(clip, std::make_shared<const std::vector<float>>(1, 0.0f));
+  const auto lease = cache.put(clip, std::make_shared<const std::vector<float>>(1, 0.0f), 1);
   const double lookup = timed(repeat, [&] { sink += cache.find(clip) ? 1 : 0; });
   std::printf("{\"wav_bytes\":%zu,\"base64_bytes\":%zu,\"line_bytes\":%zu,\"repeat\":%d,\"parse_seconds\":%.6f,"
               "\"decode_seconds\":%.6f,\"lookup_seconds\":%.6f,\"total_seconds\":%.6f,\"sink\":%zu}\n",

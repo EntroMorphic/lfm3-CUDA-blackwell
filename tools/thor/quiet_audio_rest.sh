@@ -14,7 +14,8 @@ export LFM3_WORKSPACE=$W
 B=$W/liquid-CUDA/build; C=/workspace/liquid-CUDA/build; M=/workspace/models/LFM3-Omni-2B; L=/workspace/data/librispeech/wav
 CT=/workspace/liquid-CUDA/${TOOLS#$W/liquid-CUDA/}; SRC_REL=${SRC#$W/liquid-CUDA/}; BASE_REL=build/audio-src-base
 IMG=sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f
-O=quiet-audio-rest; SP=audio-fe-w-speech; SV=audio-fe-w-srv; BS=audio-fe-w-base-srv; BE=audio-fe-w-bench
+O=${QAR_OUT:-quiet-audio-rest}; P=${QAR_TAG:-audio-fe-w}  # the output and build names (audio-handles-v1 runs it with its own)
+SP=$P-speech; SV=$P-srv; BS=${QAR_BASE_TAG:-audio-fe-w-base-srv}; BE=$P-bench
 X="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
 mkdir -p $B/$O && cd $B/$O || { echo "NOT RUNNABLE: cannot make $B/$O"; exit 1; }
 nr() { echo "NOT RUNNABLE: $*"; exit 1; }

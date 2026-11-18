@@ -288,4 +288,21 @@ def test_features_are_dropped_when_a_request_ends_however_it_ends(harness_binary
         s.close()
         time.sleep(1.5)  # the next cycle cancels it and frees its row
         prompt_length(h, ask([clips[4]]))  # alone
-        assert log.read_text().splitlines()[-1] == "entries 1", log.read_text()
+        assert log.read_text().splitlines()[-1] == "entries 1 refs", log.read_text()  # its own clip, by handle (audio-handles-v1)
+
+
+def test_a_request_with_a_clip_left_out_sends_base64_with_the_same_prompt(harness_binary, tmp_path, monkeypatch):
+    # validation/audio-handles-v1 rule 1: with every clip's features held the engine gets handles; with one clip left
+    # out (LFM3_AUDIO_AHEAD_SKIP, the diagnostic switch) the whole request goes as base64, as before, and the engine
+    # sees the same prompt. The fake engine checks every handle's features against log_mel of the clip it names.
+    a, b = wav(1.0), wav(2.5)
+    refs, mixed = tmp_path / "refs.log", tmp_path / "mixed.log"
+    with running(harness_binary, "--feature-cache-log", str(refs)) as h:
+        both = prompt_length(h, ask([a, b]))[1]
+        one = prompt_length(h, ask([a]))[1]
+    assert [line.split()[-1] for line in refs.read_text().splitlines()] == ["refs", "refs"], refs.read_text()
+    monkeypatch.setenv("LFM3_AUDIO_AHEAD_SKIP", "1")  # the second clip of a request
+    with running(harness_binary, "--feature-cache-log", str(mixed)) as h:
+        assert prompt_length(h, ask([a, b]))[1] == both  # clip 0 held, clip 1 not: base64
+        assert prompt_length(h, ask([a]))[1] == one       # one clip, none left out: handles
+    assert [line.split()[-1] for line in mixed.read_text().splitlines()] == ["base64", "refs"], mixed.read_text()

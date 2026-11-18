@@ -75,24 +75,51 @@ class FakeEngine final : public lfm::http::Backend {
       f.lengths.push_back(c.array().size());
     }
     // audio input (#3), as WorkerCore checks it: each clip decoded, and the spans matching the clips
+    if (request.has("audio") && request.has("audio_ref")) throw std::runtime_error("audio and audio_ref together");
+    // a clip's features, from the cache, checked against log_mel of the clip (in full up to 20 s, by length beyond)
+    auto check_features = [](const lfm::audio_features::FeatureCache::Features& f, const std::vector<float>& samples) {
+      if (f->size() != size_t(lfm::audio_features::kMels) * lfm::audio_features::frames(samples.size()) ||
+          (samples.size() <= 20 * 16000 && *f != lfm::audio_features::log_mel(samples)))
+        throw std::runtime_error("harness: a clip's features computed ahead differ from log_mel");
+    };
+    auto& cache = lfm::audio_features::shared_feature_cache();
     if (request.has("audio")) {
       if (!audio_input_) throw std::runtime_error("audio input is not supported by this checkpoint");
       if (request.at("audio").array().size() > 64) throw std::runtime_error("too many audio clips");
       if (chunked) throw std::runtime_error("chunks cannot take audio input");
+      // validation/audio-handles-v1: with features computed ahead, the server sends base64 only when a clip was left
+      // out (the LFM3_AUDIO_AHEAD_SKIP switch); otherwise handles
+      if (audio_features_ahead_ && !std::getenv("LFM3_AUDIO_AHEAD_SKIP"))
+        throw std::runtime_error("harness: base64 sent though every clip's features were held");
       std::vector<size_t> clip_tokens;
       for (const auto& a : request.at("audio").array()) {
         const auto samples = lfm3_speech::clip_from_base64(a.string());
         clip_tokens.push_back(lfm::audio_features::tokens(samples.size()));
-        if (audio_features_ahead_) {  // validation/audio-frontend-v1: the hand-off WorkerCore relies on
-          const auto f = lfm::audio_features::shared_feature_cache().find(a.string());
-          if (!f) throw std::runtime_error("harness: a clip's features were not computed ahead");
-          if (f->size() != size_t(lfm::audio_features::kMels) * lfm::audio_features::frames(samples.size()) ||
-              (samples.size() <= 20 * 16000 && *f != lfm::audio_features::log_mel(samples)))
-            throw std::runtime_error("harness: a clip's features computed ahead differ from log_mel");
-        }
+        if (const auto f = cache.find(a.string())) check_features(f, samples);  // a held clip in a mixed request
+      }
+      if (cache_log_) cache_log_ << "entries " << cache.size() << " base64\n" << std::flush;
+      lfm3_speech::check_audio_spans(prompts[0], clip_tokens);
+    } else if (request.has("audio_ref")) {
+      // validation/audio-handles-v1, as WorkerCore resolves them; and each handle's features checked against log_mel of
+      // the clip the handle names (cache.clip_of: a test's view; the engine never needs the clip)
+      if (!audio_input_) throw std::runtime_error("audio input is not supported by this checkpoint");
+      if (request.at("audio_ref").array().size() > 64) throw std::runtime_error("too many audio clips");
+      if (chunked) throw std::runtime_error("chunks cannot take audio input");
+      if (!audio_features_ahead_) throw std::runtime_error("harness: handles without features computed ahead");
+      std::vector<size_t> clip_tokens;
+      for (const auto& h : request.at("audio_ref").array()) {
+        const long long id = h.integer();
+        const auto r = id > 0 ? cache.resolve(uint64_t(id)) : std::nullopt;
+        if (!r) throw std::runtime_error("unknown audio handle " + std::to_string(id));
+        const auto clip = cache.clip_of(uint64_t(id));
+        if (!clip) throw std::runtime_error("harness: a resolved handle without its clip");
+        const auto samples = lfm3_speech::clip_from_base64(*clip);
+        if (samples.size() != r->samples) throw std::runtime_error("harness: a handle's sample count differs from its clip");
+        check_features(r->features, samples);
+        clip_tokens.push_back(lfm::audio_features::tokens(r->samples));
       }
       // --feature-cache-log: the cache's entries as the engine takes an audio request (eviction tests)
-      if (cache_log_) cache_log_ << "entries " << lfm::audio_features::shared_feature_cache().size() << "\n" << std::flush;
+      if (cache_log_) cache_log_ << "entries " << cache.size() << " refs\n" << std::flush;
       lfm3_speech::check_audio_spans(prompts[0], clip_tokens);
     } else {
       for (const auto& p : prompts) lfm3_speech::check_audio_spans(p, {});

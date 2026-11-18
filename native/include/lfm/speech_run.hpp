@@ -37,6 +37,9 @@ struct Options {
   // each clip's features when computed ahead (lfm::audio_features::FeatureCache, validation/audio-frontend-v1): empty,
   // or one per clip, null where the engine computes them itself (the same bytes either way)
   std::vector<lfm::audio_features::FeatureCache::Features> audio_features;
+  // the clips handed over by handle (validation/audio-handles-v1): no samples (`audio` empty), each clip's sample count
+  // here and its features in audio_features (every one present). Empty otherwise.
+  std::vector<size_t> audio_lengths;
   bool record_audio = false;
   // image input (#4): the images after the native front end (lfm/image_preprocess.hpp), one per <|image|> span of the
   // prompt in order (each span holds PixelValues::tokens placeholders); audio and image spans may interleave
@@ -53,6 +56,13 @@ struct Options {
   std::function<void(int slot)> on_slot;
   std::function<void(size_t chunk, const ChunkInfo& info)> on_chunk;
 };
+
+// A request's audio clips, whether given as samples or by handle (validation/audio-handles-v1): how many, and each
+// one's sample count.
+inline size_t audio_clip_count(const Options& o) { return o.audio.empty() ? o.audio_lengths.size() : o.audio.size(); }
+inline size_t audio_clip_length(const Options& o, size_t i) {
+  return o.audio.empty() ? o.audio_lengths.at(i) : o.audio.at(i).size();
+}
 
 struct Cancelled : std::runtime_error {
   Cancelled() : std::runtime_error("speech generation cancelled at a step boundary") {}

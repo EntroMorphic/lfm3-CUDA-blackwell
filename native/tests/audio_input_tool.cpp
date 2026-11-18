@@ -13,6 +13,8 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <atomic>
+#include <optional>
 #include <thread>
 #include <vector>
 
@@ -44,6 +46,44 @@ int main(int argc, char** argv) try {
     for (const auto& g : got)
       if (g != want) throw std::runtime_error("concurrent calls changed the features");
     std::cout << "{\"ok\":true,\"frames\":" << lfm::audio_features::frames(a.samples.size()) << "}\n";
+    return 0;
+  }
+  if (mode == "cache-handles") {  // validation/audio-handles-v1: the feature cache's handles and their lifetime
+    using lfm::audio_features::FeatureCache;
+    auto need = [](bool ok, const char* what) { if (!ok) throw std::runtime_error(std::string("cache-handles: ") + what); };
+    FeatureCache cache;
+    auto feats = [](float v) { return std::make_shared<const std::vector<float>>(4, v); };
+    std::optional<FeatureCache::Lease> la(cache.put("clip-a", feats(1), 100)), lb(cache.put("clip-b", feats(2), 200));
+    const uint64_t ha = la->handle(), hb = lb->handle();
+    need(ha && hb && ha != hb, "distinct nonzero handles");
+    const auto ra = cache.resolve(ha);
+    need(ra && ra->samples == 100 && (*ra->features)[0] == 1 && cache.clip_of(ha) == std::string("clip-a"),
+         "a handle names its own clip, features and sample count");
+    auto la2 = cache.lease_if_present("clip-a");  // the same clip in another request: the same entry and handle
+    need(la2 && la2->handle() == ha && cache.size() == 2, "the same clip shares an entry");
+    la.reset();
+    need(cache.resolve(ha).has_value(), "a handle lives while any lease holds its entry");
+    la2.reset();
+    need(!cache.resolve(ha) && !cache.clip_of(ha) && cache.size() == 1, "a handle outliving its leases is refused");
+    const auto la3 = cache.put("clip-a", feats(1), 100);
+    need(la3.handle() != ha && la3.handle() != hb, "handles are never reused");
+    need(!cache.resolve(0) && !cache.resolve(~uint64_t(0)), "unknown handles are refused");
+    // concurrent requests: put, lease, resolve and release from 8 threads over a few shared clips
+    std::vector<std::thread> threads;
+    std::atomic<int> wrong{0};
+    for (int t = 0; t < 8; ++t)
+      threads.emplace_back([&, t] {
+        for (int i = 0; i < 2000; ++i) {
+          const std::string key = "shared-" + std::to_string((t + i) % 3);
+          const auto l = cache.put(key, feats(float((t + i) % 3)), size_t((t + i) % 3 + 1));
+          const auto r = cache.resolve(l.handle());
+          if (!r || r->samples != size_t((t + i) % 3 + 1) || cache.clip_of(l.handle()) != key) ++wrong;
+        }
+      });
+    for (auto& t : threads) t.join();
+    need(wrong == 0, "concurrent handles name their own clips");
+    need(cache.size() == 2, "every shared entry released (clip-a and clip-b still held)");
+    std::cout << "{\"ok\":true}\n";
     return 0;
   }
   if (mode == "exact-threads") {  // amendment 2: F1 and F2 the same floats at 1 to 12 threads and from 8 callers
