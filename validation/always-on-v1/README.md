@@ -53,3 +53,54 @@ for its first token. Where those seconds go has not been measured.
 - **Rule 2 and rule 5 on Thor.** The exactness checks start the server by path with fixed arguments; with `--warmup`
   they are run with SERVER pointing at a two-line wrapper that execs the binary with `--warmup` added. Rule 5 needs the
   binary to run on the host (the unit cannot reach a process started by `docker exec` with SIGTERM); see docs/service.md.
+
+## Thor results (quiet window 15, 2026-11-17 18:37-19:21; `build/quiet-w15-always-on/`)
+- **Build:** main d0a5e80 (the merge 7ce8546), in the container `lfm3-profile-v1`.
+- **Container caveat:** since the 2026-11-14 boot this container cannot open `/dev/nvidia-uvm` (prefill-stall-v1, window 14), and any request in it can carry a prefill stall. The repeats below agree to a few ms, so no stall shows in these numbers.
+- **Measurement:** time to first token in seconds. "Seq" means the kinds in order on one cold server; "alone" means each kind first on its own fresh server; "warm" is the median of 3 fresh `--warmup` servers.
+
+| Kind | Cold, seq: 1st / 3rd | Cold, alone: 1st / 3rd | Warm: 1st / 3rd (median of 3) |
+|---|---|---|---|
+| text (`max_new_tokens` 1) | 2.731 / 0.035 | 0.843 / 0.035 | 0.0296 / 0.0293 |
+| TTS, first audio | 0.709 / 0.240 | 1.482 / 0.240 | 0.243 / 0.241 |
+| 4K image, first text | 1.140 / 0.329 | 2.305 / 0.296 | **1.073 / 0.300** |
+| audio in, first event | 0.086 / 0.080 | 1.274 / 0.080 | 0.080 / 0.080 |
+
+- **Rule 0: proceed.** Every kind's first request on a fresh server is slower than its third by more than 1 s in at least one ordering:
+  - text +2.70 s when it is the server's very first request, +0.81 s alone;
+  - TTS +1.24 s alone;
+  - image +2.01 s alone;
+  - audio in +1.19 s alone.
+
+  The server's own timings show where the time goes. The engine's `prefill_seconds` for the first and third request differ by at most 0.07 s, so the cold cost is outside the engine's timed prefill and generate: first-use initialisation, not the model's work.
+- **Rule 1: FAIL as written.** Text, TTS and audio in pass: their warm first request is within 50 ms of the third. The image does not: 1.073 against 0.300.
+  - The tool sends the same photograph three times, so on any server the 2nd and 3rd are hits in the image caches, while the 1st must decode and encode it.
+  - Engine prefill confirms this: 0.595 s on the 1st against 0.228 s on the 2nd and 3rd, the same miss and hit as image-cache-v1's C3 (0.60 and 0.228).
+  - The warm-up does remove the image's cold cost. The first image on a cold server alone was 2.305 s; on a warm server it is 1.073 s, which matches the third image on the same server when it is a miss.
+  - As written, the rule compares a miss with a hit. The amendment below changes the comparison, not the bar.
+- **Rule 2 (`--warmup`): PASS for what was run**, every check on a fresh server whose first request of each kind follows the warm-up:
+  - the 11 stage-0 image requests (IMAGE SERVER PASS);
+  - `check_lfm3_image_cache.py` 32 of 32 identical;
+  - the speech stream check PASS;
+  - the audio-in server check PASS.
+
+  **Not run:** the three soak text bodies.
+- **Rule 3: PASS.** Idle RSS, 10 s after the four requests:
+
+  | Server | Idle RSS |
+  |---|---|
+  | warm | 5,696.4 MiB |
+  | cold, after the warm-up's four requests (replica) | 5,697.1 MiB |
+
+  The bound was the cold figure plus 64 MiB. Nothing is left behind: host-tested, and the warm-up checks it itself before ready.
+- **Rule 4: startup reported.** Process start to ready, warm-up included: 4.175, 4.155 and 4.196 s (median 4.18 s). `/health` 503 until warm, the ready line after the warm-up, and failures exiting 1 are covered by the host tests (`tests/test_lfm3_http_warmup.py`).
+- **Rule 6: PASS for the same checks without `--warmup`** on the same build (all four checks above). The host suites passed before the merge.
+- **Rule 5:** not yet. It needs the host and Tripp's `enable-linger`.
+
+### Amendment to rule 1 (2026-11-17, after window 15, before any rerun)
+- **The change:** each kind's 1st request after ready is compared with a later request of that kind that does the same work.
+  - For the image, the 3rd request carries a different 4K image of the same size, never sent before: a miss, as the 1st is.
+  - Text, TTS and audio in have no input cache, so they are unchanged.
+- **The bar is unchanged:** 10% or 50 ms, whichever is larger; median of 3 fresh servers.
+- **What I expect:** the warm 1st image within the bar of the 3rd miss. Window 15's sequence already suggests it: cold "seq" image 1st 1.140 s after the other kinds had warmed the server, against the warm 1st 1.073 s.
+- **Rule 0's reading is not affected:** cold alone, the first image was 2.305 s against the 1.07 s a miss costs on a warm server.
