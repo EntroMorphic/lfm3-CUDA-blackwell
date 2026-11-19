@@ -211,3 +211,18 @@ Tripp reboots Thor; nobody logs in before the check's data is read (ssh afterwar
 - **Serving:** `/health` answers 200, and one real request of each of text and TTS succeeds.
 - **Recorded as well:** the server's own warm-up line (the page cache is cold after a boot, so the checkpoint's load is part of this start), and the time from kernel boot to active.
 - **The UVM question:** the major number of `/dev/nvidia-uvm` (488 before the reboot), and whether `lfm3-profile-v1-pre-uvm`, started briefly, can open it. If the major is still 488 and it still cannot, the "stale allowlist" explanation is wrong.
+
+## The boot check: results (2026-11-18, 22:29 boot)
+Data in Thor's `build/always-on-boot/` (the unit's `systemctl show`, this boot's journal, the replies). Times are seconds since kernel boot (monotonic).
+
+| Check | Result | Verdict |
+|---|---|---|
+| Started by itself | linger on; `user@1000.service` started by systemd (pid 1) at 13.22 s, active at 13.56 s; the unit started at 13.57 s, `NRestarts=0`. The first login of the user was at 31.0 s (Tripp's desktop password login at the console), after the unit was already active. | **PASS** |
+| Warm in time | `InactiveExitTimestamp` 13.566 s to `ActiveEnterTimestamp` 19.544 s: **5.98 s** (bound 14.18 s) | **PASS** |
+| Serving | `/health` 200. Text (`/generate`, the lighthouse prompt, 96 new tokens): 200, `stop`, a coherent paragraph. TTS ("Thor is back up, and the service started on its own."): 200, 4.16 s of audio, which the service itself transcribes back word for word (ASR at 16 kHz). The clip is `outputs/always-on-boot/tts-after-boot.wav`. | **PASS** |
+
+**Recorded as well:** the warm-up line: startup 5.98 s, warm-up 5.15 s (text 2.02 s, TTS 1.31 s, image 1.10 s, audio 0.72 s), with a cold page cache. From kernel boot to active: 19.54 s.
+
+**Started at boot: PASS. With it, every rule of always-on-v1 has a verdict.**
+
+**The UVM question.** The major of `/dev/nvidia-uvm` is still 488. `lfm3-profile-v1-pre-uvm`, started briefly, cannot open it: it now has no `/dev/nvidia-uvm` node at all, as uid 0 or 1000 (before the reboot it had a node that gave EPERM). So, by the rule set above, **the "stale allowlist" explanation is wrong.** After the reboot the old container behaves as a freshly created nvidia-runtime container does on this Thor: no UVM node. Why it had a node before the reboot is not known. One unconfirmed guess is that something inside it once created the node, which the device cgroup then refused. The fix holds either way: `lfm3-profile-v1` (with `--device /dev/nvidia-uvm`) opens it as uid 0 and 1000 after the reboot. Both containers have restart policy "no", so `lfm3-profile-v1` needs a `docker start` after each reboot.
