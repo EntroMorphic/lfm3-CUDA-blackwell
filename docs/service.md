@@ -51,7 +51,7 @@ A template, filled in by `deploy/install-user-service.sh`:
 - `ExecStart=... --experimental MODEL --port PORT --warmup`. **Loopback only**: the server binds `127.0.0.1` and
   has no option to bind anything else. The bearer token is the default file `~/.config/liquid-lfm3/token` (mode
   0600, created on the first start), which `tools/lfm3_token.py` reads for clients.
-- `Restart=on-failure` (a non-zero exit, a crash, a failed warm-up), `RestartSec=5`, at most 5 starts in 10 minutes;
+- `Restart=on-failure` (a non-zero exit, a crash, a failed warm-up), `RestartSec=1`, at most 5 starts in 10 minutes;
   plus `RestartForceExitStatus=0`: the server exits 0 on `SIGTERM`, so a `SIGTERM` from outside systemd would
   otherwise leave it down. `systemctl --user stop` is never followed by a restart.
 - `KillSignal=SIGTERM`, `TimeoutStopSec=30`, **`SendSIGKILL=no`**: this project never SIGKILLs a CUDA process. A server

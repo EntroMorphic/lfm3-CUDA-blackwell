@@ -178,3 +178,13 @@ The image's 2nd request, a hit on the 1st's photograph, is 0.297-0.302 s. Engine
 1. Why the text warm-up went from 1.4 s to 5 s.
 2. Whether to cut `RestartSec` from 5 s to 1 s. That is a change to the unit, not to the bar; `StartLimitBurst` still guards crash loops. If so, record it as a change, then run the crash checks again.
 3. The boot check: Tripp reboots.
+
+## The slow text warm-up, and the change to the unit (2026-11-18, before rule 5 run 3)
+**The slow text warm-up was not reproduced; its cause is unknown** (`build/warmup-diag-v1/`).
+- Last night's five starts, by the server's own line: text 1.40 s (22:10), then 4.40, 4.97, 5.04 and 4.99 s (23:08:52-23:09:35), then 1.41 s (23:09:41).
+- **The build is not the cause:** `sig-srv` and `sig-srv2`, 4 starts each, alternating: startup 4.98-5.14 s, text 1.28-1.36 s.
+- **A build just before is not the cause:** the same server build, then 8 starts at once: startup 4.55-5.05 s, text 0.79-1.29 s.
+- Power state was the same last night. Whether it recurs is watched in run 3's starts.
+
+**Change to the unit:** `RestartSec=5` becomes `RestartSec=1`. The bar is unchanged (14.18 s). `StartLimitBurst=5` in 10 minutes still ends a crash loop.
+**Expected in run 3:** warm again about 6.5-7 s after each SIGTERM (exit about 0.5 s, restart delay 1 s, startup about 5 s).

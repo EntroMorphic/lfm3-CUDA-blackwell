@@ -28,7 +28,7 @@ Restart=on-failure
 # SIGTERM from outside systemd (validation/always-on-v1 rule 5's stand-in for a crash) would otherwise leave it down.
 # `systemctl --user stop` is never followed by a restart, whatever the exit status.
 RestartForceExitStatus=0
-RestartSec=5
+RestartSec=1
 # loading the checkpoint and the warm-up
 TimeoutStartSec=900
 # Stop: SIGTERM only. The server stops admission, cancels running generations at their next token and exits 0.
