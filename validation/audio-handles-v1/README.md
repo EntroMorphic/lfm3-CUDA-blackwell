@@ -245,3 +245,119 @@ Run 1's outputs are kept as `build/quiet-w19-handles-run1/`, `build/quiet-w19-ha
 `tools/thor/quiet_session_v19.sh` in full, as window 19 ran it:
 - the handles server rebuilds, because its tree hash changes;
 - the base server's build is reused.
+
+## Quiet window 19, run 2 (2026-11-19, Thor, 06:43–08:41; QUIET-V19-FINISHED)
+- **Source:** `16bbe85`, plus `f8e2299`'s audio-in check, swapped in before its first use (above).
+- **Logs on Thor:** `build/quiet-w19.log`, `build/quiet-w19-handles/`, `build/quiet-w19-handles-rest/`.
+- Figures as the coordinator reported them.
+
+**Overall: rule 3 FAILS as written (the long clip, 2 of 10 cells). Rules 1 and 5 pass. Rule 3's reported figure is
+1.5 ms, under the expected 3 ms. Rule 4's memcheck is clean (0 errors, 0 leaks), but its check has one unexplained
+FALSE, open below.**
+
+### Rule 1, exactness: PASS
+- **The audio-in check, three ways:** with each front end (`dft`, `exact-f2`) and with mixed requests (`skip1`). Each
+  time the repeat was identical, the text control identical, and the exit 0.
+- **At once:** 8 at once gave 8 of 8 identical to lfm3-speech (2.5 s); 32 at once gave 32 of 32 (4.3 s).
+- **The 360 + 93 stage files:** unchanged (in rule 5's list below). F2's 5 differences are the expected ones.
+
+### Rule 3 again, as written: FAIL
+The stall in seconds, both servers in the same window, with each cell's bar.
+
+| rows | clip | base (rule 0's server) | new (handles) | bar | |
+|---|---|---|---|---|---|
+| 8 | short | 0.0740 | 0.0338 | 0.0468 | PASS |
+| 8 | median | 0.1046 | 0.0427 | 0.0547 | PASS |
+| 8 | typical | 0.1701 | 0.0587 | 0.0702 | PASS |
+| 8 | long | 0.4922 | 0.1489 | 0.1413 | **FAIL** (+5.4%) |
+| 8 | joined 90 s | 1.2291 | 0.3137 | 0.3177 | PASS |
+| 16 | short | 0.0493 | 0.0282 | 0.0468 | PASS |
+| 16 | median | 0.0986 | 0.0376 | 0.0547 | PASS |
+| 16 | typical | 0.1644 | 0.0574 | 0.0702 | PASS |
+| 16 | long | 0.4915 | 0.1491 | 0.1413 | **FAIL** (+5.5%) |
+| 16 | joined 90 s | 1.2222 | 0.3161 | 0.3177 | PASS |
+
+- **The new server:** under the bar in 8 of 10 cells. The long clip is over by about 8 ms, at both row counts.
+- **"Base" is rule 0's base server** (`audio-fe-w-base-srv`, before the handler-thread front end), as in window 12's
+  table. It is not audio-frontend-v1. Its figures agree with window 12's to within a few ms (90 s: 1.229 and 1.222
+  against 1.234 and 1.230).
+- **Against audio-frontend-v1's own figures (window 12, a different window; its bars were 0.3020 and 0.1327 there):**
+
+  | rows | clip | audio-frontend-v1 (w12) | handles (w19) | change |
+  |---|---|---|---|---|
+  | 8 | short | 0.0376 | 0.0338 | −3.8 ms |
+  | 8 | median | 0.0501 | 0.0427 | −7.4 ms |
+  | 8 | typical | 0.0693 | 0.0587 | −10.6 ms |
+  | 8 | long | 0.1440 | 0.1489 | +4.9 ms |
+  | 8 | 90 s | 0.3555 | 0.3137 | −41.8 ms |
+  | 16 | short | 0.0323 | 0.0282 | −4.1 ms |
+  | 16 | median | 0.0437 | 0.0376 | −6.1 ms |
+  | 16 | typical | 0.0592 | 0.0574 | −1.8 ms |
+  | 16 | long | 0.1384 | 0.1491 | +10.7 ms |
+  | 16 | 90 s | 0.3533 | 0.3161 | −37.2 ms |
+
+  - At 90 s the handles took off 37–42 ms, as predicted (about 35 ms from window 16's trace).
+  - The long clip came out 5–11 ms worse, at both row counts.
+  - **Not explained:** the parse saved there should have been about 12 ms. The same base server moved by up to
+    14.5 ms between windows 12 and 19 (8 rows, short: 0.0595 against 0.0740), so a cross-window change of this size
+    is not yet evidence. A same-window comparison of audio-frontend-v1 and the handles server would settle it.
+  - The bars themselves moved between windows: the long clip's from 0.1327 to 0.1413, the 90 s clip's from 0.3020 to
+    0.3177.
+- **Recorded as written:** a failure. Closing the remaining 8 ms is the `log_mel` contention question (out of scope,
+  above).
+- **Run 1's base-server stop at the 90 s clip did not recur:** this time the base server measured all five clips, the
+  90 s clip with a 1.23 s stall. That does not support run 1's hypothesis (a stall longer than the 4 s window). Run 1's
+  stop stays unexplained, with no diagnostics from that run.
+
+### Rule 3's reported figure (nsys, the 90 s clip at 8 rows, new server)
+| figure | run 2 | window 16 (base) |
+|---|---|---|
+| the engine thread's CPU-only time before the encoder | **1.5 ms** (expected under 3) | 35.3 ms |
+| CPU-only time ending before the launch | 96.4 ms | |
+| encoder, GPU | 157.1 ms | |
+| decode step before | 25.6 ms | |
+
+### Rule 4, safety
+- **Host suites:** PASS (above).
+- **Red-team:** done (above).
+- **compute-sanitizer memcheck on the server path:**
+  - ERROR SUMMARY 0 errors; LEAK SUMMARY 0 bytes in 0 allocations;
+  - the hang is fixed: the server got SIGTERM, and compute-sanitizer wrote its summary.
+- **The server exited 15** ("Target application returned an error"). Known: this branch has no
+  `lfm/stop_signals.hpp`, since it predates main's stop-signal forwarding (`064c1bb`, windows 13 and 17's same exit
+  15). Merging main brings it in.
+- **The check under memcheck:**
+  - the 90 s case missed its wall bound (242.4 s against 240), expected under the sanitizer;
+  - every other case returned 200 and was identical;
+  - **`text_control_identical` was FALSE, not explained.** The check kept neither the second `/generate`'s status nor
+    the ids. Stderr was empty, so the service did not fail closed.
+- **The leading hypothesis, not checked:** the control session was reaped.
+  - It is created and reset before the cases, then sits idle until the second `/generate`.
+  - The server's default `session_idle_timeout` is 300 s.
+  - Under memcheck the cases take far longer: the 90 s case alone took 242 s. The session would then be reaped, and
+    the second `/generate` answered 404 `unknown_session`, which the check counted as FALSE.
+  - Without the sanitizer the cases take a minute or two, which fits all five unsanitized runs passing the control.
+- **Other causes the record must rule out:**
+  - a client timeout: the second `/generate` has a 600 s bound, likely enough under memcheck for 128 tokens, but not
+    certain;
+  - real nondeterminism after audio requests that appears only under memcheck. Memcheck serializes kernels and slows
+    the host, so any race between streams or host threads would surface there first.
+- **The check now records the control** (`text_control` in its JSON; host-checked against a fake server, with the
+  session kept, reaped, and differing ids):
+  - both statuses, the reset's status and how long the session sat idle;
+  - both replies' `generated_ids` and the first differing index;
+  - the error of a non-200 reply;
+  - when the session was reaped, the control also run on a fresh session, which must give the same ids, with
+    `session_reaped` recorded;
+  - a request that times out or fails is recorded as a client error instead of ending the check without a report.
+- **Next:** rerun the memcheck step alone, about 15 minutes. It is exactness, not timing, so it can overlap the
+  always-on service.
+
+### Rule 5, nothing else changes: PASS
+- **The memory bound:** idle 5,405 MiB, peak 5,627, growth 222 MiB (bound 1,024); 16 of 16 served.
+- **Rule 6's list, in full:**
+  - lfm3-speech regression (36);
+  - the audio-in files (360 + 93; F2's 5 expected);
+  - e2e, split, the concurrent engine;
+  - the batch server, the stream, the audio-in server, the TTS server;
+  - the text gate, images through the server.

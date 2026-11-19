@@ -175,6 +175,8 @@ def run_cases(cases, port, token, server, speech, model, work):
                 return r.status, json.loads(r.read())
         except urllib.error.HTTPError as e:
             return e.code, json.loads(e.read())
+        except (OSError, ValueError) as e:  # timeout, refused connection, a reply that is not JSON: recorded, not raised
+            return None, {"error": f"client: {type(e).__name__}: {e}"}
 
     report = dict(cases={}, server_sha256=hashlib.sha256(Path(server).read_bytes()).hexdigest(),
                   speech_sha256=hashlib.sha256(Path(speech).read_bytes()).hexdigest())
@@ -183,7 +185,8 @@ def run_cases(cases, port, token, server, speech, model, work):
     control = dict(session_id=sid, max_new_tokens=128,
                    messages=[{"role": "user", "content": "Explain in one paragraph how a lighthouse warns ships at night."}])
     s0, before = post("/generate", control)
-    post(f"/sessions/{sid}/reset", {})
+    s_reset, _ = post(f"/sessions/{sid}/reset", {})
+    idle_from = time.monotonic()  # the control session is idle from here to the second /generate
     first = None
     for name, messages, mode, count, seed in cases:
         # the reference: lfm3-speech with the clips as paths
@@ -225,9 +228,30 @@ def run_cases(cases, port, token, server, speech, model, work):
     same = status == 200 and all(again.get(k) == first[1].get(k) for k in ("text", "audio_wav_base64", "frames", "chunks"))
     report["repeat_identical"] = same
     ok &= same
+    idle = time.monotonic() - idle_from
     s1, after = post("/generate", control)
-    text_same = s0 == s1 == 200 and before["generated_ids"] == after["generated_ids"]
+    # Recorded in full (quiet window 19, run 2: FALSE under memcheck, with neither status nor ids kept). The session sat
+    # idle through every case; under a sanitizer that can pass the server's session idle timeout (default 300 s), and
+    # the session is then reaped (404 unknown_session): the control is then also run on a fresh session, which must
+    # give the same ids, and the record says so.
+    ids = lambda reply: reply.get("generated_ids") if isinstance(reply, dict) else None  # noqa: E731
+    control_report = dict(before_status=s0, reset_status=s_reset, idle_seconds=round(idle, 1), after_status=s1,
+                          before_ids=ids(before), after_ids=ids(after),
+                          after_error=after.get("error") if isinstance(after, dict) and s1 != 200 else None)
+    if s1 == 404 and isinstance(after, dict) and after.get("error") == "unknown_session":
+        fresh = post("/sessions", {"capacity": 1024})
+        s_new, after = (post("/generate", dict(control, session_id=fresh[1]["session_id"])) if fresh[0] == 200
+                        else (fresh[0], fresh[1]))
+        control_report.update(session_reaped=True, fresh_session_status=s_new, fresh_session_ids=ids(after))
+        s1 = s_new
+    a, b = ids(before) or [], ids(after) or []
+    control_report["first_difference"] = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y),
+                                              None if len(a) == len(b) else min(len(a), len(b)))
+    text_same = s0 == s1 == 200 and s_reset == 200 and ids(before) is not None and ids(before) == ids(after)
+    report["text_control"] = control_report
     report["text_control_identical"] = text_same
+    if not text_same:
+        print("text control:", json.dumps({k: v for k, v in control_report.items() if not k.endswith("ids")}), flush=True)
     ok &= text_same
     return ok, report
 
