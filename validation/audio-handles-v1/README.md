@@ -216,7 +216,14 @@ child server holding its pipes:
 - the stderr line was kept;
 - no process was left.
 
-Not run on Thor; the coordinator folds it into the next window if the rerun hangs again.
+**In window 19's rerun (run 2, launched 06:43 on `16bbe85`):**
+- at 06:47:11, during step 1 and before any run of the check, the coordinator swapped `f8e2299`'s
+  `tools/check_lfm3_audio_in_server.py` (sha256 `01388a82…`) into Thor's `build/audio-src-h`;
+- that tree's `SOURCE_COMMIT` reads "16bbe85 + tools/check_lfm3_audio_in_server.py from f8e2299";
+- steps 1 (rule 6's list), 2 and 3 all use this check.
+
+Run 1's outputs are kept as `build/quiet-w19-handles-run1/`, `build/quiet-w19-handles-rest-run1/` and
+`quiet-w19-run1.log`.
 
 ### The base server's "no row streamed audio across the window" (run 1)
 `stall-audio-fe-w-base-srv-8.log`, 8 rows:
