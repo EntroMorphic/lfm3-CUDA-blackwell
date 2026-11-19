@@ -252,8 +252,9 @@ Run 1's outputs are kept as `build/quiet-w19-handles-run1/`, `build/quiet-w19-ha
 - Figures as the coordinator reported them.
 
 **Overall: rule 3 FAILS as written (the long clip, 2 of 10 cells). Rules 1 and 5 pass. Rule 3's reported figure is
-1.5 ms, under the expected 3 ms. Rule 4's memcheck is clean (0 errors, 0 leaks), but its check has one unexplained
-FALSE, open below.**
+1.5 ms, under the expected 3 ms. Rule 4 holds: memcheck clean (0 errors, 0 leaks). The text control's FALSE was the
+control session reaped while idle under the sanitizer: identical on a fresh session, in the memcheck-only rerun below.
+The server's exit 15 is the known pre-merge cause.**
 
 ### Rule 1, exactness: PASS
 - **The audio-in check, three ways:** with each front end (`dft`, `exact-f2`) and with mixed requests (`skip1`). Each
@@ -350,8 +351,24 @@ The stall in seconds, both servers in the same window, with each cell's bar.
   - when the session was reaped, the control also run on a fresh session, which must give the same ids, with
     `session_reaped` recorded;
   - a request that times out or fails is recorded as a client error instead of ending the check without a report.
-- **Next:** rerun the memcheck step alone, about 15 minutes. It is exactness, not timing, so it can overlap the
-  always-on service.
+- **The memcheck step rerun alone (2026-11-19):**
+  - **Run:** Thor `build/quiet-w19-memcheck3/`. The check was `beb7950`'s `check_lfm3_audio_in_server.py` (sha256
+    `9335ab3a…`); the server was `audio-h-w-srv` (`16bbe85`, sha256 `9a9e7254…`).
+  - **memcheck:** ERROR SUMMARY 0 errors; LEAK SUMMARY 0 bytes in 0 allocations.
+  - **The text control: explained, and identical.** The control session sat idle 821.6 s, and the second `/generate`
+    got 404 `unknown_session` (reaped, `session_reaped` true). On a fresh session, the control returned 200 with the
+    same 67 ids as before (no difference). So the hypothesis holds: the session was reaped as idle, not
+    nondeterminism.
+  - **The repeat:** identical.
+  - **The check's own verdict is FAIL, for the server's exit 15 only.** That is the known missing stop-signal header,
+    which the merge brings in.
+  - **Not read:** whether `asr-joined-90s` missed its 240 s wall bound under the sanitizer again (run 2: 242.4 s). It
+    is in this run's `memcheck/audio-in-server.log`.
+- **A void attempt before it,** `build/quiet-w19-memcheck2-void-wrong-check/`: launched with `f8e2299`'s check by
+  mistake (a copy step overwrote the new one), and stopped within a minute by SIGTERM to the server. Void; nothing from
+  it is used.
+- **Rule 4, as it stands:** host suites PASS, the red-team done, memcheck clean, the text control explained and
+  identical. The exit 15 is the known pre-merge cause.
 
 ### Rule 5, nothing else changes: PASS
 - **The memory bound:** idle 5,405 MiB, peak 5,627, growth 222 MiB (bound 1,024); 16 of 16 served.
