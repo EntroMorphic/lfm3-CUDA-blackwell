@@ -203,3 +203,11 @@ The image's 2nd request, a hit on the 1st's photograph, is 0.297-0.302 s. Engine
 | 10-60 s | 5 | 3 slow (3.31-3.47 s), 2 normal (1.39 s) |
 
 **Reading: associated with idle, not explained by it.** Last night's slow restarts followed only about 5.5 s of idle, and 5-8 s here was normal. The cause is still unknown. It costs a start at most about 4 s and no client request: the running service holds the GPU open.
+
+## The boot check, set before the reboot (2026-11-18)
+Tripp reboots Thor; nobody logs in before the check's data is read (ssh afterwards does not change the timestamps it reads).
+- **Started by itself:** the unit is active after boot, with linger on, and its start came from the user manager, not from a login or from a person.
+- **Warm in time:** from the unit's start (`InactiveExitTimestamp`) to active (`ActiveEnterTimestamp`, which `Type=notify` sets only once warm) within rule 4's startup + 10 s = **14.18 s**.
+- **Serving:** `/health` answers 200, and one real request of each of text and TTS succeeds.
+- **Recorded as well:** the server's own warm-up line (the page cache is cold after a boot, so the checkpoint's load is part of this start), and the time from kernel boot to active.
+- **The UVM question:** the major number of `/dev/nvidia-uvm` (488 before the reboot), and whether `lfm3-profile-v1-pre-uvm`, started briefly, can open it. If the major is still 488 and it still cannot, the "stale allowlist" explanation is wrong.

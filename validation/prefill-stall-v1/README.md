@@ -209,3 +209,11 @@ The host run had 0 catches again, so 0 stalls.
 - **Recreating `lfm3-profile-v1` is Tripp's call.** Until then, timing measured in it can carry the stall.
 - **Still open:** how `lfm3-profile-v1` got a `/dev/nvidia-uvm` node it may not open. The reboot tonight checks whether the major number moves.
 - The test container is stopped, not removed.
+
+## The fix applied (2026-11-18 17:41, approved by Tripp; `build/container-uvm-swap/`)
+`lfm3-profile-v1` is now a new container with UVM. The old one is stopped and kept as `lfm3-profile-v1-pre-uvm`, for rollback.
+- **Configuration:** compared field by field with the old one (image, runtime, GPUs, network, memory and swap limits, shm, restart policy, command, working directory, environment, mounts). The only difference is `--device /dev/nvidia-uvm`. Both inspect records are saved.
+- **Old container's writable layer:** NVIDIA runtime files and caches; no package changes (`/var/lib/dpkg` untouched).
+- **Checks on the new one:** `/dev/nvidia-uvm` opens as root and as uid 1000; the engine maps it; the 11 stage-0 image requests are **67 of 67 files identical** to `vimg-e2e-a4`.
+- **Timing comparisons:** anything measured in this container before today carries the stall; anything after does not. Stall-sensitive numbers from the old container should not be compared with new ones without saying so.
+- **Restart policy is "no", as before:** after a reboot the container must be started by hand (`docker start lfm3-profile-v1`).
