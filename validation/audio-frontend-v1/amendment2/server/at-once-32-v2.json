@@ -1,0 +1,307 @@
+{
+ "server_sha256": "9dbf1addfd2bab976366ee4198e979257dc09cec9aa3e55b0e3d02fa24142ca7",
+ "n": 32,
+ "server_args": [
+  "--queue-size",
+  "40",
+  "--handlers",
+  "48"
+ ],
+ "wall_seconds": 20.78,
+ "cases": {
+  "672-122797-0033": {
+   "seconds": 1.285,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 14.76,
+   "text": "A story?",
+   "reference_text": null
+  },
+  "7176-92135-0010": {
+   "seconds": 2.16,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 11.45,
+   "text": "Ham, to be or not to be.",
+   "reference_text": null
+  },
+  "260-123286-0012": {
+   "seconds": 2.43,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 5.6,
+   "text": "But there seemed no reason of fear.",
+   "reference_text": null
+  },
+  "8455-210777-0007": {
+   "seconds": 2.67,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 10.48,
+   "text": "Quite satisfied, said Eva.",
+   "reference_text": null
+  },
+  "237-134493-0010": {
+   "seconds": 2.875,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 5.97,
+   "text": "I never see lose, sigh them over here.",
+   "reference_text": null
+  },
+  "5142-33396-0056": {
+   "seconds": 3.07,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 9.45,
+   "text": "Here they said is a rascal who has been harrying our coasts.",
+   "reference_text": null
+  },
+  "7176-88083-0008": {
+   "seconds": 3.28,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 17.37,
+   "text": "In despair, he hurled himself downward too soon.",
+   "reference_text": null
+  },
+  "3575-170457-0034": {
+   "seconds": 3.495,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 8.0,
+   "text": "In this monotonous life of mine, that was a pleasant event.",
+   "reference_text": null
+  },
+  "260-123440-0008": {
+   "seconds": 3.745,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 14.08,
+   "text": "I'll try if I know all the things I used to know.",
+   "reference_text": null
+  },
+  "260-123286-0017": {
+   "seconds": 3.975,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 6.35,
+   "text": "I shudder as I recall these monsters to my remembrance.",
+   "reference_text": null
+  },
+  "1188-133604-0031": {
+   "seconds": 4.25,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 16.7,
+   "text": "There's one and there's another, the Dudley and the Flint.",
+   "reference_text": null
+  },
+  "237-134500-0028": {
+   "seconds": 4.5249375,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 8.77,
+   "text": "I'm sure Alexander hopes you will stay on here, she murmured.",
+   "reference_text": null
+  },
+  "6829-68771-0014": {
+   "seconds": 4.77,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 16.24,
+   "text": "We ought to have more attendance, Beth, said Louise, approaching her cousin.",
+   "reference_text": null
+  },
+  "121-127105-0001": {
+   "seconds": 5.025,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 6.94,
+   "text": "Someone else told a story not particularly effective, which I saw he was not following.",
+   "reference_text": null
+  },
+  "7729-102255-0014": {
+   "seconds": 5.295,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 18.33,
+   "text": "The leaders of the conspiracy became distrustful of their power to crush the town.",
+   "reference_text": null
+  },
+  "8455-210777-0039": {
+   "seconds": 5.59,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 11.94,
+   "text": "I can assure you, he has not even allowed me to see the trigger since I have been on board.",
+   "reference_text": null
+  },
+  "61-70970-0037": {
+   "seconds": 5.98,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 19.06,
+   "text": "His tones rang pleasantly on Warrenton's ears, and forthwith a good fellowship was heralded between them.",
+   "reference_text": null
+  },
+  "4507-16021-0056": {
+   "seconds": 6.345,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 10.97,
+   "text": "However, he who says light does not necessarily say joy.",
+   "reference_text": null
+  },
+  "1284-1181-0020": {
+   "seconds": 6.73,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 8.38,
+   "text": "Dear me, what a chatterbox you're getting to be, Unc! remarked the magician, who was pleased with the compliment.",
+   "reference_text": null
+  },
+  "6829-68771-0013": {
+   "seconds": 7.19,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 7.22,
+   "text": "The attendance was unexpectedly large, and the girls were delighted for seeing great success for their fight.",
+   "reference_text": null
+  },
+  "908-31957-0012": {
+   "seconds": 7.615,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 13.85,
+   "text": "If he, to keep one oath, must lose one joy, by his life's star foretold.",
+   "reference_text": null
+  },
+  "2830-3979-0003": {
+   "seconds": 8.085,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 17.32,
+   "text": "The undertaking, which seemed so attractive when viewed as a literary task, proved the most difficult one, and at times became oppressive.",
+   "reference_text": null
+  },
+  "4970-29095-0038": {
+   "seconds": 8.74,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 8.98,
+   "text": "Ruth was glad to hear that Philip had made a push into the world, and she was sure that his talent and courage would make a way for him.",
+   "reference_text": null
+  },
+  "8463-294828-0003": {
+   "seconds": 9.34,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 9.86,
+   "text": "I wanted nothing more than to see my country again, my friends, my modest quarters by the botanical gardens, my dearly beloved collections.",
+   "reference_text": null
+  },
+  "5683-32879-0016": {
+   "seconds": 10.185,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 15.78,
+   "text": "And the wan oracle, having spoken, she sat down in the same sort of abstraction again beside Dorcas, and she looked full in her cousin's eyes.",
+   "reference_text": null
+  },
+  "6930-75918-0004": {
+   "seconds": 11.065,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 14.41,
+   "text": "She taught her daughter, then, by her own affection for it, that love for a country where they had both been hospitably received and where a brilliant future opened for them.",
+   "reference_text": null
+  },
+  "5639-40744-0019": {
+   "seconds": 12.06,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 13.63,
+   "text": "What you had best do, my child, is to keep it and pray to it that since it was a witness to your undoing, it will deign to vindicate your cause by its righteous judgment.",
+   "reference_text": null
+  },
+  "237-126133-0000": {
+   "seconds": 13.29,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 19.83,
+   "text": "Here she would stay, comforted and soothed among the lovely plants and rich exotics, rejoicing the heart of old Turner the gardener, who since Polly's first rapturous entrance had taken her into his good graces for all time.",
+   "reference_text": null
+  },
+  "2094-142345-0003": {
+   "seconds": 14.675,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 17.27,
+   "text": "A large open fireplace with rusty dogs in it and a bare boarded floor. At the far end, fleeces of wool stacked up. In the middle of the floor, some empty corn bags.",
+   "reference_text": null
+  },
+  "1188-133604-0016": {
+   "seconds": 16.595,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 12.34,
+   "text": "This at once compels you to understand that the work is to be imaginative and decorative, that it represents beautiful things in the clearest way, but not under existing conditions, and that, in fact, you are producing jeweler's work rather than pictures.",
+   "reference_text": null
+  },
+  "7127-75946-0026": {
+   "seconds": 20.15,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 19.73,
+   "text": "When the music, by its bursts of melody, carried away these illustrious dancers, when the simple, untutored pantomime of that period only the more natural on account of the very indifferent acting of the August actors, had reached its culminating point of triumph, the theater shook with tumultuous applause.",
+   "reference_text": null
+  },
+  "4507-16021-0047": {
+   "seconds": 34.955,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 20.76,
+   "text": "Yesterday you were trembling for a health that is dear to you. Today you fear for your own. Tomorrow it will be anxiety about money. The day after tomorrow the diatribe of a slanderer. The day after that the misfortune of some friend. Then the prevailing weather. Then something that has been broken or lost. Then a pleasure with which your conscience and your vertebral column reproach you. Again, the course of public affairs.",
+   "reference_text": null
+  }
+ },
+ "text_control_identical": true,
+ "exit_code": 0,
+ "stderr": "",
+ "served": 32,
+ "identical": 32,
+ "pass": true
+}

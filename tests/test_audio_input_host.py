@@ -12,6 +12,7 @@ through native/tests/audio_input_tool.cpp, built plain and with ASan+UBSan.
 """
 import base64
 import json
+import os
 import random
 import shutil
 import struct
@@ -22,7 +23,8 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-VARIANTS = {"plain": ("g++", ["-O2"]), "asan": ("g++", ["-O1", "-g", "-fsanitize=address,undefined", "-fno-sanitize-recover=all"])}
+VARIANTS = {"plain": ("g++", ["-O2"]), "asan": ("g++", ["-O1", "-g", "-fsanitize=address,undefined", "-fno-sanitize-recover=all"]),
+            "tsan": ("clang++", ["-O1", "-g", "-fsanitize=thread"])}  # the threaded front end (validation/audio-frontend-v1)
 
 
 @pytest.fixture(scope="module", params=sorted(VARIANTS))
@@ -36,8 +38,13 @@ def tool(tmp_path_factory, request):
     return binary
 
 
+def command(tool):
+    """The tool's command line; ThreadSanitizer needs ASLR off on this kernel (as in test_lfm3_http_native.py)."""
+    return (["setarch", os.uname().machine, "-R"] if tool.name.endswith("-tsan") else []) + [str(tool)]
+
+
 def run(tool, mode, paths):
-    r = subprocess.run([str(tool), mode, *map(str, paths)], capture_output=True, text=True, timeout=600)
+    r = subprocess.run([*command(tool), mode, *map(str, paths)], capture_output=True, text=True, timeout=600)
     assert r.returncode == 0, r.stderr
     return [json.loads(line) for line in r.stdout.splitlines()]
 
@@ -175,7 +182,7 @@ def test_features_match_fp64_reference(tool, tmp_path, samples):
     q = (s * 32767).astype("<i2")
     wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
     out = tmp_path / "mel.f32"
-    r = subprocess.run([str(tool), "mel", str(wav), str(out)], capture_output=True, text=True, check=True)
+    r = subprocess.run([*command(tool), "mel", str(wav), str(out)], capture_output=True, text=True, check=True)
     info = json.loads(r.stdout)
     ref = reference_log_mel(q.astype(np.float32) / 32768)
     assert info["frames"] == ref.shape[1] and info["tokens"] == -(-ref.shape[1] // 8)
@@ -183,6 +190,61 @@ def test_features_match_fp64_reference(tool, tmp_path, samples):
     # float32 window and filter values in the engine; the rest in double (validation/audio-in-v1: within 1.2e-4 of
     # FP64 on real speech, closer than HF's float32 arithmetic)
     assert np.abs(got - ref).max() < 2e-4, np.abs(got - ref).max()
+
+
+@pytest.mark.parametrize("samples", [1, 400, 16_000, 160_000])
+def test_features_do_not_depend_on_threads(tool, tmp_path, samples):
+    """log_mel at 1 to 12 threads and from 8 callers at once: byte-identical (validation/audio-frontend-v1 rule 1)."""
+    rng = np.random.default_rng(samples)
+    q = (np.clip(0.2 * rng.standard_normal(samples), -1, 1) * 32767).astype("<i2")
+    wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
+    (r,) = run(tool, "mel-threads", [wav])
+    assert r["ok"] and r["frames"] == run(tool, "mel", [wav, tmp_path / "m.f32"])[0]["frames"]
+
+
+@pytest.mark.parametrize("samples", [1, 400, 16_000, 160_000])
+def test_correctly_rounded_features_agree_across_paths_and_threads(tool, tmp_path, samples):
+    """Amendment 2: F1 (double FFT) and F2 (compensated FFT) give the same floats at 1 to 12 threads and from 8
+    callers at once (each output their common correct rounding; validated against a quad reference on Thor and x86)."""
+    rng = np.random.default_rng(samples + 7)
+    q = (np.clip(0.2 * rng.standard_normal(samples), -1, 1) * 32767).astype("<i2")
+    wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
+    (r,) = run(tool, "exact-threads", [wav])
+    assert r["ok"]
+
+
+def test_feature_cache_handles(tool):
+    """validation/audio-handles-v1: a handle names its own clip, features and sample count; it lives while any lease
+    holds its entry and is refused after; handles are never reused; concurrent requests (8 threads) keep their own."""
+    r = subprocess.run([*command(tool), "cache-handles", "-"], capture_output=True, text=True, timeout=600)
+    assert r.returncode == 0 and json.loads(r.stdout) == {"ok": True}, r.stderr
+
+
+def test_mel_threads_switch(tool, tmp_path):
+    """LFM3_MEL_THREADS (audio-frontend-v1, a diagnostic switch): log_mel runs on that many threads, the features
+    byte-identical at any count; anything but an integer 1..64 is refused with its name."""
+    rng = np.random.default_rng(11)
+    q = (np.clip(0.2 * rng.standard_normal(48_000), -1, 1) * 32767).astype("<i2")
+    wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
+
+    def mel(value):
+        env = {k: v for k, v in os.environ.items() if k != "LFM3_MEL_THREADS"}
+        if value is not None:
+            env["LFM3_MEL_THREADS"] = value
+        out = tmp_path / f"mel-{value}.f32"
+        return subprocess.run([*command(tool), "mel", str(wav), str(out)], capture_output=True, text=True, env=env,
+                              timeout=600), out
+    r, base = mel(None)
+    assert r.returncode == 0, r.stderr
+    assert json.loads(r.stdout)["threads"] == 4  # kMelThreads
+    for value, threads in (("1", 1), ("4", 4), ("12", 12), ("64", 64)):
+        r, out = mel(value)
+        assert r.returncode == 0, r.stderr
+        assert json.loads(r.stdout)["threads"] == threads
+        assert out.read_bytes() == base.read_bytes(), value
+    for value in ("0", "65", "x", "4x", " 4", "-1"):
+        r, _ = mel(value)
+        assert r.returncode != 0 and "LFM3_MEL_THREADS" in r.stderr, (value, r.returncode, r.stderr)
 
 
 def test_base64_encode_matches_python(tmp_path):

@@ -1,0 +1,5 @@
+31fab84268660447e110900f4faab3df84d436a735cbaa2453c44d7ea651f490  build/audio-mel-a2/audio-mel-check
+dc1c3af663ee5b7f30a3433dcaf699c3e028d541ea020224c10f3248ef2ea2b4  build/audio-mel-a2/audio-mel-audit
+214a576c6b10e0878d0bea6cad48ed19c1abd5502441108d10bead272411cbe4  build/audio-fe-speech-a3/lfm3-speech
+9dbf1addfd2bab976366ee4198e979257dc09cec9aa3e55b0e3d02fa24142ca7  build/audio-fe-srv-a2/liquid-lfm3-server
+4af26a8d3a954ad38758a4888d51ddcd7e65ff6deed54ca76ac59a3859819047  build/audio-fe-srv-a2/liquid-lfm3-worker

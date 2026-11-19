@@ -171,7 +171,7 @@ def test_shutdown_cancels_every_row_and_fails_the_queued(harness_binary):
 
 def test_an_engine_failure_fails_every_row(harness_binary):
     with running(harness_binary, "--speech-rows", "2", "--token-delay-ms", "100", "--fail-op", "speech_step",
-                 "--fail-after", "3") as h:
+                 "--fail-after", "3", failed_closed="(speech batch): native operation rejected: injected failure") as h:
         got, _ = together([lambda: h.call("POST", "/speech", tts(LONG, seed=1)),
                            lambda: stream(h, tts(LONG, seed=2, stream=True))])
         assert got[0] == (503, {"error": "worker_unavailable"}), got[0]

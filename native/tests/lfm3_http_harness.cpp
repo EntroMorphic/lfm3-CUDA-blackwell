@@ -14,12 +14,14 @@
 // --warmup-inputs DIR: writes the warm-up's generated image and clip (DIR/warmup.png, DIR/warmup.wav) for the tests.
 // --unmasked-thread-file FILE: starts a thread that does not block SIGTERM/SIGINT (as a sanitizer's thread) and writes
 // its thread id to FILE before the ready line, for the stop-signal forwarding test (lfm/stop_signals.hpp).
+//                     [--audio-features ahead|engine] [--feature-cache-log FILE (the feature cache's size at each audio request)]
 // Token from LFM3_SERVER_TOKEN. Prints {"ready":true,"port":N}. SIGTERM exits like liquid-lfm3-server.
 #include <lfm/lfm3_http.hpp>
 #include <lfm/lfm3_warmup.hpp>
 #include <lfm/speech_run.hpp>
 #include <lfm/stop_signals.hpp>
 #include <lfm/lfm3_text_request.hpp>
+#include <lfm/lfm3_worker_schema.hpp>
 #include <lfm/text_batch_cancellation.hpp>
 #include <lfm/text_cancellation.hpp>
 #include <lfm/text_sessions.hpp>
@@ -83,13 +85,51 @@ class FakeEngine final : public lfm::http::Backend {
       f.lengths.push_back(c.array().size());
     }
     // audio input (#3), as WorkerCore checks it: each clip decoded, and the spans matching the clips
+    if (request.has("audio") && request.has("audio_ref")) throw std::runtime_error("audio and audio_ref together");
+    // a clip's features, from the cache, checked against log_mel of the clip (in full up to 20 s, by length beyond)
+    auto check_features = [](const lfm::audio_features::FeatureCache::Features& f, const std::vector<float>& samples) {
+      if (f->size() != size_t(lfm::audio_features::kMels) * lfm::audio_features::frames(samples.size()) ||
+          (samples.size() <= 20 * 16000 && *f != lfm::audio_features::log_mel(samples)))
+        throw std::runtime_error("harness: a clip's features computed ahead differ from log_mel");
+    };
+    auto& cache = lfm::audio_features::shared_feature_cache();
     if (request.has("audio")) {
       if (!audio_input_) throw std::runtime_error("audio input is not supported by this checkpoint");
       if (request.at("audio").array().size() > 64) throw std::runtime_error("too many audio clips");
       if (chunked) throw std::runtime_error("chunks cannot take audio input");
+      // validation/audio-handles-v1: with features computed ahead, the server sends base64 only when a clip was left
+      // out (the LFM3_AUDIO_AHEAD_SKIP switch); otherwise handles
+      if (audio_features_ahead_ && !std::getenv("LFM3_AUDIO_AHEAD_SKIP"))
+        throw std::runtime_error("harness: base64 sent though every clip's features were held");
       std::vector<size_t> clip_tokens;
-      for (const auto& a : request.at("audio").array())
-        clip_tokens.push_back(lfm::audio_features::tokens(lfm3_speech::clip_from_base64(a.string()).size()));
+      for (const auto& a : request.at("audio").array()) {
+        const auto samples = lfm3_speech::clip_from_base64(a.string());
+        clip_tokens.push_back(lfm::audio_features::tokens(samples.size()));
+        if (const auto f = cache.find(a.string())) check_features(f, samples);  // a held clip in a mixed request
+      }
+      if (cache_log_) cache_log_ << "entries " << cache.size() << " base64\n" << std::flush;
+      lfm3_speech::check_audio_spans(prompts[0], clip_tokens);
+    } else if (request.has("audio_ref")) {
+      // validation/audio-handles-v1, as WorkerCore resolves them; and each handle's features checked against log_mel of
+      // the clip the handle names (cache.clip_of: a test's view; the engine never needs the clip)
+      if (!audio_input_) throw std::runtime_error("audio input is not supported by this checkpoint");
+      if (request.at("audio_ref").array().size() > 64) throw std::runtime_error("too many audio clips");
+      if (chunked) throw std::runtime_error("chunks cannot take audio input");
+      if (!audio_features_ahead_) throw std::runtime_error("harness: handles without features computed ahead");
+      std::vector<size_t> clip_tokens;
+      for (const auto& h : request.at("audio_ref").array()) {
+        const long long id = h.integer();
+        const auto r = id > 0 ? cache.resolve(uint64_t(id)) : std::nullopt;
+        if (!r) throw std::runtime_error("unknown audio handle " + std::to_string(id));
+        const auto clip = cache.clip_of(uint64_t(id));
+        if (!clip) throw std::runtime_error("harness: a resolved handle without its clip");
+        const auto samples = lfm3_speech::clip_from_base64(*clip);
+        if (samples.size() != r->samples) throw std::runtime_error("harness: a handle's sample count differs from its clip");
+        check_features(r->features, samples);
+        clip_tokens.push_back(lfm::audio_features::tokens(r->samples));
+      }
+      // --feature-cache-log: the cache's entries as the engine takes an audio request (eviction tests)
+      if (cache_log_) cache_log_ << "entries " << cache.size() << " refs\n" << std::flush;
       lfm3_speech::check_audio_spans(prompts[0], clip_tokens);
     } else {
       for (const auto& p : prompts) lfm3_speech::check_audio_spans(p, {});
@@ -248,6 +288,7 @@ class FakeEngine final : public lfm::http::Backend {
       const auto op = request.at("op").string();
       if (trace_) trace_ << op << "\n" << std::flush;  // --trace-ops: the order of engine calls, for the scheduler tests
       if (op == fail_op_ && ++fail_count_ >= fail_after_) throw std::runtime_error("injected failure");
+      lfm::worker::schema(request, op);  // WorkerCore's own field check, shared, so the two cannot drift
       if (op == "generate_batch") { batch(request, rpc, out); return out.str(); }
       if (op == "speech") { speech(request, rpc, out, progress); return out.str(); }
       if (op == "speech_admit") { speech_admit(request, rpc, out, progress); return out.str(); }
@@ -412,10 +453,14 @@ class FakeEngine final : public lfm::http::Backend {
   std::vector<FakeRow> rows_;  // --speech-rows
   int admitted_ = 0, max_busy_ = 0;
   std::ofstream trace_;  // --trace-ops FILE
+  std::ofstream cache_log_;  // --feature-cache-log FILE (validation/audio-frontend-v1)
   bool image_input_ = true;  // --image-input: WorkerCore::image_input_supported
   lfm::LruBytes<int> engine_cache_;  // --engine-cache-mb N (default 0: none): a stand-in for WorkerCore::image_cache_
   std::ofstream image_log_;  // --image-log FILE: per image, "handoff" (found handed over) or "decode"
   std::ofstream handoff_log_;  // --handoff-log FILE: per image request, the handoff's entry count as the engine meets it
+  // --audio-features ahead (default, as liquid-lfm3-server): every clip's features must be waiting in the shared cache,
+  // equal to log_mel of the clip (checked in full for clips up to 20 s, by length beyond), or the op fails
+  bool audio_features_ahead_ = true;
   bool audio_input_ = true;  // --audio-input: WorkerCore::audio_input_supported  // --speech-truncate K: answer only the first K chunks, as a request the step budget cut
  private:
   int fail_after_, fail_count_ = 0;
@@ -456,6 +501,8 @@ int main(int argc, char** argv) try {
   bool image_handoff = false;  // --image-handoff on: as the in-process server (image-queue-v1 part 2)
   std::string image_log, handoff_log;
   int engine_cache_mb = 0;
+  std::string cache_log;  // --feature-cache-log FILE: "entries N" each time the fake engine takes an audio request
+  std::string audio_features = "ahead";  // --audio-features ahead|engine: computed on the handlers (the server) or by the engine
   int speech_truncate = 0;
   std::string stream_fault;
   int stream_piece_bytes = 4, speech_rows = 2;
@@ -475,6 +522,8 @@ int main(int argc, char** argv) try {
     else if (o == "--handoff-log") handoff_log = v;
     else if (o == "--image-cache-mb") settings.image_cache_mb = std::stoi(v);
     else if (o == "--engine-cache-mb") engine_cache_mb = std::stoi(v);
+    else if (o == "--audio-features") audio_features = v;
+    else if (o == "--feature-cache-log") cache_log = v;
     else if (o == "--speech-truncate") speech_truncate = std::stoi(v);
     else if (o == "--speech-stream-fault") stream_fault = v;
     else if (o == "--speech-stream-piece-bytes") stream_piece_bytes = std::stoi(v);
@@ -513,6 +562,8 @@ int main(int argc, char** argv) try {
   policy.image_input = speech && image_input;
   policy.speech_rows = speech ? speech_rows : 0;
   policy.image_handoff = image_handoff;
+  if (audio_features != "ahead" && audio_features != "engine") throw std::runtime_error("--audio-features: ahead or engine");
+  policy.audio_features_ahead = audio_features == "ahead";
   policy.stops = config.eos;
   for (auto name : {"audio_token_id", "audio_out_token_id", "image_token_id", "video_token_id", "mixed_start_token_id", "audio_start_token_id"})
     policy.suppress.push_back(model.at(name).integer());
@@ -537,6 +588,11 @@ int main(int argc, char** argv) try {
     std::ofstream(warmup_inputs + "/warmup.wav", std::ios::binary) << lfm::http::warmup::wav_clip();
   }
   if (!handoff_log.empty()) engine.handoff_log_.open(handoff_log);
+  engine.audio_features_ahead_ = policy.audio_features_ahead;
+  if (!cache_log.empty()) {
+    engine.cache_log_.open(cache_log);
+    if (!engine.cache_log_) throw std::runtime_error("cannot open --feature-cache-log file");
+  }
   if (!trace_ops.empty()) {
     engine.trace_.open(trace_ops);
     if (!engine.trace_) throw std::runtime_error("cannot open --trace-ops file");

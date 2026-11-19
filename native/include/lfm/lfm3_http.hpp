@@ -505,6 +505,9 @@ struct Policy {
   // validation/image-queue-v1 part 2: the engine runs in this process and finds a decoded image's pixel values in
   // lfm::image::shared_pixel_handoff (the handler thread decodes and preprocesses; the engine does not again)
   bool image_handoff = false;
+  // validation/audio-frontend-v1: the engine runs in this process (liquid-lfm3-server), so a clip's features computed
+  // on the request's handler thread reach it (lfm::audio_features::shared_feature_cache); off, the engine computes them
+  bool audio_features_ahead = false;
 };
 
 inline std::chrono::nanoseconds seconds(double s) {
@@ -858,6 +861,10 @@ class Service {
     std::vector<int> image_tokens;   // each image part's token count, in prompt order (decode_images)
     // each decoded image's pixel values left for the in-process engine, held until this request ends (image-queue-v1)
     std::vector<lfm::LeasedMap<lfm::image::PixelValues>::Lease> image_leases;
+    // the clips' features computed ahead (compute_audio_features), held for the engine until the request ends
+    std::vector<lfm::audio_features::FeatureCache::Lease> audio_features;
+    std::vector<std::pair<size_t, size_t>> audio_clips;  // each clip's (offset, length) in audio_json (encode_speech)
+    std::string audio_refs_json;  // the clips' handles, when every clip's features are held (audio-handles-v1)
     bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
     bool stream = false;             // the reply as events while the engine generates (speech_stream)
   };
@@ -943,6 +950,91 @@ class Service {
         image_token_cache_.put(part.data, std::make_shared<const int>(tokens), sizeof(int));
       }
   }
+  // validation/audio-frontend-v1: each audio clip's features (lfm::audio_features::log_mel) computed on the request's
+  // own handler thread, at most kAudioFeatureSlots clips at a time (each on up to mel_threads() threads), and left for
+  // the in-process engine, so the thread that steps every row no longer computes them. It runs after encode_speech
+  // (red-team finding 1): a request the front end refuses is refused exactly as before, at the cost it had before; the
+  // clips are the engine request's own (s.audio_clips: spans of s.audio_json, no copies). A clip whose features are
+  // already in the cache (the same clip in flight, or twice here) is leased, not computed again. The waiting is
+  // decode_images': within the deadline (504 frontend_deadline), 503 when the server stops, 499 client_gone. A clip
+  // whose features are not left here is computed by the engine: the same bytes.
+  void compute_audio_features(Speech& s, Clock::time_point deadline, const std::function<bool()>& gone) {
+    if (!policy_.audio_features_ahead) return;
+    auto& cache = lfm::audio_features::shared_feature_cache();
+    for (size_t i = 0; i < s.audio_clips.size(); ++i) {
+      const auto [at, length] = s.audio_clips[i];
+      const std::string_view clip(s.audio_json.data() + at, length);
+      if (int(i) == audio_ahead_skip()) continue;  // the diagnostic switch: this clip left to the engine (base64)
+      if (auto lease = cache.lease_if_present(clip)) {
+        s.audio_features.push_back(std::move(*lease));
+        continue;
+      }
+      {
+        std::unique_lock g(audio_slots_lock_);
+        for (;;) {
+          if (stopping_) throw ApiError(503, "worker_unavailable");
+          if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
+          if (gone && gone()) throw ApiError(499, "client_gone");
+          if (audio_slots_ > 0) break;
+          audio_slots_cv_.wait_until(g, std::min(deadline, Clock::now() + std::chrono::milliseconds(50)));
+        }
+        --audio_slots_;
+      }
+      struct Slot {
+        Service& service;
+        ~Slot() {
+          {
+            std::lock_guard g(service.audio_slots_lock_);
+            ++service.audio_slots_;
+          }
+          service.audio_slots_cv_.notify_one();
+        }
+      } slot{*this};
+      if (auto lease = cache.lease_if_present(clip)) {  // computed by another request while this one waited
+        s.audio_features.push_back(std::move(*lease));
+        continue;
+      }
+      lfm::audio_features::FeatureCache::Features features;
+      size_t samples = 0;
+      try {
+        const auto pcm = lfm3_speech::clip_from_base64(std::string(clip));
+        samples = pcm.size();
+        features = std::make_shared<const std::vector<float>>(lfm::audio_features::log_mel(pcm));
+      } catch (const std::exception&) {
+        continue;  // not expected (encode_speech decoded this clip); the engine computes or refuses it as before
+      }
+      s.audio_features.push_back(cache.put(clip, std::move(features), samples));
+    }
+    // validation/audio-handles-v1: every clip's features held, so the engine request carries the clips' handles, not
+    // their bytes; otherwise (a clip skipped) the base64 as before, for every clip of the request
+    if (!s.audio_clips.empty() && s.audio_features.size() == s.audio_clips.size()) {
+      s.audio_refs_json = "[";
+      for (size_t i = 0; i < s.audio_features.size(); ++i)
+        s.audio_refs_json += (i ? "," : "") + std::to_string(s.audio_features[i].handle());
+      s.audio_refs_json += "]";
+    }
+  }
+  // The engine request's audio: the handles when every clip's features are held (audio-handles-v1), else the clips'
+  // base64 (the out-of-process worker's way, and audio-in-v1's).
+  static void audio_field(Obj& frame, const Speech& s) {
+    if (!s.audio_refs_json.empty()) frame.raw("audio_ref", s.audio_refs_json);
+    else if (!s.audio_json.empty()) frame.raw("audio", s.audio_json);
+  }
+  // LFM3_AUDIO_AHEAD_SKIP (validation/audio-handles-v1, a diagnostic switch for rule 1's mixed requests): the ordinal
+  // (0..63) of a clip whose features are not computed ahead, so a request holding it sends base64. Unset: -1.
+  static int audio_ahead_skip() {
+    static const int k = [] {
+      const char* v = std::getenv("LFM3_AUDIO_AHEAD_SKIP");
+      if (!v || !*v) return -1;
+      const std::string t = v;
+      if (t.size() > 2 || !std::all_of(t.begin(), t.end(), [](char c) { return c >= '0' && c <= '9'; }))
+        throw std::runtime_error("LFM3_AUDIO_AHEAD_SKIP: an integer 0..63");
+      const int n = std::stoi(t);
+      if (n > 63) throw std::runtime_error("LFM3_AUDIO_AHEAD_SKIP: an integer 0..63");
+      return n;
+    }();
+    return k;
+  }
   Speech validate_speech(const Json& item) const {
     const auto& o = object_of(item);
     static const std::set<std::string> allowed = {"messages", "mode", "max_new_tokens", "seed", "split", "normalize",
@@ -1024,7 +1116,10 @@ class Service {
       for (const auto& part : m.parts) {
         if (part.audio) {
           clip_tokens.push_back(lfm::audio_features::tokens(lfm3_speech::clip_from_base64(part.data).size()));
-          s.audio_json += (clip_tokens.size() > 1 ? ",\"" : "\"") + part.data + "\"";  // checked base64: no escapes
+          s.audio_json += clip_tokens.size() > 1 ? ",\"" : "\"";
+          s.audio_clips.emplace_back(s.audio_json.size(), part.data.size());  // compute_audio_features' clips
+          s.audio_json += part.data;  // checked base64: no escapes
+          s.audio_json += '"';
           media.push_back({lfm3_text::kAudioToken, clip_tokens.back()});
         } else if (part.image) {
           // decoded and preprocessed before the front end (decode_images), as the engine will: its token count
@@ -1277,7 +1372,8 @@ class Service {
     if (request->image_input && !policy_.image_input) throw ApiError(501, "image_input_unsupported");
     request->body = std::move(body);  // `messages` points into it until encode_speech drops it
     decode_images(*request, deadline, gone);
-    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input);
+    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input || request->audio_input, gone);
+    compute_audio_features(*request, deadline, gone);
     if (policy_.speech_rows > 0) {
       auto t = std::make_shared<Ticket>();
       t->request = request, t->deadline = deadline;
@@ -1298,7 +1394,7 @@ class Service {
       Obj frame;
       frame.str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
           .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split);
-      if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
+      audio_field(frame, *request);
       if (!request->images_json.empty()) frame.raw("images", request->images_json);
       const auto result = rpc(std::move(frame),
                               {{"speech", event}}, false, kMaxSpeechResponse, nullptr, kMaxSpeechFrame);
@@ -1350,8 +1446,10 @@ class Service {
       ~Release() { --n; }
     } release{streams_};
     request->body = std::move(body);
-    decode_images(*request, deadline, [&] { return sink.peer && sink.peer() == Peer::Reset; });
-    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input);
+    const std::function<bool()> reset = [&] { return sink.peer && sink.peer() == Peer::Reset; };
+    decode_images(*request, deadline, reset);
+    frontend_call([&] { encode_speech(*request); }, deadline, request->image_input || request->audio_input, reset);
+    compute_audio_features(*request, deadline, reset);
     auto lines = std::make_shared<Lines>();
     std::future<std::string> future;
     // past the deadline: true if the request goes on (it completed meanwhile, or, in the speech batch, was admitted: it
@@ -1382,7 +1480,7 @@ class Service {
         frame.str("op", "speech").raw("chunks", request->chunks_json).str("mode", request->mode)
             .num("max_new_tokens", request->count).num("seed", request->seed).boolean("chunked", request->split)
             .boolean("stream", true);
-        if (!request->audio_json.empty()) frame.raw("audio", request->audio_json);
+        audio_field(frame, *request);
         if (!request->images_json.empty()) frame.raw("images", request->images_json);
         const auto result = rpc(std::move(frame), {{key, event}}, false, kMaxBody, &progress, kMaxSpeechFrame);
         state.check(result);
@@ -1555,13 +1653,22 @@ class Service {
 
   // One serialized CPU frontend job at a time (lfm3_server.Service._frontend_call, wait=False):
   // a second concurrent encode is refused rather than queued. `wait` (image requests, validation/image-queue-v1: their
-  // images already decoded, only rendering and tokenizing is left) waits for it within the deadline instead.
+  // images already decoded, only rendering and tokenizing is left; audio requests, validation/audio-frontend-v1)
+  // waits for it within the deadline instead, in 50 ms steps: 503 when the server stops, 499 client_gone when `gone`
+  // says the client has left (audio-frontend-v1 red-team finding 5), 504 frontend_deadline past the deadline.
   template <class F>
-  void frontend_call(F&& function, Clock::time_point deadline, bool wait = false) {
+  void frontend_call(F&& function, Clock::time_point deadline, bool wait = false, const std::function<bool()>& gone = {}) {
     if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
     std::unique_lock guard(frontend_lock_, std::defer_lock);
-    if (wait ? !guard.try_lock_until(deadline) : !guard.try_lock())
-      throw wait ? ApiError(504, "frontend_deadline") : ApiError(429, "frontend_busy");
+    if (!wait) {
+      if (!guard.try_lock()) throw ApiError(429, "frontend_busy");
+    } else {
+      while (!guard.try_lock_until(std::min(deadline, Clock::now() + std::chrono::milliseconds(50)))) {
+        if (stopping_) throw ApiError(503, "worker_unavailable");
+        if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
+        if (gone && gone()) throw ApiError(499, "client_gone");
+      }
+    }
     if (stopping_) throw ApiError(503, "worker_unavailable");
     if (Clock::now() >= deadline) throw ApiError(504, "frontend_deadline");
     function();
@@ -1655,7 +1762,10 @@ class Service {
       throw WorkerFailure("invalid worker reply");
     // Even native execution errors are fail-closed, rather than guessing which CUDA errors might leave
     // the process or another cache usable.
-    if (!*ok) throw WorkerFailure("native operation rejected");
+    if (!*ok) {  // the worker's own reason, for fatal()'s log line (never sent to a client)
+      const std::string* error = result.has("error") ? std::get_if<std::string>(&result.at("error").value) : nullptr;
+      throw WorkerFailure("native operation rejected: " + (error ? *error : std::string("(no error field)")));
+    }
     std::get<Json::Object>(result.value).erase("rpc_id");
     return result;
   }
@@ -1667,9 +1777,25 @@ class Service {
     sessions_.erase(sid);
   }
 
-  void fatal() {
+  // Fails the service closed. `where` (a failure, not shutdown) logs the first failure's reason to stderr once: the
+  // exception being handled (the worker's error for a refused operation). Clients still see only 503.
+  void fatal(const char* where = nullptr) {
+    std::string reason;
+    if (where) {
+      try {
+        if (const auto e = std::current_exception()) std::rethrow_exception(e);
+        reason = "(no exception)";
+      } catch (const std::exception& e) {
+        reason = e.what();
+      } catch (...) {
+        reason = "(non-standard exception)";
+      }
+      if (reason.size() > 1000) reason = reason.substr(0, 1000) + "...";
+    }
     {
       std::lock_guard g(lock_);
+      if (where && !failed_)
+        std::fprintf(stderr, "liquid-lfm3-server: worker failed closed (%s): %s\n", where, reason.c_str());
       failed_ = true;
       sessions_.clear();
     }
@@ -1771,7 +1897,7 @@ class Service {
         Obj frame;
         frame.str("op", "speech_admit").num("ticket", t->id).raw("chunks", r.chunks_json).str("mode", r.mode)
             .num("max_new_tokens", r.count).num("seed", r.seed).boolean("chunked", r.split).boolean("stream", r.stream);
-        if (!r.audio_json.empty()) frame.raw("audio", r.audio_json);
+        audio_field(frame, r);
         if (!r.images_json.empty()) frame.raw("images", r.images_json);
         if (r.stream) t->state = std::make_unique<StreamState>(*this, r, t->lines);
         running_[t->id] = t;  // before the call: a failure fails it with the rest
@@ -1815,7 +1941,7 @@ class Service {
       if (!reply.has("busy") || reply.at("busy").integer() != (long long)running_.size())
         throw WorkerFailure("invalid speech step reply");
     } catch (...) {
-      fatal();
+      fatal("speech batch");
       std::deque<std::shared_ptr<Ticket>> queued;
       {
         std::lock_guard q(queue_lock_);
@@ -1891,6 +2017,9 @@ class Service {
       timed_out_ = true;
       {
         std::lock_guard l(lock_);
+        if (!failed_)
+          std::fprintf(stderr, "liquid-lfm3-server: worker failed closed (watchdog): an engine call ran past engine_timeout (%g s)\n",
+                       settings_.engine_timeout);
         failed_ = true;
         sessions_.clear();
       }
@@ -1933,7 +2062,7 @@ class Service {
         if (stopping_ && queue_.empty() && speech_queue_.empty() && running_.empty() && !text_) return;
       }
       try { reap_idle(); }
-      catch (...) { fatal(); }
+      catch (...) { fatal("idle session reaping"); }
       std::shared_ptr<Job> job;
       bool speech = false;
       {
@@ -1977,7 +2106,7 @@ class Service {
       job->promise.set_exception(std::current_exception());
       return;
     } catch (...) {
-      fatal();
+      fatal("request");
       job->cleanup();
       job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
       return;
@@ -2003,7 +2132,7 @@ class Service {
     }
     if (abandoned) {
       try { job->discard(); }
-      catch (...) { fatal(); }
+      catch (...) { fatal("abandoned request cleanup"); }
       job->cleanup();
     }
   }
@@ -2046,7 +2175,7 @@ class Service {
       job->promise.set_exception(std::current_exception());
       return;
     } catch (...) {
-      fatal();
+      fatal("text generation start");
       job->cleanup();
       job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
       return;
@@ -2090,7 +2219,7 @@ class Service {
       return;
     } catch (...) {
       text_.reset();
-      fatal();
+      fatal("text generation step");
       job->cleanup();
       job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
       return;
@@ -2114,6 +2243,10 @@ class Service {
   std::condition_variable image_slots_cv_;
   int image_slots_ = kImageDecodeSlots;
   lfm::LockedLruBytes<int> image_token_cache_;  // image-cache-v1: an image part's base64 text -> its token count
+  static constexpr int kAudioFeatureSlots = 2;  // clips whose features are computed at once (compute_audio_features)
+  std::mutex audio_slots_lock_;
+  std::condition_variable audio_slots_cv_;
+  int audio_slots_ = kAudioFeatureSlots;
   std::mutex queue_lock_;
   std::condition_variable queue_cv_;
   std::deque<std::shared_ptr<Job>> queue_;

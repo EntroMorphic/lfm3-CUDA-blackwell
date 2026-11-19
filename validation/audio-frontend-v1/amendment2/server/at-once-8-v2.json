@@ -1,0 +1,91 @@
+{
+ "server_sha256": "9dbf1addfd2bab976366ee4198e979257dc09cec9aa3e55b0e3d02fa24142ca7",
+ "n": 8,
+ "server_args": [
+  "--queue-size",
+  "40",
+  "--handlers",
+  "48"
+ ],
+ "wall_seconds": 9.23,
+ "cases": {
+  "672-122797-0033": {
+   "seconds": 1.285,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 4.97,
+   "text": "A story?",
+   "reference_text": null
+  },
+  "121-127105-0015": {
+   "seconds": 2.96,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 5.48,
+   "text": "He quitted the fire and dropped back into his chair.",
+   "reference_text": null
+  },
+  "8455-210777-0050": {
+   "seconds": 3.945,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 5.58,
+   "text": "One of us always remains on board while the other is on shore.",
+   "reference_text": null
+  },
+  "7127-75946-0024": {
+   "seconds": 5.09,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 5.58,
+   "text": "Monsieur was the only one who did not understand anything about the matter.",
+   "reference_text": null
+  },
+  "237-134500-0036": {
+   "seconds": 6.6,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 6.23,
+   "text": "I can't play with you like a little boy any more, he said slowly. That's what you miss, Marie.",
+   "reference_text": null
+  },
+  "8230-279154-0000": {
+   "seconds": 8.805,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 6.44,
+   "text": "The analysis of knowledge will occupy us until the end of the 13th lecture, and is the most difficult part of our whole enterprise.",
+   "reference_text": null
+  },
+  "4077-13754-0006": {
+   "seconds": 12.7499375,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 6.99,
+   "text": "What the Lateran Saints call celestial marriage is characteristic of the Church and is in very general practice. But of celestial marriage, plurality of wives was an incident, never an essential.",
+   "reference_text": null
+  },
+  "4507-16021-0047": {
+   "seconds": 34.955,
+   "status": 200,
+   "text_identical": true,
+   "error": null,
+   "wall_seconds": 9.23,
+   "text": "Yesterday you were trembling for a health that is dear to you. Today you fear for your own. Tomorrow it will be anxiety about money. The day after tomorrow the diatribe of a slanderer. The day after that the misfortune of some friend. Then the prevailing weather. Then something that has been broken or lost. Then a pleasure with which your conscience and your vertebral column reproach you. Again, the course of public affairs.",
+   "reference_text": null
+  }
+ },
+ "text_control_identical": true,
+ "exit_code": 0,
+ "stderr": "",
+ "served": 8,
+ "identical": 8,
+ "pass": true
+}

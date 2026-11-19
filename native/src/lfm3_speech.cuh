@@ -194,9 +194,14 @@ class Batch {
           throw std::runtime_error("speech: video or speech-output placeholder in the prompt (not supported as input)");
     {
       std::vector<size_t> clip_tokens, image_tokens;
-      for (const auto& clip : o.audio) {
-        if (clip.empty()) throw std::runtime_error("speech: empty audio clip");
-        clip_tokens.push_back(lfm::audio_features::tokens(clip.size()));
+      // clips by handle (validation/audio-handles-v1): no samples, and every clip's features present
+      if (!o.audio_lengths.empty() &&
+          (!o.audio.empty() || o.audio_features.size() != o.audio_lengths.size() ||
+           std::any_of(o.audio_features.begin(), o.audio_features.end(), [](const auto& f) { return !f; })))
+        throw std::runtime_error("speech: clips by handle need every clip's features and no samples");
+      for (size_t c = 0; c < audio_clip_count(o); ++c) {
+        if (audio_clip_length(o, c) == 0) throw std::runtime_error("speech: empty audio clip");
+        clip_tokens.push_back(lfm::audio_features::tokens(audio_clip_length(o, c)));
       }
       if ((!o.image_keys.empty() && o.image_keys.size() != o.images.size()) ||
           (!o.image_rows.empty() && o.image_rows.size() != o.images.size()))
@@ -219,7 +224,7 @@ class Batch {
     if (o.codec_continue && !w.stream_open) throw std::runtime_error("speech: no open codec stream to continue");
     if (o.record_hidden && rows_ != 1) throw std::runtime_error("speech: record_hidden needs a batch of one");
     // the encoder (and its checkpoint contract) before any state changes
-    if (!o.audio.empty() && !encoder_) encoder_ = std::make_unique<lfm3_audio_in::Encoder>(runner_.weights, model_dir_);
+    if (audio_clip_count(o) && !encoder_) encoder_ = std::make_unique<lfm3_audio_in::Encoder>(runner_.weights, model_dir_);
     bool encode_images = false;
     for (size_t k = 0; k < o.images.size(); ++k) encode_images |= k >= o.image_rows.size() || !o.image_rows[k];
     if (encode_images && !vision_) {
@@ -239,12 +244,12 @@ class Batch {
     w.res.prompt = prompt;
     const auto t0 = Clock::now();
     runner_.reset();
-    if (o.audio.empty() && o.images.empty()) {
+    if (!audio_clip_count(o) && o.images.empty()) {
       runner_.forward(prompt);
     } else {
       const auto e0 = Clock::now();
       size_t total = 0;
-      for (const auto& clip : o.audio) total += lfm::audio_features::tokens(clip.size());
+      for (size_t c = 0; c < audio_clip_count(o); ++c) total += lfm::audio_features::tokens(audio_clip_length(o, c));
       for (const auto& im : o.images) total += size_t(im->tokens);
       if (audio_capacity_ < total)
         audio_rows_ = std::make_unique<Buffer<bf16>>(total * size_t(runner_.s.hidden)), audio_capacity_ = total;
@@ -256,7 +261,15 @@ class Batch {
         bf16* dst = audio_rows_->p + at * runner_.s.hidden;
         if (id == audio_token) {
           lfm::audio_features::Dump dump;
-          const auto mel = lfm::audio_features::log_mel(o.audio[clip++]);
+          // computed ahead on the request's handler thread when the server could (validation/audio-frontend-v1), or
+          // here: the same bytes
+          const auto& ahead = clip < o.audio_features.size() ? o.audio_features[clip] : nullptr;
+          std::vector<float> computed;
+          if (!ahead) computed = lfm::audio_features::log_mel(o.audio[clip]);
+          const auto& mel = ahead ? *ahead : computed;
+          if (mel.size() != size_t(lfm::audio_features::kMels) * lfm::audio_features::frames(audio_clip_length(o, clip)))
+            throw std::logic_error("speech: a clip's features do not match its length");  // unreachable
+          ++clip;
           at += size_t(encoder_->encode(mel, dst, o.record_audio ? &dump : nullptr));
           if (o.record_audio) w.res.audio_dumps.push_back(std::move(dump));
         } else {
@@ -290,7 +303,7 @@ class Batch {
         }
         while (i < prompt.size() && prompt[i] == id) ++i;
       }
-      if (at != total || clip != o.audio.size() || image != o.images.size())  // unreachable
+      if (at != total || clip != audio_clip_count(o) || image != o.images.size())  // unreachable
         throw std::runtime_error("speech: encoded media rows differ from the placeholders");
       cuda_check(cudaDeviceSynchronize());
       w.res.encode_seconds = secs(e0);

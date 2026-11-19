@@ -2,7 +2,9 @@
 //   audio-input-tool wav FILE...      -> {"ok":true,"rate":R,"samples":N,"sum":S} or {"ok":false,"error":"..."}
 //   audio-input-tool b64 FILE...      -> {"ok":true,"hex":"..."} or {"ok":false,"error":"..."} (FILE holds the text)
 //   audio-input-tool mel WAV OUT.f32  -> writes lfm::audio_features::log_mel of the clip ([128][frames] float32) and
-//                                        prints {"frames":T,"tokens":N}
+//                                        prints {"frames":T,"tokens":N,"threads":K} (K: log_mel's thread count, LFM3_MEL_THREADS)
+//   audio-input-tool mel-threads WAV  -> log_mel at 1 to 12 threads and from 8 callers at once, each byte-identical to
+//                                        the 1-thread result (validation/audio-frontend-v1); {"ok":true,"frames":T}
 #include <lfm/audio_features.hpp>
 #include <lfm/base64.hpp>
 #include <lfm/wav.hpp>
@@ -11,6 +13,10 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <atomic>
+#include <optional>
+#include <thread>
+#include <vector>
 
 namespace {
 std::string slurp(const char* path) {
@@ -26,15 +32,86 @@ std::string escape(const std::string& s) {
 }  // namespace
 
 int main(int argc, char** argv) try {
-  if (argc < 3) throw std::runtime_error("usage: audio-input-tool wav|b64 FILE... | mel WAV OUT.f32");
+  if (argc < 3) throw std::runtime_error("usage: audio-input-tool wav|b64 FILE... | mel WAV OUT.f32 | mel-threads WAV");
   const std::string mode = argv[1];
+  if (mode == "mel-threads") {
+    const auto a = lfm::wav::read(argv[2]);
+    const auto want = lfm::audio_features::log_mel(a.samples, 1);
+    for (int t = 2; t <= 12; ++t)
+      if (lfm::audio_features::log_mel(a.samples, t) != want) throw std::runtime_error("the thread count changed the features");
+    std::vector<std::vector<float>> got(8);
+    std::vector<std::thread> callers;
+    for (size_t i = 0; i < got.size(); ++i) callers.emplace_back([&a, &got, i] { got[i] = lfm::audio_features::log_mel(a.samples); });
+    for (auto& c : callers) c.join();
+    for (const auto& g : got)
+      if (g != want) throw std::runtime_error("concurrent calls changed the features");
+    std::cout << "{\"ok\":true,\"frames\":" << lfm::audio_features::frames(a.samples.size()) << "}\n";
+    return 0;
+  }
+  if (mode == "cache-handles") {  // validation/audio-handles-v1: the feature cache's handles and their lifetime
+    using lfm::audio_features::FeatureCache;
+    auto need = [](bool ok, const char* what) { if (!ok) throw std::runtime_error(std::string("cache-handles: ") + what); };
+    FeatureCache cache;
+    auto feats = [](float v) { return std::make_shared<const std::vector<float>>(4, v); };
+    std::optional<FeatureCache::Lease> la(cache.put("clip-a", feats(1), 100)), lb(cache.put("clip-b", feats(2), 200));
+    const uint64_t ha = la->handle(), hb = lb->handle();
+    need(ha && hb && ha != hb, "distinct nonzero handles");
+    const auto ra = cache.resolve(ha);
+    need(ra && ra->samples == 100 && (*ra->features)[0] == 1 && cache.clip_of(ha) == std::string("clip-a"),
+         "a handle names its own clip, features and sample count");
+    auto la2 = cache.lease_if_present("clip-a");  // the same clip in another request: the same entry and handle
+    need(la2 && la2->handle() == ha && cache.size() == 2, "the same clip shares an entry");
+    la.reset();
+    need(cache.resolve(ha).has_value(), "a handle lives while any lease holds its entry");
+    la2.reset();
+    need(!cache.resolve(ha) && !cache.clip_of(ha) && cache.size() == 1, "a handle outliving its leases is refused");
+    const auto la3 = cache.put("clip-a", feats(1), 100);
+    need(la3.handle() != ha && la3.handle() != hb, "handles are never reused");
+    need(!cache.resolve(0) && !cache.resolve(~uint64_t(0)), "unknown handles are refused");
+    // concurrent requests: put, lease, resolve and release from 8 threads over a few shared clips
+    std::vector<std::thread> threads;
+    std::atomic<int> wrong{0};
+    for (int t = 0; t < 8; ++t)
+      threads.emplace_back([&, t] {
+        for (int i = 0; i < 2000; ++i) {
+          const std::string key = "shared-" + std::to_string((t + i) % 3);
+          const auto l = cache.put(key, feats(float((t + i) % 3)), size_t((t + i) % 3 + 1));
+          const auto r = cache.resolve(l.handle());
+          if (!r || r->samples != size_t((t + i) % 3 + 1) || cache.clip_of(l.handle()) != key) ++wrong;
+        }
+      });
+    for (auto& t : threads) t.join();
+    need(wrong == 0, "concurrent handles name their own clips");
+    need(cache.size() == 2, "every shared entry released (clip-a and clip-b still held)");
+    std::cout << "{\"ok\":true}\n";
+    return 0;
+  }
+  if (mode == "exact-threads") {  // amendment 2: F1 and F2 the same floats at 1 to 12 threads and from 8 callers
+    using lfm::audio_features::Transform;
+    const auto a = lfm::wav::read(argv[2]);
+    const auto want = lfm::audio_features::log_mel(a.samples, 1, Transform::kExactF2);
+    for (int t = 1; t <= 12; ++t)
+      if (lfm::audio_features::log_mel(a.samples, t, Transform::kExactF1) != want ||
+          lfm::audio_features::log_mel(a.samples, t, Transform::kExactF2) != want)
+        throw std::runtime_error("F1, F2 or the thread count changed the features");
+    std::vector<std::vector<float>> got(8);
+    std::vector<std::thread> callers;
+    for (size_t i = 0; i < got.size(); ++i)
+      callers.emplace_back([&a, &got, i] { got[i] = lfm::audio_features::log_mel(a.samples, 4, i % 2 ? Transform::kExactF1 : Transform::kExactF2); });
+    for (auto& c : callers) c.join();
+    for (const auto& g : got)
+      if (g != want) throw std::runtime_error("concurrent calls changed the features");
+    std::cout << "{\"ok\":true,\"frames\":" << lfm::audio_features::frames(a.samples.size()) << "}\n";
+    return 0;
+  }
   if (mode == "mel") {
     const auto a = lfm::wav::read(argv[2]);
     const auto mel = lfm::audio_features::log_mel(a.samples);
     std::ofstream f(argv[3], std::ios::binary);
     f.write(reinterpret_cast<const char*>(mel.data()), std::streamsize(mel.size() * sizeof(float)));
     std::cout << "{\"frames\":" << lfm::audio_features::frames(a.samples.size())
-              << ",\"tokens\":" << lfm::audio_features::tokens(a.samples.size()) << "}\n";
+              << ",\"tokens\":" << lfm::audio_features::tokens(a.samples.size())
+              << ",\"threads\":" << lfm::audio_features::mel_threads() << "}\n";
     return f ? 0 : 1;
   }
   for (int i = 2; i < argc; ++i) {

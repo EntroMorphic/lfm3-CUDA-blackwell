@@ -160,6 +160,7 @@ int main(int argc,char** argv) try {
   policy.image_input=backend.core().image_input_supported();
   policy.speech_rows=backend.core().speech_rows();
   policy.image_handoff=true;  // the engine runs in this process (image-queue-v1 part 2)
+  policy.audio_features_ahead=true;  // the engine is in this process (validation/audio-frontend-v1)
   for(auto* ids:{&policy.suppress,&policy.stops}) {
     std::sort(ids->begin(),ids->end());ids->erase(std::unique(ids->begin(),ids->end()),ids->end());
   }

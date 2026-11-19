@@ -171,7 +171,7 @@ def test_shutdown_with_text_and_rows_running_exits_0(harness_binary):
 
 def test_an_engine_failure_in_a_text_slice_fails_the_service_closed(harness_binary):
     with running(harness_binary, "--speech-rows", "2", "--token-delay-ms", "50", "--fail-op", "text_step",
-                 "--fail-after", "3") as h:
+                 "--fail-after", "3", failed_closed="native operation rejected: injected failure") as h:
         sid = session(h)
         t, speech = in_thread(lambda: h.call("POST", "/speech", long_speech(60)))
         time.sleep(0.2)
@@ -206,7 +206,7 @@ def test_generate_batch_still_waits_for_the_rows_and_holds_back_later_speech(har
 
 def test_a_speech_failure_with_text_active_fails_both_closed(harness_binary):
     with running(harness_binary, "--speech-rows", "2", "--token-delay-ms", "50", "--fail-op", "speech_step",
-                 "--fail-after", "10") as h:
+                 "--fail-after", "10", failed_closed="(speech batch): native operation rejected: injected failure") as h:
         sid = session(h)
         t, speech = in_thread(lambda: h.call("POST", "/speech", long_speech(60)))
         time.sleep(0.2)

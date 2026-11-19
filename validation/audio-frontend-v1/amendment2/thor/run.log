@@ -1,0 +1,10 @@
+f2: 40 clips, 4391424 floats: 0 not the reference's rounding, 0 undecided by the reference; 2 changed from today (2 of them the reference's rounding); fast 4391422, quad 2, quad undecided 0
+f2: 12 clips, 259072 floats: 0 not the reference's rounding, 0 undecided by the reference; 0 changed from today (0 of them the reference's rounding); fast 259072, quad 0, quad undecided 0
+f2: 2620 clips, 248578432 floats: 0 not the reference's rounding, 0 undecided by the reference; 29 changed from today (29 of them the reference's rounding); fast 248578278, quad 154, quad undecided 0
+f1: 40 clips, 4391424 floats: 0 not the reference's rounding, 0 undecided by the reference; 2 changed from today (2 of them the reference's rounding); fast 4347947, quad 43477, quad undecided 0
+f1: 12 clips, 259072 floats: 0 not the reference's rounding, 0 undecided by the reference; 0 changed from today (0 of them the reference's rounding); fast 257338, quad 1734, quad undecided 0
+f1: 2620 clips, 248578432 floats: 0 not the reference's rounding, 0 undecided by the reference; 29 changed from today (29 of them the reference's rounding); fast 246253424, quad 2325008, quad undecided 0
+write: 2620 clips, 2620 identical, threads 1; exact outputs: 248578278 fast, 154 quad, 0 undecided
+compare: 2620 clips, 2620 identical, threads 4; exact outputs: 248578278 fast, 154 quad, 0 undecided
+compare: 2620 clips, 2620 identical, threads 4; exact outputs: 246253424 fast, 2325008 quad, 0 undecided
+RULE 1 THOR DONE 15:15:57

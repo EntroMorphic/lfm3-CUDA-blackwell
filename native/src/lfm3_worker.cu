@@ -7,6 +7,7 @@
 #include <lfm/text_cancellation.hpp>
 #include <lfm/text_batch_cancellation.hpp>
 #include <lfm/lfm3_text_request.hpp>
+#include <lfm/lfm3_worker_schema.hpp>
 #ifdef LFM3_NATIVE_GEMM  // speech (#2) was validated only with the native GEMM; other builds refuse op "speech"
 #include "lfm3_batch.cuh"
 #include "lfm3_speech.cuh"
@@ -96,24 +97,8 @@ lfm::TextSamplingOptions sampling_options(const lfm::Json& request,int vocab,int
   if(o.top_k>live) o.top_k=live;
   return o;
 }
-void schema(const lfm::Json& request,const std::string& op) {
-  const std::set<std::string> common={"op","session_id","rpc_id"};
-  const std::set<std::string> generate={"input_ids","max_new_tokens","do_sample","temperature","top_k","top_p","min_p","repetition_penalty","seed","return_logits","trace_sampling","messages","return_text"};
-  const auto* object=std::get_if<lfm::Json::Object>(&request.value);
-  if(!object) throw std::runtime_error("expected object");
-  for(const auto& [key,value]:*object) {
-    if(common.count(key)) continue;
-    if(op=="create" && key=="capacity") continue;
-    if((op=="generate" || op=="text_begin") && generate.count(key)) continue;
-    if(op=="text_step" && (key=="tokens" || key=="cancel")) continue;
-    if(op=="generate_batch" && (key=="op" || key=="rpc_id" || key=="lanes")) continue;
-    if((op=="speech" || op=="speech_admit") && (key=="chunks" || key=="mode" || key=="max_new_tokens" || key=="seed" ||
-                                               key=="chunked" || key=="audio" || key=="images" || key=="stream")) continue;
-    if(op=="speech_admit" && key=="ticket") continue;
-    if(op=="speech_step" && key=="cancel") continue;
-    throw std::runtime_error("unsupported request field: "+key);
-  }
-}
+// The accepted fields, per op: lfm/lfm3_worker_schema.hpp (shared with the host harness's fake engine).
+void schema(const lfm::Json& request,const std::string& op) {lfm::worker::schema(request,op);}
 // Metadata is collected for BOTH lanes before any lease, weight load or reset.
 struct BatchLane {
   std::string id;
@@ -690,6 +675,9 @@ class WorkerCore {
     }
     if(prompts.empty() || (!chunked && prompts.size()!=1)) throw std::runtime_error("speech needs one prompt, or chunks");
     std::vector<std::vector<float>> clips;  // decoded and checked (spans included) before any engine state changes
+    std::vector<lfm::audio_features::FeatureCache::Features> features;  // computed ahead by the in-process server
+    std::vector<size_t> audio_lengths;  // the clips by handle: their sample counts (audio-handles-v1)
+    if(request.has("audio") && request.has("audio_ref")) throw std::runtime_error("audio and audio_ref together");
     if(request.has("audio")) {
       if(!audio_in_ok) throw std::runtime_error("audio input is not supported by this checkpoint");
       if(request.at("audio").array().size()>kSpeechMaxClips) throw std::runtime_error("too many audio clips");
@@ -698,6 +686,23 @@ class WorkerCore {
       for(const auto& a:request.at("audio").array()) {
         clips.push_back(lfm3_speech::clip_from_base64(a.string()));
         clip_tokens.push_back(lfm::audio_features::tokens(clips.back().size()));
+        features.push_back(lfm::audio_features::shared_feature_cache().find(a.string()));  // validation/audio-frontend-v1
+      }
+      lfm3_speech::check_audio_spans(prompts[0],clip_tokens);
+    } else if(request.has("audio_ref")) {
+      // validation/audio-handles-v1: the in-process server's clips by handle (their features and sample counts held in
+      // the shared cache under the request's lease): no base64 to parse or decode on this thread
+      if(!audio_in_ok) throw std::runtime_error("audio input is not supported by this checkpoint");
+      if(request.at("audio_ref").array().size()>kSpeechMaxClips) throw std::runtime_error("too many audio clips");
+      if(chunked) throw std::runtime_error("chunks cannot take audio input");
+      std::vector<size_t> clip_tokens;
+      for(const auto& h:request.at("audio_ref").array()) {
+        const long long id=h.integer();
+        const auto r=id>0?lfm::audio_features::shared_feature_cache().resolve(uint64_t(id)):std::nullopt;
+        if(!r) throw std::runtime_error("unknown audio handle "+std::to_string(id));  // never recomputed from nothing
+        features.push_back(r->features);
+        audio_lengths.push_back(r->samples);
+        clip_tokens.push_back(lfm::audio_features::tokens(r->samples));
       }
       lfm3_speech::check_audio_spans(prompts[0],clip_tokens);
     } else {
@@ -739,7 +744,7 @@ class WorkerCore {
     }
     auto& o=job.o;
     o.mode=mode=="audio"?lfm::audio::Requested::Audio:mode=="text"?lfm::audio::Requested::Text:lfm::audio::Requested::Interleaved;
-    o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);o.images=std::move(images);
+    o.max_new_tokens=count;o.seed=uint64_t(seed);o.audio=std::move(clips);o.audio_features=std::move(features);o.audio_lengths=std::move(audio_lengths);o.images=std::move(images);
     o.image_keys=std::move(image_keys);o.image_rows=std::move(image_rows);
     return job;
   }
