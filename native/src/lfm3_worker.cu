@@ -7,6 +7,7 @@
 #include <lfm/text_cancellation.hpp>
 #include <lfm/text_batch_cancellation.hpp>
 #include <lfm/lfm3_text_request.hpp>
+#include <lfm/lfm3_worker_schema.hpp>
 #ifdef LFM3_NATIVE_GEMM  // speech (#2) was validated only with the native GEMM; other builds refuse op "speech"
 #include "lfm3_batch.cuh"
 #include "lfm3_speech.cuh"
@@ -95,24 +96,8 @@ lfm::TextSamplingOptions sampling_options(const lfm::Json& request,int vocab,int
   if(o.top_k>live) o.top_k=live;
   return o;
 }
-void schema(const lfm::Json& request,const std::string& op) {
-  const std::set<std::string> common={"op","session_id","rpc_id"};
-  const std::set<std::string> generate={"input_ids","max_new_tokens","do_sample","temperature","top_k","top_p","min_p","repetition_penalty","seed","return_logits","trace_sampling","messages","return_text"};
-  const auto* object=std::get_if<lfm::Json::Object>(&request.value);
-  if(!object) throw std::runtime_error("expected object");
-  for(const auto& [key,value]:*object) {
-    if(common.count(key)) continue;
-    if(op=="create" && key=="capacity") continue;
-    if((op=="generate" || op=="text_begin") && generate.count(key)) continue;
-    if(op=="text_step" && (key=="tokens" || key=="cancel")) continue;
-    if(op=="generate_batch" && (key=="op" || key=="rpc_id" || key=="lanes")) continue;
-    if((op=="speech" || op=="speech_admit") && (key=="chunks" || key=="mode" || key=="max_new_tokens" || key=="seed" ||
-                                               key=="chunked" || key=="audio" || key=="images" || key=="stream")) continue;
-    if(op=="speech_admit" && key=="ticket") continue;
-    if(op=="speech_step" && key=="cancel") continue;
-    throw std::runtime_error("unsupported request field: "+key);
-  }
-}
+// The accepted fields, per op: lfm/lfm3_worker_schema.hpp (shared with the host harness's fake engine).
+void schema(const lfm::Json& request,const std::string& op) {lfm::worker::schema(request,op);}
 // Metadata is collected for BOTH lanes before any lease, weight load or reset.
 struct BatchLane {
   std::string id;

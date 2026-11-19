@@ -96,6 +96,7 @@ STUBS = r'''
 #include <lfm/text_batch_cancellation.hpp>
 #include <lfm/text_serving_limits.hpp>
 #include <lfm/lfm3_text_request.hpp>
+#include <lfm/lfm3_worker_schema.hpp>
 #include <algorithm>
 #include <cassert>
 #include <filesystem>

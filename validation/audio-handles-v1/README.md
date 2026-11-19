@@ -128,3 +128,78 @@ checkpoint beside it: **2,442 passed, 2 skipped, 1 failed** (53 minutes).
 - rule 3's reported figure from an nsys trace.
 
 It needs this branch synced to `build/audio-src-h` and the base sources in `build/audio-src-base` (already there).
+
+## Quiet window 19 (2026-11-18, Thor, `f1dac0a`): NOT RUNNABLE, a fault in this branch
+Results in Thor's `build/quiet-w19-handles/` and `build/quiet-w19-handles-rest/`, as the coordinator reported them:
+- **The new server (`audio-h-w-srv`) answered every request containing an audio clip with 503 `worker_unavailable`,
+  and every request after it, text included.** It failed closed within 0.01 s of the first audio request, with
+  nothing on stderr. No rule could be measured on it.
+- The memcheck step (3) ran for 6 hours before it was stopped. Not yet explained (below).
+- The base server's stall step at 8 rows stopped with "no row streamed audio across the window": NOT RUNNABLE. The
+  baseline worst gaps at 8 rows are about 1.15 s in earlier windows.
+
+### The cause (found on the workstation, 2026-11-19)
+`WorkerCore` checks every request's fields against a fixed list per op (`schema()` in `lfm3_worker.cu`) before it reads
+any of them. `"audio_ref"` was never added to the list for ops `speech` and `speech_admit`. Every request by handle
+was therefore refused with "unsupported request field: audio_ref". The Service treats any refused engine operation as
+fatal, so it failed closed, and answered 503 to everything after.
+
+**Why the host suites passed:**
+- the host harness's fake engine reimplements `parse_speech`'s checks, and it accepted `"audio_ref"`;
+- it had no copy of `schema()`;
+- the real `WorkerCore` runs only on Thor.
+
+**Why stderr was empty:**
+- the Service turned the worker's error into `WorkerFailure("native operation rejected")`, dropping the reason;
+- `fatal()` logged nothing.
+
+### The fix
+- The field lists moved to `native/include/lfm/lfm3_worker_schema.hpp`, with `"audio_ref"` added for ops `speech` and
+  `speech_admit`.
+  - `WorkerCore` calls it as before.
+  - The fake engine now runs every frame the Service sends through the same function, so a field the Service starts
+    sending is refused on the host exactly as on Thor.
+- **Reproduced on the host:** the same header with `"audio_ref"` taken back out fails 27 of the 28 audio-in HTTP tests
+  (plain build) with 503 `worker_unavailable`. The one that passes is the engine-computed half of a test whose other
+  half fails. With the fix, all 28 pass.
+- **Logging:**
+  - the refused operation now carries the worker's own error ("native operation rejected: unsupported request field:
+    audio_ref");
+  - `fatal(where)` writes the first failure's reason to stderr once:
+    `liquid-lfm3-server: worker failed closed (WHERE): REASON` (at most 1,000 characters; clients still see only 503);
+  - the watchdog writes `liquid-lfm3-server: worker failed closed (watchdog): an engine call ran past engine_timeout`;
+  - shutdown's own `fatal()` call logs nothing.
+- **`tools/measure_lfm3_audio_stall.py`:** a run it cannot measure now says why, without changing the measurement:
+  with or without the clip, and per row the tries, the first attempt, the stream's start and end, and the first and
+  last audio, each in seconds from the clip request's start.
+- **Host tests:**
+  - the tests that fail the engine on purpose (`--fail-op`, `--speech-stream-fault`, the engine timeout: 13 in each
+    build) now require exactly the one failed-closed line, with its reason;
+  - every other test still requires an empty stderr;
+  - `test_text_batch_cancellation.py` builds `WorkerCore`'s source on the host, and now includes the new header.
+- **Host suites in full again** (`tests` and `audit/test_host_contracts.py`; plain, ASan+UBSan, TSan; 2026-11-19,
+  workstation, 51 minutes): **2,440 passed, 4 skipped, 1 failed**.
+  - The failure is the known pre-existing `test_every_validation_prompt_matches_hf_ids`.
+  - The skips are the 2 memory tests, as before, and `test_speech_normalize.py`'s 2 corpus tests: the corpus data was
+    not in this copy.
+- **The server's translation unit on x86 (nvcc 13.5, sm_90):** only the 3 known errors from the quad type
+  (`__float128` there, `long double` on Thor). Thor's build is the real compile check.
+
+### Not yet explained, need window 19's files
+- **The memcheck step's 6 hours.**
+  - The check sends every case with a 600 s bound per request. Against a server failed closed, each case is an
+    immediate 503.
+  - This branch's server has no warm-up at startup.
+  - So the hang is not in the requests as written. Candidates: the server's start or exit under memcheck, or
+    compute-sanitizer's handling of SIGTERM.
+  - Needed: `memcheck/audio-in-server.log`, `ls -la memcheck/`, the session log around step 3, and whether a
+    `liquid-lfm3-server` or `compute-sanitizer` process was still alive when the step was stopped.
+- **The base server's "no row streamed audio across the window".** The tool gives this when no streaming row has an
+  audio event inside the 4 s window. Every row would then have ended before the clip's start, or been silent across the
+  whole window, for example still waiting on 429 retries. Needed: `stall-audio-fe-w-base-srv-8.log`, which says which
+  clip it reached. The next run of the tool says the rest itself.
+
+### To rerun on Thor (the fix's commit synced to `build/audio-src-h`; nothing else changes)
+`tools/thor/quiet_session_v19.sh` in full, as window 19 ran it:
+- the handles server rebuilds, because its tree hash changes;
+- the base server's build is reused.

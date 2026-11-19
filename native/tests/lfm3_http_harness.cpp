@@ -13,6 +13,7 @@
 #include <lfm/lfm3_http.hpp>
 #include <lfm/speech_run.hpp>
 #include <lfm/lfm3_text_request.hpp>
+#include <lfm/lfm3_worker_schema.hpp>
 #include <lfm/text_batch_cancellation.hpp>
 #include <lfm/text_cancellation.hpp>
 #include <lfm/text_sessions.hpp>
@@ -262,6 +263,7 @@ class FakeEngine final : public lfm::http::Backend {
       const auto op = request.at("op").string();
       if (trace_) trace_ << op << "\n" << std::flush;  // --trace-ops: the order of engine calls, for the scheduler tests
       if (op == fail_op_ && ++fail_count_ >= fail_after_) throw std::runtime_error("injected failure");
+      lfm::worker::schema(request, op);  // WorkerCore's own field check, shared, so the two cannot drift
       if (op == "generate_batch") { batch(request, rpc, out); return out.str(); }
       if (op == "speech") { speech(request, rpc, out, progress); return out.str(); }
       if (op == "speech_admit") { speech_admit(request, rpc, out, progress); return out.str(); }

@@ -97,11 +97,18 @@ class Harness:
         response = self.raw(("\r\n".join(lines) + "\r\n\r\n").encode("latin-1") + payload, timeout=timeout)
         return parse_response(response)
 
-    def stop(self, timeout=30):
+    def stop(self, timeout=30, failed_closed=None):
+        """SIGTERM, a clean exit and nothing on stderr; failed_closed (a test that fails the engine on purpose): then
+        exactly the one line fatal() logs, its reason containing that text."""
         self.process.send_signal(signal.SIGTERM)
         code = self.process.wait(timeout=timeout)
         stderr = self.process.stderr.read().decode()
-        assert code == 0 and not stderr, (code, stderr)
+        if failed_closed is None:
+            assert code == 0 and not stderr, (code, stderr)
+        else:
+            lines = stderr.splitlines()
+            assert code == 0 and len(lines) == 1, (code, stderr)
+            assert lines[0].startswith("liquid-lfm3-server: worker failed closed (") and failed_closed in lines[0], stderr
 
 
 def parse_response(response):
@@ -120,14 +127,14 @@ def parse_response(response):
 
 
 @contextlib.contextmanager
-def running(binary, *options):
+def running(binary, *options, failed_closed=None):
     h = Harness(binary, *options)
     try:
         yield h
     except BaseException:
         h.process.kill()
         raise
-    h.stop()
+    h.stop(failed_closed=failed_closed)
 
 
 def session(h, capacity=1024):
@@ -404,7 +411,8 @@ def test_idle_sessions_are_reaped(harness_binary):
 @pytest.mark.parametrize("operation", ["text_begin", "text_step", "create", "reset", "generate_batch"])
 def test_engine_failure_is_fatal(harness_binary, operation):
     fail_after = "2" if operation == "create" else "1"
-    with running(harness_binary, "--fail-op", operation, "--fail-after", fail_after) as h:
+    with running(harness_binary, "--fail-op", operation, "--fail-after", fail_after,
+                 failed_closed="native operation rejected: injected failure") as h:
         a = session(h)
         if operation == "create":
             assert h.call("POST", "/sessions", {"capacity": 64}) == (503, {"error": "worker_unavailable"})
@@ -536,7 +544,8 @@ def test_large_bodies_are_parsed_one_at_a_time(harness_binary):
 
 
 def test_engine_timeout_fails_closed(harness_binary):
-    with running(harness_binary, "--token-delay-ms", "400", "--engine-timeout", "1") as h:
+    with running(harness_binary, "--token-delay-ms", "400", "--engine-timeout", "1",
+                 failed_closed="(watchdog): an engine call ran past engine_timeout (1 s)") as h:
         a = session(h)
         started = time.monotonic()
         assert generate(h, a, 20) == (503, {"error": "worker_unavailable"})

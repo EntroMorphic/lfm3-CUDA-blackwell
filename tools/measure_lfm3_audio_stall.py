@@ -80,7 +80,7 @@ def one_run(s, rows, clip_body):
     clip_seconds = time.monotonic() - t_clip  # from the first attempt: time spent refused counts
     for t in threads:
         t.join()
-    gaps, row_tries = [], []
+    gaps, row_tries, rows_seen = [], [], []
     for (status, events, times, t0), first, tries in results:
         if status != 200:
             raise SystemExit(f"a streaming row failed after {tries} tries: {status} {events[:1]}")
@@ -92,11 +92,18 @@ def one_run(s, rows, clip_body):
         before = [a for a in audio if a < t_clip][-1:]
         seq = before + inside
         gaps.append(max((b - a for a, b in zip(seq, seq[1:])), default=None))
+        # diagnostics only (seconds from the clip request's start), for a run that cannot be measured
+        rel = lambda x: None if x is None else round(x - t_clip, 3)  # noqa: E731
+        rows_seen.append(dict(tries=tries, first_attempt=rel(first), stream_start=rel(t0), audio_events=len(audio) - 1,
+                              first_audio=rel(audio[1] if len(audio) > 1 else None), last_audio=rel(audio[-1] if len(audio) > 1 else None),
+                              stream_end=rel(t0 + times[-1] if times else None), last_event=events[-1]["event"] if events else None))
     if clip_body and clip_result[0] != 200:
         raise SystemExit(f"the clip request failed: {clip_result}")
     real = [g for g in gaps if g is not None]
     if not real:
-        raise SystemExit("no row streamed audio across the window")
+        raise SystemExit("no row streamed audio across the window ("
+                         + (f"with the clip: {clip_seconds:.3f} s, {clip_tries} tries" if clip_body else "without the clip")
+                         + "); rows, seconds from the clip's start: " + json.dumps(rows_seen))
     return dict(worst_gap=max(real), row_gaps=gaps, clip_seconds=clip_seconds if clip_body else None,
                 clip_tries=clip_tries, row_tries=row_tries)
 

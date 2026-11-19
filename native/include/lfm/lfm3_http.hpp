@@ -1703,7 +1703,10 @@ class Service {
       throw WorkerFailure("invalid worker reply");
     // Even native execution errors are fail-closed, rather than guessing which CUDA errors might leave
     // the process or another cache usable.
-    if (!*ok) throw WorkerFailure("native operation rejected");
+    if (!*ok) {  // the worker's own reason, for fatal()'s log line (never sent to a client)
+      const std::string* error = result.has("error") ? std::get_if<std::string>(&result.at("error").value) : nullptr;
+      throw WorkerFailure("native operation rejected: " + (error ? *error : std::string("(no error field)")));
+    }
     std::get<Json::Object>(result.value).erase("rpc_id");
     return result;
   }
@@ -1715,9 +1718,25 @@ class Service {
     sessions_.erase(sid);
   }
 
-  void fatal() {
+  // Fails the service closed. `where` (a failure, not shutdown) logs the first failure's reason to stderr once: the
+  // exception being handled (the worker's error for a refused operation). Clients still see only 503.
+  void fatal(const char* where = nullptr) {
+    std::string reason;
+    if (where) {
+      try {
+        if (const auto e = std::current_exception()) std::rethrow_exception(e);
+        reason = "(no exception)";
+      } catch (const std::exception& e) {
+        reason = e.what();
+      } catch (...) {
+        reason = "(non-standard exception)";
+      }
+      if (reason.size() > 1000) reason = reason.substr(0, 1000) + "...";
+    }
     {
       std::lock_guard g(lock_);
+      if (where && !failed_)
+        std::fprintf(stderr, "liquid-lfm3-server: worker failed closed (%s): %s\n", where, reason.c_str());
       failed_ = true;
       sessions_.clear();
     }
@@ -1863,7 +1882,7 @@ class Service {
       if (!reply.has("busy") || reply.at("busy").integer() != (long long)running_.size())
         throw WorkerFailure("invalid speech step reply");
     } catch (...) {
-      fatal();
+      fatal("speech batch");
       std::deque<std::shared_ptr<Ticket>> queued;
       {
         std::lock_guard q(queue_lock_);
@@ -1939,6 +1958,9 @@ class Service {
       timed_out_ = true;
       {
         std::lock_guard l(lock_);
+        if (!failed_)
+          std::fprintf(stderr, "liquid-lfm3-server: worker failed closed (watchdog): an engine call ran past engine_timeout (%g s)\n",
+                       settings_.engine_timeout);
         failed_ = true;
         sessions_.clear();
       }
@@ -1981,7 +2003,7 @@ class Service {
         if (stopping_ && queue_.empty() && speech_queue_.empty() && running_.empty() && !text_) return;
       }
       try { reap_idle(); }
-      catch (...) { fatal(); }
+      catch (...) { fatal("idle session reaping"); }
       std::shared_ptr<Job> job;
       bool speech = false;
       {
@@ -2025,7 +2047,7 @@ class Service {
       job->promise.set_exception(std::current_exception());
       return;
     } catch (...) {
-      fatal();
+      fatal("request");
       job->cleanup();
       job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
       return;
@@ -2051,7 +2073,7 @@ class Service {
     }
     if (abandoned) {
       try { job->discard(); }
-      catch (...) { fatal(); }
+      catch (...) { fatal("abandoned request cleanup"); }
       job->cleanup();
     }
   }
@@ -2094,7 +2116,7 @@ class Service {
       job->promise.set_exception(std::current_exception());
       return;
     } catch (...) {
-      fatal();
+      fatal("text generation start");
       job->cleanup();
       job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
       return;
@@ -2138,7 +2160,7 @@ class Service {
       return;
     } catch (...) {
       text_.reset();
-      fatal();
+      fatal("text generation step");
       job->cleanup();
       job->promise.set_exception(std::make_exception_ptr(ApiError(503, "worker_unavailable")));
       return;

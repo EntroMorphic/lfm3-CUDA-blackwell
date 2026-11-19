@@ -143,7 +143,7 @@ def test_unsupported_speech_is_an_ordinary_501(harness_binary):
 
 def test_an_engine_fault_before_any_event_is_an_ordinary_503(harness_binary):
     # a malformed first audio piece: nothing was sent, so the failure is a plain JSON 503, and the service fails closed
-    with running(harness_binary, "--speech-stream-fault", "malformed") as h:
+    with running(harness_binary, "--speech-stream-fault", "malformed", failed_closed="") as h:
         status, body, events = stream(h, tts(LONG, stream=True))
         assert events is None and status == 503 and body == {"error": "worker_unavailable"}
         assert h.call("POST", "/speech", tts(LONG))[0] == 503
@@ -151,7 +151,7 @@ def test_an_engine_fault_before_any_event_is_an_ordinary_503(harness_binary):
 
 @pytest.mark.parametrize("fault", ["samples", "slots", "chunk"])
 def test_a_reply_that_disagrees_with_the_stream_ends_it_with_an_error(harness_binary, fault):
-    with running(harness_binary, "--speech-stream-fault", fault) as h:
+    with running(harness_binary, "--speech-stream-fault", fault, failed_closed="") as h:
         status, events, _ = stream(h, dict(messages=INTERLEAVED, mode="interleaved", max_new_tokens=256, stream=True))
         assert status == 200 and events[-1] == {"event": "error", "error": "worker_unavailable"}
         assert all(e["event"] != "done" for e in events) and len(events) > 1
