@@ -362,8 +362,9 @@ The stall in seconds, both servers in the same window, with each cell's bar.
   - **The repeat:** identical.
   - **The check's own verdict is FAIL, for the server's exit 15 only.** That is the known missing stop-signal header,
     which the merge brings in.
-  - **Not read:** whether `asr-joined-90s` missed its 240 s wall bound under the sanitizer again (run 2: 242.4 s). It
-    is in this run's `memcheck/audio-in-server.log`.
+  - **`asr-joined-90s`:** status 200, text and WAV identical, but 241.98 s against the 240 s wall bound, so the case
+    reads `pass` false (from this run's `memcheck/audio-in-server.log`). It missed only the wall bound, under the
+    sanitizer, as in run 2 (242.4 s).
 - **A void attempt before it,** `build/quiet-w19-memcheck2-void-wrong-check/`: launched with `f8e2299`'s check by
   mistake (a copy step overwrote the new one), and stopped within a minute by SIGTERM to the server. Void; nothing from
   it is used.
