@@ -185,19 +185,54 @@ fatal, so it failed closed, and answered 503 to everything after.
 - **The server's translation unit on x86 (nvcc 13.5, sm_90):** only the 3 known errors from the quad type
   (`__float128` there, `long double` on Thor). Thor's build is the real compile check.
 
-### Not yet explained, need window 19's files
-- **The memcheck step's 6 hours.**
-  - The check sends every case with a 600 s bound per request. Against a server failed closed, each case is an
-    immediate 503.
-  - This branch's server has no warm-up at startup.
-  - So the hang is not in the requests as written. Candidates: the server's start or exit under memcheck, or
-    compute-sanitizer's handling of SIGTERM.
-  - Needed: `memcheck/audio-in-server.log`, `ls -la memcheck/`, the session log around step 3, and whether a
-    `liquid-lfm3-server` or `compute-sanitizer` process was still alive when the step was stopped.
-- **The base server's "no row streamed audio across the window".** The tool gives this when no streaming row has an
-  audio event inside the 4 s window. Every row would then have ended before the clip's start, or been silent across the
-  whole window, for example still waiting on 429 retries. Needed: `stall-audio-fe-w-base-srv-8.log`, which says which
-  clip it reached. The next run of the tool says the rest itself.
+### The memcheck step's 6 hours: explained from run 1's files, and fixed
+**From run 1's files** (`quiet-w19-handles-run1/memcheck/`, the coordinator's account of the processes at 05:12):
+- the check sent its 9 cases by 23:14, every one a 503, then stopped the server with `proc.terminate()`;
+- `proc` was `srv-memcheck.sh`, which execs compute-sanitizer. SIGTERM killed compute-sanitizer itself (the log has
+  "exit: -15"), and compute-sanitizer did not pass the signal on;
+- the server lived on under TreeLauncherSubreaper, idle, holding the check's stderr pipe;
+- `proc.wait()` returned at once; `proc.stderr.read()` then waited for an end of file that never came;
+- `audio-in-server.json` was written at 05:13, just after the coordinator sent SIGTERM to the server inside the
+  container;
+- `memcheck-1407.log` has only its header: compute-sanitizer died before any summary.
+
+So it was not a full pipe, but a read to the end of a pipe that a surviving process held open. The pipes were not
+drained either, which a talkative server could also have blocked on.
+
+**The fix** (`tools/check_lfm3_audio_in_server.py`):
+- SIGTERM goes to the server itself: the process at or below `proc` whose argv[0] is `liquid-lfm3-server`, found in
+  `/proc`. Under compute-sanitizer, that is the target. compute-sanitizer then sees it exit, writes its summary and
+  exits with the target's code;
+- run directly, `proc` is the server and gets the signal as before;
+- stdout and stderr are drained in threads from the start, so nothing blocks on a full pipe or on a pipe's end;
+- the wait for the exit is bounded (900 s, for memcheck's leak check), never followed by SIGKILL. A server still alive
+  is recorded in the JSON (`still_running_after_sigterm`) and printed;
+- the server is stopped even when a case raises.
+
+**Checked on the workstation** with a stand-in launcher that, like compute-sanitizer, dies of SIGTERM and waits for a
+child server holding its pipes:
+- the server got the signal;
+- the launcher wrote its summary and exited 0;
+- the stderr line was kept;
+- no process was left.
+
+Not run on Thor; the coordinator folds it into the next window if the rerun hangs again.
+
+### The base server's "no row streamed audio across the window" (run 1)
+`stall-audio-fe-w-base-srv-8.log`, 8 rows:
+
+| clip | worst gap without | with | stall |
+|---|---|---|---|
+| short | 1.1540 s | 1.2934 s | 0.1393 s |
+| median | 1.1591 s | 1.3957 s | 0.2367 s |
+| typical | 1.1579 s | 1.4613 s | 0.3034 s |
+| long | 0.4580 s | 1.4325 s | 0.9746 s |
+| 90 s | (stopped: no row had audio inside the window) | | |
+
+- The long clip's "without" median, 0.458 s, is far below the other clips' 1.15 s, unexplained.
+- **Hypothesis, not checked:** the 90 s clip's admission held every row silent for the whole 4 s window. Rule 0's
+  3.3 s stall at 90 s was close to that. The tool's definition then has no gap to measure.
+- The tool's message now says whether the run had the clip, and when each row's audio was, so the rerun will show it.
 
 ### To rerun on Thor (the fix's commit synced to `build/audio-src-h`; nothing else changes)
 `tools/thor/quiet_session_v19.sh` in full, as window 19 ran it:

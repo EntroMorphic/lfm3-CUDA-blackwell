@@ -18,14 +18,78 @@ import hashlib
 import json
 import os
 import secrets
+import signal
 import subprocess
 import sys
+import threading
 import time
 import urllib.request
 import wave
 from pathlib import Path
 
 ASR = "Perform ASR in English."
+SERVER_NAME = "liquid-lfm3-server"
+EXIT_WAIT = 900  # seconds for the server to exit after SIGTERM (memcheck's leak check runs at exit)
+
+
+def _argv0(pid):
+    try:
+        return Path((Path("/proc") / str(pid) / "cmdline").read_bytes().split(b"\0", 1)[0].decode()).name
+    except (OSError, UnicodeDecodeError):
+        return ""
+
+
+def _descendants(pid):
+    """PIDs below pid, from /proc, nearest first."""
+    children = {}
+    for d in Path("/proc").iterdir():
+        if d.name.isdigit():
+            try:
+                ppid = int((d / "stat").read_text().rsplit(")", 1)[1].split()[1])
+            except (OSError, IndexError, ValueError):
+                continue
+            children.setdefault(ppid, []).append(int(d.name))
+    out, todo = [], [pid]
+    while todo:
+        for c in children.get(todo.pop(0), []):
+            out.append(c)
+            todo.append(c)
+    return out
+
+
+def _drain(stream, sink):
+    """Reads a pipe to its end in a thread, so the server never blocks on a full pipe and nothing here waits for an
+    end of file that a surviving process could hold off."""
+    def run():
+        for line in stream:
+            sink.append(line)
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+    return t
+
+
+def stop_server(proc):
+    """SIGTERM to the server itself, never SIGKILL. Started under a launcher (srv-memcheck.sh execs compute-sanitizer),
+    proc is the launcher: compute-sanitizer dies of SIGTERM without passing it on, so the server would live on and its
+    summary would never be written (quiet window 19, run 1: the check then waited 6 hours on the server's stderr). The
+    descendant running liquid-lfm3-server gets the signal instead, and the launcher exits after it, summary written.
+    Returns (proc's exit code or None if it did not exit within EXIT_WAIT, the server's PIDs still alive)."""
+    if proc.poll() is not None:
+        return proc.returncode, []
+    below = [p for p in _descendants(proc.pid) if _argv0(p) == SERVER_NAME]
+    if not below and _argv0(proc.pid) != SERVER_NAME:
+        print(f"warning: no {SERVER_NAME} process found at or below PID {proc.pid}; SIGTERM to it", file=sys.stderr)
+    for pid in below or [proc.pid]:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    try:
+        code = proc.wait(timeout=EXIT_WAIT)
+    except subprocess.TimeoutExpired:
+        code = None
+    left = [p for p in [proc.pid, *below] if Path(f"/proc/{p}").exists() and _argv0(p)]
+    return code, left
 NUMBERS = ("The meeting starts at 7:45 and ends by 9:00. Order number 389 cost $3.50, about 2.75% more than in 1984. "
            "Dr. Patel met Mr. Lee at St. Mary's on Nov. 9, 2026.")
 
@@ -80,6 +144,28 @@ def main(server, speech, model, wav_dir, work, out_json):
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     port = json.loads(proc.stdout.readline())["port"]
     token_path.unlink()
+    out_lines, err_lines = [], []
+    _drain(proc.stdout, out_lines)
+    _drain(proc.stderr, err_lines)
+    try:
+        ok, report = run_cases(cases, port, token, server, speech, model, work)
+    finally:
+        code, left = stop_server(proc)
+    time.sleep(1)  # the drains' last lines
+    report["exit_code"] = code
+    report["stderr"] = "".join(err_lines)[-2000:]
+    if left:
+        report["still_running_after_sigterm"] = left
+    ok &= code == 0
+    report["pass"] = bool(ok)
+    Path(out_json).write_text(json.dumps(report, indent=1) + "\n")
+    print("repeat identical:", report["repeat_identical"], "| text control identical:", report["text_control_identical"],
+          "| exit:", code, f"| still running after SIGTERM: {left}" if left else "", "| PASS" if ok else "| FAIL")
+    sys.exit(0 if ok else 1)
+
+
+def run_cases(cases, port, token, server, speech, model, work):
+    """The cases, the repeat and the text control: (all passed, the report so far)."""
 
     def post(path, body, timeout=600):
         req = urllib.request.Request(f"http://127.0.0.1:{port}{path}", data=json.dumps(body).encode(), method="POST",
@@ -143,15 +229,7 @@ def main(server, speech, model, wav_dir, work, out_json):
     text_same = s0 == s1 == 200 and before["generated_ids"] == after["generated_ids"]
     report["text_control_identical"] = text_same
     ok &= text_same
-    proc.terminate()
-    report["exit_code"] = proc.wait(timeout=120)
-    report["stderr"] = proc.stderr.read()[-2000:]
-    ok &= report["exit_code"] == 0
-    report["pass"] = bool(ok)
-    Path(out_json).write_text(json.dumps(report, indent=1) + "\n")
-    print("repeat identical:", same, "| text control identical:", text_same, "| exit:", report["exit_code"],
-          "| PASS" if ok else "| FAIL")
-    sys.exit(0 if ok else 1)
+    return ok, report
 
 
 if __name__ == "__main__":
