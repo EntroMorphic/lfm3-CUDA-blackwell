@@ -188,3 +188,18 @@ The image's 2nd request, a hit on the 1st's photograph, is 0.297-0.302 s. Engine
 
 **Change to the unit:** `RestartSec=5` becomes `RestartSec=1`. The bar is unchanged (14.18 s). `StartLimitBurst=5` in 10 minutes still ends a crash loop.
 **Expected in run 3:** warm again about 6.5-7 s after each SIGTERM (exit about 0.5 s, restart delay 1 s, startup about 5 s).
+
+## Rule 5, run 3 (2026-11-18 17:34-17:35, host; `build/always-on-rule5-run3/`, unit `RestartSec=1`)
+- **Crash recovery: PASS.** Warm again 6.80, 6.79 and 6.59 s after each SIGTERM (bound 14.18 s; expected 6.5-7 s).
+- **Stop with a streamed TTS request in flight: PASS.** Exit 0 after 0.44 s, unit result success, the client got `done` with `"cancelled":true`, no process left.
+- **Listening on 127.0.0.1:8080 only: PASS.** Install and `systemd-analyze --user verify` clean. Left running, enabled.
+- **Still to do for rule 5:** starts at boot (Tripp's reboot).
+
+**The slow text warm-up came back on this run's first start** (startup 8.76 s, text 5.00 s); the four starts after it were normal (text 1.40 s). A test of the GPU's idle time before a start (`build/warmup-diag-v1/idle-*`, service stopped, 16 starts):
+
+| Idle before the start | Starts | Text warm-up |
+|---|---|---|
+| 1-8 s | 11 | all normal (0.90-1.39 s) |
+| 10-60 s | 5 | 3 slow (3.31-3.47 s), 2 normal (1.39 s) |
+
+**Reading: associated with idle, not explained by it.** Last night's slow restarts followed only about 5.5 s of idle, and 5-8 s here was normal. The cause is still unknown. It costs a start at most about 4 s and no client request: the running service holds the GPU open.
