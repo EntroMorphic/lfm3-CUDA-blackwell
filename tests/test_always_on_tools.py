@@ -68,6 +68,7 @@ def test_install_fills_the_template_reloads_and_enables(world):
     assert d["Environment"] == ['"LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia"']
     assert d["Restart"] == ["on-failure"] and d["KillSignal"] == ["SIGTERM"] and d["TimeoutStopSec"] == ["30"]
     assert d["SendSIGKILL"] == ["no"] and d["RestartForceExitStatus"] == ["0"]
+    assert d["OOMScoreAdjust"] == ["100"]  # the lowest a user unit can set without privilege (default 200)
     assert d["WantedBy"] == ["default.target"]
     # SIGKILL appears only where the unit forbids it
     assert all("SIGKILL" not in line or line.startswith(("#", "SendSIGKILL=no")) for line in unit.splitlines())

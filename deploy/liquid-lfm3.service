@@ -37,6 +37,11 @@ TimeoutStopSec=30
 # Never SIGKILL: the project forbids SIGKILL on CUDA processes. If the server has not exited 30 s after SIGTERM,
 # systemd gives up waiting and marks the unit failed, and the process is left running for a person to look at.
 SendSIGKILL=no
+# Out of memory: user units default to oom_score_adj 200 (the user manager's 100, plus 100), so under memory
+# pressure the kernel killed this service before anything else (2026-11-19: three kills in 16 minutes while another
+# GPU workload ran). 100 is the lowest a user unit can set without privilege (the manager's own value); still above
+# the system's and docker's processes (0). Going lower needs root: an OOMScoreAdjust drop-in for user@UID.service.
+OOMScoreAdjust=100
 
 [Install]
 WantedBy=default.target

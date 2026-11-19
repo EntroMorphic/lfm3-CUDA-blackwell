@@ -57,6 +57,10 @@ A template, filled in by `deploy/install-user-service.sh`:
 - `KillSignal=SIGTERM`, `TimeoutStopSec=30`, **`SendSIGKILL=no`**: this project never SIGKILLs a CUDA process. A server
   still running 30 s after `SIGTERM` leaves the unit failed and the process running, for a person to look at.
 - `TimeoutStartSec=900` for the checkpoint load and the warm-up.
+- `OOMScoreAdjust=100`: user units default to 200, so when memory runs out the kernel kills this service first
+  (2026-11-19, three times in 16 minutes alongside another GPU workload; systemd restarted it each time). 100 is the
+  lowest a user unit can set without privilege, still above system and docker processes (0); lower needs root, an
+  `OOMScoreAdjust` drop-in for `user@UID.service`. The kernel's OOM kill is a SIGKILL nothing here can prevent.
 
 ## Install
 
