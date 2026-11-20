@@ -475,3 +475,33 @@ Stall on the long clip, in seconds, one figure per round:
 The encoder's GPU time is compared the same way. It is expected to be equal for F and H, because both use the same encoder code.
 
 **Void for part B:** another GPU process before either trace, or a trace without an admission of the clip.
+
+### Second run: results (2026-11-20, Thor, 10:08–10:53; `build/long-clip-w2/`)
+**Part A: VOID, by its own rule.**
+- The sampler took 2,226 samples, never more than 1.05 s apart. It saw exactly 4 entries outside the allowed list, each `[liquid-lfm3-ser] <defunct>`, each in a single sample.
+- These are zombies: exited processes waiting to be reaped, which hold no GPU context, memory or CPU. They are almost certainly this window's own servers between exit and reaping.
+- The rule allowed no such entry, so part A is void as written.
+- Its figures are reported but give no verdict:
+
+  | | 8 rows | 16 rows |
+  |---|---|---|
+  | F | 0.0728, 0.1412, 0.1458 (median 0.1412) | 0.1376, 0.1377, 0.1360 (median 0.1376) |
+  | H | 0.1225, 0.1229, 0.1245 (median 0.1229) | 0.1191, 0.1205, 0.1198 (median 0.1198) |
+  | M | 0.1244, 0.1223, 0.1234 (median 0.1234) | 0.1197, 0.1204, 0.1182 (median 0.1197) |
+
+- The power state was the same before every run and at the end.
+- **The first-run effect again:** the window's first run (F, 8 rows) had an inflated "worst gap without" (0.507 s against about 0.437 s), as in the first run (0.511 s). Here that made its stall 0.0728 s, and F's 8-row spread 73 ms. So the window's first measurement is systematically off.
+
+**Part B: explained by the admission.**
+- F has 3 admissions: CPU-only time before the encoder 18.1, 18.1 and 18.3 ms; encoder GPU time 62.9, 62.5 and 62.5 ms.
+- H has 3 admissions: CPU-only time 2.5, 0.9 and 0.6 ms; encoder GPU time 62.7, 62.4 and 62.4 ms.
+- D = 17.2 ms against G = 18.3 ms. |D − G| = 1.1 ms, within the 4 ms bound.
+- The encoder's GPU time differs by 0.2 ms.
+- **So the ~19 ms gain is the engine thread's per-admission CPU work that the handles removed** (parsing the request and decoding the clip's base64 and WAV). The ~12 ms prediction scaled window 16's 90 s figure by the clip's length, and that underestimated the cost for this clip.
+
+## The long clip, third run of part A (set 2026-11-20, before any data)
+This is the second run's part A, with two changes. Both are set before any data, from what the second run showed:
+1. **Defunct entries are allowed:** an entry ending in `<defunct>` is counted and reported, but does not void the run, because a zombie holds no GPU, memory or CPU. Any live process outside the allowed list still voids it.
+2. **One throwaway run comes first:** before round 1, a stall run of M at 8 rows is made and left out of every figure. This absorbs the first-run effect seen in both earlier runs.
+
+Everything else is the second run's: servers, clip, rows, tool, rounds, order, the per-run power check, the sampler, and the verdict rule. Part B is not repeated.
