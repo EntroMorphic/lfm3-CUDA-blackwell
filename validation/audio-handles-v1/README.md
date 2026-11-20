@@ -428,3 +428,26 @@ Stall on the long clip, in seconds, one figure per round:
 **Noted:**
 - F's first run, the window's first, had a larger "worst gap without" (0.511 s against about 0.437 s). Its median is unaffected.
 - Window 19's long-clip bar was 0.1413 s. H's and M's stalls here (0.120–0.125 s) are under it, but that bar was measured in a different window, so rule 3's recorded FAIL stands as written.
+
+### Red-team of the same-window result (2026-11-20)
+**Could a cache favour H and M?** No.
+- The tool repeats the same clip three times on one server process.
+- The feature cache frees a clip's entry when its last lease ends (`FeatureCache::Lease::release`), so each sequential repeat recomputes the clip's features.
+- F has the same cache (audio-frontend-v1), so all three servers do the same work per request.
+
+**Is F really audio-frontend-v1?** Yes.
+- F's binary is the one window 12 measured. Its sha256 `b2e4d647…` is in `build/quiet-audio-rest/binaries.sha256` (2026-11-17 16:08), and window 16 used it as "window 12's build" without rebuilding it.
+
+**Can the gain be credited to the handles?** Yes.
+- The only engine commit between F's source and the handles' parent is b78c567. It adds `LFM3_MEL_THREADS`, whose unset default is the same `kMelThreads`, plus a benchmark that is not in the server.
+- So F and H differ in engine code only by 7a57e87 and 16bbe85, the handles.
+
+**Is the result driven by an outlier?** No.
+- F's first run, the window's first, had the larger "without" gap. Leaving it out, F's 8-row median is 0.1421 s, and H is still 18.4 ms lower.
+
+**Same tool for all?** Yes. `measure_lfm3_audio_stall.py` is identical in `audio-src-h` (window 19) and `merge-src` (here). Window 19's H figures (0.1489 s and 0.1491 s) and today's (0.1237 s and 0.1201 s) come from the same binary and the same tool, so about 25 ms of window-to-window movement is real for this measurement. That supports the reading that window 19's comparison against window 12 was a cross-window artefact.
+
+**Limits:**
+- The busy check ran between runs, not during them.
+- The power state was read at the start and the end only.
+- The ~19 ms is larger than the ~12 ms predicted from window 16's trace. That is not explained, and it is not a defect.

@@ -173,6 +173,7 @@ def test_health_is_503_while_warming_then_200_and_the_ready_line_comes_after(har
     p = Process(harness_binary, "--warmup", "--port", port, "--token-delay-ms", 60, "--trace-ops", ops)
     seen = []  # (time, status, body)
     refused = None
+    trace_at_first_200 = None  # the engine's op trace (flushed per op) when /health first answered 200
     while not p.out and p.process.poll() is None:
         try:
             status, body = call(port, "GET", "/health", timeout=5)
@@ -180,6 +181,8 @@ def test_health_is_503_while_warming_then_200_and_the_ready_line_comes_after(har
             time.sleep(0.01)
             continue
         seen.append((time.monotonic(), status, body))
+        if status == 200 and trace_at_first_200 is None:
+            trace_at_first_200 = ops.read_text()
         if status == 503 and refused is None:
             refused = call(port, "POST", "/sessions", {"capacity": 1024})
         time.sleep(0.02)
@@ -189,7 +192,10 @@ def test_health_is_503_while_warming_then_200_and_the_ready_line_comes_after(har
     assert isinstance(ready["warmup_seconds"], float) and ready["warmup_seconds"] > 0.5
     # The server ends warming (set_warming(false)) before it prints the ready line, so that a client acting on the line
     # is accepted. A poll can therefore see 200 in that short gap (the TSan build's run on 2026-11-19 did). What must
-    # hold: 503 until the warm-up ends, then 200 for good, never back; and the gap before the line is short.
+    # hold: 503 until the warm-up ends, then 200 for good, never back; and the gap before the line is short. "Until the
+    # warm-up ends" is checked without timing: nothing calls the engine after warming ends (no request is sent here
+    # that reaches it), so the trace read at the first 200 must already be the whole trace. A 200 one request early
+    # (the last two warm-up requests take about 0.1 s each in the fake, well inside any time bound) fails here.
     statuses = [(t, s, b) for t, s, b in seen if t < ready_at]
     warming = [(s, b) for _, s, b in statuses if s == 503]
     first_200 = next((i for i, (_, s, _) in enumerate(statuses) if s == 200), len(statuses))
@@ -211,6 +217,8 @@ def test_health_is_503_while_warming_then_200_and_the_ready_line_comes_after(har
     assert code == 0 and len(out) == 1 and err.count("\n") == 1, (code, out, err)
     # every kind went through the engine: a session's create, sliced text and close; three speech rows
     trace = ops.read_text().split()
+    if trace_at_first_200 is not None:
+        assert trace_at_first_200.split() == trace, "health turned 200 before the warm-up's last engine call"
     assert trace[:3] == ["create", "text_begin", "text_step"] and "close" in trace
     assert trace.count("speech_admit") == 3
 
