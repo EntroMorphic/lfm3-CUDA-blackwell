@@ -237,7 +237,7 @@ The always-on service moved from main 67c0617's server (`000aa16aa5cc`) to the m
 - 32 at once: 32 of 32 identical to `lfm3-speech`.
 - Speech stream check: PASS, in a quiet window (06:21-06:32, the service stopped, MAXN, clocks locked at the start and the end). All cases exact. TTS first audio: median 0.239 s, max 0.241 s (n 25). Interleaved first audio: median 0.359 s, max 0.416 s (n 14). After a cancel, the next request's first audio was 0.042 s later and the request was exact. Streaming cost 1.004x plain.
 
-An earlier run of the stream check overlapped other GPU work (14:23-14:39 on 2026-11-19), so its timing is void. A second attempt waited for quiet and was ended by an unclean reboot of Thor at 19:42 on 2026-11-19: the journal stops at 19:38 with no shutdown, and the cause is not known. The service came back at 19:42 on its own, which is a second, unplanned pass of "started at boot".
+An earlier run of the stream check overlapped other GPU work (14:23-14:39 on 2026-11-19), so its timing is void. A second attempt waited for quiet and was ended by a reboot of Thor at 19:42 on 2026-11-19 (Tripp's, by hand; the journal stops at 19:38 with no shutdown entry). The service came back at 19:42 on its own, which is a second, unplanned pass of "started at boot".
 
 **After the deploy:**
 - Restart: 4.57 s. Warm-up: startup 4.35 s, warm-up 3.51 s (text 0.68 s, TTS 1.15 s, image 1.06 s, audio 0.61 s).
