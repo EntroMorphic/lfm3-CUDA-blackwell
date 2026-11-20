@@ -379,3 +379,30 @@ The stall in seconds, both servers in the same window, with each cell's bar.
   - e2e, split, the concurrent engine;
   - the batch server, the stream, the audio-in server, the TTS server;
   - the text gate, images through the server.
+
+## The long clip, same window (set 2026-11-20, before any data)
+**Question:** window 19 put the handles server's long-clip stall 5–11 ms above audio-frontend-v1's from window 12, and that was a cross-window comparison. Is it a real regression?
+
+**Servers,** all already built on Thor:
+- **F:** audio-frontend-v1, `audio-fe-w-srv`, sha256 `b2e4d647…`. This is window 12's build.
+- **H:** the handles server, `audio-h-w-srv`, sha256 `9a9e7254…`. This is window 19's build.
+- **M:** the merge, `merge-srv`, sha256 `a681eab4…`. This is the server now deployed.
+
+**Method:**
+- Use `tools/measure_lfm3_audio_stall.py` from the merged tree, with 3 repeats.
+- Use the long clip only (`4507-16021-0047`), at 8 and 16 rows.
+- Run 3 rounds, rotating the order: F H M, then H M F, then M F H.
+- Run everything in one quiet window with the service stopped. Check the power state at the start and the end.
+
+**Figures:**
+- Each server's median stall over the 3 rounds, per row count.
+- Its spread: the maximum minus the minimum.
+
+**Verdict on H against F,** with diff = median(H) − median(F):
+- **Regression:** diff > 3 ms and diff > the larger of the two spreads, at both row counts.
+- **No regression shown:** diff ≤ max(3 ms, the larger spread) at both row counts.
+- **Mixed:** anything else.
+
+M against H is judged by the same rule and reported; M is expected to equal H.
+
+**Void if:** the power state changed, or another GPU process was seen during the window.
