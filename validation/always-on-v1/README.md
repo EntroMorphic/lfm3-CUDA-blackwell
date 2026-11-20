@@ -244,3 +244,5 @@ An earlier run of the stream check overlapped other GPU work (14:23-14:39 on 202
 - `/health`: 200. `oom_score_adj`: 100.
 - One text request (`/speech`, text mode: "why is the sky blue"): 200, one coherent sentence.
 - One TTS request: 200, 4.0 s of audio, ended by EOS.
+
+**Correction (2026-11-20):** the "restart policy 'no'" above was true when written. With Tripp's approval it was later set to `unless-stopped` on both containers (verified with `docker inspect` on 2026-11-20: `lfm3-profile-v1` and `lfm3-omni-dev`, both `unless-stopped`). Both came back by themselves after the 2026-11-19 reboot, so no `docker start` is needed after a reboot.

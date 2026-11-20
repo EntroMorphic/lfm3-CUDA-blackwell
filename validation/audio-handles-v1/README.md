@@ -451,3 +451,27 @@ Stall on the long clip, in seconds, one figure per round:
 - The busy check ran between runs, not during them.
 - The power state was read at the start and the end only.
 - The ~19 ms is larger than the ~12 ms predicted from window 16's trace. That is not explained, and it is not a defect.
+
+## The long clip, same window, second run: the red-team's limits closed (set 2026-11-20, before any data)
+**Why:** the first run checked for other GPU work only between runs, and read the power state only at its start and end. Its ~19 ms gain is also larger than the ~12 ms predicted, and nothing explains the difference.
+
+**Part A, the comparison again:** the same servers (F, H, M), clip, rows, tool, 3 rounds, rotated order and verdict rule as the first run, with two remediations:
+- **Continuous monitoring:** a sampler logs every process matching the GPU-work patterns, plus `docker ps`, once a second for the whole of part A. The pattern list is the busy check's, widened to anything named `liquid-lfm3`.
+  - Allowed: this window's own processes. That means the stall tool, its `docker exec`, and at most one server process at a time from F's, H's or M's build directory (plus that build's worker).
+  - Allowed containers: only `lfm3-profile-v1` and `lfm3-omni-dev`.
+  - Any other sample voids part A.
+- **Power state before every run,** checked strictly against the window's start. Any difference voids part A.
+
+**Part B, explaining the gain (reported, not gated):**
+- One nsys trace each of F and H on the long clip at 8 rows, with 3 repeats, run on the host as window 19's trace was.
+- `tools/nsys_audio_admission.py` reads, for each admission of the clip, the engine thread's CPU-only time before the encoder and the encoder's GPU time.
+- Per server, take the median over the admissions that carry the clip (the encoder runs only for those).
+
+**How part B is read,** with D = median CPU-only time (F) − median CPU-only time (H), and G = part A's H-against-F stall difference at 8 rows:
+- **Explained by the admission:** |D − G| ≤ 4 ms.
+- **Partly explained:** D ≥ 4 ms but |D − G| > 4 ms. The remainder is recorded as unexplained.
+- **Not explained:** D < 4 ms.
+
+The encoder's GPU time is compared the same way. It is expected to be equal for F and H, because both use the same encoder code.
+
+**Void for part B:** another GPU process before either trace, or a trace without an admission of the clip.
