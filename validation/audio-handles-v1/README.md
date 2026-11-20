@@ -406,3 +406,25 @@ The stall in seconds, both servers in the same window, with each cell's bar.
 M against H is judged by the same rule and reported; M is expected to equal H.
 
 **Void if:** the power state changed, or another GPU process was seen during the window.
+
+### Results (2026-11-20, Thor, 08:04–08:43; `build/long-clip-w/`)
+The window was quiet: power unchanged, no other GPU process seen, and every run exited 0.
+
+Stall on the long clip, in seconds, one figure per round:
+
+| server | rows | r1 | r2 | r3 | median | spread |
+|---|---|---|---|---|---|---|
+| F audio-frontend-v1 | 8 | 0.1532 | 0.1410 | 0.1431 | 0.1431 | 0.0122 |
+| F | 16 | 0.1387 | 0.1388 | 0.1354 | 0.1387 | 0.0034 |
+| H handles | 8 | 0.1243 | 0.1237 | 0.1230 | 0.1237 | 0.0013 |
+| H | 16 | 0.1211 | 0.1201 | 0.1193 | 0.1201 | 0.0018 |
+| M merge (deployed) | 8 | 0.1234 | 0.1248 | 0.1229 | 0.1234 | 0.0019 |
+| M | 16 | 0.1197 | 0.1201 | 0.1178 | 0.1197 | 0.0023 |
+
+**H against F: no regression shown.** H is 19.3 ms *lower* at 8 rows and 18.6 ms lower at 16 rows, beyond each spread. Window 19's "5–11 ms worse" was a cross-window artefact. The handles save about 19 ms on this clip, more than the ~12 ms expected.
+
+**M against H: no regression shown** (−0.3 ms and −0.4 ms). The merge kept the gain.
+
+**Noted:**
+- F's first run, the window's first, had a larger "worst gap without" (0.511 s against about 0.437 s). Its median is unaffected.
+- Window 19's long-clip bar was 0.1413 s. H's and M's stalls here (0.120–0.125 s) are under it, but that bar was measured in a different window, so rule 3's recorded FAIL stands as written.
