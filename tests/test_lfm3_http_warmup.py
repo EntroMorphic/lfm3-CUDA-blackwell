@@ -187,8 +187,17 @@ def test_health_is_503_while_warming_then_200_and_the_ready_line_comes_after(har
     ready_at = p.out[0][0]
     assert list(ready) == ["ready", "port", "warmup_seconds"] and ready["ready"] is True and ready["port"] == port
     assert isinstance(ready["warmup_seconds"], float) and ready["warmup_seconds"] > 0.5
-    before = [(s, b) for t, s, b in seen if t < ready_at]
-    assert before and all(x == (503, {"ready": False, "gpu_batching": False}) for x in before), before
+    # The server ends warming (set_warming(false)) before it prints the ready line, so that a client acting on the line
+    # is accepted. A poll can therefore see 200 in that short gap (the TSan build's run on 2026-11-19 did). What must
+    # hold: 503 until the warm-up ends, then 200 for good, never back; and the gap before the line is short.
+    statuses = [(t, s, b) for t, s, b in seen if t < ready_at]
+    warming = [(s, b) for _, s, b in statuses if s == 503]
+    first_200 = next((i for i, (_, s, _) in enumerate(statuses) if s == 200), len(statuses))
+    assert warming and all(x == (503, {"ready": False, "gpu_batching": False}) for x in warming), warming
+    assert all(s == 503 for _, s, _ in statuses[:first_200]), statuses
+    assert all((s, b) == (200, {"ready": True, "gpu_batching": False}) for _, s, b in statuses[first_200:]), statuses
+    if first_200 < len(statuses):
+        assert ready_at - statuses[first_200][0] < 2.0, (ready_at - statuses[first_200][0], statuses)
     assert refused == (503, {"error": "warming_up"})
     assert call(port, "GET", "/health") == (200, {"ready": True, "gpu_batching": False})
     # the report came before the ready line, on stderr: startup and each kind's time
