@@ -226,3 +226,21 @@ Data in Thor's `build/always-on-boot/` (the unit's `systemctl show`, this boot's
 **Started at boot: PASS. With it, every rule of always-on-v1 has a verdict.**
 
 **The UVM question.** The major of `/dev/nvidia-uvm` is still 488. `lfm3-profile-v1-pre-uvm`, started briefly, cannot open it: it now has no `/dev/nvidia-uvm` node at all, as uid 0 or 1000 (before the reboot it had a node that gave EPERM). So, by the rule set above, **the "stale allowlist" explanation is wrong.** After the reboot the old container behaves as a freshly created nvidia-runtime container does on this Thor: no UVM node. Why it had a node before the reboot is not known. One unconfirmed guess is that something inside it once created the node, which the device cgroup then refused. The fix holds either way: `lfm3-profile-v1` (with `--device /dev/nvidia-uvm`) opens it as uid 0 and 1000 after the reboot. Both containers have restart policy "no", so `lfm3-profile-v1` needs a `docker start` after each reboot.
+
+## The merged server deployed (2026-11-20)
+The always-on service moved from main 67c0617's server (`000aa16aa5cc`) to the merge of audio-handles-v1 (ee2a8c1). The new server is `build/merge-srv`, sha256 `a681eab4c040…`, installed in `~/.local/lib/liquid-lfm3/a681eab4c040/`. The unit is cc7c30b's, with `OOMScoreAdjust=100`. The only line that changed is `ExecStart`, and `systemd-analyze --user verify` is clean.
+
+**Before the deploy, on Thor, the merged tree checked out as follows:**
+- Image server: PASS.
+- Image cache: 32 of 32 identical.
+- Audio-in server: PASS.
+- 32 at once: 32 of 32 identical to `lfm3-speech`.
+- Speech stream check: PASS, in a quiet window (06:21-06:32, the service stopped, MAXN, clocks locked at the start and the end). All cases exact. TTS first audio: median 0.239 s, max 0.241 s (n 25). Interleaved first audio: median 0.359 s, max 0.416 s (n 14). After a cancel, the next request's first audio was 0.042 s later and the request was exact. Streaming cost 1.004x plain.
+
+An earlier run of the stream check overlapped other GPU work (14:23-14:39 on 2026-11-19), so its timing is void. A second attempt waited for quiet and was ended by an unclean reboot of Thor at 19:42 on 2026-11-19: the journal stops at 19:38 with no shutdown, and the cause is not known. The service came back at 19:42 on its own, which is a second, unplanned pass of "started at boot".
+
+**After the deploy:**
+- Restart: 4.57 s. Warm-up: startup 4.35 s, warm-up 3.51 s (text 0.68 s, TTS 1.15 s, image 1.06 s, audio 0.61 s).
+- `/health`: 200. `oom_score_adj`: 100.
+- One text request (`/speech`, text mode: "why is the sky blue"): 200, one coherent sentence.
+- One TTS request: 200, 4.0 s of audio, ended by EOS.
