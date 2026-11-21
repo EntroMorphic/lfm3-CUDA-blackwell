@@ -520,3 +520,72 @@ Window checks: the service stopped; MONITOR CLEAN (1,457 samples; foreign proces
 **The batch server with `LFM3_AUDIO_ENCODER=fp32` on `a6-srv`: PASS** (timing sub-checks included).
 
 The exactness script (amendment rules 1 and 2) is running (`build/a6-exact/`).
+
+### Amendment 6, the exactness run (2026-11-21, 10:33–11:15; `build/a6-exact/`)
+**Amendment rule 1, byte-identical to the build that passed rules 1, 2 and 4: PASS.**
+- Default (x2) `lfm3-speech` `530f162d…` against `ttft-speech-a2`'s x2 run: 360 of 360 dumped-clip files and 93 of 93 edge files, none missing or extra.
+- e2e and split: 90 of 90 each, against the validated runs.
+- The bench's hashes equal rule 4's at both clips.
+
+So rules 1 and 2 carry over unchanged.
+
+**Amendment rule 2, nothing else changes: PASS.**
+
+| check | result |
+|---|---|
+| vision, 31 cases (`vcheck-a6` `71601aba…`) | 713 of 713 stage files identical to main's |
+| TTS regression | 36 SAME, 0 differ or failed |
+| `LFM3_AUDIO_ENCODER=fp32`: dump, edge, e2e, split | F2's known 5 only; 93 of 93; 90 of 90; 90 of 90 |
+| concurrent engine, fp32 mode | CONCURRENT PASS |
+| server: audio in; 8 and 32 at once | PASS; 8 of 8 and 32 of 32 identical to `lfm3-speech` |
+| server: TTS; text gate; images | exit 0; exit 0; PASS |
+| batch server, fp32 mode (in the quiet window) | PASS |
+| sanitizers on the bench (memcheck with leak check, racecheck, synccheck, initcheck), short and 90 s | 0 errors, 0 bytes leaked, 0 hazards; hashes identical to the plain run |
+| host suites (`tests` and `audit/test_host_contracts.py`, as before) | 2,564 + 5 = **2,569 passed, 3 skipped, 0 failed**; the first attempt ran `tests` alone (2,564 + 3 skipped), and the audit file's 5 then ran with the test module it imports |
+
+## Conclusion (2026-11-21)
+**What ships, if merged (engine 2fdb883, tools to 9adca1f):** the audio encoder's multiplies on the tensor cores and its attention in shared memory.
+- The split multiply is x2: hi + lo BF16 parts against `[W | W]`, FP32 accumulation, the doubled weights kept (439 MiB).
+- Attention: `window_attention_tiled`, byte-identical to the old kernel.
+- The rotary table is computed by the same device code.
+- The scratch is still released after every clip.
+- `LFM3_AUDIO_ENCODER=fp32` reproduces the old bytes.
+
+| rule | verdict |
+|---|---|
+| 1, accuracy on the 40 clips | PASS (ratio unchanged on every clip, 0.152–0.228) |
+| 2, recognition on 2,620 utterances | PASS (WER 2.5987% against HF's 2.6062%; upper bound +0.0149 points); 42 changed transcripts read, all coherent |
+| 3, the encoder alone at most HF's at 35 and 90 s | **FAIL** (0.0219 against 0.0123 s; 0.0463 against 0.0279 s, allocations included) |
+| 4, sanitizers | PASS (0 errors, 0 leaks, 0 hazards; hashes identical) |
+| 5, nothing else changes | PASS |
+| 5b, memory | PASS by the corrected measure (+531 MiB, bound 1 GiB) |
+| amendment 6, faster than the deployed server at every clip | PASS |
+
+**Time to first token, same window as the deployed server:**
+
+| clip | deployed | this round | change |
+|---|---|---|---|
+| 90 s | 0.5415 s | 0.4247 s | −21.6% |
+| 35 s | 0.2273 s | 0.1824 s | −19.8% |
+| 10.4 s | 0.0896 s | 0.0777 s | −13.3% |
+| 5.8 s | 0.0622 s | 0.0573 s | −7.9% |
+| 2.1 s | 0.0452 s | 0.0448 s | −0.9% |
+
+- Against HF (HF measured in the 06:25 window, not this one), native is still 2.8× slower at 90 s and 2.3× at 35 s, but already faster on the short clip.
+- **Where the 90 s time to first token goes now** (each part measured on its own): log_mel 0.171 s, the language model's prefill about 0.139 s, the encoder 0.046 s, about 0.07 s else. log_mel is now the largest part (HF's front end: 0.015 s).
+
+**Failures and lessons, kept:**
+- The exactness script ran rule 4 on the wrong binary (amendment 3).
+- Amendment 1 measured memory with VmRSS, which does not see GPU memory on Thor (amendment 4).
+- Amendment 4's own baseline drifted by 510 MiB.
+- Amendment 5's wrap cost 5.4 ms and was withdrawn.
+- The kept scratch slowed the language model's prefill by an effect not understood: one small `cudaMalloc` + `cudaFree` after the encode restored it. An isolated probe could not reproduce it.
+  - **This is open, and it may reach beyond audio.** A text prompt's prefill also makes no allocation calls.
+  - Any future change that removes allocation calls from a request (a memory pool, for one) must time the language model's prefill too.
+
+**Open, for later rounds:**
+1. log_mel (0.171 s at 90 s; the DFT option is Tripp's call).
+2. The allocation effect: its mechanism (the memory clock needs root to read), and whether text prefills pay it.
+3. The first audio request after a start: 2.2 s (the encoder's construction and first allocations). A warm-up audio request would move it to startup.
+4. The encoder against rule 3: `split_rows` (4.5 ms) fused into the producers, `conv_in` and `depthwise` (6.2 ms), and the allocations (~12 ms).
+5. The wrap (c968b5d) for the vision encoder's and this encoder's `[W | W]`, if memory matters.
