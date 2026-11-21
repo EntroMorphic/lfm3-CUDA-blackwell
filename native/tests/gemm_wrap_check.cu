@@ -74,7 +74,7 @@ int main() {
     }
     std::printf("rows %4d: done\n", rows);
   }
-  // refusals: a wrap that is not a multiple of 8; ldb below it; a K x N B; the K = 128 decode path
+  // refusals: a wrap that is not a multiple of 8; ldb below it; a K x N B; the K = 128 decode path; k over twice it
   int refused = 0;
   {
     std::vector<bf16> z(64 * 256);
@@ -89,6 +89,7 @@ int main() {
       if (variant == 0) p.b_k_wrap = 60;
       if (variant == 1) p.ldb = 56;
       if (variant == 2) p.b_k_contiguous = false, p.b_rows = 128;
+      if (variant == 4) p.b_k_wrap = 56, p.ldb = 56;  // k 128 > 2 x 56
       try {
         lfm::gemm::run(p);
         cuda_check(cudaDeviceSynchronize());
@@ -97,11 +98,11 @@ int main() {
         ++refused;
       }
     };
-    for (int v = 0; v < 4; ++v) bad_problem(v);
+    for (int v = 0; v < 5; ++v) bad_problem(v);
     cudaFree(d);
     cudaFree(c);
   }
-  std::printf("%d of %d cases identical; %d of 4 invalid uses refused\n", cases - bad, cases, refused);
-  std::printf("%s\n", bad || refused != 4 ? "GEMM WRAP CHECK FAIL" : "GEMM WRAP CHECK PASS");
-  return bad || refused != 4;
+  std::printf("%d of %d cases identical; %d of 5 invalid uses refused\n", cases - bad, cases, refused);
+  std::printf("%s\n", bad || refused != 5 ? "GEMM WRAP CHECK FAIL" : "GEMM WRAP CHECK PASS");
+  return bad || refused != 5;
 }
