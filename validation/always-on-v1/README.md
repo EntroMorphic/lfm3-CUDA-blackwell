@@ -246,3 +246,27 @@ An earlier run of the stream check overlapped other GPU work (14:23-14:39 on 202
 - One TTS request: 200, 4.0 s of audio, ended by EOS.
 
 **Correction (2026-11-20):** the "restart policy 'no'" above was true when written. With Tripp's approval it was later set to `unless-stopped` on both containers (verified with `docker inspect` on 2026-11-20: `lfm3-profile-v1` and `lfm3-omni-dev`, both `unless-stopped`). Both came back by themselves after the 2026-11-19 reboot, so no `docker start` is needed after a reboot.
+
+## The audio-ttft-v1 merge deployed (2026-11-21)
+The always-on service moved from `a681eab4c040` (the audio-handles-v1 merge) to main 717cca6, the merge of audio-ttft-v1: the audio encoder on the tensor cores.
+- The new server is `build/merge2-srv`, sha256 `4025f693822c…`, installed in `~/.local/lib/liquid-lfm3/4025f693822c/`. The previous binary stays in place for a rollback.
+- The only line of the unit that changed is `ExecStart` (the binary's path). The unit before is kept as `build/merge2-check/liquid-lfm3.service.before`. `systemd-analyze --user verify` is clean.
+- `native/` is identical to the source of `a6-srv`, which passed audio-ttft-v1 amendment 6. The binaries differ only by their build path, so the checks were run again on this one.
+
+**Before the deploy, on Thor (`build/merge2-check/`, `tools/thor/deploy_check_merge2.sh`):**
+- **Quiet, 13:38–13:49:**
+  - speech stream check: PASS;
+  - time to first token on the five clips: 0.0372, 0.0512, 0.0733, 0.1762 and 0.4086 s, texts identical to amendment 6's;
+  - MONITOR CLEAN (621 samples); power unchanged.
+
+  These times are 4–17% under amendment 6's same-binary-source runs from another window (0.0448–0.4247 s). That is not explained. This pass followed the stream check's heavy GPU work, so it may be the open allocation effect of audio-ttft-v1. It is recorded, not claimed as a gain.
+- **Exact:** images PASS; image cache 24 of 24 identical, PASS; audio in PASS; 8 and 32 at once identical to `lfm3-speech`; TTS exit 0; text gate exit 0.
+  - The image cache count is 24 here against 32 at the last deploy. That run also passed a listening directory, which adds cases; this one did not.
+
+**After the deploy (14:02):**
+- Restart: 5.0 s. Warm-up: startup 4.77 s, warm-up 3.97 s (text 1.30, TTS 1.10, image 0.97, audio 0.60 s).
+- `/health`: 200. `oom_score_adj`: 100. The process runs `~/.local/lib/liquid-lfm3/4025f693822c/liquid-lfm3-server`.
+- Text ("why is the sky blue"): 200, a coherent answer.
+- TTS: 200, 3.68 s of audio, ended by EOS.
+- Audio in, the 90 s clip (ASR): 200, the right transcript. The first request after the restart reached its first text 0.401 s after the send; the second, 0.399 s. This is the live service, not a quiet window.
+  - So the warm-up's audio request already covers the encoder's first-use costs.
