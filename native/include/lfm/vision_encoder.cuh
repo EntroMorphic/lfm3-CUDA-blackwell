@@ -26,6 +26,7 @@
 #include <lfm/model_config.hpp>
 #include <lfm/safetensors.hpp>
 #include <lfm/safetensors_header.hpp>
+#include <lfm/split_linear.cuh>
 
 #include <cmath>
 #include <functional>
@@ -163,34 +164,12 @@ __global__ void __launch_bounds__(kAttnQueries) attention(const float* q, const 
   for (int d = 0; d < 64; ++d) out[(size_t(query) * heads + h) * 64 + d] = __fdiv_rn(acc[d], total);
 }
 // ---- the tensor-core paths (validation/images-speed-v1) ----
-// A float as BF16 parts: hi = bf16(v); lo = bf16(v - hi) (x2), so hi + lo holds v to about 2^-16 of it.
-__device__ __forceinline__ void split_bf16(float v, bf16& hi, bf16& lo) {
-  hi = __float2bfloat16_rn(v);
-  lo = __float2bfloat16_rn(__fsub_rn(v, __bfloat162float(hi)));
-}
-// x [rows][in] FP32 -> lfm::gemm's A operand [rows][parts * in]: hi in columns 0..in, lo (x2) in in..2 in, so one
-// GEMM against [W | W] (double_rows) sums hi·W + lo·W.
-__global__ void split_rows(const float* x, bf16* out, int rows, int in, int parts) {
-  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
-  if (i >= size_t(rows) * in) return;
-  const size_t r = i / in, c = i % in;
-  bf16 hi, lo;
-  split_bf16(x[i], hi, lo);
-  out[r * parts * in + c] = hi;
-  if (parts == 2) out[r * parts * in + in + c] = lo;
-}
-// [W | W]: each row of W [rows][in] twice, the B operand of the split multiply
-__global__ void double_rows(const bf16* w, bf16* out, int rows, int in) {
-  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
-  if (i >= size_t(rows) * in) return;
-  const size_t r = i / in, c = i % in;
-  out[r * 2 * in + c] = out[r * 2 * in + in + c] = w[i];
-}
-// y[i] = c[i] + bias[i % cols]
-__global__ void add_bias(const float* c, const bf16* bias, size_t n, int cols, float* y) {
-  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
-  if (i < n) y[i] = __fadd_rn(c[i], __bfloat162float(bias[i % cols]));
-}
+// split_bf16, split_rows, double_rows and add_bias: lfm/split_linear.cuh (moved there unchanged; shared with the
+// audio encoder since validation/audio-ttft-v1)
+using lfm::split::kernels::add_bias;
+using lfm::split::kernels::double_rows;
+using lfm::split::kernels::split_bf16;
+using lfm::split::kernels::split_rows;
 // K and V split once per layer into the attention tiles' layouts: ks [kv][npad][PARTS * 64] (part p in columns
 // 64 p ..), vt [kv][PARTS][64][npad] (V transposed); keys at or past n are zeros. A block: 64 keys of one kv head,
 // loaded coalesced, V transposed through shared memory.
