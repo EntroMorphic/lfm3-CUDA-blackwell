@@ -427,3 +427,20 @@ nsys on four 90 s requests per server. All texts are identical. TTFT and prefill
   - kept, plus a 2 MiB `cudaMalloc` + `cudaFree` after every encode.
 
   This tests whether any allocation call restores the speed.
+
+### The keep diagnostic (2026-11-21, quiet 09:19–09:21; `build/keep-diag/`)
+`lfm3-speech` built three ways from `ttft-src` (6ec2358's engine), four 90 s requests per process. `encode_seconds` here includes log_mel. "Language model" is `prefill_seconds − encode_seconds`.
+
+| variant | language model, request 1 | requests 2–4 |
+|---|---|---|
+| keep (as built), first run | 0.1795 s | 0.1787 / 0.1787 / 0.1790 s |
+| release (`kKeepBytes = 0`) | 0.1386 s | 0.1382 / 0.1382 / 0.1382 s |
+| touch (kept, then a 2 MiB `cudaMalloc` + `cudaFree` after each encode) | 0.1391 s | 0.1382 / 0.1382 / 0.1381 s |
+| keep, second run | 0.1383 s | 0.1783 / 0.1779 / 0.1781 s |
+
+- **One allocation call restores the full speed.** Holding the memory does not cause the slowdown. A process that has made no `cudaMalloc` or `cudaFree` for a while runs the language model's large prefill GEMMs about 29% slower (0.178 against 0.138 s). One small allocate-and-free just before brings them back.
+- The deployed encoder frees its scratch after every clip, so it was making that call by accident. This round's keep removed it.
+- The mechanism is not yet known. Candidates: a memory-clock (EMC) boost on allocation that decays, or similar driver state.
+  - The memory clock cannot be read without root (`tegrastats` omits it for a user; `/sys/kernel/debug/bpmp` is denied).
+  - A probe follows (`build/alloc-probe/`): the same GEMM shape and a 512 MiB copy, after idle periods with no call, and at delays after one allocate-and-free.
+- **Wider question:** a text prompt's prefill makes no allocation calls either. If the slow state is the default, long text prefills may be paying it too. To be measured.
