@@ -401,18 +401,15 @@ class Encoder {
     mul(hid.p, w(P + "linear_2.weight"), w(P + "linear_2.bias"), proj.p, N, kOut, kOut);
     to_bf16<<<grid(size_t(N) * kOut), 256>>>(proj.p, out, size_t(N) * kOut);
     cuda_check(cudaGetLastError());
-    // the scratch is kept for the next clip while it totals at most kKeepBytes (validation/audio-ttft-v1 amendment 1:
-    // each cudaMalloc costs about 0.27 ms on Thor, ~30 per clip); a longer clip's stages take more (the first is W1 x 64
-    // x 256 floats) and are released at its end, so they do not stay allocated for the process's life
-    // (validation/audio-in-v1 red-team)
+    // the scratch is released after every clip, so a long clip's stages (the first is W1 x 64 x 256 floats) do not stay
+    // allocated for the process's life (validation/audio-in-v1 red-team). Keeping it up to 1 GiB saved the ~30
+    // cudaMalloc calls (~10 ms at 90 s) but cost the language model's prefill that follows ~40 ms at 90 s, by an effect
+    // not understood: one small cudaMalloc + cudaFree after the encode restored it (validation/audio-ttft-v1,
+    // amendment 6 and the diagnostics before it).
     cuda_check(cudaDeviceSynchronize());
-    size_t held = linear_.scratch_bytes();
-    for (size_t z : sizes_) held += z * sizeof(float);
-    if (held > kKeepBytes) {
-      for (auto& b : scratch_) b.reset();
-      std::fill(sizes_.begin(), sizes_.end(), 0);
-      linear_.release();
-    }
+    for (auto& b : scratch_) b.reset();
+    std::fill(sizes_.begin(), sizes_.end(), 0);
+    linear_.release();
     if (dumps) {
       std::vector<bf16> b(size_t(N) * kOut);
       cuda_check(cudaMemcpy(b.data(), out, b.size() * sizeof(bf16), cudaMemcpyDeviceToHost));
@@ -429,7 +426,6 @@ class Encoder {
   double theta_ = 1e6;
   std::vector<std::unique_ptr<Buffer<float>>> scratch_ = std::vector<std::unique_ptr<Buffer<float>>>(13);
   std::vector<size_t> sizes_ = std::vector<size_t>(13, 0);
-  static constexpr size_t kKeepBytes = size_t(1) << 30;  // the scratch kept between clips, at most
   bool fp32_ = false;                           // LFM3_AUDIO_ENCODER=fp32
   int parts_ = 2;                               // the activations' BF16 parts: 2 (x2) or 1 (x1)
   lfm::split::Linear linear_;                   // the split multiply's doubled weights and scratch
