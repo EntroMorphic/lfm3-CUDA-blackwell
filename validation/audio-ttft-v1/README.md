@@ -404,3 +404,26 @@ The other shapes are unchanged (grid 16×9: 33.0 against 33.5 ms; the norms, rot
   - `ttft-srv` (scratch kept, doubled weights);
   - `ttft-srv` with `LFM3_AUDIO_ENCODER=fp32` (scratch kept, nothing doubled, no split);
   - amendment 5's server (scratch kept, nothing doubled, x2 by the wrap).
+
+### The four-way diagnostic (2026-11-21, quiet 08:55–08:59; `build/a5-diag/`)
+nsys on four 90 s requests per server. All texts are identical. TTFT and prefill are in seconds, as each request reported them; the rest come from the trace.
+
+| server | encoder state kept | TTFT, requests 2–4 | encode, warm | encode end → first token, request 1 / 2–4 | GEMM grid 60×9, request 1 / 2–4 |
+|---|---|---|---|---|---|
+| `merge-srv` | nothing (freed per clip) | 0.541–0.544 | 156.6–157.6 ms | 141.9 / 141.1–142.1 ms | 45.7 / 45.4–45.6 ms |
+| `ttft-srv` (x2) | scratch, doubled weights | 0.454–0.457 | 34.0 ms | 140.1 / 183.2–184.6 ms | 46.0 / 81.3–81.7 ms |
+| `ttft-srv`, `LFM3_AUDIO_ENCODER=fp32` | scratch | 0.559 | 139.0 ms | 141.0 / 183.0–183.3 ms | 45.9 / 82.0–82.2 ms |
+| `a5-srv` (amendment 5) | scratch | 0.461–0.463 | 39.4 ms | 141.9 / 185.8–186.1 ms | 46.9 / 82.6–83.0 ms |
+
+- **The cause is keeping the scratch, not the doubled weights.** fp32 mode doubles nothing and slows the same way. Every server that keeps the scratch slows after its first request; the one that frees it never does.
+  - Each server's first request is normal, though by then its scratch is already allocated.
+  - So the trigger is not the memory being held during the prefill. It is something about a request that makes no allocation calls.
+- **Amendment 5's wrap costs the encoder 5.4 ms** (39.4 against 34.0 ms warm). It fixes the memory, but the modulo in the B loader is slow.
+- **Amendment 5's exactness run was stopped** (SIGTERM, at step 2). It was certifying code about to change.
+  - Its step 1 stands as evidence for the wrap's arithmetic: `gemm-wrap-check` 154 of 154 cases identical, 4 of 4 invalid uses refused.
+- **Next (`build/keep-diag/`):** `lfm3-speech` built three ways from `ttft-src`, four 90 s requests each, quiet:
+  - the scratch kept;
+  - released after every clip;
+  - kept, plus a 2 MiB `cudaMalloc` + `cudaFree` after every encode.
+
+  This tests whether any allocation call restores the speed.
