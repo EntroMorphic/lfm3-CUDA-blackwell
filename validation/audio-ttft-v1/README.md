@@ -287,3 +287,36 @@ Racecheck on the encoder alone finished in minutes; on whole `lfm3-speech` reque
 - real time at 8, 12 and 16 rows, and 7 TTS + 5 spoken joining: no stalls.
 
 So the server's five audio-in differences under the default come from the encoder's multiplies alone, as the engine's did.
+
+### Rule 5b by amendment 4 (2026-11-21, Thor, quiet 07:40–07:41; `build/ttft-mem/`): FAIL
+Window checks: the service stopped; MONITOR CLEAN (53 samples, foreign processes in 0); power unchanged; both servers exited 0.
+
+| | before (no server) | started | after the short clip | after the 90 s clip |
+|---|---|---|---|---|
+| `merge-srv`: in-use / device figure | 4,627 MiB | 4,745 / 25 | 11,464 / 6,697 | 11,437 / 6,666 |
+| `ttft-srv`: in-use / device figure | 4,117 MiB | 4,729 / 518 | 12,001 / 7,744 | 12,655 / 8,394 |
+| difference in the device figure (the gate) | | 493 | 1,046 | **1,728 (bound 1,024): FAIL** |
+| difference in plain in-use | −510 | −16 | 537 | **1,218** |
+
+- **The measure's flaw, found in its own data.** The no-server baseline moved by 510 MiB between the two servers' runs. That moves the gated figure by the same amount. The plain in-use readings, taken while each server ran, differ by 1,218 MiB after the 90 s clip. That is over the bound too, so the verdict does not depend on the flaw.
+- **What the code explains:**
+  - the doubled weights: 104 weights, 112 M parameters in the 101 counted from the checkpoint's header, plus the downsampler's output projection. That makes about 439 MiB as `[W | W]` in BF16, kept for the process's life;
+  - the 90 s scratch, kept under the 1 GiB cap: `ttft-srv` grew 654 MiB from the short clip to the 90 s clip, while `merge-srv` stayed flat (−27 MiB).
+
+  These two account for the 1,218 MiB.
+- So the round, as built, keeps about 1.2 GiB more than the deployed server after a 90 s clip. Rule 5b fails.
+
+### A diagnostic: the two servers in one window (2026-11-21, quiet 07:57–07:59; `build/ttft-ab/`; MONITOR CLEAN)
+Time to first token from the file, in seconds (1 untimed + 5 timed passes per run, run in the order A1 B1 A2 B2):
+
+| clip | merge A1 | ttft B1 | merge A2 | ttft B2 | saved | engine prefill, merge | engine prefill, ttft |
+|---|---|---|---|---|---|---|---|
+| short | 0.0454 | 0.0432 | 0.0447 | 0.0434 | 0.0018 | 0.0373 | 0.0354 |
+| median | 0.0619 | 0.0547 | 0.0622 | 0.0552 | 0.0071 | 0.0455 | 0.0384 |
+| typical | 0.0895 | 0.0751 | 0.0899 | 0.0756 | 0.0143 | 0.0605 | 0.0461 |
+| long | 0.2263 | 0.1828 | 0.2267 | 0.1831 | 0.0435 | 0.1301 | 0.0854 |
+| 90 s | 0.5411 | 0.4523 | 0.5447 | 0.4534 | 0.0901 | 0.3058 | 0.2138 |
+
+- The saving is stable across passes, and every text is identical across passes.
+- The bench's encoder alone saved 0.133 s (90 s) and 0.051 s (35 s); the server saves 0.090 s and 0.044 s. **So at 90 s about 40 ms of the encoder's gain does not reach the server, within one window.** It is not a cross-window artefact.
+- The GPU clock is pinned (`gpu-gpc-0` 1,575 MHz, min = max), so it is not frequency scaling. A quiet nsys comparison of the server's encode against the bench's follows (`build/ttft-prof/`).
