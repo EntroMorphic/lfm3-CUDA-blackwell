@@ -375,3 +375,32 @@ Kernel time per warm encode, the same in both to 0.1 ms:
   - it pays for the encoder's construction, 118 allocations (the scratch), the doubled weights (removed by amendment 5) and first-launch costs (`cuLibraryGetKernel`).
 
   The always-on service pays this once after every start. A warm-up audio request would move it to startup: noted for the next round, not changed here.
+
+### A diagnostic: where the 40 ms goes (2026-11-21, quiet 08:32–08:33; `build/ttft-prof-merge/`)
+**The deployed pair, profiled the same way:**
+- `merge-srv`'s 90 s encode equals its bench's: 156.9–158.6 ms of kernels (`linear_staged` 126.0, `rotary` 12.5, `window_attention` 7.0), plus about 9 ms of `cudaMalloc` and `cudaFree` per clip.
+- So stage 0's bench did not overstate the deployed encode. The new encoder saves about 132 ms inside the server.
+
+**It is the language model's prefill.** From the encode's end to the first token (the first `greedy_rows`), 489 kernels in the same sequence in both servers:
+
+| | request 1 | requests 2–4 |
+|---|---|---|
+| `merge-srv` | 142.4 ms | 142.9 / 141.5 / 141.6 ms |
+| `ttft-srv` | 141.0 ms | **181.8 / 182.5 / 182.4 ms** |
+
+Kernel by kernel (request 3 of each), the difference is two of the language model's GEMM shapes:
+
+| kernel | instances | `merge-srv` | `ttft-srv` |
+|---|---|---|---|
+| `wide_kernel` grid 60×9 | 48 | 45.9 ms | 81.6 ms (+35.7) |
+| `wide_kernel` grid 48×9 | 13 | 9.4 ms | 16.9 ms (+7.5) |
+
+The other shapes are unchanged (grid 16×9: 33.0 against 33.5 ms; the norms, rotary and attention to 0.1 ms).
+
+- **So after the new server's first audio request, those GEMMs run about 75% slower**, while its own encode is untouched. It is the same arithmetic on the same weights (the texts are identical), so it is a speed effect, not a correctness one.
+- Something the round keeps after a request causes it: the kept scratch or the doubled weights.
+- Next, a quiet window (`build/a5-diag/`) profiles four servers the same way:
+  - `merge-srv`, as control;
+  - `ttft-srv` (scratch kept, doubled weights);
+  - `ttft-srv` with `LFM3_AUDIO_ENCODER=fp32` (scratch kept, nothing doubled, no split);
+  - amendment 5's server (scratch kept, nothing doubled, x2 by the wrap).
