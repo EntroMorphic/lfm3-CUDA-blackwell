@@ -136,6 +136,50 @@ __global__ void window_attention(const float* q, const float* k, const float* v,
     out[(size_t(t) * heads + h) * dim + d] = acc;
   }
 }
+// window_attention with the keys and values staged in shared memory (validation/audio-ttft-v1 amendment 1): a block
+// takes 32 consecutive queries of one head, whose windows lie in 63 key rows; each (query, head) is computed by one
+// warp exactly as window_attention computes it (the same operations in the same order), so the output is the same.
+// The rows are padded to 97 floats so that lanes reading different keys at the same d fall in different banks.
+constexpr int kTileQueries = 32, kTileKeys = kTileQueries + 31, kTileDim = 96, kTilePad = kTileDim + 1;
+__global__ void window_attention_tiled(const float* q, const float* k, const float* v, float* out, int rows, int heads,
+                                       int kv_heads, float scale) {
+  __shared__ float ks[kTileKeys][kTilePad], vs[kTileKeys][kTilePad];
+  const int t0 = blockIdx.x * kTileQueries, h = blockIdx.y, g = h / (heads / kv_heads), base = t0 - 31;
+  for (int e = threadIdx.x; e < kTileKeys * kTileDim; e += blockDim.x) {
+    const int r = e / kTileDim, d = e % kTileDim, s = base + r;
+    if (s >= 0 && s < rows) {
+      ks[r][d] = k[(size_t(s) * kv_heads + g) * kTileDim + d];
+      vs[r][d] = v[(size_t(s) * kv_heads + g) * kTileDim + d];
+    }
+  }
+  __syncthreads();
+  const int warp = threadIdx.x / 32, lane = threadIdx.x % 32, warps = blockDim.x / 32;
+  for (int qi = warp; qi < kTileQueries; qi += warps) {
+    const int t = t0 + qi;
+    if (t >= rows) break;
+    const int s = t - 31 + lane;  // key row qi + lane of the tile
+    const float* qr = q + (size_t(t) * heads + h) * kTileDim;
+    float score = -INFINITY;
+    if (s >= 0) {
+      float dot = 0;
+      for (int d = 0; d < kTileDim; ++d) dot = __fmaf_rn(qr[d], ks[qi + lane][d], dot);
+      score = __fmul_rn(dot, scale);
+    }
+    float m = score;
+    for (int o = 16; o; o /= 2) m = fmaxf(m, __shfl_xor_sync(0xffffffff, m, o));
+    float p = s >= 0 ? expf(score - m) : 0.0f, total = p;
+    for (int o = 16; o; o /= 2) total += __shfl_xor_sync(0xffffffff, total, o);
+    p = __fdiv_rn(p, total);
+    for (int d = lane; d < kTileDim; d += 32) {
+      float acc = 0;
+      for (int j = 0; j < 32; ++j) {
+        const float pj = __shfl_sync(0xffffffff, p, j);
+        if (t - 31 + j >= 0) acc = __fmaf_rn(pj, vs[qi + j][d], acc);
+      }
+      out[(size_t(t) * heads + h) * kTileDim + d] = acc;
+    }
+  }
+}
 // LayerNorm with weight and bias, two-pass FP32 statistics; one warp per row
 __global__ void layer_norm(const float* x, const bf16* wt, const bf16* b, float* y, int rows, int width, float eps) {
   const int row = int((size_t(blockIdx.x) * blockDim.x + threadIdx.x) / 32), lane = threadIdx.x % 32;
@@ -330,8 +374,9 @@ class Encoder {
         f::rms_norm(k, w(p + "self_attn.k_layernorm.weight"), k, nullptr, N * kKvHeads, kHeadDim, eps_);
         rotary_apply<<<grid(size_t(N) * kHeads * kHeadDim / 2), 256>>>(q, rope.p, N, kHeads, kHeadDim);
         rotary_apply<<<grid(size_t(N) * kKvHeads * kHeadDim / 2), 256>>>(k, rope.p, N, kKvHeads, kHeadDim);
-        window_attention<<<grid(size_t(N) * kHeads * 32), 256>>>(q, k, v, att.p, N, kHeads, kKvHeads, kHeadDim,
-                                                                 float(1.0 / std::sqrt(double(kHeadDim))));
+        static_assert(kHeadDim == kTileDim && kWindow == 32, "window_attention_tiled's geometry");
+        window_attention_tiled<<<dim3((N + kTileQueries - 1) / kTileQueries, kHeads), 256>>>(
+            q, k, v, att.p, N, kHeads, kKvHeads, float(1.0 / std::sqrt(double(kHeadDim))));
         mul(att.p, w(p + "self_attn.out_proj.weight"), nullptr, op.p, N, kWidth, kWidth);
       }
       add<<<grid(NW), 256>>>(x.p, op.p, NW);
@@ -355,12 +400,18 @@ class Encoder {
     mul(hid.p, w(P + "linear_2.weight"), w(P + "linear_2.bias"), proj.p, N, kOut, kOut);
     to_bf16<<<grid(size_t(N) * kOut), 256>>>(proj.p, out, size_t(N) * kOut);
     cuda_check(cudaGetLastError());
-    // the scratch is released after every clip: a long clip's stages take hundreds of MB (the first is W1 x 64 x 256
-    // floats), which would otherwise stay allocated for the process's life (validation/audio-in-v1 red-team)
+    // the scratch is kept for the next clip while it totals at most kKeepBytes (validation/audio-ttft-v1 amendment 1:
+    // each cudaMalloc costs about 0.27 ms on Thor, ~30 per clip); a longer clip's stages take more (the first is W1 x 64
+    // x 256 floats) and are released at its end, so they do not stay allocated for the process's life
+    // (validation/audio-in-v1 red-team)
     cuda_check(cudaDeviceSynchronize());
-    for (auto& b : scratch_) b.reset();
-    linear_.release();
-    std::fill(sizes_.begin(), sizes_.end(), 0);
+    size_t held = linear_.scratch_bytes();
+    for (size_t z : sizes_) held += z * sizeof(float);
+    if (held > kKeepBytes) {
+      for (auto& b : scratch_) b.reset();
+      std::fill(sizes_.begin(), sizes_.end(), 0);
+      linear_.release();
+    }
     if (dumps) {
       std::vector<bf16> b(size_t(N) * kOut);
       cuda_check(cudaMemcpy(b.data(), out, b.size() * sizeof(bf16), cudaMemcpyDeviceToHost));
@@ -377,6 +428,7 @@ class Encoder {
   double theta_ = 1e6;
   std::vector<std::unique_ptr<Buffer<float>>> scratch_ = std::vector<std::unique_ptr<Buffer<float>>>(13);
   std::vector<size_t> sizes_ = std::vector<size_t>(13, 0);
+  static constexpr size_t kKeepBytes = size_t(1) << 30;  // the scratch kept between clips, at most
   bool fp32_ = false;                           // LFM3_AUDIO_ENCODER=fp32
   lfm::split::Linear linear_;                   // the split multiply's doubled weights and scratch
   lfm::fp32::DeviceArray<double2> rope_;        // the rotary table, kept, grown to the longest clip seen

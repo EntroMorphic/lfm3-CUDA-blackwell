@@ -73,6 +73,7 @@ class Linear {
     operand_ = lfm::fp32::DeviceArray<bf16>();
     unbiased_ = lfm::fp32::DeviceArray<float>();
   }
+  size_t scratch_bytes() const { return operand_.bytes() + unbiased_.bytes(); }
   size_t doubled_bytes() const {
     size_t n = 0;
     for (const auto& [w, d] : doubled_) n += d.n * sizeof(bf16);
