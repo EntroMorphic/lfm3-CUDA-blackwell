@@ -569,7 +569,7 @@ So rules 1 and 2 carry over unchanged.
 | 35 s | 0.2273 s | 0.1824 s | −19.8% |
 | 10.4 s | 0.0896 s | 0.0777 s | −13.3% |
 | 5.8 s | 0.0622 s | 0.0573 s | −7.9% |
-| 2.1 s | 0.0452 s | 0.0448 s | −0.9% |
+| 2.1 s | 0.0452 s | 0.0448 s | −1.0% |
 
 - Against HF (HF measured in the 06:25 window, not this one), native is still 2.8× slower at 90 s and 2.3× at 35 s, but already faster on the short clip.
 - **Where the 90 s time to first token goes now** (each part measured on its own): log_mel 0.171 s, the language model's prefill about 0.139 s, the encoder 0.046 s, about 0.07 s else. log_mel is now the largest part (HF's front end: 0.015 s).
