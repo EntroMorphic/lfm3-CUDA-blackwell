@@ -266,3 +266,24 @@ The encoder is 4.2× (35 s) and 5.0× (90 s) faster than stage 0's, but still ov
   - The difference after the short clip is reported: roughly the doubled weights.
 - **Expected before the data, from the code:** the 90 s scratch is about 0.6–0.75 GB, and the doubled audio-encoder weights about 0.45 GB, so the total may exceed the bound.
   - If it fails, the bound is not relaxed after the fact. A lower keep cap, or not doubling, would be a new amendment with its own run.
+
+### Rule 4 (amendment 3) and the batch server in fp32 mode (2026-11-21, Thor; `build/ttft-post/`)
+**Rule 4: PASS.**
+- Binary: `audio-encoder-bench` `ttft-bench-a3` `1f18a50e…`, from 7ae8f22 (the same bench source as e611281).
+- Clips: the short clip (27 tokens) and the 90 s clip (1,125 tokens), `--repeat 1`, 07:14–07:24.
+
+| tool | result | hashes against the plain run (short: mel `86fd42e9…`, encoded `3b6b1d97…`; 90 s: mel `0de75340…`, encoded `c4399214…`) |
+|---|---|---|
+| memcheck `--leak-check full` | 0 errors; 0 bytes leaked in 0 allocations | identical, both clips |
+| racecheck | 0 hazards (0 errors, 0 warnings) | identical, both clips |
+| synccheck | 0 errors | identical, both clips |
+| initcheck | 0 errors | identical, both clips |
+
+Racecheck on the encoder alone finished in minutes; on whole `lfm3-speech` requests it had not finished the 90 s clip in 6 h (above).
+
+**The batch-server check with `LFM3_AUDIO_ENCODER=fp32`: PASS.** It ran quiet, 06:53–07:14:
+- the service was stopped; MONITOR CLEAN (1,201 samples; foreign processes in 0); power unchanged;
+- all four crowds: 42 of 42 identical to the old references, `spoken-q0`–`q4` included;
+- real time at 8, 12 and 16 rows, and 7 TTS + 5 spoken joining: no stalls.
+
+So the server's five audio-in differences under the default come from the encoder's multiplies alone, as the engine's did.
