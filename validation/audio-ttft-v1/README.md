@@ -356,3 +356,22 @@ Time to first token from the file, in seconds (1 untimed + 5 timed passes per ru
 5. **No slower (quiet window, one window):** time to first token on the five clips, `ttft-srv` and the new server ABAB. At every clip the new server's median is at most `ttft-srv`'s + 2%.
 
 Rule 3 stays FAIL; this amendment does not aim at it.
+
+### A diagnostic: the server's 90 s encode against the bench's (2026-11-21, quiet 08:15–08:16; `build/ttft-prof/`)
+nsys CUDA trace, `ttft-srv` with four 90 s requests and `ttft-bench-a3` with `--repeat 3`. Each encode runs from `conv_in`'s launch to `to_bf16`'s end.
+
+| | first encode | encodes 2–4 |
+|---|---|---|
+| server | 47.2 ms span (118 `cudaMalloc`, `double_rows` 4.7 ms) | 33.9 / 33.9 / 34.0 ms; 353 launches; no allocations |
+| bench | 46.3 ms span (the same) | 34.0 / 33.9 / 34.0 ms; 353 launches; no allocations |
+
+Kernel time per warm encode, the same in both to 0.1 ms:
+- `wide_kernel` 15.2 ms, `split_rows` 4.5, `conv_in` 3.7, `depthwise` 2.5;
+- `rms_norm` 1.2, `add` 1.0, `window_attention_tiled` 1.0, `swiglu` 1.0, `add_bias` 0.9, `activate` 0.9.
+
+- **So the server's encode is the bench's.** The 40 ms of the A/B is not lost in the new server. The next check is whether stage 0's bench overstated the deployed server's encode: the deployed pair, `merge-srv` and stage 0's `ttft-bench`, profiled the same way (`build/ttft-prof-merge/`).
+- **The first audio request after a start:**
+  - its time to first token was 2.2 s, against 0.45 s for the next ones;
+  - it pays for the encoder's construction, 118 allocations (the scratch), the doubled weights (removed by amendment 5) and first-launch costs (`cuLibraryGetKernel`).
+
+  The always-on service pays this once after every start. A warm-up audio request would move it to startup: noted for the next round, not changed here.
