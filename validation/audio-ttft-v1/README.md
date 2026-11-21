@@ -148,3 +148,23 @@ x2's error before the output's BF16 rounding (at most 4.7e-6) is about 350 times
 - **The choice, by the rules unchanged:** x1 ships as the default if it passes rules 1 and 2 (accuracy on the 40 clips, recognition on the 2,620). Otherwise x2 ships.
   - Rules 3–5 then run on the chosen variant.
   - No other variant is added without amending first.
+
+### Rules 1 and 2 (2026-11-20, Thor, 21:47–22:50; `build/ttft-rule12/`; lfm3-speech `ttft-speech-a2`, `8586be33…`, from 165cc8c)
+Each mode ran the 40 dumped clips and all 2,620 utterances, scored by `check_lfm3_audio_in.py`.
+
+| mode | rule 1: ratio, 40 clips | vs fp32, per clip | WER (HF 2.6062%) | difference, 95% CI | token sequences equal to fp32's |
+|---|---|---|---|---|---|
+| fp32 (today's bytes) | 0.1524–0.2276 | — | 2.5911% | −0.0151 [−0.0381, +0.0057] | — |
+| x1 | 0.3402–0.5188 | +0.177 to +0.310 | 2.6006% | −0.0057 [−0.0299, +0.0171] | 2,572 of 2,620 |
+| x2 | 0.1524–0.2276 | +0.0000 on every clip | 2.5987% | −0.0075 [−0.0306, +0.0149] | 2,578 of 2,620 |
+
+- **x1: rule 1 FAIL** (over 0.25 on every clip, and far over fp32 + 0.02). By amendment 2, **x2 ships**; x1 is not the default. Its rule 2 would have passed.
+- **x2: rule 1 PASS; rule 2 PASS** (upper bound +0.0149 points against +0.25).
+- **Coherency (x2):** I read all 42 utterances whose tokens differ from fp32's.
+  - 1 differs in tokens only; the text is identical.
+  - Most differences are punctuation and capitalisation ("Mrs." / "Missus", a comma, "said" / "Said").
+  - Word changes go both ways:
+    - better: "prayed" (was "pray"), "Independence" (was "independents"), "Ben-Zoof" (was "Ben-Zouf");
+    - worse: "Leoceria" (was "Leocadia", twice), "king's sword" (was "king swore", for "soared"), "call off" (was "carf", for "carved"), "Bronte's".
+  - On these 42 the errors are 32 (fp32) against 36 (x2).
+  - Every transcript is a coherent English sentence; none is truncated, repeated or garbled.
