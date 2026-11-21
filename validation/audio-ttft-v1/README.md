@@ -72,4 +72,6 @@ HF's "generate to the first token" includes its own encoder pass, its language m
   - So our prefill alone is already about 40% over HF's prefill plus its first step.
   - The prefill GEMMs are what tcgen05-gemm-v1 speeds up (2.38× `lfm::gemm` at large M), held OFF by its rule 4b.
 - **What is left:** at 90 s, about 0.056 s between the first byte and the first token, beyond `log_mel` and the server's prefill (0.532 − 0.171 − 0.305, derived). That is the first decode step (about 0.025 s) plus the handler's own parse and decode of the 3.8 MB request, which audio-handles-v1 moved off the engine thread but which is still in this path.
-- **At 90 s, closing the bar needs all three.** Even with the encoder at HF's 0.028 s, `log_mel` at 0.015 s and nothing else changed, time to first token would be about 0.24 s against HF's 0.151 s. The language model's prefill and the remaining parse also have to come down. At 10.4 s, the encoder and `log_mel` together would be enough: about 0.027 s to save, from 0.043 s of those two stages.
+- **Every bar clip needs more than the encoder and `log_mel`.**
+  - At 90 s, with the encoder at HF's 0.028 s, `log_mel` at 0.015 s and nothing else changed, time to first token would be about 0.25 s (0.5433 − 0.138 − 0.156) against HF's 0.151 s. The language model's prefill and the remaining parse also have to come down.
+  - At 10.4 s, 0.029 s must be saved, and bringing both stages to HF's level saves 0.027 s (0.0154 + 0.0114). That is just short, so there too something else has to move, or those two stages have to beat HF's.
