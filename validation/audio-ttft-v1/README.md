@@ -168,3 +168,10 @@ Each mode ran the 40 dumped clips and all 2,620 utterances, scored by `check_lfm
     - worse: "Leoceria" (was "Leocadia", twice), "king's sword" (was "king swore", for "soared"), "call off" (was "carf", for "carved"), "Bronte's".
   - On these 42 the errors are 32 (fp32) against 36 (x2).
   - Every transcript is a coherent English sentence; none is truncated, repeated or garbled.
+
+## Stage 1, amendment 3 (2026-11-21, before any rule-4 data from the bench): rule 4 as written, and a deviation recorded
+- **The deviation.** The exactness script (`tools/thor/audio_ttft_stage1_exact.sh`, ac21bae) ran rule 4's sanitizers on `lfm3-speech` (the whole engine, the shortest dumped clip and the 90 s clip), not on `audio-encoder-bench` as rule 4 says. Those runs are recorded below as extra evidence, not as rule 4.
+- **The gap behind it.** `audio-encoder-bench` recorded only the mel features' hash, so on the bench "outputs byte-identical to the plain run" had nothing to compare for the encoder.
+- **The amendment.** The bench now also hashes the encoder's BF16 output (`encoded_fnv1a`), copied to the host outside the timed span. The hash must be equal on every run of a clip, or the tool fails.
+  - Rule 4 then runs as written: memcheck (`--leak-check full`), racecheck, synccheck and initcheck on this bench at the short and 90 s clips (`--repeat 1`). Each needs 0 errors and the same `mel_fnv1a` and `encoded_fnv1a` as the plain run.
+  - The quiet window's timed bench (`ttft-bench-s1`, `bbcc9573…`) was built from 6ec2358, before this change; the change adds only the copy and hash after each timed span.

@@ -4,7 +4,8 @@
 //   - encode: lfm3_audio_in::Encoder::encode on the GPU, wall time on the host (the call synchronizes and frees its
 //     scratch, so this is what the engine thread waits for) and its GPU span by CUDA events.
 // Each clip: one untimed run of each, then R timed runs; the JSON holds every run and the median. The mel features'
-// FNV-1a hash is recorded too (the front-end round's byte-identity reference; equal across runs or the tool fails).
+// FNV-1a hash is recorded too (the front-end round's byte-identity reference; equal across runs or the tool fails), and
+// so is the encoder output's (validation/audio-ttft-v1 amendment 3: rule 4's outputs; equal across runs or it fails).
 // --fp64: also the GPU's FMA throughput in FP64 and FP32 (a kernel of independent FMA chains), for the front-end
 // round's design (validation/audio-frontend-v1).
 // Usage: audio-encoder-bench MODEL_DIR OUT.json [--repeat R] [--fp64] [--mel-threads N] NAME=WAV...
@@ -79,11 +80,18 @@ std::string list(const std::vector<double>& v) {
   for (size_t i = 0; i < v.size(); ++i) o << (i ? "," : "") << v[i];
   return o.str() + ']';
 }
-uint64_t fnv1a(const std::vector<float>& f) {
+uint64_t fnv1a(const void* data, size_t bytes) {
   uint64_t h = 1469598103934665603ull;
-  const auto* p = reinterpret_cast<const unsigned char*>(f.data());
-  for (size_t i = 0; i < f.size() * sizeof(float); ++i) h = (h ^ p[i]) * 1099511628211ull;
+  const auto* p = static_cast<const unsigned char*>(data);
+  for (size_t i = 0; i < bytes; ++i) h = (h ^ p[i]) * 1099511628211ull;
   return h;
+}
+uint64_t fnv1a(const std::vector<float>& f) { return fnv1a(f.data(), f.size() * sizeof(float)); }
+// the encoder's BF16 output, copied to the host and hashed (outside the timed span)
+uint64_t encoded_hash(const Buffer<__nv_bfloat16>& out, size_t n) {
+  std::vector<__nv_bfloat16> host(n);
+  cuda_check(cudaMemcpy(host.data(), out.p, n * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost));
+  return fnv1a(host.data(), n * sizeof(__nv_bfloat16));
 }
 std::string escape(const std::string& s) {
   std::string o;
@@ -141,6 +149,7 @@ int main(int argc, char** argv) try {
       std::vector<float> mel = lfm::audio_features::log_mel(audio.samples, mel_threads);  // untimed
       const uint64_t hash = fnv1a(mel);
       encoder.encode(mel, out.p);  // untimed
+      const uint64_t encoded = encoded_hash(out, tokens * lfm3_audio_in::Encoder::kOut);
       for (int r = 0; r < repeat; ++r) {
         const auto t0 = std::chrono::steady_clock::now();
         mel = lfm::audio_features::log_mel(audio.samples, mel_threads);
@@ -157,13 +166,16 @@ int main(int argc, char** argv) try {
         cuda_check(cudaEventElapsedTime(&ms, e0, e1));
         gpu_s.push_back(ms * 1e-3);
         if (size_t(got) != tokens) throw std::runtime_error("token count");
+        if (encoded_hash(out, tokens * lfm3_audio_in::Encoder::kOut) != encoded)
+          throw std::runtime_error(clips[c].first + ": the encoder's output differs between runs");
       }
-      char h[17];
+      char h[17], he[17];
       std::snprintf(h, sizeof h, "%016llx", (unsigned long long)hash);
+      std::snprintf(he, sizeof he, "%016llx", (unsigned long long)encoded);
       js << (c ? "," : "") << "{\"name\":\"" << escape(clips[c].first) << "\",\"wav\":\"" << escape(clips[c].second)
          << "\",\"samples\":" << n << ",\"audio_seconds\":" << double(n) / lfm::audio_features::kRate
          << ",\"frames\":" << lfm::audio_features::frames(n) << ",\"tokens\":" << tokens << ",\"mel_fnv1a\":\"" << h
-         << "\",\"log_mel_seconds\":" << median(mel_s) << ",\"encode_wall_seconds\":" << median(wall_s)
+         << "\",\"encoded_fnv1a\":\"" << he << "\",\"log_mel_seconds\":" << median(mel_s) << ",\"encode_wall_seconds\":" << median(wall_s)
          << ",\"encode_gpu_seconds\":" << median(gpu_s) << ",\"runs\":{\"log_mel\":" << list(mel_s)
          << ",\"encode_wall\":" << list(wall_s) << ",\"encode_gpu\":" << list(gpu_s) << "}}";
       std::fprintf(stderr, "%s: %.2f s audio, %zu tokens: log_mel %.4f s, encode %.4f s (GPU span %.4f s)\n",
