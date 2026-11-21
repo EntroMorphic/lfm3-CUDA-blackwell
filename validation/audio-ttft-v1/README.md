@@ -106,3 +106,25 @@ HF's "generate to the first token" includes its own encoder pass, its language m
    - the server's audio-in replies are identical to the new `lfm3-speech`'s (the audio-in check, 8 and 32 at once);
    - `LFM3_AUDIO_ENCODER=fp32` reproduces today's 360 + 93 audio-in stage files byte for byte;
    - the host suites pass.
+
+### Stage 1, development (2026-11-20, not a rule run; `build/ttft-dev/`)
+- **The split multiply (51795de):** the encoder alone, rough timing on a non-quiet Thor, x2 against fp32:
+  - 90 s: 0.0519 against 0.1538 s;
+  - 35 s: 0.0232 against 0.0624 s;
+  - 10.4 s: 0.0116 against 0.0214 s.
+
+  Still over HF's encoder (0.028 and 0.0125 s at 90 and 35 s).
+- **Accuracy on the 40 dumped clips** (`check_lfm3_audio_in.py`; development evidence, the gated run comes with the final build):
+  - x2's ratio equals fp32's on every clip to 4 decimals (0.152–0.228);
+  - the error before the BF16 output rounding rises from at most 5.0e-7 to 4.7e-6 (encoder output), far below the rounding (about 1.7e-3);
+  - the 40-clip WER equals HF's (37 of 40 token sequences equal HF's; fp32: 38).
+- **Where x2's 90 s encode goes** (nsys, per run): about 40 ms of kernels in 52 ms of wall time.
+  - Kernels: multiplies 15.4 ms, `window_attention` 7.0, `split_rows` 4.6, `conv_in` and `depthwise` 6.5.
+  - The other ~12 ms is about 30 `cudaMalloc` calls per encode (median 0.27 ms) and their frees: the scratch is released after every clip (audio-in-v1 red-team), about 630 MB at 90 s.
+  - The doubled weights are built once (104 weights).
+
+## Stage 1, amendment 1 (2026-11-20, before its code): two more changes, the rules unchanged but one added
+1. **Scratch kept between clips, up to a cap.** The encoder keeps its scratch, the split multiply's included, after a clip when the total is at most **1 GiB**. A clip that needs more releases all of it at its end, as today. This adds a memory rule:
+   - **5b (gated):** the server's idle device memory after a 90 s clip is at most 1 GiB above the deployed server's after the same clip.
+   - Reported: the doubled weights' size.
+2. **`window_attention` with its keys and values staged in shared memory.** A block takes consecutive queries of one head, which share most of their 32-key windows. Each (query, head) keeps today's arithmetic in today's order (the dot product over d, the warp softmax, the weighted sum over j), so the output is byte-identical to today's. Rule 5's `LFM3_AUDIO_ENCODER=fp32` stage files test this, since fp32 mode uses the same attention.
