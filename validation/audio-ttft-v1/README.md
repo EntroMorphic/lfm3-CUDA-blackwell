@@ -320,3 +320,39 @@ Time to first token from the file, in seconds (1 untimed + 5 timed passes per ru
 - The saving is stable across passes, and every text is identical across passes.
 - The bench's encoder alone saved 0.133 s (90 s) and 0.051 s (35 s); the server saves 0.090 s and 0.044 s. **So at 90 s about 40 ms of the encoder's gain does not reach the server, within one window.** It is not a cross-window artefact.
 - The GPU clock is pinned (`gpu-gpc-0` 1,575 MHz, min = max), so it is not frequency scaling. A quiet nsys comparison of the server's encode against the bench's follows (`build/ttft-prof/`).
+
+## Stage 1, amendment 5 (2026-11-21, before any data from it): no doubled weights
+**The change.**
+- `lfm::gemm::Problem` gains `b_k_wrap`: for an N × K B, B's k index is read modulo it.
+- The split multiply's x2 then runs `[hi | lo]` against W itself (`ldb = in`, `b_k_wrap = in`), not against a stored `[W | W]`. The GEMM reads the same values in the same order, so its output is byte-identical; the 439 MiB copy goes.
+- Every `in` is a multiple of 8, so no 8-element load straddles the wrap.
+- `check()` refuses a wrap that is not a multiple of 8, an `ldb` below it, a K × N B, and the K = 128 decode path (no caller needs it).
+- Off (0) everywhere else. The language model's and the vision encoder's GEMMs get one uniform branch and keep their arithmetic.
+- The vision encoder still builds its own `[W | W]`. Moving it to the wrap is a later change with its own checks.
+
+**Rules (all gated):**
+1. **The GEMM:** `gemm-wrap-check` compares the wrap against an explicit `[W | W]` bit for bit:
+   - the encoder's 7 shapes × 11 row counts (1 to 1,125: the thin path and every wide tile), FP32 and BF16 outputs;
+   - every case identical, and the 4 invalid uses refused.
+2. **Byte-identical to the build that passed rules 1, 2 and 4:**
+   - `lfm3-speech` from this amendment, by default (x2): the 40 dumped clips' 360 files, the 93 edge files, and e2e and split are identical to `ttft-speech-a2`'s x2 run (`build/ttft-speech-a2-rule6-x2`);
+   - the bench's `encoded_fnv1a` equals rule 4's (`3b6b1d97…` short, `c4399214…` 90 s).
+
+   So rules 1 and 2 carry over without a rerun.
+3. **Nothing else changes:** amendment 3's exactness script again, on this amendment's binaries:
+   - vision 713 of 713;
+   - TTS regression 36 SAME;
+   - fp32 mode as before (F2's 5 only);
+   - the concurrent engine, the batch server (both in fp32 mode against the old references);
+   - server audio in, 8 and 32 at once, TTS, the text gate, images.
+
+   Also: rule 4's four sanitizers on the bench at both clips, and the host suites.
+4. **Rule 5b, measured again.** Amendment 4's tool, with its flaw removed (the no-server baseline moved by 510 MiB between servers):
+   - the servers run in the order `merge-srv`, new, `merge-srv`, new;
+   - the gate uses the plain in-use reading after the 90 s clip: the new server's mean minus `merge-srv`'s mean is at most 1 GiB;
+   - each pair's difference and the baselines are reported.
+
+   Expected from the code: about 0.65–0.75 GiB, the kept 90 s scratch.
+5. **No slower (quiet window, one window):** time to first token on the five clips, `ttft-srv` and the new server ABAB. At every clip the new server's median is at most `ttft-srv`'s + 2%.
+
+Rule 3 stays FAIL; this amendment does not aim at it.

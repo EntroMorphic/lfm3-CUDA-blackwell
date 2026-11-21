@@ -38,6 +38,10 @@ struct Problem {
   long long stride_a = 0, stride_b = 0, stride_c = 0;  // per batch item; B indexed by z / group
   int batch = 1, group = 1;
   bool b_k_contiguous = true;
+  // For an N x K B (b_k_contiguous): when set, B's k index is read modulo it, so B (ldb >= b_k_wrap) acts as
+  // [W | W | ...] over K without the copy (the split multiply's [hi | lo] against [W | W]; validation/audio-ttft-v1
+  // amendment 5). A multiple of 8, so no 8-element chunk straddles the wrap. 0: off.
+  int b_k_wrap = 0;
   // FP32 scratch for the split-K path (M <= 8 with a K x N B: decode P·V); see workspace_bytes().
   float* workspace = nullptr;
   size_t workspace_size = 0;  // bytes
@@ -138,7 +142,8 @@ __global__ void __launch_bounds__(T::THREADS) wide_kernel(Problem p) {
         const int row = i / KCH, ch = i % KCH;
         const int gn = n0 + row, gk = k0 + ch * 8;
         const bool ok = gn < p.n && gk < p.k;
-        cp_async16(smem_u32(db + swz_k<KCH>(row, ch)), ok ? B + gn * p.ldb + gk : B, ok);
+        const int bk = p.b_k_wrap ? gk % p.b_k_wrap : gk;
+        cp_async16(smem_u32(db + swz_k<KCH>(row, ch)), ok ? B + gn * p.ldb + bk : B, ok);
       }
     } else {
 #pragma unroll
@@ -250,9 +255,10 @@ __global__ void __launch_bounds__(256) thin_kernel(Problem p) {
 #pragma unroll 4
   for (int kb = lane * 8; kb < p.k; kb += 256) {
     int4 w[COLS];
+    const int bk = p.b_k_wrap ? kb % p.b_k_wrap : kb;
 #pragma unroll
     for (int j = 0; j < COLS; ++j)
-      w[j] = col0 + j < p.n ? __ldcs(reinterpret_cast<const int4*>(B + (col0 + j) * p.ldb + kb)) : make_int4(0, 0, 0, 0);
+      w[j] = col0 + j < p.n ? __ldcs(reinterpret_cast<const int4*>(B + (col0 + j) * p.ldb + bk)) : make_int4(0, 0, 0, 0);
 #pragma unroll
     for (int r = 0; r < R; ++r) {
       const int4 xa = __ldg(reinterpret_cast<const int4*>(A + r * p.lda + kb));
@@ -431,6 +437,8 @@ inline void check(const Problem& p) {
   if (!aligned(p.a) || !aligned(p.b) || p.lda % 8 || p.ldb % 8 || p.stride_a % 8 || p.stride_b % 8)
     throw std::runtime_error("gemm: operands must be 16-byte aligned with 8-element strides");
   if (!p.b_k_contiguous && (p.b_rows < 0 || p.b_rows > p.k || p.n % 8)) throw std::runtime_error("gemm: invalid K x N operand");
+  if (p.b_k_wrap && (p.b_k_wrap < 0 || p.b_k_wrap % 8 || !p.b_k_contiguous || p.ldb < p.b_k_wrap || (p.m <= 8 && p.k == 128)))
+    throw std::runtime_error("gemm: invalid b_k_wrap (a multiple of 8, an N x K B, ldb at least it; not the K = 128 decode path)");
 }
 
 // The engine's GEMM: thin (M <= 8, B stored N x K), split-K (M <= 8, B stored K x N) or wide.
