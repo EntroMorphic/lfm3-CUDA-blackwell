@@ -17,10 +17,17 @@
 // depth decoder; the features are not rounded to BF16 on the way in). Only the output is rounded to BF16, the
 // language model's input. validation/audio-in-v1 round 1 ran the encoder at HF's BF16 rounding points instead and
 // matched HF's error to the FP32 model only on average (median ratio 1.02, worst clip 1.25).
+// The multiplies (validation/audio-ttft-v1 stage 1): by default on the tensor cores, the FP32 activations split into
+// two BF16 parts against the BF16 weights (lfm/split_linear.cuh, x2, as the vision encoder's), FP32 accumulation;
+// LFM3_AUDIO_ENCODER=fp32 keeps the CUDA cores' FP32 multiplies (validation/audio-in-v1's bytes). The rotary cos/sin
+// pairs come from a table computed once per length by the same FP64 device code as lfm::fp32::rotary, so the rotated
+// values are those of lfm::fp32::rotary in both modes.
 #include <lfm/audio_features.hpp>
 #include <lfm/fp32_ops.cuh>
 #include <lfm/safetensors_header.hpp>
+#include <lfm/split_linear.cuh>
 
+#include <cstdlib>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -149,6 +156,28 @@ __global__ void to_bf16(const float* x, bf16* y, size_t n) {
   const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i < n) y[i] = __float2bfloat16_rn(x[i]);
 }
+// The rotary table: cs[t][d] = (cos, sin) of position t's angle for pair d, by lfm::fp32::kernels::rotary's own FP64
+// arithmetic (position0 0)
+__global__ void rotary_table(double2* cs, int rows, int dim, double theta) {
+  const int half = dim / 2, i = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i >= rows * half) return;
+  const int d = i % half, t = i / half;
+  const double inverse = 1.0 / pow(theta, double(2 * d) / dim);
+  double s, c;
+  sincos(double(t) * inverse, &s, &c);
+  cs[i] = make_double2(c, s);
+}
+// lfm::fp32::kernels::rotary's rotation with the table's (cos, sin): the same values
+__global__ void rotary_apply(float* x, const double2* cs, int rows, int heads, int dim) {
+  const int half = dim / 2, i = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i >= rows * heads * half) return;
+  const int d = i % half, head_row = i / half, t = head_row / heads;
+  const double c = cs[size_t(t) * half + d].x, s = cs[size_t(t) * half + d].y;
+  float* v = x + size_t(head_row) * dim;
+  const double a = v[d], b = v[d + half];
+  v[d] = float(a * c - b * s);
+  v[d + half] = float(b * c + a * s);
+}
 }  // namespace kernels
 
 // Host copies of the encoder's stages for one clip (the parity check against HF; tools/lfm3_audio_in_hf.py "dump").
@@ -231,6 +260,12 @@ class Encoder {
     eps_ = float(tc.at("norm_eps").number());
     theta_ = tc.at("rope_parameters").at("rope_theta").number();
     for (const auto& t : tc.at("layer_types").array()) attention_.push_back(t.string() == "full_attention");
+    const char* mode = std::getenv("LFM3_AUDIO_ENCODER");  // validation/audio-ttft-v1: x2 (the default) or fp32
+    if (mode && *mode) {
+      const std::string m = mode;
+      if (m != "x2" && m != "fp32") throw std::runtime_error("LFM3_AUDIO_ENCODER must be x2 or fp32: " + m);
+      fp32_ = m == "fp32";
+    }
   }
 
   // Encodes one clip's features (mel: [128][T], from lfm::audio_features::log_mel) into `out` (device, [N][2048] BF16,
@@ -245,14 +280,14 @@ class Encoder {
     auto& in = scratch(0, mel.size());
     cuda_check(cudaMemcpy(in.p, mel.data(), mel.size() * sizeof(float), cudaMemcpyHostToDevice));
     const std::string D = "model.audio_encoder.downsample.";
-    // downsampler; f::linear(x, w, bias, y, rows, out, in)
+    // downsampler; mul(x, w, bias, y, rows, out, in)
     auto& a1 = scratch(1, size_t(W1) * 64 * kChannels);
     conv_in<<<grid(size_t(W1) * 64 * kChannels), 256>>>(in.p, T, w(D + "conv_in.weight"), w(D + "conv_in.bias"), a1.p, W1);
     auto stage = [&](const float* x, int W, int H, int W2_, const char* s, Buffer<float>& y) {
       const size_t n = size_t(W2_) * (H / 2) * kChannels;
       auto& c = scratch(2, n);
       depthwise<<<grid(n), 256>>>(x, W, H, w(D + "conv_" + s + ".weight"), w(D + "conv_" + s + ".bias"), c.p, W2_);
-      f::linear(c.p, w(D + "lin_" + s + ".weight"), w(D + "lin_" + s + ".bias"), y.p, int(n / kChannels), kChannels, kChannels);
+      mul(c.p, w(D + "lin_" + s + ".weight"), w(D + "lin_" + s + ".bias"), y.p, int(n / kChannels), kChannels, kChannels);
       activate<<<grid(n), 256>>>(y.p, n, 1);
     };
     auto& a2 = scratch(3, size_t(W2) * 32 * kChannels);
@@ -262,7 +297,7 @@ class Encoder {
     auto& flat = scratch(2, size_t(N) * 4096);
     flatten<<<grid(size_t(N) * 4096), 256>>>(a3.p, flat.p, N);
     auto& x = scratch(4, size_t(N) * kWidth);
-    f::linear(flat.p, w(D + "lin_out.weight"), w(D + "lin_out.bias"), x.p, N, kWidth, 4096);
+    mul(flat.p, w(D + "lin_out.weight"), w(D + "lin_out.bias"), x.p, N, kWidth, 4096);
     if (dumps) dumps->mel = mel, dumps->down = host(x.p, size_t(N) * kWidth);
     // encoder
     const size_t NW = size_t(N) * kWidth;
@@ -273,32 +308,38 @@ class Encoder {
     auto& ff_a = scratch(8, size_t(N) * kMlp);
     auto& ff_b = scratch(9, size_t(N) * kMlp);
     auto& att = scratch(10, NW);
+    if (rope_rows_ < N) {  // the rotary table, for this length and every shorter one
+      rope_ = lfm::fp32::DeviceArray<double2>(size_t(N) * kHeadDim / 2);
+      rotary_table<<<grid(size_t(N) * kHeadDim / 2), 256>>>(rope_.p, N, kHeadDim, theta_);
+      rope_rows_ = N;
+    }
+    const auto& rope = rope_;
     for (int i = 0; i < kLayers; ++i) {
       const std::string p = layer(i);
       f::rms_norm(x.p, w(p + "operator_norm.weight"), n.p, nullptr, N, kWidth, eps_);
       if (!attention_[i]) {
-        f::linear(n.p, w(p + "conv.in_proj.weight"), nullptr, tmp.p, N, 3 * kWidth, kWidth);
+        mul(n.p, w(p + "conv.in_proj.weight"), nullptr, tmp.p, N, 3 * kWidth, kWidth);
         short_conv<<<grid(NW), 256>>>(tmp.p, w(p + "conv.conv.weight"), att.p, N, kWidth);
-        f::linear(att.p, w(p + "conv.out_proj.weight"), nullptr, op.p, N, kWidth, kWidth);
+        mul(att.p, w(p + "conv.out_proj.weight"), nullptr, op.p, N, kWidth, kWidth);
       } else {
         float *q = tmp.p, *k = tmp.p + NW, *v = tmp.p + NW + size_t(N) * kv;
-        f::linear(n.p, w(p + "self_attn.q_proj.weight"), nullptr, q, N, kWidth, kWidth);
-        f::linear(n.p, w(p + "self_attn.k_proj.weight"), nullptr, k, N, kv, kWidth);
-        f::linear(n.p, w(p + "self_attn.v_proj.weight"), nullptr, v, N, kv, kWidth);
+        mul(n.p, w(p + "self_attn.q_proj.weight"), nullptr, q, N, kWidth, kWidth);
+        mul(n.p, w(p + "self_attn.k_proj.weight"), nullptr, k, N, kv, kWidth);
+        mul(n.p, w(p + "self_attn.v_proj.weight"), nullptr, v, N, kv, kWidth);
         f::rms_norm(q, w(p + "self_attn.q_layernorm.weight"), q, nullptr, N * kHeads, kHeadDim, eps_);
         f::rms_norm(k, w(p + "self_attn.k_layernorm.weight"), k, nullptr, N * kKvHeads, kHeadDim, eps_);
-        f::rotary(q, N, kHeads, kHeadDim, 0, theta_);
-        f::rotary(k, N, kKvHeads, kHeadDim, 0, theta_);
+        rotary_apply<<<grid(size_t(N) * kHeads * kHeadDim / 2), 256>>>(q, rope.p, N, kHeads, kHeadDim);
+        rotary_apply<<<grid(size_t(N) * kKvHeads * kHeadDim / 2), 256>>>(k, rope.p, N, kKvHeads, kHeadDim);
         window_attention<<<grid(size_t(N) * kHeads * 32), 256>>>(q, k, v, att.p, N, kHeads, kKvHeads, kHeadDim,
                                                                  float(1.0 / std::sqrt(double(kHeadDim))));
-        f::linear(att.p, w(p + "self_attn.out_proj.weight"), nullptr, op.p, N, kWidth, kWidth);
+        mul(att.p, w(p + "self_attn.out_proj.weight"), nullptr, op.p, N, kWidth, kWidth);
       }
       add<<<grid(NW), 256>>>(x.p, op.p, NW);
       f::rms_norm(x.p, w(p + "ffn_norm.weight"), n.p, nullptr, N, kWidth, eps_);
-      f::linear(n.p, w(p + "feed_forward.w1.weight"), nullptr, ff_a.p, N, kMlp, kWidth);
-      f::linear(n.p, w(p + "feed_forward.w3.weight"), nullptr, ff_b.p, N, kMlp, kWidth);
+      mul(n.p, w(p + "feed_forward.w1.weight"), nullptr, ff_a.p, N, kMlp, kWidth);
+      mul(n.p, w(p + "feed_forward.w3.weight"), nullptr, ff_b.p, N, kMlp, kWidth);
       f::swiglu(ff_a.p, ff_b.p, size_t(N) * kMlp);
-      f::linear(ff_a.p, w(p + "feed_forward.w2.weight"), nullptr, op.p, N, kWidth, kMlp);
+      mul(ff_a.p, w(p + "feed_forward.w2.weight"), nullptr, op.p, N, kWidth, kMlp);
       add<<<grid(NW), 256>>>(x.p, op.p, NW);
     }
     f::rms_norm(x.p, w("model.audio_encoder.lfm.embedding_norm.weight"), n.p, nullptr, N, kWidth, eps_);
@@ -308,16 +349,17 @@ class Encoder {
     layer_norm<<<grid(size_t(N) * 32), 256>>>(n.p, w(P + "layer_norm.weight"), w(P + "layer_norm.bias"), att.p, N, kWidth,
                                                1e-5f);
     auto& hid = scratch(11, size_t(N) * kOut);
-    f::linear(att.p, w(P + "linear_1.weight"), w(P + "linear_1.bias"), hid.p, N, kOut, kWidth);
+    mul(att.p, w(P + "linear_1.weight"), w(P + "linear_1.bias"), hid.p, N, kOut, kWidth);
     activate<<<grid(size_t(N) * kOut), 256>>>(hid.p, size_t(N) * kOut, 2);
     auto& proj = scratch(12, size_t(N) * kOut);
-    f::linear(hid.p, w(P + "linear_2.weight"), w(P + "linear_2.bias"), proj.p, N, kOut, kOut);
+    mul(hid.p, w(P + "linear_2.weight"), w(P + "linear_2.bias"), proj.p, N, kOut, kOut);
     to_bf16<<<grid(size_t(N) * kOut), 256>>>(proj.p, out, size_t(N) * kOut);
     cuda_check(cudaGetLastError());
     // the scratch is released after every clip: a long clip's stages take hundreds of MB (the first is W1 x 64 x 256
     // floats), which would otherwise stay allocated for the process's life (validation/audio-in-v1 red-team)
     cuda_check(cudaDeviceSynchronize());
     for (auto& b : scratch_) b.reset();
+    linear_.release();
     std::fill(sizes_.begin(), sizes_.end(), 0);
     if (dumps) {
       std::vector<bf16> b(size_t(N) * kOut);
@@ -335,6 +377,16 @@ class Encoder {
   double theta_ = 1e6;
   std::vector<std::unique_ptr<Buffer<float>>> scratch_ = std::vector<std::unique_ptr<Buffer<float>>>(13);
   std::vector<size_t> sizes_ = std::vector<size_t>(13, 0);
+  bool fp32_ = false;                           // LFM3_AUDIO_ENCODER=fp32
+  lfm::split::Linear linear_;                   // the split multiply's doubled weights and scratch
+  lfm::fp32::DeviceArray<double2> rope_;        // the rotary table, kept, grown to the longest clip seen
+  int rope_rows_ = 0;
+
+  // y [rows][out] = x [rows][in] · Wᵀ (+ bias): the split multiply on the tensor cores (x2), or lfm::fp32::linear
+  void mul(const float* x, const bf16* W, const bf16* bias, float* y, int rows, int out, int in) {
+    if (fp32_) lfm::fp32::linear(x, W, bias, y, rows, out, in);
+    else linear_.mul(x, W, bias, y, rows, out, in, 2);
+  }
 
   static std::string layer(int i) { return "model.audio_encoder.lfm.layers." + std::to_string(i) + "."; }
   const bf16* w(const std::string& name) const { return weights_->at(name).device_data; }
