@@ -304,11 +304,12 @@ class Encoder {
     eps_ = float(tc.at("norm_eps").number());
     theta_ = tc.at("rope_parameters").at("rope_theta").number();
     for (const auto& t : tc.at("layer_types").array()) attention_.push_back(t.string() == "full_attention");
-    const char* mode = std::getenv("LFM3_AUDIO_ENCODER");  // validation/audio-ttft-v1: x2 (the default) or fp32
+    const char* mode = std::getenv("LFM3_AUDIO_ENCODER");  // validation/audio-ttft-v1: x2 (the default), x1 or fp32
     if (mode && *mode) {
       const std::string m = mode;
-      if (m != "x2" && m != "fp32") throw std::runtime_error("LFM3_AUDIO_ENCODER must be x2 or fp32: " + m);
+      if (m != "x2" && m != "x1" && m != "fp32") throw std::runtime_error("LFM3_AUDIO_ENCODER must be x2, x1 or fp32: " + m);
       fp32_ = m == "fp32";
+      parts_ = m == "x1" ? 1 : 2;
     }
   }
 
@@ -430,14 +431,15 @@ class Encoder {
   std::vector<size_t> sizes_ = std::vector<size_t>(13, 0);
   static constexpr size_t kKeepBytes = size_t(1) << 30;  // the scratch kept between clips, at most
   bool fp32_ = false;                           // LFM3_AUDIO_ENCODER=fp32
+  int parts_ = 2;                               // the activations' BF16 parts: 2 (x2) or 1 (x1)
   lfm::split::Linear linear_;                   // the split multiply's doubled weights and scratch
   lfm::fp32::DeviceArray<double2> rope_;        // the rotary table, kept, grown to the longest clip seen
   int rope_rows_ = 0;
 
-  // y [rows][out] = x [rows][in] · Wᵀ (+ bias): the split multiply on the tensor cores (x2), or lfm::fp32::linear
+  // y [rows][out] = x [rows][in] · Wᵀ (+ bias): the split multiply on the tensor cores (x2, x1), or lfm::fp32::linear
   void mul(const float* x, const bf16* W, const bf16* bias, float* y, int rows, int out, int in) {
     if (fp32_) lfm::fp32::linear(x, W, bias, y, rows, out, in);
-    else linear_.mul(x, W, bias, y, rows, out, in, 2);
+    else linear_.mul(x, W, bias, y, rows, out, in, parts_);
   }
 
   static std::string layer(int i) { return "model.audio_encoder.lfm.layers." + std::to_string(i) + "."; }

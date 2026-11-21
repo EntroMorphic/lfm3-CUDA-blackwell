@@ -128,3 +128,23 @@ HF's "generate to the first token" includes its own encoder pass, its language m
    - **5b (gated):** the server's idle device memory after a 90 s clip is at most 1 GiB above the deployed server's after the same clip.
    - Reported: the doubled weights' size.
 2. **`window_attention` with its keys and values staged in shared memory.** A block takes consecutive queries of one head, which share most of their 32-key windows. Each (query, head) keeps today's arithmetic in today's order (the dot product over d, the warp softmax, the weighted sum over j), so the output is byte-identical to today's. Rule 5's `LFM3_AUDIO_ENCODER=fp32` stage files test this, since fp32 mode uses the same attention.
+
+### Amendment 1, development results (2026-11-20, not a rule run)
+- **`audio-attention-check`:** `window_attention_tiled` is bit-identical to `window_attention` on random inputs at 11 lengths (1, 2, 31, 32, 33, 63, 64, 65, 100, 1,125, 1,149), the tile edges included.
+- **The encoder alone, rough timing on a non-quiet Thor** (x2 after the amendment, x2 before it, fp32 after it):
+
+  | clip | x2 after | x2 before | fp32 after |
+  |---|---|---|---|
+  | 90 s | 0.0330 s | 0.0519 s | 0.1378 s |
+  | 35 s | 0.0157 s | 0.0232 s | 0.0551 s |
+  | 10.4 s | 0.0084 s | 0.0116 s | 0.0189 s |
+
+  HF's encoder: 0.028 / 0.0125 / 0.0113 s.
+- **Noted:** the bench repeats each clip, so its timed runs find the scratch already allocated. In the server, the first clip longer than any before it still allocates.
+
+## Stage 1, amendment 2 (2026-11-20, before any x1 data): x1 as a candidate
+x2's error before the output's BF16 rounding (at most 4.7e-6) is about 350 times below that rounding (about 1.7e-3), so a single BF16 part may meet rule 1. The vision round tried x1 first for the same reason; its x1 failed a stricter bar (0.15 × HF BF16's).
+- **The variant:** x1, the activations rounded once to BF16 (`LFM3_AUDIO_ENCODER=x1`). It is one GEMM over K, not 2K, through the same `lfm::split::Linear`.
+- **The choice, by the rules unchanged:** x1 ships as the default if it passes rules 1 and 2 (accuracy on the 40 clips, recognition on the 2,620). Otherwise x2 ships.
+  - Rules 3–5 then run on the chosen variant.
+  - No other variant is added without amending first.
