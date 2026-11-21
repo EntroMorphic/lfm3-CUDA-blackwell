@@ -175,3 +175,38 @@ Each mode ran the 40 dumped clips and all 2,620 utterances, scored by `check_lfm
 - **The amendment.** The bench now also hashes the encoder's BF16 output (`encoded_fnv1a`), copied to the host outside the timed span. The hash must be equal on every run of a clip, or the tool fails.
   - Rule 4 then runs as written: memcheck (`--leak-check full`), racecheck, synccheck and initcheck on this bench at the short and 90 s clips (`--repeat 1`). Each needs 0 errors and the same `mel_fnv1a` and `encoded_fnv1a` as the plain run.
   - The quiet window's timed bench (`ttft-bench-s1`, `bbcc9573…`) was built from 6ec2358, before this change; the change adds only the copy and hash after each timed span.
+
+### Rule 5, the exactness run (2026-11-20 22:53 to 11-21 06:08, Thor, not timed; `build/ttft-exact/`)
+Binaries:
+- server `ttft-srv` `222ff9cf…`, worker `600d42d0…` (6ec2358);
+- `lfm3-speech` `ttft-speech-a2` `8586be33…`;
+- `lfm3-vision-check` from this round `b77467ce…` and from main `30afbe24…`.
+
+| check | result |
+|---|---|
+| vision encoder, images-v1's 31 cases, x2/x2 | 713 of 713 stage files byte-identical to main's |
+| lfm3-speech TTS regression | 36 of 36 SAME |
+| `LFM3_AUDIO_ENCODER=fp32`, 40 dumped clips (360 files) | 355 identical; the 5 that differ are F2's known 5 (`8455-210777-0002` mel; `8555-292519-0007` mel, down, encoded, features) |
+| `LFM3_AUDIO_ENCODER=fp32`, 93 edge files | 93 of 93 identical |
+| `LFM3_AUDIO_ENCODER=fp32`, e2e and split | 90 of 90 and 90 of 90 identical |
+| default (x2), 40 dumped clips | the down, encoded and features files of all 40 differ (by design); mel as fp32 (F2's 2); 3 of 40 transcripts differ (`4507-16021-0023`, `5105-28240-0024`, `7127-75946-0008`; rules 1 and 2 cover these) |
+| default (x2), edge files | 57 of 93 identical; the 36 that differ are the encoder stages (down, encoded, features) of the 12 clips with audio |
+| default (x2), e2e and split | 90 of 90 and 90 of 90 identical |
+| server audio in against the new `lfm3-speech` | PASS (repeat identical, text control identical) |
+| server, 8 and 32 at once | 8 of 8 and 32 of 32 identical to `lfm3-speech`; PASS |
+| server TTS check; text gate; images through the server | exit 0; exit 0; PASS |
+| host suites on the branch | 2,569 passed, 3 skipped, 0 failed |
+
+**Two checks exited 1, by design.** The concurrent engine check and the batch-server check compare against references recorded before this round.
+- In both, the only differences are the five audio-in cases `spoken-q0`–`spoken-q4`. The other 36 (engine) and 37 (server crowds, all four orders) are identical.
+- The concurrent check at 4, 8 and 16 rows is 41 of 41 identical to its own run alone.
+- **Confirmed in fp32 mode:** the concurrent engine check with `LFM3_AUDIO_ENCODER=fp32` (`engine-exact-fp32.log`) PASSES, 41 of 41 at every row count against the old references, so the five differences come from the encoder's multiplies alone.
+  - It ran beside the sanitizers; it has no timing criteria.
+  - The batch-server check in fp32 mode has timing sub-checks, so it runs quiet, after the quiet window (`build/ttft-post/`).
+
+**Extra evidence, not rule 4 (amendment 3):** the sanitizers on `lfm3-speech` (the shortest dumped clip and the 90 s clip, whole requests):
+- memcheck with `--leak-check full`: 0 errors, 0 bytes leaked; synccheck: 0 errors; initcheck: 0 errors.
+- Every output file equals the plain run's (the JSON compared without its timing keys).
+- racecheck: the short clip finished (outputs identical) but the 90 s clip did not end within the 6 h limit. I stopped it with SIGTERM, so its log has no summary.
+- A script fault: its output comparison called `compare_speech_outputs.py` with file prefixes, not directories, and printed nothing. I compared the files directly afterwards (above).
+- A harness lesson: `timeout` on `docker exec` ends the client, not the process in the container. The post-window script runs `timeout` inside the container.
