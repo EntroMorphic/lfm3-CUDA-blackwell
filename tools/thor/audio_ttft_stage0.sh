@@ -26,7 +26,7 @@ python3 -c "import json; print(' '.join(f\"{c['name']}={c['wav']}\" for c in jso
 cp $B/$S/tools/time_lfm3_audio_hf.py hf_tool.py
 
 echo "== build the bench from $S $(date +%T)"
-[ -x $B/$BENCH/audio-encoder-bench ] || LFM3_WORKSPACE=$W bash $R/tools/thor/build_audio_bench.sh $BENCH build/$S > build-bench.log 2>&1 \
+[ -x $B/$BENCH/audio-encoder-bench ] || LFM3_WORKSPACE=$W bash $B/$S/tools/thor/build_audio_bench.sh $BENCH build/$S > build-bench.log 2>&1 \
   || { echo "BENCH BUILD FAILED: $(tail -2 build-bench.log)"; fin; exit 1; }
 (cd $B && sha256sum $SRV/liquid-lfm3-server $BENCH/audio-encoder-bench) | tee binaries.sha256
 
