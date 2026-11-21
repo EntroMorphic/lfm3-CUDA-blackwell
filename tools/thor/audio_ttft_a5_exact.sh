@@ -9,6 +9,7 @@
 #   3. amendment rule 3: vision 31 cases against main's; TTS regression; rule6 in fp32 mode; the concurrent engine in
 #      fp32 mode; the server (audio in, 8 and 32 at once, TTS, text gate, images); rule 4's sanitizers on the bench.
 #      The batch server in fp32 mode has timing sub-checks and runs in the quiet window instead.
+# Builds are skipped when the binary exists (build/a5-diag builds them first, then runs this script).
 # Usage (Thor host, copied to build/a5-exact/run.sh): bash run.sh > run.log 2>&1
 set -uo pipefail
 W=$HOME/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build; O=a5-exact
@@ -22,19 +23,20 @@ cd $B/$O || exit 1
 step() { echo "== $1 $(date +%T)"; }
 
 step "0. builds"
-LFM3_WORKSPACE=$W bash $TH/build_speech.sh $SP build/$S > build-speech.log 2>&1; echo "lfm3-speech build exit $?"
-docker run --rm --network none -v $B/$S/native:/src/native:ro -v $W:/workspace $IMG bash -c \
+[ -x $B/$SP/lfm3-speech ] || { LFM3_WORKSPACE=$W bash $TH/build_speech.sh $SP build/$S > build-speech.log 2>&1; echo "lfm3-speech build exit $?"; }
+[ -x $B/$SV/liquid-lfm3-server ] || docker run --rm --network none -v $B/$S/native:/src/native:ro -v $W:/workspace $IMG bash -c \
   "bash $C/$S/tools/thor/build_native.sh $C/$SV; rc=\$?; chown -R 1000:1000 $C/$SV $C/$SV.cmake.log $C/$SV.build.log; exit \$rc" \
   > build-srv.log 2>&1; echo "server build exit $?"
-LFM3_WORKSPACE=$W bash $TH/build_audio_bench.sh $BENCH build/$S > build-bench.log 2>&1; echo "bench build exit $?"
+[ -x $B/$BENCH/audio-encoder-bench ] || { LFM3_WORKSPACE=$W bash $TH/build_audio_bench.sh $BENCH build/$S > build-bench.log 2>&1; echo "bench build exit $?"; }
 for t in vcheck-a5:lfm3_vision_check.cu:lfm3-vision-check a5-gemm:gemm_wrap_check.cu:gemm-wrap-check; do
   tag=${t%%:*}; rest=${t#*:}; srcf=${rest%%:*}; bin=${rest#*:}
-  docker run --rm --network none -v $W:/workspace $IMG bash -c "mkdir -p $C/$tag && cd $C/$tag && \
+  [ -x $B/$tag/$bin ] || docker run --rm --network none -v $W:/workspace $IMG bash -c "mkdir -p $C/$tag && cd $C/$tag && \
     nvcc -O3 --fmad=false -std=c++20 -arch=sm_110 -I $C/$S/native/include -DLFM3_NATIVE_GEMM -o $bin \
     $C/$S/native/tests/$srcf $C/$S/native/src/safetensors.cpp > build.log 2>&1; rc=\$?; chown -R 1000:1000 .; exit \$rc"
   echo "$tag build exit $?"
 done
 (cd $B && sha256sum $SP/lfm3-speech $SV/liquid-lfm3-server $SV/liquid-lfm3-worker $BENCH/audio-encoder-bench vcheck-a5/lfm3-vision-check a5-gemm/gemm-wrap-check) | tee binaries.sha256
+[ "${BUILD_ONLY:-0}" = 1 ] && { echo "BUILDS DONE $(date +%T)"; exit 0; }
 
 step "1. gemm-wrap-check"
 $X $C/a5-gemm/gemm-wrap-check > gemm-wrap.log 2>&1; echo "gemm-wrap-check exit $?: $(tail -2 gemm-wrap.log | tr '\n' ' ')"
