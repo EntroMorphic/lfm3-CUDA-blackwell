@@ -253,7 +253,7 @@ The encoder is 4.2× (35 s) and 5.0× (90 s) faster than stage 0's, but still ov
 **A diagnostic, not a rule run (`build/ttft-diag/`, `tools/profile_lfm3_audio_server.py`).** `ttft-srv` under nsys, four 90 s requests in a row. It ran beside rule 4's racecheck, so its times are not comparable.
 - Request 1's encode made 118 `cudaMalloc` calls (38.7 ms in the API) and built the doubled weights (`double_rows`, 7.2 ms).
 - Requests 2–4 made none: the server keeps the scratch, as the bench does.
-- **Found:** the server's warm-up does not run the audio encoder. The first audio request after a start pays for the encoder's construction, its allocations and the doubled weights. This is noted for the warm-up, not changed in this round.
+- **Found:** a server started without `--warmup`, as every measuring tool starts it, pays for the encoder's construction, its allocations and the doubled weights on its first audio request. *(Corrected 2026-11-21: this first read "the server's warm-up does not run the audio encoder". That is wrong: `--warmup`, which the always-on service uses, sends a 2 s audio clip (`lfm/lfm3_warmup.hpp`), so the service pays this at startup.)*
 
 ## Stage 1, amendment 4 (2026-11-21, before any data from it): rule 5b by the device stand-in
 - **The measure.** It is image-cache-v1's device stand-in: Thor's in-use memory (MemTotal − MemAvailable), less the same reading before the server started, less the server's RssAnon + RssShmem.
@@ -374,7 +374,7 @@ Kernel time per warm encode, the same in both to 0.1 ms:
   - its time to first token was 2.2 s, against 0.45 s for the next ones;
   - it pays for the encoder's construction, 118 allocations (the scratch), the doubled weights (removed by amendment 5) and first-launch costs (`cuLibraryGetKernel`).
 
-  The always-on service pays this once after every start. A warm-up audio request would move it to startup: noted for the next round, not changed here.
+  *(Corrected 2026-11-21:)* the always-on service runs `--warmup`, whose audio request already moves this to startup. Only servers started without it, as the measuring tools start them, pay it on their first request.
 
 ### A diagnostic: where the 40 ms goes (2026-11-21, quiet 08:32–08:33; `build/ttft-prof-merge/`)
 **The deployed pair, profiled the same way:**
@@ -586,6 +586,6 @@ So rules 1 and 2 carry over unchanged.
 **Open, for later rounds:**
 1. log_mel (0.171 s at 90 s; the DFT option is Tripp's call).
 2. The allocation effect: its mechanism (the memory clock needs root to read), and whether text prefills pay it.
-3. The first audio request after a start: 2.2 s (the encoder's construction and first allocations). A warm-up audio request would move it to startup.
+3. *(Withdrawn 2026-11-21:)* the first audio request after a start. The service's `--warmup` already sends an audio clip; the 2.2 s was measured on servers started without it.
 4. The encoder against rule 3: `split_rows` (4.5 ms) fused into the producers, `conv_in` and `depthwise` (6.2 ms), and the allocations (~12 ms).
 5. The wrap (c968b5d) for the vision encoder's and this encoder's `[W | W]`, if memory matters.
