@@ -444,3 +444,41 @@ nsys on four 90 s requests per server. All texts are identical. TTFT and prefill
   - The memory clock cannot be read without root (`tegrastats` omits it for a user; `/sys/kernel/debug/bpmp` is denied).
   - A probe follows (`build/alloc-probe/`): the same GEMM shape and a 512 MiB copy, after idle periods with no call, and at delays after one allocate-and-free.
 - **Wider question:** a text prompt's prefill makes no allocation calls either. If the slow state is the default, long text prefills may be paying it too. To be measured.
+
+### The allocation probe (2026-11-21, quiet 09:38–09:44; `build/alloc-probe/`, `native/tests/alloc_effect_probe.cu`): no effect in isolation
+The slowed GEMM's shape alone (M 1,149, N 7,680, K 2,048) and a 512 MiB device copy, in a fresh process. The GPU sat idle 5 s between readings. There were two rounds each in the container and on the host.
+- The GEMM's median was 0.830–0.882 ms in every condition: no call, at 0–8 s after a 2 MiB `cudaMalloc` + `cudaFree`, and after `cudaFree(nullptr)`, `cudaMemGetInfo`, `cudaDeviceSynchronize`, or a kept malloc and its later free.
+- The copy ran 232–240 GB/s throughout.
+- Only the first launch after an idle period without an allocation call is about 0.07–0.1 ms slower. That is far too small to explain 40 ms.
+
+So this is not a global clock or bandwidth state that an allocation call raises. It appears only in the engine's own context, and its mechanism is open. Two things are ruled out:
+- the weights are read from device memory: one `cudaMalloc` payload (`src/safetensors.cpp`), not the file mapping;
+- frequency scaling: the GPU clock is pinned.
+
+## Stage 1, amendment 6 (2026-11-21, before any data from it): release the scratch per clip; amendment 5 withdrawn
+**The change.**
+- The encoder frees its scratch after every clip, as the deployed encoder does. The 1 GiB keep (amendment 1, part 1) is removed.
+- Keeping cost the language model's prefill about 40 ms at 90 s by an effect not understood (above). Releasing measured fast (`release`: 0.138 s; keep: 0.178 s).
+- The cost: the encoder's `cudaMalloc` and `cudaFree` calls per clip, about 10 ms at 90 s by the earlier nsys reading.
+- The doubled weights stay (built once, kept). They are 439 MiB, inside rule 5b's 1 GiB on their own.
+
+**Amendment 5 is withdrawn.** Its purpose was rule 5b, which releasing meets without it. Withdrawing it also leaves the language model's GEMM untouched.
+- The wrap and its check stay in history (c968b5d) for a later round, the vision encoder's `[W | W]` included.
+- Its one result: `gemm-wrap-check` 154 of 154 identical.
+
+**The engine is then 6ec2358's, except that the scratch is freed after every clip.** That changes no arithmetic.
+
+**Rules (all gated):**
+1. **Byte-identical to the build that passed rules 1, 2 and 4.** The default (x2) `lfm3-speech` matches `ttft-speech-a2`'s x2 run:
+   - the 360 dumped-clip files;
+   - the 93 edge files;
+   - e2e and split, against the validated runs;
+   - the bench's `encoded_fnv1a` against rule 4's (`3b6b1d97…`, `c4399214…`).
+
+   Rules 1 and 2 carry over.
+2. **Nothing else changes:** amendment 3's exactness script on the new binaries (vision 713, TTS regression 36 SAME, fp32 mode, the concurrent engine in fp32 mode, the server checks); rule 4's four sanitizers on the bench, memcheck's leak check included; the host suites.
+3. **Rule 5b** by amendment 5's corrected measure: plain in-use after the 90 s clip, ABAB against `merge-srv`, the new mean minus `merge-srv`'s mean at most 1 GiB. Expected: about 0.45 GiB, the doubled weights.
+4. **Faster than the deployed server, one quiet window:** time to first token on the five clips, `merge-srv` against the new server ABAB, plus `ttft-srv` once as a reference.
+   - The new server's median is at most `merge-srv`'s at every clip.
+   - Reported: the saving, and the language model's prefill time from the done event.
+   - Rule 3 (the encoder at most HF's) is re-measured in the same window and recorded. It is expected to stay FAIL: the bench's encode now includes the allocations.
