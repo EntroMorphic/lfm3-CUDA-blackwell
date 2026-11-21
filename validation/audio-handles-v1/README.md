@@ -505,3 +505,37 @@ This is the second run's part A, with two changes. Both are set before any data,
 2. **One throwaway run comes first:** before round 1, a stall run of M at 8 rows is made and left out of every figure. This absorbs the first-run effect seen in both earlier runs.
 
 Everything else is the second run's: servers, clip, rows, tool, rounds, order, the per-run power check, the sampler, and the verdict rule. Part B is not repeated.
+
+### Third run of part A: results (2026-11-20, Thor, 11:09–11:50; `build/long-clip-w3/`)
+**Monitoring: CLEAN.**
+- The sampler took 2,326 samples, never more than 1.05 s apart.
+- It saw no foreign process or container, and never more than one server at a time.
+- Defunct entries (`[liquid-lfm3-ser] <defunct>`, allowed and counted) appeared in 4 samples.
+- The power state was the same before every run, the throwaway included, and at the end.
+
+**The throwaway run** (M, 8 rows, left out of every figure): "without" 0.4362 s, stall 0.1249 s. Its "without" was normal, and so were round 1's. The first-run effect did not appear this time, so whether the throwaway absorbed it is not known.
+
+| server | rows | r1 | r2 | r3 | median | spread |
+|---|---|---|---|---|---|---|
+| F audio-frontend-v1 | 8 | 0.1404 | 0.1400 | 0.1441 | 0.1404 | 0.0041 |
+| F | 16 | 0.1369 | 0.1351 | 0.1381 | 0.1369 | 0.0030 |
+| H handles | 8 | 0.1224 | 0.1224 | 0.1225 | 0.1224 | 0.0002 |
+| H | 16 | 0.1200 | 0.1180 | 0.1196 | 0.1196 | 0.0020 |
+| M merge (deployed) | 8 | 0.1233 | 0.1232 | 0.1211 | 0.1232 | 0.0021 |
+| M | 16 | 0.1167 | 0.1200 | 0.1171 | 0.1171 | 0.0033 |
+
+**H against F: no regression shown.** H is 18.0 ms lower at 8 rows and 17.3 ms lower at 16 rows. Each difference is more than 4 times the larger spread.
+
+**M against H: no regression shown** (+0.9 ms and −2.5 ms, within the spreads).
+
+### The long clip: conclusion
+| run | monitoring | H − F, 8 rows | H − F, 16 rows |
+|---|---|---|---|
+| first | between runs only | −19.3 ms | −18.6 ms |
+| second (part A) | VOID by its rule (zombies only) | −18.3 ms | −17.8 ms |
+| third | CLEAN | −18.0 ms | −17.3 ms |
+
+- **No regression:** the handles server's long-clip stall is about 18 ms *lower* than audio-frontend-v1's, in three windows, with the red-team's limits closed in the third.
+- **Explained:** the gain matches the engine thread's per-admission CPU work that the handles removed (second run, part B: 17.2 ms against 18.3 ms; the encoder's GPU time is the same).
+- **The deployed merge matches the handles server.**
+- **Rule 3 as written stays a recorded FAIL** (window 19). These runs did not re-measure its bar.
