@@ -210,3 +210,59 @@ Binaries:
 - racecheck: the short clip finished (outputs identical) but the 90 s clip did not end within the 6 h limit. I stopped it with SIGTERM, so its log has no summary.
 - A script fault: its output comparison called `compare_speech_outputs.py` with file prefixes, not directories, and printed nothing. I compared the files directly afterwards (above).
 - A harness lesson: `timeout` on `docker exec` ends the client, not the process in the container. The post-window script runs `timeout` inside the container.
+
+### Rule 3 and the quiet window (2026-11-21, Thor, quiet 06:25–06:38; `build/ttft-s1q/`)
+Binaries:
+- server `ttft-srv` `222ff9cf…`; deployed server `merge-srv` `a681eab4…`;
+- bench `ttft-bench-s1` `bbcc9573…` (6ec2358).
+
+Window checks:
+- the always-on service stopped for the window and started again at 06:38:22;
+- power state unchanged before every step and at the end; every step exited 0;
+- sampler: 724 samples; foreign processes in 0; more than one server in 0; defunct (allowed) in 1. **MONITOR: CLEAN.**
+
+**Rule 3: FAIL.** The encoder alone is not at most HF's encoder alone at 35 s or at 90 s.
+
+| clip | native encoder (bench, median of 5) | HF encoder | native ÷ HF | stage 0's native encoder |
+|---|---|---|---|---|
+| 10.4 s (reported) | 0.0083 s | 0.0112 s | 0.74 | 0.0227 s |
+| 35 s (gated) | 0.0157 s | 0.0124 s | **1.27** | 0.0663 s |
+| 90 s (gated) | 0.0330 s | 0.0279 s | **1.18** | 0.1663 s |
+
+The encoder is 4.2× (35 s) and 5.0× (90 s) faster than stage 0's, but still over HF's at both gated lengths.
+
+**Time to first token** (the server, from reading the file; runs A and D are this window's two passes; HF's is re-measured in this window; stage 0's figures come from another window, 2026-11-20):
+
+| clip | audio | server A | server D | HF | native ÷ HF | stage 0's ratio | log_mel | encoder | rest |
+|---|---|---|---|---|---|---|---|---|---|
+| short | 2.11 s | 0.0434 | 0.0434 | 0.0475 | 0.91 | 0.95 | 0.0054 | 0.0056 | 0.0324 |
+| median | 5.79 s | 0.0547 | 0.0546 | 0.0518 | 1.05 | 1.22 | 0.0111 | 0.0070 | 0.0365 |
+| typical | 10.44 s | 0.0754 | 0.0750 | 0.0600 | 1.25 | 1.47 | 0.0199 | 0.0083 | 0.0470 |
+| long | 34.95 s | 0.1834 | 0.1816 | 0.0803 | 2.27 | 2.85 | 0.0667 | 0.0157 | 0.1001 |
+| 90 s | 90.00 s | 0.4539 | 0.4533 | 0.1508 | 3.01 | 3.59 | 0.1711 | 0.0330 | 0.2495 |
+
+- Times are in seconds. log_mel and encoder are the bench's; rest = server A − log_mel − encoder. All texts are identical across passes.
+- **Noted, under diagnosis:** at 90 s, the server's time to first token fell 0.089 s from stage 0's while the bench's encoder fell 0.133 s, so rest grew from 0.2060 to 0.2495 s. At 35 s rest grew only 0.005 s.
+
+**Rule 5b as first measured (the quiet window, step E): not a valid measure; see amendment 4.**
+- `measure_lfm3_audio_memory.py` read VmRSS: `merge-srv` idle 5,439 MiB, `ttft-srv` 5,440 MiB, a difference of 0.6 MiB.
+- But VmRSS on Thor does not count GPU allocations. image-cache-v1 had recorded this; amendment 1 missed it when it chose this tool.
+  - The 5.4 GB is almost all `RssFile`, the checkpoint's mapping. The deployed service reads `RssAnon` 117 MB, `RssFile` 5,422 MB.
+  - So "0.6 MiB" says nothing about the kept scratch.
+
+**A diagnostic, not a rule run (`build/ttft-diag/`, `tools/profile_lfm3_audio_server.py`).** `ttft-srv` under nsys, four 90 s requests in a row. It ran beside rule 4's racecheck, so its times are not comparable.
+- Request 1's encode made 118 `cudaMalloc` calls (38.7 ms in the API) and built the doubled weights (`double_rows`, 7.2 ms).
+- Requests 2–4 made none: the server keeps the scratch, as the bench does.
+- **Found:** the server's warm-up does not run the audio encoder. The first audio request after a start pays for the encoder's construction, its allocations and the doubled weights. This is noted for the warm-up, not changed in this round.
+
+## Stage 1, amendment 4 (2026-11-21, before any data from it): rule 5b by the device stand-in
+- **The measure.** It is image-cache-v1's device stand-in: Thor's in-use memory (MemTotal − MemAvailable), less the same reading before the server started, less the server's RssAnon + RssShmem.
+  - Tool: `tools/measure_lfm3_audio_device_memory.py`.
+  - Each server runs alone, the deployed `merge-srv` first, then `ttft-srv`, on a quiet Thor (the window's usual checks: the service stopped, the sampler, the power state).
+  - Sequence: start (its warm-up), a reading; one short-clip request, a reading; two 90 s requests, a reading.
+  - Each reading is the median of 5 samples, 0.5 s apart, after 3 s idle.
+- **The gate, rule 5b's bound unchanged:** after the 90 s clip, `ttft-srv`'s device figure is at most 1 GiB above `merge-srv`'s.
+  - This covers everything the round keeps: the scratch (kept up to 1 GiB) and the doubled weights (kept for the process's life).
+  - The difference after the short clip is reported: roughly the doubled weights.
+- **Expected before the data, from the code:** the 90 s scratch is about 0.6–0.75 GB, and the doubled audio-encoder weights about 0.45 GB, so the total may exceed the bound.
+  - If it fails, the bound is not relaxed after the fact. A lower keep cap, or not doubling, would be a new amendment with its own run.
