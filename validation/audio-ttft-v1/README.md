@@ -482,3 +482,41 @@ So this is not a global clock or bandwidth state that an allocation call raises.
    - The new server's median is at most `merge-srv`'s at every clip.
    - Reported: the saving, and the language model's prefill time from the done event.
    - Rule 3 (the encoder at most HF's) is re-measured in the same window and recorded. It is expected to stay FAIL: the bench's encode now includes the allocations.
+
+### Amendment 6, the quiet window (2026-11-21, quiet 10:07–10:33; `build/a6-run/`)
+Binaries from 14068df (engine 2fdb883):
+- server `a6-srv` `cd66cf5d…`; `lfm3-speech` `a6-speech` `530f162d…`; bench `a6-bench` `136c24f0…`;
+- for comparison: deployed `merge-srv` `a681eab4…`, `ttft-srv` `222ff9cf…`.
+
+Window checks: the service stopped; MONITOR CLEAN (1,457 samples; foreign processes in 0; defunct, allowed, in 3); power checked before every step.
+
+**Amendment rule 4, faster than the deployed server at every clip: PASS.** Time to first token from the file, median of 5 timed passes per run, in seconds:
+
+| clip | merge A1 | a6 B1 | merge A2 | a6 B2 | ttft-srv R (scratch kept) | saved against merge | engine prefill: merge / a6 / ttft |
+|---|---|---|---|---|---|---|---|
+| short | 0.0450 | 0.0449 | 0.0454 | 0.0446 | 0.0433 | 0.0004 | 0.0373 / 0.0368 / 0.0352 |
+| median | 0.0619 | 0.0571 | 0.0625 | 0.0574 | 0.0545 | 0.0049 | 0.0457 / 0.0408 / 0.0380 |
+| typical | 0.0896 | 0.0777 | 0.0895 | 0.0776 | 0.0748 | 0.0119 | 0.0605 / 0.0486 / 0.0457 |
+| long | 0.2282 | 0.1830 | 0.2264 | 0.1817 | 0.1823 | 0.0449 | 0.1302 / 0.0854 / 0.0849 |
+| 90 s | 0.5395 | 0.4247 | 0.5435 | 0.4247 | 0.4505 | **0.1168** | 0.3060 / 0.1851 / 0.2121 |
+
+- All texts are identical across every run.
+- At 90 s, releasing beats keeping by 0.026 s: the language model's prefill is back to the deployed speed.
+- On clips up to 10 s, keeping was 2–3 ms faster (no allocations, and the slowdown is small there). Releasing is still faster than the deployed server at every clip.
+
+**Rule 3, re-measured: FAIL.** The bench's encode now includes the allocations.
+
+| clip | native encoder | HF encoder |
+|---|---|---|
+| 10.4 s (reported) | 0.0109 s | 0.0113 s |
+| 35 s (gated) | 0.0219 s | 0.0123 s |
+| 90 s (gated) | 0.0463 s | 0.0279 s |
+
+**Amendment rule 3 (rule 5b): PASS.**
+- Plain in-use after the 90 s clip: `a6-srv` 12,002 and 12,018 MiB; `merge-srv` 11,462 and 11,496 MiB.
+- Difference of the means: **531 MiB** (bound 1,024); pairs +540 and +522 MiB. Baselines 4,122–4,178 MiB.
+- That is about the doubled weights (439 MiB) plus allocation rounding.
+
+**The batch server with `LFM3_AUDIO_ENCODER=fp32` on `a6-srv`: PASS** (timing sub-checks included).
+
+The exactness script (amendment rules 1 and 2) is running (`build/a6-exact/`).
