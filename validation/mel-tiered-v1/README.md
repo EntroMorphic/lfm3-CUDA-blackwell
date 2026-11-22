@@ -79,7 +79,7 @@ F1's bound is a max-norm recurrence in A0 = max |x[n]|: 435,103 u·A0 per compon
 
 ## Rule 1 (2026-11-21): PASS on Thor and x86
 **Thor** (aarch64; `build/mel3-rule1/`, `tools/thor/mel_tiered_rule1.sh`):
-- Binaries: `audio-mel-check` from main 717cca6 `28185279…` (the reference: F2 as deployed); from this round, 9ebeeb7's tree, `9dd6e929…`.
+- Binaries: `audio-mel-check` from main 717cca6 `28185279…` (the reference: F2 as deployed); from this round, e816690's tree, `9dd6e929…`.
 - Built as the engine compiles the header: nvcc's host pass, `-O3 --fmad=false`.
 
 **x86** (the workstation; scratchpad `mel3-x86/`):
