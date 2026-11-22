@@ -20,6 +20,7 @@
 //            UTF-8 sequence either way.
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iterator>
 #include <queue>
@@ -66,8 +67,18 @@ inline bool next_code_point(std::string_view s, size_t& i, std::uint32_t& cp) {
 inline bool valid_utf8(std::string_view s) {
   size_t i = 0;
   std::uint32_t cp = 0;
-  while (i < s.size())
+  while (i < s.size()) {
+    // validation/ttft-rest-v1: ASCII 8 bytes at a time (every byte under 0x80 is one valid code point, so the result is
+    // the same); then the strict decoder from the first byte that is not
+    while (i + 8 <= s.size()) {
+      std::uint64_t w;
+      std::memcpy(&w, s.data() + i, 8);
+      if (w & 0x8080808080808080ull) break;
+      i += 8;
+    }
+    if (i >= s.size()) break;
     if (!next_code_point(s, i, cp)) return false;
+  }
   return true;
 }
 

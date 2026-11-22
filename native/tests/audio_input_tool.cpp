@@ -7,6 +7,7 @@
 //                                        the 1-thread result (validation/audio-frontend-v1); {"ok":true,"frames":T}
 #include <lfm/audio_features.hpp>
 #include <lfm/base64.hpp>
+#include <lfm/lfm3_text.hpp>
 #include <lfm/wav.hpp>
 
 #include <cstdio>
@@ -32,6 +33,50 @@ std::string escape(const std::string& s) {
   return o;
 }
 }  // namespace
+
+// validation/ttft-rest-v1: today's base64::decode and valid_utf8 before the change, verbatim, as the references the
+// new ones must equal on every input
+namespace reference {
+std::string decode_reference(std::string_view s) {
+  auto fail = []() -> std::string { throw std::invalid_argument("invalid base64"); };
+  if (s.size() % 4) return fail();
+  auto value = [](char c) -> int {
+    if (c >= 'A' && c <= 'Z') return c - 'A';
+    if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+    if (c >= '0' && c <= '9') return c - '0' + 52;
+    if (c == '+') return 62;
+    if (c == '/') return 63;
+    return -1;
+  };
+  std::string out;
+  out.reserve(s.size() / 4 * 3);
+  for (size_t i = 0; i < s.size(); i += 4) {
+    const bool last = i + 4 == s.size();
+    const int pad = last ? (s[i + 3] == '=') + (s[i + 2] == '=' && s[i + 3] == '=') : 0;
+    int v[4];
+    for (int k = 0; k < 4; ++k) {
+      if (k >= 4 - pad) { v[k] = 0; continue; }
+      v[k] = value(s[i + k]);
+      if (v[k] < 0) return fail();
+    }
+    const unsigned n = unsigned(v[0]) << 18 | unsigned(v[1]) << 12 | unsigned(v[2]) << 6 | unsigned(v[3]);
+    out += char(n >> 16);
+    if (pad < 2) out += char((n >> 8) & 255);
+    else if (n & 0xFFFF) return fail();
+    if (pad < 1) out += char(n & 255);
+    else if (n & 0xFF) return fail();
+  }
+  return out;
+}
+
+bool valid_utf8_reference(std::string_view s) {
+  size_t i = 0;
+  std::uint32_t cp = 0;
+  while (i < s.size())
+    if (!lfm::lfm3_text::next_code_point(s, i, cp)) return false;
+  return true;
+}
+}  // namespace reference
 
 int main(int argc, char** argv) try {
   if (argc < 3) throw std::runtime_error("usage: audio-input-tool wav|b64 FILE... | mel WAV OUT.f32 | mel-threads WAV");
@@ -86,6 +131,59 @@ int main(int argc, char** argv) try {
     need(wrong == 0, "concurrent handles name their own clips");
     need(cache.size() == 2, "every shared entry released (clip-a and clip-b still held)");
     std::cout << "{\"ok\":true}\n";
+    return 0;
+  }
+  if (mode == "base64-equivalence" || mode == "utf8-equivalence") {  // ttft-rest-v1 rule 1: N random strings (argv[2])
+    const long n = std::stol(argv[2]);
+    std::mt19937_64 rng(17);
+    const std::string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    long accepted = 0, refused = 0;
+    auto outcome_b64 = [](auto&& f, std::string_view s) -> std::pair<bool, std::string> {
+      try { return {true, f(s)}; } catch (const std::invalid_argument&) { return {false, {}}; }
+    };
+    for (long i = 0; i < n; ++i) {
+      std::string s;
+      if (mode == "base64-equivalence") {
+        // mostly valid encodings of random bytes, then one change: a character replaced (any byte), padding moved or
+        // added, a length off by one or two, nonzero bits under the padding
+        std::string bytes(i % 10000 == 0 ? 100000 : rng() % 40, '\0');  // every 10,000th: 100 KB, a clip's scale
+        for (auto& c : bytes) c = char(rng() & 255);
+        s = lfm::base64::encode(bytes);
+        switch (rng() % 8) {
+          case 0: break;
+          case 1: if (!s.empty()) s[rng() % s.size()] = char(rng() & 255); break;
+          case 2: if (!s.empty()) s[rng() % s.size()] = '='; break;
+          case 3: s += std::string(1 + rng() % 2, '='); break;
+          case 4: if (!s.empty()) s.pop_back(); break;
+          case 5: if (s.size() >= 2 && s.back() == '=') s[s.size() - (s[s.size() - 2] == '=' ? 3 : 2)] = alphabet[rng() % 64]; break;
+          case 6: s = std::string(rng() % 9, '=') ; break;
+          case 7: for (int k = int(rng() % 8); k > 0; --k) s += alphabet[rng() % 64]; break;
+        }
+        const auto a = outcome_b64([](std::string_view x) { return lfm::base64::decode(x); }, s);
+        const auto r = outcome_b64([](std::string_view x) { return reference::decode_reference(x); }, s);
+        if (a != r) throw std::runtime_error("base64::decode differs from the reference on string " + std::to_string(i));
+        (a.first ? accepted : refused)++;
+      } else {
+        // ASCII runs of every length around random bytes and multibyte sequences, valid and not
+        const int parts = 1 + int(rng() % 6);
+        for (int k = 0; k < parts; ++k) {
+          s += std::string(rng() % 20, char('a' + rng() % 26));
+          switch (rng() % 6) {
+            case 0: s += "\xC3\xA9"; break;              // valid 2 bytes
+            case 1: s += "\xE2\x82\xAC"; break;         // valid 3 bytes
+            case 2: s += "\xF0\x9F\x98\x80"; break;    // valid 4 bytes
+            case 3: s += char(0x80 | (rng() & 0x7F)); break;  // a stray byte at or above 0x80
+            case 4: s += "\xED\xA0\x80"; break;         // a surrogate (invalid)
+            case 5: s += char(rng() & 255); break;
+          }
+        }
+        if (rng() % 4 == 0 && !s.empty()) s.pop_back();     // a truncated tail
+        const bool a = lfm::lfm3_text::valid_utf8(s), r = reference::valid_utf8_reference(s);
+        if (a != r) throw std::runtime_error("valid_utf8 differs from the reference on string " + std::to_string(i));
+        (a ? accepted : refused)++;
+      }
+    }
+    std::cout << "{\"ok\":true,\"strings\":" << n << ",\"accepted\":" << accepted << ",\"refused\":" << refused << "}\n";
     return 0;
   }
   if (mode == "fft-bound") {  // mel-tiered-v1 amendment 1: the double FFT's per-bin error against a quad direct DFT,

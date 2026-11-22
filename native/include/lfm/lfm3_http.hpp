@@ -864,6 +864,9 @@ class Service {
     // the clips' features computed ahead (compute_audio_features), held for the engine until the request ends
     std::vector<lfm::audio_features::FeatureCache::Lease> audio_features;
     std::vector<std::pair<size_t, size_t>> audio_clips;  // each clip's (offset, length) in audio_json (encode_speech)
+    // each clip's samples as encode_speech decoded them, for compute_audio_features (validation/ttft-rest-v1: the clip
+    // decoded once, not twice); empty when the features are not computed ahead, and freed once they are
+    std::vector<std::vector<float>> audio_pcm;
     std::string audio_refs_json;  // the clips' handles, when every clip's features are held (audio-handles-v1)
     bool normalize = false;          // numbers and abbreviations in words before the split (audio mode)
     bool stream = false;             // the reply as events while the engine generates (speech_stream)
@@ -997,7 +1000,9 @@ class Service {
       lfm::audio_features::FeatureCache::Features features;
       size_t samples = 0;
       try {
-        const auto pcm = lfm3_speech::clip_from_base64(std::string(clip));
+        // the samples encode_speech decoded (the same function of the same clip); decoded here only if it kept none
+        std::vector<float> pcm = i < s.audio_pcm.size() && !s.audio_pcm[i].empty()
+                                     ? std::move(s.audio_pcm[i]) : lfm3_speech::clip_from_base64(std::string(clip));
         samples = pcm.size();
         features = std::make_shared<const std::vector<float>>(lfm::audio_features::log_mel(pcm));
       } catch (const std::exception&) {
@@ -1115,7 +1120,10 @@ class Service {
     for (const auto& m : messages)
       for (const auto& part : m.parts) {
         if (part.audio) {
-          clip_tokens.push_back(lfm::audio_features::tokens(lfm3_speech::clip_from_base64(part.data).size()));
+          auto pcm = lfm3_speech::clip_from_base64(part.data);
+          clip_tokens.push_back(lfm::audio_features::tokens(pcm.size()));
+          if (policy_.audio_features_ahead) s.audio_pcm.push_back(std::move(pcm));
+          else s.audio_pcm.emplace_back();
           s.audio_json += clip_tokens.size() > 1 ? ",\"" : "\"";
           s.audio_clips.emplace_back(s.audio_json.size(), part.data.size());  // compute_audio_features' clips
           s.audio_json += part.data;  // checked base64: no escapes

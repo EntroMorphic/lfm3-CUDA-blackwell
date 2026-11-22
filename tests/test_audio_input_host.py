@@ -254,6 +254,16 @@ def test_fft_error_bounds_hold_against_quad(tool, tmp_path, clip):
     assert d["twiddle_error_over_u"] < 24, d  # amendment 2's blanket assumption holds too
 
 
+@pytest.mark.parametrize("which", ["base64", "utf8"])
+def test_fast_paths_equal_the_originals(tool, which):
+    """validation/ttft-rest-v1 rule 1: the table base64::decode and valid_utf8's ASCII fast path against the originals
+    (kept verbatim in the tool) on a million strings: the same bytes or the same refusal, the same verdict."""
+    r = subprocess.run([*command(tool), f"{which}-equivalence", "1000000"], capture_output=True, text=True, timeout=1800)
+    assert r.returncode == 0, r.stderr
+    d = json.loads(r.stdout)
+    assert d["ok"] and d["strings"] == 1_000_000 and d["accepted"] > 1000 and d["refused"] > 1000, d
+
+
 def test_feature_cache_handles(tool):
     """validation/audio-handles-v1: a handle names its own clip, features and sample count; it lives while any lease
     holds its entry and is refused after; handles are never reused; concurrent requests (8 threads) keep their own."""
