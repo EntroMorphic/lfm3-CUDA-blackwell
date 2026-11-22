@@ -102,4 +102,32 @@ Texts are identical in every run.
 - images through the server: PASS; the image cache 24 of 24 identical;
 - TTS exit 0; text gate exit 0.
 
-The host suites are running. Rule 1's equivalence (a million strings each, three builds) passed before Thor (3d51799).
+**Host suites** (`tests` and `audit/test_host_contracts.py`, workstation): **2,590 passed, 3 skipped, 0 failed**. That is the 2,584 before, plus this stage's 6: the two equivalences in three builds.
+
+**Rule 1: PASS** (3d51799). In the plain, ASan+UBSan and TSan builds:
+- the table `base64::decode` gives the same bytes or the same refusal as the original on 1,000,000 strings;
+- the fast `valid_utf8` gives the same verdict as the original on 1,000,000 strings;
+- each run had over 1,000 strings accepted and over 1,000 refused.
+
+## Conclusion (2026-11-21)
+**Every rule passes.**
+- At 90 s, time to first token is 36 ms lower: 0.288 → 0.252 s in one window against the deployed server. At 35 s it is 15 ms lower.
+- Every output is unchanged.
+
+**What changed:**
+- the clip is decoded once, not twice;
+- `base64::decode` runs by table (it serves images as well);
+- `valid_utf8` skips ASCII 8 bytes at a time.
+
+**Where the 90 s time to first token goes now** (each part measured on its own): about 0.252 s in all.
+
+| part | time |
+|---|---|
+| language model prefill | about 0.139 s |
+| encoder | 0.046 s |
+| log_mel | 0.037 s |
+| the body's receipt, the hand-off to the engine and the first event (not split) | about 0.011 s |
+| strict_json | 0.005 s |
+| one decode | 0.002 s |
+
+HF's whole time to first token is 0.151 s (measured in an earlier window).
