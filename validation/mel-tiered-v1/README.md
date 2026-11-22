@@ -149,4 +149,38 @@ Texts are identical in every run.
 | `exact-f2` and `dft` still give their bytes | yes, at the feature level: rule 1 (F2 = main's F2, `dft` = audio-frontend-v1's bytes, all 2,672 clips) |
 | host test file `test_audio_input_host.py` (plain, ASan+UBSan, TSan) | 91 passed (F3 = F2 = F1 at 1–12 threads and from 8 callers; the second tier reached; the bounds against quad) |
 
-The full host suites are running.
+| host suites (`tests` and `audit/test_host_contracts.py`, workstation) | **2,584 passed, 3 skipped, 0 failed** (the 2,569 before, plus this round's 15) |
+
+**Rule 4: PASS.**
+
+## Rule 2's edge item (2026-11-21, quiet 19:31–19:32; `build/mel3-edge/`, `tools/thor/mel_tiered_edge.sh`)
+- Second-tier frames per edge clip: 0 on the six cuts but `cut-1681` (1); `float32` 49; `two-clips` 9 and 10; `three-clips` 8, 0, 9.
+- On `float32` (10.4 s, the most), log_mel at 4 threads: F2 0.0200 s, F3 0.0045 s, the hashes equal. The service was stopped and power unchanged.
+- None of the 12 edge clips is hard for F3 (at most 4.7% of frames). F3's worst case is a clip where most frames fall back, which costs about F2's time plus the double path's. The host test's speech-like clips exercise that path for exactness, not speed.
+
+## Conclusion (2026-11-21)
+**Every rule passes.**
+
+| rule | verdict |
+|---|---|
+| 1, byte-identical to F2 | PASS (Thor and x86, 2,672 clips, 1 and 4 threads; the bounds against quad, largest ratio 0.012) |
+| 2, speed | PASS (90 s 0.1709 → 0.0365 s; faster at every clip) |
+| 3, time to first token against the deployed server | PASS (90 s −31.7%, 35 s −27.6%, 10.4 s −20.0%, short −9.9%) |
+| 4, nothing else changes | PASS |
+
+**What ships, if merged:** F3 as the default front end.
+- The double FFT, under the smaller of two rigorous bounds (amendment 2's max-norm, and amendment 1's 2-norm with the measured twiddle error).
+- The double-double FFT for the about 6% of frames with an output the first bound cannot decide.
+- Quad as before.
+- Every feature is still correctly rounded, the same bytes as F2. `LFM3_AUDIO_FEATURES=exact-f2`, `exact-f1` and `dft` still select the others.
+
+**Where the 90 s time to first token goes now** (each part measured on its own): about 0.289 s in all.
+
+| part | time |
+|---|---|
+| language model prefill | about 0.139 s |
+| everything else (parse, transfers, sampling) | about 0.07 s |
+| encoder | 0.046 s |
+| log_mel | 0.037 s |
+
+HF's whole time to first token is 0.151 s (measured in an earlier window).
