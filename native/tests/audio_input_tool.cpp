@@ -15,6 +15,7 @@
 #include <iterator>
 #include <atomic>
 #include <optional>
+#include <cstring>
 #include <thread>
 #include <vector>
 
@@ -86,22 +87,35 @@ int main(int argc, char** argv) try {
     std::cout << "{\"ok\":true}\n";
     return 0;
   }
-  if (mode == "exact-threads") {  // amendment 2: F1 and F2 the same floats at 1 to 12 threads and from 8 callers
+  if (mode == "exact-threads") {  // amendment 2 and mel-tiered-v1: F1, F2 and F3 the same floats (bytes) at 1 to 12
+                                   // threads and from 8 callers; F3's decisions per tier reported (one run, 1 thread)
     using lfm::audio_features::Transform;
     const auto a = lfm::wav::read(argv[2]);
     const auto want = lfm::audio_features::log_mel(a.samples, 1, Transform::kExactF2);
+    const auto same = [&want](const std::vector<float>& v) {
+      return v.size() == want.size() && std::memcmp(v.data(), want.data(), v.size() * sizeof(float)) == 0;
+    };
+    auto& st = lfm::audio_features::exact_stats();
+    const unsigned long long f0 = st.fast, s0 = st.second, q0 = st.quad, u0 = st.undecided;
+    if (!same(lfm::audio_features::log_mel(a.samples, 1, Transform::kExactF3)))
+      throw std::runtime_error("F3 differs from F2");
+    const unsigned long long fast = st.fast - f0, second = st.second - s0, quad = st.quad - q0, undecided = st.undecided - u0;
     for (int t = 1; t <= 12; ++t)
-      if (lfm::audio_features::log_mel(a.samples, t, Transform::kExactF1) != want ||
-          lfm::audio_features::log_mel(a.samples, t, Transform::kExactF2) != want)
-        throw std::runtime_error("F1, F2 or the thread count changed the features");
-    std::vector<std::vector<float>> got(8);
+      for (const auto tr : {Transform::kExactF1, Transform::kExactF2, Transform::kExactF3})
+        if (!same(lfm::audio_features::log_mel(a.samples, t, tr)))
+          throw std::runtime_error("F1, F2, F3 or the thread count changed the features");
+    std::vector<std::vector<float>> got(9);
     std::vector<std::thread> callers;
     for (size_t i = 0; i < got.size(); ++i)
-      callers.emplace_back([&a, &got, i] { got[i] = lfm::audio_features::log_mel(a.samples, 4, i % 2 ? Transform::kExactF1 : Transform::kExactF2); });
+      callers.emplace_back([&a, &got, i] {
+        const Transform tr[] = {Transform::kExactF1, Transform::kExactF2, Transform::kExactF3};
+        got[i] = lfm::audio_features::log_mel(a.samples, 4, tr[i % 3]);
+      });
     for (auto& c : callers) c.join();
     for (const auto& g : got)
-      if (g != want) throw std::runtime_error("concurrent calls changed the features");
-    std::cout << "{\"ok\":true,\"frames\":" << lfm::audio_features::frames(a.samples.size()) << "}\n";
+      if (!same(g)) throw std::runtime_error("concurrent calls changed the features");
+    std::cout << "{\"ok\":true,\"frames\":" << lfm::audio_features::frames(a.samples.size()) << ",\"f3\":{\"fast\":" << fast
+              << ",\"second\":" << second << ",\"quad\":" << quad << ",\"undecided\":" << undecided << "}}\n";
     return 0;
   }
   if (mode == "mel") {

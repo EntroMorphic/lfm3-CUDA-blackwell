@@ -210,7 +210,23 @@ def test_correctly_rounded_features_agree_across_paths_and_threads(tool, tmp_pat
     q = (np.clip(0.2 * rng.standard_normal(samples), -1, 1) * 32767).astype("<i2")
     wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
     (r,) = run(tool, "exact-threads", [wav])
-    assert r["ok"]
+    assert r["ok"] and r["f3"]["undecided"] == 0
+
+
+@pytest.mark.parametrize("clip", ["quiet-noise-and-burst", "pure-tone"])
+def test_tiered_features_reach_every_tier(tool, tmp_path, clip):
+    """mel-tiered-v1: F3 equals F2 (and F1) byte for byte at 1 to 12 threads and from 8 callers, on clips where F1's
+    bound leaves outputs undecided, so F3's second tier (the frame's double-double FFT) runs: a few LSB of noise with a
+    loud burst, and a loud pure tone (its far mel bands weak against the frame's peak)."""
+    rng = np.random.default_rng(3)
+    if clip == "pure-tone":
+        q = (0.5 * 32767 * np.sin(2 * np.pi * 1000 * np.arange(32_000) / 16_000)).astype("<i2")
+    else:
+        q = rng.integers(-3, 4, 32_000).astype("<i2")
+        q[12_000:12_800] = (np.clip(0.5 * rng.standard_normal(800), -1, 1) * 32767).astype("<i2")
+    wav = write(tmp_path, f"{clip}.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
+    (r,) = run(tool, "exact-threads", [wav])
+    assert r["ok"] and r["f3"]["second"] > 0 and r["f3"]["undecided"] == 0, r
 
 
 def test_feature_cache_handles(tool):
