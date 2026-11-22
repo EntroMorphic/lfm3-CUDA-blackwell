@@ -116,26 +116,31 @@ inline int mel_threads() {
 // - kExactF1, kExactF2: amendment 2, every output correctly rounded from the exact mathematics. The fast path is the
 //   double FFT (F1) or the compensated double-double FFT (F2) under a written error bound, and the output is
 //   recomputed in quad precision wherever that bound cannot decide its rounding. F1 and F2 give the same floats.
-enum class Transform { kDft, kFft, kExactF1, kExactF2 };
-// The process's default: F2, the correctly rounded front end (amendment 2: rule 1 passed on Thor and x86; F2 the faster
-// in quiet window 3). LFM3_AUDIO_FEATURES (read once) chooses explicitly: dft (today's bytes, the fallback), fft,
-// exact-f1, exact-f2.
+// - kExactF3 (validation/mel-tiered-v1): F1's double FFT, and F2's double-double FFT only for a frame with an output
+//   F1's bound cannot decide; quad last. The same floats as F1 and F2.
+enum class Transform { kDft, kFft, kExactF1, kExactF2, kExactF3 };
+// The process's default: F3, the correctly rounded front end by tiered precision (validation/mel-tiered-v1; F2 before
+// it: audio-frontend-v1 amendment 2). LFM3_AUDIO_FEATURES (read once) chooses explicitly: dft (audio-in-v1's bytes,
+// the fallback), fft, exact-f1, exact-f2, exact-f3.
 inline Transform default_transform() {
   static const Transform t = [] {
     const char* v = std::getenv("LFM3_AUDIO_FEATURES");
     const std::string s = v ? v : "";
-    if (s.empty() || s == "exact-f2") return Transform::kExactF2;
+    if (s.empty() || s == "exact-f3") return Transform::kExactF3;
+    if (s == "exact-f2") return Transform::kExactF2;
     if (s == "dft") return Transform::kDft;
     if (s == "fft") return Transform::kFft;
     if (s == "exact-f1") return Transform::kExactF1;
-    throw std::runtime_error("LFM3_AUDIO_FEATURES: dft, fft, exact-f1 or exact-f2");
+    throw std::runtime_error("LFM3_AUDIO_FEATURES: dft, fft, exact-f1, exact-f2 or exact-f3");
   }();
   return t;
 }
-// Counts of the correctly rounded front end's outputs, process-wide: decided on the fast path, recomputed in quad, and
-// left undecided even in quad (rounded from the quad value and reported; expected never).
+// Counts of the correctly rounded front end's outputs, process-wide: decided on the fast path, decided by F3's second
+// tier (the frame's double-double FFT), recomputed in quad, and left undecided even in quad (rounded from the quad value
+// and reported; expected never).
 struct ExactStats {
-  std::atomic<uint64_t> fast{0}, quad{0}, undecided{0};
+  std::atomic<uint64_t> fast{0}, second{0}, quad{0}, undecided{0};
+  std::atomic<uint64_t> frames{0}, second_frames{0};  // frames computed; frames F3's second tier recomputed
 };
 inline ExactStats& exact_stats() {
   static ExactStats s;
@@ -197,9 +202,10 @@ inline const std::vector<double>& turn_sin() {
   }();
   return s;
 }
-// a * W^t, W = exp(-2 pi i / 400)
-inline Complex twiddle(Complex a, int t) {
-  const double c = turn_cos()[size_t(t)], s = turn_sin()[size_t(t)];
+// a * W^t, W = exp(-2 pi i / 400); the tables may be passed in (fft() hoists them; the arithmetic is the same)
+inline Complex twiddle(Complex a, int t, const double* cos_table = turn_cos().data(),
+                       const double* sin_table = turn_sin().data()) {
+  const double c = cos_table[size_t(t)], s = sin_table[size_t(t)];
   // (re + i im)(c - i s) = (re c + im s) + i (im c - re s)
   return {std::fma(a.re, c, a.im * s), std::fma(a.im, c, -(a.re * s))};
 }
@@ -213,9 +219,11 @@ inline void fft(const Complex* in, int stride, int n, Complex* out) {
   const int m = n / r;
   for (int j = 0; j < r; ++j) fft(in + size_t(j) * stride, stride * r, m, out + size_t(j) * m);
   const int unit = kFft / n;  // W_n = W^unit
+  const double* C = turn_cos().data();
+  const double* S = turn_sin().data();
   Complex t[5];
   for (int k = 0; k < m; ++k) {
-    for (int j = 0; j < r; ++j) t[j] = j == 0 || k == 0 ? out[size_t(j) * m + k] : twiddle(out[size_t(j) * m + k], j * k * unit);
+    for (int j = 0; j < r; ++j) t[j] = j == 0 || k == 0 ? out[size_t(j) * m + k] : twiddle(out[size_t(j) * m + k], j * k * unit, C, S);
     if (r == 4) {  // multiplications by -i are exact
       const Complex a0{t[0].re + t[2].re, t[0].im + t[2].im}, a1{t[0].re - t[2].re, t[0].im - t[2].im};
       const Complex b0{t[1].re + t[3].re, t[1].im + t[3].im}, b1{t[1].re - t[3].re, t[1].im - t[3].im};
@@ -228,7 +236,7 @@ inline void fft(const Complex* in, int stride, int n, Complex* out) {
         double re = t[0].re, im = t[0].im;
         for (int j = 1; j < 5; ++j) {
           const int e = (j * q % 5) * (kFft / 5);
-          const double c = turn_cos()[size_t(e)], s = turn_sin()[size_t(e)];
+          const double c = C[size_t(e)], s = S[size_t(e)];
           re = std::fma(t[j].re, c, std::fma(t[j].im, s, re));
           im = std::fma(t[j].im, c, std::fma(-t[j].re, s, im));
         }
@@ -418,6 +426,35 @@ inline double fft_error_bound(double a0, double u, double dw, double add_const =
   twiddle(), radix4();
   return e * (1 + 1e-9);
 }
+// The double table twiddles' largest error, |turn_cos/turn_sin - exact| over the 400 entries, measured against the
+// quad twiddles (a few quad ulps, covered by 2^-200) (validation/mel-tiered-v1 amendment 1)
+inline double table_twiddle_error() {
+  static const double d = [] {
+    const auto& q = quad_turn();
+    quad m = 0;
+    for (int i = 0; i < kFft; ++i)
+      for (const quad diff : {quad(turn_cos()[size_t(i)]) - q.cos[size_t(i)], quad(turn_sin()[size_t(i)]) - q.sin[size_t(i)]})
+        m = std::max(m, diff < 0 ? -diff : diff);
+    return double(m + quad(0x1p-200)) * (1 + 0x1p-50);  // rounded up past the conversion
+  }();
+  return d;
+}
+// The 2-norm bound (validation/mel-tiered-v1 amendment 1) on the double FFT's error, every bin's complex error at most
+// it, from n0 >= ||x||_2: levels n = 5, 25, 100, 400 (radices 5, 5, 4, 4); E' = sqrt(r) (E + kappa V) + b_r (1 + kappa) V
+// with V = sqrt(n_prev) n0 + E; the first level has no twiddles.
+inline double fft_error_bound_l2(double n0) {
+  const double u = kU, dw = table_twiddle_error();
+  const auto gamma = [u](int k) { return k * u / (1 - k * u); };
+  const double kappa = 2 * (dw + u * (1 + dw) + u * (1 + dw) * (1 + u));
+  const double b4 = 8 * gamma(2), b5 = 10 * (gamma(8) * (1 + dw) + dw);
+  double E = b5 * n0;  // level 1: n = 5 from length-1 copies, no twiddles
+  const struct { int r, n_prev; } levels[] = {{5, 5}, {4, 25}, {4, 100}};
+  for (const auto& l : levels) {
+    const double V = std::sqrt(double(l.n_prev)) * n0 + E;
+    E = std::sqrt(double(l.r)) * (E + kappa * V) + (l.r == 4 ? b4 : b5) * (1 + kappa) * V;
+  }
+  return E * (1 + 1e-9);
+}
 // Each mel filter's nonzero taps, ascending: the exact sums (zero taps add exactly nothing)
 struct MelTaps {
   std::vector<int> k0, k1;  // [k0, k1) per mel
@@ -538,69 +575,102 @@ inline float quad_output(const double* x, int mel) {
   else exact_stats().undecided.fetch_add(1, std::memory_order_relaxed);
   return out;
 }
-// Frames [t0, t1) of the padded clip x into out, correctly rounded (F1: double FFT; F2: double-double FFT)
-inline void exact_frames(const float* x, size_t T, size_t t0, size_t t1, float* out, bool compensated) {
-  const auto& w = window();
-  const auto& filters = mel_filters();
-  const auto& taps = mel_taps();
+// One frame's spectrum under a tier's bound (amendment 2): each bin's power (rounded to double) and a bound dpower on
+// |power - exact|. F1: the double FFT (`compensated` false); F2: the double-double FFT. `l2` (F3's first tier,
+// mel-tiered-v1 amendment 1): the double FFT's bound is the smaller of amendment 2's and the 2-norm bound.
+inline void frame_power(const double* frame, double a0, bool compensated, double* power, double* dpower,
+                        bool l2 = false) {
   // the bound's twiddle errors: the double table within 24 u of exact (amendment 2); the double-double table, from
   // the quad series, within 2^-104
   const double dw = compensated ? 0x1p-104 : 24 * kU;
   const double u = compensated ? kUdd : kU;
-  double frame[kFft], re[kBins], im[kBins], power[kBins], dpower[kBins];
-  Complex zin[kFft], zout[kFft];
-  ComplexDD din[kFft], dout[kFft];
-  uint64_t fast = 0;
+  double e = compensated ? fft_error_bound(a0, u, dw, 4.0, 10.0, 100.0) : fft_error_bound(a0, u, dw);
+  if (l2 && !compensated) {
+    double ss = 0;
+    for (int n = 0; n < kFft; ++n) ss = std::fma(frame[n], frame[n], ss);
+    e = std::min(e, fft_error_bound_l2(std::sqrt(ss) * (1 + 1e-9)));
+  }
+  double re[kBins], im[kBins];
+  if (compensated) {
+    ComplexDD din[kFft], dout[kFft];
+    for (int n = 0; n < kFft; ++n) din[n] = {{frame[n], 0.0}, {0.0, 0.0}};
+    fft_dd(din, 1, kFft, dout);
+    for (int k = 0; k < kBins; ++k) {
+      const DD p = dout[k].re * dout[k].re + dout[k].im * dout[k].im;
+      power[k] = p.hi + p.lo;  // rounded to double
+      re[k] = dout[k].re.hi, im[k] = dout[k].im.hi;
+    }
+  } else {
+    Complex zin[kFft], zout[kFft];
+    for (int n = 0; n < kFft; ++n) zin[n] = {frame[n], 0.0};
+    fft(zin, 1, kFft, zout);
+    for (int k = 0; k < kBins; ++k) {
+      re[k] = zout[k].re, im[k] = zout[k].im;
+      power[k] = std::fma(re[k], re[k], im[k] * im[k]);
+    }
+  }
+  for (int k = 0; k < kBins; ++k)  // |P^ - P| (amendment 2), with margin for the double-double rounding
+    dpower[k] = (e * (2 * (std::fabs(re[k]) + std::fabs(im[k])) + 4 * e) + 2.02 * kU * power[k]) * (1 + 1e-9);
+}
+// Mel `m`'s output from a frame's power and bound: true and `out` set when the bound decides its rounding
+inline bool mel_output(const double* power, const double* dpower, int m, float& out,
+                       const std::vector<float>& filters = mel_filters(), const MelTaps& taps = mel_taps()) {
+  double sum = 0, bound = 0;
+  int n_taps = 0;
+  for (int k = taps.k0[size_t(m)]; k < taps.k1[size_t(m)]; ++k) {
+    const double fk = double(filters[size_t(k) * kMels + m]);
+    if (fk == 0) continue;
+    sum = std::fma(fk, power[k], sum);
+    bound = std::fma(fk, dpower[k], bound);
+    ++n_taps;
+  }
+  bound = bound * (1 + 1e-9) + (n_taps + 1) * 1.01 * kU * sum;
+  return output_from_mel_double(sum, bound, out);
+}
+// Frames [t0, t1) of the padded clip x into out, correctly rounded. F1: the double FFT, quad where its bound cannot
+// decide; F2: the double-double FFT, likewise. F3 (validation/mel-tiered-v1, `tiered`): the double FFT; where its
+// bound cannot decide an output, the double-double FFT of that frame (computed once per frame) under F2's bound; quad
+// last. Every output is the correctly rounded value of the same exact mathematics, so all three give the same floats.
+inline void exact_frames(const float* x, size_t T, size_t t0, size_t t1, float* out, bool compensated,
+                         bool tiered = false) {
+  const auto& w = window();
+  const auto& filters = mel_filters();
+  const auto& taps = mel_taps();
+  double frame[kFft], power[kBins], dpower[kBins], power_dd[kBins], dpower_dd[kBins];
+  uint64_t fast = 0, second = 0, second_frames = 0;
   for (size_t t = t0; t < t1; ++t) {
     double a0 = 0;
     for (int n = 0; n < kFft; ++n) {
       frame[n] = double(x[t * kHop + n] * w[n]);
       a0 = std::max(a0, std::fabs(frame[n]));
     }
-    const double e = compensated ? fft_error_bound(a0, u, dw, 4.0, 10.0, 100.0) : fft_error_bound(a0, u, dw);
-    if (compensated) {
-      for (int n = 0; n < kFft; ++n) din[n] = {{frame[n], 0.0}, {0.0, 0.0}};
-      fft_dd(din, 1, kFft, dout);
-      for (int k = 0; k < kBins; ++k) {
-        const DD p = dout[k].re * dout[k].re + dout[k].im * dout[k].im;
-        power[k] = p.hi + p.lo;  // rounded to double
-        re[k] = dout[k].re.hi, im[k] = dout[k].im.hi;
-      }
-    } else {
-      for (int n = 0; n < kFft; ++n) zin[n] = {frame[n], 0.0};
-      fft(zin, 1, kFft, zout);
-      for (int k = 0; k < kBins; ++k) {
-        re[k] = zout[k].re, im[k] = zout[k].im;
-        power[k] = std::fma(re[k], re[k], im[k] * im[k]);
-      }
-    }
-    for (int k = 0; k < kBins; ++k)  // |P^ - P| (amendment 2), with margin for the double-double rounding
-      dpower[k] = (e * (2 * (std::fabs(re[k]) + std::fabs(im[k])) + 4 * e) + 2.02 * kU * power[k]) * (1 + 1e-9);
+    frame_power(frame, a0, compensated && !tiered, power, dpower, tiered);
+    bool have_dd = false;
     for (int m = 0; m < kMels; ++m) {
-      double sum = 0, bound = 0;
-      int n_taps = 0;
-      for (int k = taps.k0[size_t(m)]; k < taps.k1[size_t(m)]; ++k) {
-        const double fk = double(filters[size_t(k) * kMels + m]);
-        if (fk == 0) continue;
-        sum = std::fma(fk, power[k], sum);
-        bound = std::fma(fk, dpower[k], bound);
-        ++n_taps;
-      }
-      bound = bound * (1 + 1e-9) + (n_taps + 1) * 1.01 * kU * sum;
       float v;
-      if (output_from_mel_double(sum, bound, v)) ++fast;
-      else v = quad_output(frame, m);
+      if (mel_output(power, dpower, m, v, filters, taps)) {
+        ++fast;
+      } else if (tiered) {
+        if (!have_dd) frame_power(frame, a0, true, power_dd, dpower_dd), have_dd = true, ++second_frames;
+        if (mel_output(power_dd, dpower_dd, m, v, filters, taps)) ++second;
+        else v = quad_output(frame, m);
+      } else {
+        v = quad_output(frame, m);
+      }
       out[size_t(m) * T + t] = v;
     }
   }
   exact_stats().fast.fetch_add(fast, std::memory_order_relaxed);
+  exact_stats().second.fetch_add(second, std::memory_order_relaxed);
+  exact_stats().frames.fetch_add(t1 - t0, std::memory_order_relaxed);
+  exact_stats().second_frames.fetch_add(second_frames, std::memory_order_relaxed);
 }
 // Frames [t0, t1) of the padded clip x into out ([128][T]).
 // kDft: kBlock frames share one pass over the basis; for each (frame, bin) the sum runs over n in ascending order, as
 // the original's. kFft: each frame by fft(). Then, the same for both: the power, the mel sums and the log.
 inline void log_mel_frames(const float* x, size_t T, size_t t0, size_t t1, float* out, Transform transform) {
-  if (transform == Transform::kExactF1 || transform == Transform::kExactF2)
-    return exact_frames(x, T, t0, t1, out, transform == Transform::kExactF2);
+  if (transform == Transform::kExactF1 || transform == Transform::kExactF2 || transform == Transform::kExactF3)
+    return exact_frames(x, T, t0, t1, out, transform == Transform::kExactF2, transform == Transform::kExactF3);
   constexpr int kBlock = 4;
   const auto& w = window();
   const auto& b = basis();
@@ -660,8 +730,9 @@ inline std::vector<float> log_mel(const std::vector<float>& samples, int threads
   std::copy(samples.begin(), samples.end(), x.begin());
   // every table built before any worker starts
   (void)detail::window(), (void)detail::basis(), (void)detail::turn_cos(), (void)detail::turn_sin(), (void)mel_filters();
-  if (transform == Transform::kExactF1 || transform == Transform::kExactF2)
+  if (transform == Transform::kExactF1 || transform == Transform::kExactF2 || transform == Transform::kExactF3)
     (void)detail::quad_turn(), (void)detail::dd_turn(), (void)detail::mel_taps(), (void)detail::quad_ln10();
+  if (transform == Transform::kExactF3) (void)detail::table_twiddle_error();
   std::vector<float> out(size_t(kMels) * T);
   const size_t n = std::max<size_t>(1, std::min<size_t>(size_t(threads), T / 64));
   const size_t per = (T + n - 1) / n;

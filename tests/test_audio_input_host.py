@@ -210,7 +210,48 @@ def test_correctly_rounded_features_agree_across_paths_and_threads(tool, tmp_pat
     q = (np.clip(0.2 * rng.standard_normal(samples), -1, 1) * 32767).astype("<i2")
     wav = write(tmp_path, "clip.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
     (r,) = run(tool, "exact-threads", [wav])
-    assert r["ok"]
+    assert r["ok"] and r["f3"]["undecided"] == 0
+
+
+@pytest.mark.parametrize("seed", [1, 2])
+def test_tiered_features_reach_every_tier(tool, tmp_path, seed):
+    """mel-tiered-v1: F3 equals F2 (and F1) byte for byte at 1 to 12 threads and from 8 callers, on a 10 s clip whose
+    spectrum falls like speech's (harmonics 12 dB weaker per octave, voiced bursts and gaps, a little noise), where the
+    first tier leaves outputs undecided (mostly those near a float32 rounding midpoint), so the second tier (the
+    frame's double-double FFT) runs."""
+    rng = np.random.default_rng(seed)
+    n = 160_000
+    t = np.arange(n) / 16_000
+    x = np.zeros(n)
+    for f, a in ((150, 1.0), (300, 0.5), (600, 0.25), (1200, 0.06), (2400, 0.015), (4800, 0.004)):
+        x += a * np.sin(2 * np.pi * f * t + rng.uniform(0, 6.28))
+    env = (np.sin(2 * np.pi * 2.5 * t) > 0).astype(float)
+    q = (np.clip(0.3 * x * env, -1, 1) * 32767 + rng.integers(-2, 3, n)).astype("<i2")
+    wav = write(tmp_path, f"tilt-{seed}.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
+    (r,) = run(tool, "exact-threads", [wav])
+    assert r["ok"] and r["f3"]["second"] > 0 and r["f3"]["undecided"] == 0, r
+
+
+@pytest.mark.parametrize("clip", ["speech-like-noise", "pure-tone", "quiet-noise-and-burst"])
+def test_fft_error_bounds_hold_against_quad(tool, tmp_path, clip):
+    """mel-tiered-v1 amendment 1: the double FFT's per-bin error, against a quad direct DFT, is within both written
+    bounds (amendment 2's max-norm per component; the 2-norm bound on the complex error), on every bin of every frame
+    of the clip and of four adversarial frames (an impulse, a full-scale square wave, full-scale noise, near-silence);
+    and the 2-norm bound is the tighter on ordinary frames."""
+    rng = np.random.default_rng(9)
+    if clip == "pure-tone":
+        q = (0.5 * 32767 * np.sin(2 * np.pi * 1000 * np.arange(8_000) / 16_000)).astype("<i2")
+    elif clip == "speech-like-noise":
+        q = (np.clip(0.2 * rng.standard_normal(8_000), -1, 1) * 32767).astype("<i2")
+    else:
+        q = rng.integers(-3, 4, 8_000).astype("<i2")
+        q[3_000:3_800] = (np.clip(0.5 * rng.standard_normal(800), -1, 1) * 32767).astype("<i2")
+    wav = write(tmp_path, f"{clip}.wav", riff([fmt(), (b"data", q.tobytes(), None)]))
+    r = subprocess.run([*command(tool), "fft-bound", str(wav), "40"], capture_output=True, text=True, timeout=600)
+    assert r.returncode == 0, r.stderr
+    d = json.loads(r.stdout)
+    assert d["frames"] >= 40 and 0 < d["worst_over_l2_bound"] < 1 and 0 < d["worst_over_max_bound"] < 1, d
+    assert d["twiddle_error_over_u"] < 24, d  # amendment 2's blanket assumption holds too
 
 
 def test_feature_cache_handles(tool):
