@@ -104,3 +104,49 @@ F1's bound is a max-norm recurrence in A0 = max |x[n]|: 435,103 u·A0 per compon
   The 2-norm bound is still 80× conservative on real frames, yet it holds everywhere.
   - The host test adds an impulse, a full-scale square wave, full-scale noise and near-silence: all under 1.
 - **The table twiddles' measured error: 8.9u**, under amendment 2's assumed 24u. The bound uses the measured value.
+
+## Rules 2 and 3 (2026-11-21, Thor, quiet 19:02–19:04; `build/mel3-run/`, `tools/thor/mel_tiered_run.sh`)
+Binaries from e816690's tree:
+- bench `mel3-bench` `bd90eace…`; server `mel3-srv` `658cd733…`; `lfm3-speech` `mel3-speech` `d9407b6a…`;
+- deployed, for comparison: `merge2-srv` `4025f693…`.
+
+Window checks: the service stopped; MONITOR CLEAN (99 samples, foreign processes in 0); power checked before every step.
+
+**Rule 2: PASS.** log_mel alone, `audio-encoder-bench`, median of 5, in seconds:
+
+| clip | F2, 4 threads | F3, 4 threads | F3, 1 thread (reported) | mel hashes F2 = F3 |
+|---|---|---|---|---|
+| 2.1 s | 0.0054 | 0.0012 | 0.0033 | yes |
+| 5.8 s | 0.0111 | 0.0027 | 0.0092 | yes |
+| 10.4 s | 0.0199 | 0.0045 | 0.0165 | yes |
+| 35 s | 0.0666 | 0.0162 | 0.0607 | yes |
+| 90 s | 0.1709 | **0.0365** (bound 0.060) | 0.1431 | yes |
+
+F3 is 4.1–4.7× faster than F2 at every clip.
+- **A defect:** the runner was to time the edge clip with the most second-tier frames too. It read rule 1's edge list before rule 1 had written it (the two ran in parallel), found no clips, and timed none. This reported item runs again in its own quiet window (`build/mel3-edge/`).
+
+**Rule 3: PASS.** Time to first token from the file, the deployed server (F2) against this round's (F3), ABAB, in seconds:
+
+| clip | deployed A1 | F3 B1 | deployed A2 | F3 B2 | saved | change |
+|---|---|---|---|---|---|---|
+| 2.1 s | 0.0446 | 0.0404 | 0.0446 | 0.0400 | 0.0044 | −9.9% |
+| 5.8 s | 0.0570 | 0.0490 | 0.0577 | 0.0490 | 0.0084 | −14.6% |
+| 10.4 s | 0.0779 | 0.0625 | 0.0779 | 0.0622 | 0.0156 | −20.0% |
+| 35 s | 0.1807 | 0.1313 | 0.1824 | 0.1315 | 0.0502 | −27.6% |
+| 90 s | 0.4220 | 0.2883 | 0.4241 | 0.2890 | 0.1343 | **−31.7%** |
+
+Texts are identical in every run.
+
+## Rule 4 (2026-11-21, 19:04–19:16, not timed)
+| check | result |
+|---|---|
+| `lfm3-speech` TTS regression | 36 SAME, 0 differ or failed |
+| rule-6 audio-in files against amendment 6's (`a6-speech-rule6`) | dump 360 of 360, edge 93 of 93; none missing or extra |
+| e2e and split, against the validated runs | 90 of 90 and 90 of 90 |
+| server: audio in against `mel3-speech` | PASS (repeat identical, text control identical) |
+| server: 8 and 32 at once | 8 of 8 and 32 of 32 identical to `lfm3-speech`; PASS |
+| text gate | exit 0 |
+| `exact-f2` and `dft` still give their bytes | yes, at the feature level: rule 1 (F2 = main's F2, `dft` = audio-frontend-v1's bytes, all 2,672 clips) |
+| host test file `test_audio_input_host.py` (plain, ASan+UBSan, TSan) | 91 passed (F3 = F2 = F1 at 1–12 threads and from 8 callers; the second tier reached; the bounds against quad) |
+
+The full host suites are running.
