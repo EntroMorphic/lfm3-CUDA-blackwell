@@ -98,7 +98,10 @@ bool aligned(const void* q) { return reinterpret_cast<std::uintptr_t>(q) % 16 ==
 }  // namespace
 
 bool eligible(const Problem& p) {
-  return p.b_k_contiguous && p.batch == 1 && p.group == 1 && p.m >= kMinRows && p.n % tc05::kBN == 0 &&
+  // N >= 2 x kBN (validation/tcgen05-v2 amendment 2): with one 256-wide output tile per row block tcgen05 leaves most
+  // SMs idle and lost to mma.sync (the audio downsampler's N = 256 multiplies, 0.73-0.82x); every N >= 512 won
+  return p.b_k_contiguous && p.batch == 1 && p.group == 1 && p.m >= kMinRows && p.n >= 2 * tc05::kBN &&
+         p.n % tc05::kBN == 0 &&
          p.k % tc05::kBK == 0 && p.k >= tc05::kBK && p.lda == p.k && p.ldb == p.k && p.ldc == p.n && aligned(p.a) &&
          aligned(p.b) && aligned(p.c_f32 ? static_cast<const void*>(p.c_f32) : static_cast<const void*>(p.c));
 }

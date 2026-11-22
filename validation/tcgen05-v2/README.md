@@ -157,3 +157,45 @@ Seconds; texts identical in every run. The launch check is valid (464 kernels on
 - **So the short clips' 0.1–0.4 ms is a real, small regression,** not noise. With N = 256, tcgen05 has one output tile per 128-row block and leaves most of Thor's SMs idle, where mma.sync spreads the same work over many small tiles.
   - The encoder bench in the quiet window agrees: 5.8 s clip 0.0082 s OFF against 0.0088 s ON.
 - The option stays OFF. The fix is the dispatch: tcgen05 only where it is faster (amendment 2, next).
+
+## The speed map (2026-11-22, quiet 16:25–16:35; development evidence; `build/tc2-speedmap/`, `native/tests/lfm3_tcgen05_gemm_speed.cu`)
+Each engine GEMM shape at each M ≥ 257, `lfm::gemm::run` with tcgen05 on and off, the median of 15 runs (CUDA events). The service was stopped and power unchanged. Off time ÷ on time (above 1: tcgen05 faster):
+
+| shape | N | K | M = 257 … 4,096 (or the downsampler's rows) |
+|---|---|---|---|
+| lm.in_proj | 6,144 | 2,048 | 2.94, 2.80, 3.37, 2.23, 2.21, 2.51, 2.83 |
+| lm.q_o | 2,048 | 2,048 | 2.59, 2.34, 2.86, 3.10, 3.25, 3.32, 2.38 |
+| lm.kv | 512 | 2,048 | 1.60, 1.59, 1.58, 2.54, 2.21, 2.83, 3.10 |
+| lm.w1w3 | 7,680 | 2,048 | 2.18, 1.66, 1.77, 2.36, 2.40, 2.66, 2.92 |
+| lm.w2 | 2,048 | 7,680 | 2.53, 2.34, 3.20, 2.12, 3.47, 1.83, 1.81 |
+| v.patchifier | 1,024 | 3,072 | 2.41, 2.43, 2.39, 2.77, 2.66, 2.94, 2.60 |
+| v.in_proj | 3,072 | 2,048 | 2.35, 1.92, 2.21, 2.61, 2.57, 1.99, 2.14 |
+| v.q_out | 1,024 | 2,048 | 2.02, 2.06, 2.09, 2.34, 2.30, 2.59, 2.41 |
+| v.kv | 512 | 2,048 | 1.26, 1.26, 1.26, 2.09, 1.96, 2.37, 2.61 |
+| v.w1w3 | 2,560 | 2,048 | 2.00, 1.99, 2.18, 2.42, 2.42, 2.20, 1.99 |
+| v.w2 | 1,024 | 5,120 | 2.91, 2.92, 2.93, 3.12, 3.08, 2.09, 1.62 |
+| v.proj1 | 4,096 | 8,192 | 2.08, 1.82, 2.20, 2.38, 4.41, 2.55, 2.36 |
+| v.proj2 | 2,048 | 8,192 | 1.96, 1.78, 1.81, 1.39, 2.90, 1.37, 1.45 |
+| **a.lin_mid** (the downsampler's 1×1 convolutions) | **256** | 512 | M = 257, 512, 1,024: **0.73, 0.76, 0.76**; 1,700, 4,096, 8,192: 1.22, 1.20; 16,384: 1.06; 36,000, 72,000: **0.82, 0.82** |
+| a.attn | 768 | 1,536 | 1.18, 1.20, 1.82, 1.73, 1.66, 1.81, 2.13 |
+| a.conv_in | 1,536 | 1,536 | 1.56, 1.23, 1.73, 1.83, 2.07, 2.16, 2.29 |
+| a.w1w3 | 1,792 | 1,536 | 2.22, 1.79, 1.72, 2.15, 2.05, 2.22, 2.31 |
+| a.w2 | 768 | 3,584 | 1.62, 1.63, 2.56, 2.36, 2.30, 2.62, 2.37 |
+| a.lin_out | 768 | 8,192 | 2.04, 2.01, 3.40, 2.84, 2.76, 1.31, 1.32 |
+| a.proj1 | 2,048 | 1,536 | 2.17, 1.71, 2.02, 2.23, 2.16, 2.12, 2.26 |
+| a.proj2 | 2,048 | 4,096 | 2.49, 2.44, 3.02, 3.11, 2.32, 2.17, 2.49 |
+
+**Every shape with N ≥ 512 is faster on tcgen05 at every M tested** (1.18× to 4.41×). Only N = 256 loses, at small and very large M, which is what the short clips hit.
+
+## Amendment 2 (2026-11-22, before any data from it): tcgen05 only for N ≥ 512
+**The change.** `tcgen05::eligible` adds one condition: `p.n >= 2 * kBN` (512), at least two of tcgen05's 256-wide output tiles. Everything else stays as it is (M ≥ 257, the contract).
+- The downsampler's N = 256 multiplies go back to mma.sync. The result is bitwise identical either way (rule 1).
+- On this evidence no engine shape with N ≥ 512 loses. The narrow middle range where N = 256 wins (1.2×, about 1,700–8,000 rows) is given up for a simple rule.
+
+**What is run again, on the new build:**
+- **Rules 1–3:** the exactness script. The entry-point check now also covers `a.lin_mid` (256 × 512) and expects tcgen05 only where M ≥ 257 and N ≥ 512.
+- **Rule 5, fresh:** text prefill and audio time to first token, under amendment 1's per-clip rule. Clips with 0 tcgen05 launches (by the trace) may be up to 1% over OFF; the others must be at most OFF. Now the short clips are expected to launch none.
+
+**Not run again: rule 4b.** Its pass stands. The change only narrows which problems take the tcgen05 path that rule 4b soaked for an hour on each side; it adds no path and no new state.
+
+If rules 1–3 and 5 pass, the option goes ON by default.

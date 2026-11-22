@@ -79,7 +79,9 @@ static const Shape kShapes[] = {
     // out), which audio-ttft-v1 added after tcgen05-gemm-v1 (N tokens >= 257 from a clip of about 20.5 s)
     {"a.attn", 768, 1536, true},        {"a.conv_in", 1536, 1536, true}, {"a.w1w3", 1792, 1536, true},
     {"a.w2", 768, 3584, true},          {"a.lin_out", 768, 8192, true},  {"a.proj1", 2048, 1536, true},
-    {"a.proj2", 2048, 4096, true}};
+    {"a.proj2", 2048, 4096, true},
+    // the downsampler's 1x1 convolutions (N 256): outside the contract since amendment 2 (N >= 512), so mma.sync
+    {"a.lin_mid", 256, 512, true}};
 
 static std::vector<std::string> split_list(const std::string& s) {
   std::vector<std::string> v;
@@ -164,7 +166,7 @@ int main(int argc, char** argv) try {
           char head[256];
           std::snprintf(head, sizeof head, "{\"case\":\"engine\",\"data\":\"%s\",\"shape\":\"%s\",\"m\":%d,\"n\":%d,\"k\":%d,\"out\":\"%s\"",
                         kind.c_str(), s.name, M, s.n, s.k, out16 ? "bf16" : "f32");
-          report(head, o, M >= 257 ? 1 : 0);
+          report(head, o, M >= 257 && s.n >= 512 ? 1 : 0);  // the contract: M >= 257, N >= 512 (amendment 2)
         }
       }
     }
