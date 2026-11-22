@@ -1,0 +1,6 @@
+{"unit":"tma_sw128","y0":0,"rows_in_tensor":128,"mismatches":0,"pass":true}
+{"unit":"tma_sw128","y0":128,"rows_in_tensor":72,"mismatches":0,"pass":true}
+{"unit":"mma_128x256","k":16,"idesc":"0x08400490","mismatches":0,"first":"","pass":true}
+{"unit":"mma_128x256","k":64,"idesc":"0x08400490","mismatches":0,"first":"","pass":true}
+{"unit":"mma_2cta_256x256","k":16,"idesc":"0x10400490","mismatches":0,"first":"","pass":true}
+{"unit":"mma_2cta_256x256","k":64,"idesc":"0x10400490","mismatches":0,"first":"","pass":true}

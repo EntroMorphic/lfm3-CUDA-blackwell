@@ -1,0 +1,8 @@
+========= COMPUTE-SANITIZER
+========= Leaked 4 bytes at 0x208400000
+=========     Saved host backtrace up to driver entry point at allocation time
+=========         Host Frame: cudaHostAlloc [0x680a7] in tcgen05-gemm-probe
+=========         Host Frame: main [0xd173] in tcgen05-gemm-probe
+========= 
+========= LEAK SUMMARY: 4 bytes leaked in 1 allocations
+========= ERROR SUMMARY: 1 error

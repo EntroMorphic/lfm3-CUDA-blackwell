@@ -433,9 +433,24 @@ inline void check(const Problem& p) {
   if (!p.b_k_contiguous && (p.b_rows < 0 || p.b_rows > p.k || p.n % 8)) throw std::runtime_error("gemm: invalid K x N operand");
 }
 
+#ifdef LFM_GEMM_TCGEN05
+// The tcgen05 path (native/src/gemm_tcgen05.cu, sm_110a; validation/tcgen05-gemm-v1): try_run launches V3 and returns
+// true for a problem inside its contract (M >= 257, B stored N x K, batch 1, N % 256, K % 64, dense, aligned) on a
+// device where it is available; otherwise false, and the caller runs its usual kernel. Bitwise identical results.
+namespace tcgen05 {
+bool eligible(const Problem& p);
+bool try_run(const Problem& p, cudaStream_t stream);
+void set_enabled(bool on);            // tests and A/B; LFM3_TCGEN05=0 sets it off at start
+unsigned long long launch_count();    // tcgen05 launches so far (tests)
+}  // namespace tcgen05
+#endif
+
 // The engine's GEMM: thin (M <= 8, B stored N x K), split-K (M <= 8, B stored K x N) or wide.
 inline void run(const Problem& p, cudaStream_t stream = 0) {
   check(p);
+#ifdef LFM_GEMM_TCGEN05
+  if (p.m >= 257 && tcgen05::try_run(p, stream)) return;
+#endif
   if (p.b_k_contiguous && p.m <= 8 && p.k == 128) {
     switch (p.m) {
       case 1: detail::launch_thin_k128<1>(p, stream); return;
