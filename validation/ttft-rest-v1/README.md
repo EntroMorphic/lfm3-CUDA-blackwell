@@ -129,5 +129,6 @@ Texts are identical in every run.
 | the body's receipt, the hand-off to the engine and the first event (not split) | about 0.011 s |
 | strict_json | 0.005 s |
 | one decode | 0.002 s |
+| the client's own base64 and JSON (time to first token is counted from reading the file) | about 0.010 s |
 
 HF's whole time to first token is 0.151 s (measured in an earlier window).
