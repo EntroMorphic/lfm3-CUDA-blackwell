@@ -140,6 +140,7 @@ inline Transform default_transform() {
 // and reported; expected never).
 struct ExactStats {
   std::atomic<uint64_t> fast{0}, second{0}, quad{0}, undecided{0};
+  std::atomic<uint64_t> frames{0}, second_frames{0};  // frames computed; frames F3's second tier recomputed
 };
 inline ExactStats& exact_stats() {
   static ExactStats s;
@@ -422,6 +423,35 @@ inline double fft_error_bound(double a0, double u, double dw, double add_const =
   twiddle(), radix4();
   return e * (1 + 1e-9);
 }
+// The double table twiddles' largest error, |turn_cos/turn_sin - exact| over the 400 entries, measured against the
+// quad twiddles (a few quad ulps, covered by 2^-200) (validation/mel-tiered-v1 amendment 1)
+inline double table_twiddle_error() {
+  static const double d = [] {
+    const auto& q = quad_turn();
+    quad m = 0;
+    for (int i = 0; i < kFft; ++i)
+      for (const quad diff : {quad(turn_cos()[size_t(i)]) - q.cos[size_t(i)], quad(turn_sin()[size_t(i)]) - q.sin[size_t(i)]})
+        m = std::max(m, diff < 0 ? -diff : diff);
+    return double(m + quad(0x1p-200)) * (1 + 0x1p-50);  // rounded up past the conversion
+  }();
+  return d;
+}
+// The 2-norm bound (validation/mel-tiered-v1 amendment 1) on the double FFT's error, every bin's complex error at most
+// it, from n0 >= ||x||_2: levels n = 5, 25, 100, 400 (radices 5, 5, 4, 4); E' = sqrt(r) (E + kappa V) + b_r (1 + kappa) V
+// with V = sqrt(n_prev) n0 + E; the first level has no twiddles.
+inline double fft_error_bound_l2(double n0) {
+  const double u = kU, dw = table_twiddle_error();
+  const auto gamma = [u](int k) { return k * u / (1 - k * u); };
+  const double kappa = 2 * (dw + u * (1 + dw) + u * (1 + dw) * (1 + u));
+  const double b4 = 8 * gamma(2), b5 = 10 * (gamma(8) * (1 + dw) + dw);
+  double E = b5 * n0;  // level 1: n = 5 from length-1 copies, no twiddles
+  const struct { int r, n_prev; } levels[] = {{5, 5}, {4, 25}, {4, 100}};
+  for (const auto& l : levels) {
+    const double V = std::sqrt(double(l.n_prev)) * n0 + E;
+    E = std::sqrt(double(l.r)) * (E + kappa * V) + (l.r == 4 ? b4 : b5) * (1 + kappa) * V;
+  }
+  return E * (1 + 1e-9);
+}
 // Each mel filter's nonzero taps, ascending: the exact sums (zero taps add exactly nothing)
 struct MelTaps {
   std::vector<int> k0, k1;  // [k0, k1) per mel
@@ -543,13 +573,20 @@ inline float quad_output(const double* x, int mel) {
   return out;
 }
 // One frame's spectrum under a tier's bound (amendment 2): each bin's power (rounded to double) and a bound dpower on
-// |power - exact|. F1: the double FFT (`compensated` false); F2: the double-double FFT.
-inline void frame_power(const double* frame, double a0, bool compensated, double* power, double* dpower) {
+// |power - exact|. F1: the double FFT (`compensated` false); F2: the double-double FFT. `l2` (F3's first tier,
+// mel-tiered-v1 amendment 1): the double FFT's bound is the smaller of amendment 2's and the 2-norm bound.
+inline void frame_power(const double* frame, double a0, bool compensated, double* power, double* dpower,
+                        bool l2 = false) {
   // the bound's twiddle errors: the double table within 24 u of exact (amendment 2); the double-double table, from
   // the quad series, within 2^-104
   const double dw = compensated ? 0x1p-104 : 24 * kU;
   const double u = compensated ? kUdd : kU;
-  const double e = compensated ? fft_error_bound(a0, u, dw, 4.0, 10.0, 100.0) : fft_error_bound(a0, u, dw);
+  double e = compensated ? fft_error_bound(a0, u, dw, 4.0, 10.0, 100.0) : fft_error_bound(a0, u, dw);
+  if (l2 && !compensated) {
+    double ss = 0;
+    for (int n = 0; n < kFft; ++n) ss = std::fma(frame[n], frame[n], ss);
+    e = std::min(e, fft_error_bound_l2(std::sqrt(ss) * (1 + 1e-9)));
+  }
   double re[kBins], im[kBins];
   if (compensated) {
     ComplexDD din[kFft], dout[kFft];
@@ -596,21 +633,21 @@ inline void exact_frames(const float* x, size_t T, size_t t0, size_t t1, float* 
                          bool tiered = false) {
   const auto& w = window();
   double frame[kFft], power[kBins], dpower[kBins], power_dd[kBins], dpower_dd[kBins];
-  uint64_t fast = 0, second = 0;
+  uint64_t fast = 0, second = 0, second_frames = 0;
   for (size_t t = t0; t < t1; ++t) {
     double a0 = 0;
     for (int n = 0; n < kFft; ++n) {
       frame[n] = double(x[t * kHop + n] * w[n]);
       a0 = std::max(a0, std::fabs(frame[n]));
     }
-    frame_power(frame, a0, compensated && !tiered, power, dpower);
+    frame_power(frame, a0, compensated && !tiered, power, dpower, tiered);
     bool have_dd = false;
     for (int m = 0; m < kMels; ++m) {
       float v;
       if (mel_output(power, dpower, m, v)) {
         ++fast;
       } else if (tiered) {
-        if (!have_dd) frame_power(frame, a0, true, power_dd, dpower_dd), have_dd = true;
+        if (!have_dd) frame_power(frame, a0, true, power_dd, dpower_dd), have_dd = true, ++second_frames;
         if (mel_output(power_dd, dpower_dd, m, v)) ++second;
         else v = quad_output(frame, m);
       } else {
@@ -621,6 +658,8 @@ inline void exact_frames(const float* x, size_t T, size_t t0, size_t t1, float* 
   }
   exact_stats().fast.fetch_add(fast, std::memory_order_relaxed);
   exact_stats().second.fetch_add(second, std::memory_order_relaxed);
+  exact_stats().frames.fetch_add(t1 - t0, std::memory_order_relaxed);
+  exact_stats().second_frames.fetch_add(second_frames, std::memory_order_relaxed);
 }
 // Frames [t0, t1) of the padded clip x into out ([128][T]).
 // kDft: kBlock frames share one pass over the basis; for each (frame, bin) the sum runs over n in ascending order, as
@@ -687,8 +726,9 @@ inline std::vector<float> log_mel(const std::vector<float>& samples, int threads
   std::copy(samples.begin(), samples.end(), x.begin());
   // every table built before any worker starts
   (void)detail::window(), (void)detail::basis(), (void)detail::turn_cos(), (void)detail::turn_sin(), (void)mel_filters();
-  if (transform == Transform::kExactF1 || transform == Transform::kExactF2)
+  if (transform == Transform::kExactF1 || transform == Transform::kExactF2 || transform == Transform::kExactF3)
     (void)detail::quad_turn(), (void)detail::dd_turn(), (void)detail::mel_taps(), (void)detail::quad_ln10();
+  if (transform == Transform::kExactF3) (void)detail::table_twiddle_error();
   std::vector<float> out(size_t(kMels) * T);
   const size_t n = std::max<size_t>(1, std::min<size_t>(size_t(threads), T / 64));
   const size_t per = (T + n - 1) / n;

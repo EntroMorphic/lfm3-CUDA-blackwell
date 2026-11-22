@@ -124,18 +124,20 @@ int main(int argc, char** argv) try {
                  first, worst);
   }
   std::ofstream out(rest[1]);
-  unsigned long long fast = 0, second = 0, quad = 0, undecided = 0;
+  unsigned long long fast = 0, second = 0, quad = 0, undecided = 0, frames = 0, second_frames = 0;
 #ifdef LFM_AUDIO_FEATURES_THREADED
   fast = lfm::audio_features::exact_stats().fast, quad = lfm::audio_features::exact_stats().quad;
   second = lfm::audio_features::exact_stats().second;
+  frames = lfm::audio_features::exact_stats().frames, second_frames = lfm::audio_features::exact_stats().second_frames;
   undecided = lfm::audio_features::exact_stats().undecided;
 #endif
   out << "{\"mode\":\"" << mode.substr(2) << "\",\"transform\":\"" << transform << "\",\"threads\":" << threads << ",\"repeat\":" << repeat
       << ",\"clips\":" << clips << ",\"identical\":" << identical << ",\"differ\":[" << differ.str()
       << "],\"exact_outputs\":{\"fast\":" << fast << ",\"second\":" << second << ",\"quad\":" << quad << ",\"undecided\":" << undecided
-      << "},\"fnv1a\":{" << hashes.str() << "}}\n";
+      << ",\"frames\":" << frames << ",\"second_frames\":" << second_frames << "},\"fnv1a\":{" << hashes.str() << "}}\n";
   std::fprintf(stderr, "%s: %zu clips, %zu identical, threads %d; exact outputs: %llu fast, %llu second tier, %llu quad, "
-               "%llu undecided\n", mode.c_str() + 2, clips, identical, threads, fast, second, quad, undecided);
+               "%llu undecided; frames %llu, recomputed by the second tier %llu\n", mode.c_str() + 2, clips, identical, threads,
+               fast, second, quad, undecided, frames, second_frames);
   return (out && identical == clips) ? 0 : 1;
 } catch (const std::exception& e) {
   std::fprintf(stderr, "audio-mel-check: %s\n", e.what());

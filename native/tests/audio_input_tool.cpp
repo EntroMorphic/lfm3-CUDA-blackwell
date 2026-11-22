@@ -16,6 +16,7 @@
 #include <atomic>
 #include <optional>
 #include <cstring>
+#include <random>
 #include <thread>
 #include <vector>
 
@@ -85,6 +86,59 @@ int main(int argc, char** argv) try {
     need(wrong == 0, "concurrent handles name their own clips");
     need(cache.size() == 2, "every shared entry released (clip-a and clip-b still held)");
     std::cout << "{\"ok\":true}\n";
+    return 0;
+  }
+  if (mode == "fft-bound") {  // mel-tiered-v1 amendment 1: the double FFT's per-bin error against a quad direct DFT,
+                              // over both bounds (amendment 2's max-norm and the 2-norm), for each frame of a clip
+                              // (argv[3]: the largest number of frames, spread evenly) and for adversarial frames
+    namespace d = lfm::audio_features::detail;
+    using lfm::audio_features::kFft;
+    const auto a = lfm::wav::read(argv[2]);
+    const size_t limit = argc > 3 ? std::stoul(argv[3]) : 0;
+    std::vector<std::vector<double>> frames;
+    const auto& w = d::window();
+    std::vector<float> x(lfm::audio_features::padded_length(a.samples.size()), 0.0f);
+    std::copy(a.samples.begin(), a.samples.end(), x.begin());
+    const size_t T = lfm::audio_features::frames(a.samples.size()), step = limit && T > limit ? T / limit : 1;
+    for (size_t t = 0; t < T; t += step) {
+      std::vector<double> f(kFft);
+      for (int n = 0; n < kFft; ++n) f[size_t(n)] = double(x[t * lfm::audio_features::kHop + size_t(n)] * w[size_t(n)]);
+      frames.push_back(f);
+    }
+    std::mt19937_64 rng(5);
+    std::uniform_real_distribution<double> uni(-1, 1);
+    for (int kind = 0; kind < 4; ++kind) {  // impulse, full-scale square wave, full-scale noise, near-silence
+      std::vector<double> f(kFft, 0.0);
+      for (int n = 0; n < kFft; ++n) {
+        const double v = kind == 0 ? (n == 137 ? 1.0 : 0.0) : kind == 1 ? ((n / 7) % 2 ? 1.0 : -1.0)
+                       : kind == 2 ? uni(rng) : 3e-5 * std::round(uni(rng) * 3);
+        f[size_t(n)] = double(float(v) * w[size_t(n)]);
+      }
+      frames.push_back(f);
+    }
+    const auto& W = d::quad_turn();
+    double worst_l2 = 0, worst_max = 0;
+    for (const auto& f : frames) {
+      d::Complex zin[kFft], zout[kFft];
+      double a0 = 0, ss = 0;
+      for (int n = 0; n < kFft; ++n) zin[n] = {f[size_t(n)], 0.0}, a0 = std::max(a0, std::fabs(f[size_t(n)])), ss = std::fma(f[size_t(n)], f[size_t(n)], ss);
+      d::fft(zin, 1, kFft, zout);
+      const double e_max = d::fft_error_bound(a0, d::kU, 24 * d::kU), e_l2 = d::fft_error_bound_l2(std::sqrt(ss) * (1 + 1e-9));
+      for (int k = 0; k < lfm::audio_features::kBins; ++k) {
+        d::quad re = 0, im = 0;
+        for (int n = 0; n < kFft; ++n) {
+          const int i = (n * k) % kFft;
+          re += d::quad(f[size_t(n)]) * W.cos[size_t(i)];
+          im -= d::quad(f[size_t(n)]) * W.sin[size_t(i)];
+        }
+        const d::quad dr = d::quad(zout[k].re) - re, di = d::quad(zout[k].im) - im;
+        const double err = std::sqrt(double(dr * dr + di * di));
+        if (e_l2 > 0) worst_l2 = std::max(worst_l2, err / e_l2);
+        if (e_max > 0) worst_max = std::max(worst_max, std::max(std::fabs(double(dr)), std::fabs(double(di))) / e_max);
+      }
+    }
+    std::cout << "{\"frames\":" << frames.size() << ",\"worst_over_l2_bound\":" << worst_l2
+              << ",\"worst_over_max_bound\":" << worst_max << ",\"twiddle_error_over_u\":" << d::table_twiddle_error() / d::kU << "}\n";
     return 0;
   }
   if (mode == "exact-threads") {  // amendment 2 and mel-tiered-v1: F1, F2 and F3 the same floats (bytes) at 1 to 12
