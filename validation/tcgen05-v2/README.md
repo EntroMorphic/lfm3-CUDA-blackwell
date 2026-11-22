@@ -134,3 +134,26 @@ Audio time to first token (the server, from the file), seconds:
 **The launch check:** nsys (CUDA trace) on the ON server, two requests of each clip, after the timed window and not timed. It counts `gemm_1cta` and `gemm_2cta` kernels per clip. Expected 0 on the 2.1, 5.8 and 10.4 s clips (prompts under 257 rows) and more than 0 on the 35 and 90 s clips; that is the positive control, and if it shows 0 there the check is void.
 
 **Unchanged:** the failed run stays in the record as a failure under the rule as first written. Rule 5's text part passed and is not rerun.
+
+## Amendment 1's run (2026-11-22, quiet 16:02–16:04, launch check after; `build/tc2-r5/`, `tools/thor/tcgen05_v2_rule5b.sh`): FAIL as written
+Window checks: the service stopped; MONITOR CLEAN (83 samples, foreign processes in 0); power checked before every run.
+
+| clip | OFF A1 | ON B1 | OFF A2 | ON B2 | tcgen05 kernels (trace, 2 requests) | bound | saved |
+|---|---|---|---|---|---|---|---|
+| 2.1 s | 0.0388 | 0.0388 | 0.0394 | 0.0390 | 4 | 0.0391 | 0.0002 |
+| 5.8 s | 0.0458 | 0.0462 | 0.0464 | **0.0463** | 4 | 0.0461 | −0.0001 |
+| 10.4 s | 0.0576 | 0.0574 | 0.0573 | **0.0579** | 4 | 0.0575 | −0.0002 |
+| 35 s | 0.1152 | 0.0890 | 0.1146 | 0.0895 | 464 | 0.1149 | 0.0256 |
+| 90 s | 0.2512 | 0.1848 | 0.2500 | 0.1859 | 464 | 0.2506 | 0.0652 |
+
+Seconds; texts identical in every run. The launch check is valid (464 kernels on the 35 and 90 s clips).
+
+- **Rule 5 (amendment 1) FAILS:**
+  - tcgen05 launched on every clip, so the 1% allowance applied to none;
+  - ON's worst run is over OFF's mean on the 5.8 s clip (+0.2 ms) and the 10.4 s clip (+0.4 ms).
+- **A correction to amendment 1's premise, and to what I told Tripp.** I wrote that the short clips run the same kernels ON and OFF. They do not.
+  - The trace shows 2 tcgen05 launches per request inside the audio encoder: `gemm_2cta` with grids 20×1 and 10×1, right after `depthwise` and `split_rows`.
+  - These are the downsampler's 1×1 convolutions (`lin_mid`, `lin_end`: N 256, K 512 under x2), over W2 × 32 rows, so they pass 257 rows even on a 2 s clip.
+- **So the short clips' 0.1–0.4 ms is a real, small regression,** not noise. With N = 256, tcgen05 has one output tile per 128-row block and leaves most of Thor's SMs idle, where mma.sync spreads the same work over many small tiles.
+  - The encoder bench in the quiet window agrees: 5.8 s clip 0.0082 s OFF against 0.0088 s ON.
+- The option stays OFF. The fix is the dispatch: tcgen05 only where it is faster (amendment 2, next).
