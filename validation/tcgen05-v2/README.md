@@ -58,3 +58,69 @@ Binaries from 55b5170's tree (`build/tc2-src`), by `build_tcgen05_engine.sh`:
 - memcheck with leak check: 0 errors, 0 bytes leaked;
 - synccheck: 0 errors; initcheck: 0 errors;
 - every output identical to the plain run (the JSON without its timing keys, and the 4 other files).
+
+## The quiet window (2026-11-22, 10:47–13:53; `build/tc2-quiet/`, `tools/thor/tcgen05_v2_quiet.sh`)
+Window checks: the service stopped for the whole window; MONITOR CLEAN (10,688 samples, foreign processes in 0); power checked before every step.
+
+**Rule 2, the quiet part: PASS.**
+- The stream check on the ON server: PASS.
+- The batch-server check, ON against OFF as the reference server: PASS. All crowds identical; no real-time stalls at 8, 12 or 16 rows; 7 TTS + 5 spoken joining all done.
+
+**With rules 1–3 above, rule 2 passes in full.**
+
+**Rule 4b, the soak pair: PASS** (`tcgen05_4b_pair_verdict.py`, amendments 2 and 2a). ON ran 11:19–12:35, then OFF 12:36–13:52, 3,600 s each.
+
+| | ON | OFF |
+|---|---|---|
+| replies, all status 200 | 3,544 | 3,538 |
+| in-soak differences; errors | 0; 0 | 0; 0 |
+| crowd after, unstreamed / streamed | 56/56 / 56/56 | 56/56 / 56/56 |
+| server RSS idle growth | +10.2 MiB | +0.4 MiB |
+| cgroup anon growth, checkpoints 2 to 4 | +31.2 MiB | +6.9 MiB |
+| 429 retries per reply | 18.66 | 18.11 |
+
+- **Equivalence (2a):**
+  - server RSS: ON +10.2 against the bound max(0.4, 0) + 32 = 32.4: pass;
+  - cgroup anon: ON +31.2 against 6.9 + 32 = 38.9: pass.
+- The retries ratio is 1.03, so no investigation is triggered.
+- Each harness exited 1 on its own memory verdict, which amendment 2 made reported-only. The pair verdict is **rule_4b_pass: true**.
+
+So tcgen05-gemm-v1's open rule passes on today's engine. Its window-7 OFF crowd failure did not recur on either side.
+
+**Rule 5, speed: FAIL as written, on one cell.**
+
+Text prefill (`lfm3-speech`), seconds, first request | median of requests 2–4:
+
+| tokens | OFF 1 | ON 1 | OFF 2 | ON 2 | ON ÷ OFF |
+|---|---|---|---|---|---|
+| 512 | 0.0655 / 0.0600 | 0.0394 / 0.0382 | 0.0652 / 0.0601 | 0.0395 / 0.0383 | 0.638 |
+| 1,149 | 0.1259 / 0.1257 | 0.0733 / 0.0730 | 0.1261 / 0.1263 | 0.0739 / 0.0730 | 0.580 |
+| 4,000 | 0.6016 / 0.5998 | 0.4357 / 0.4356 | 0.6020 / 0.6008 | 0.4345 / 0.4361 | 0.726 |
+
+Audio time to first token (the server, from the file), seconds:
+
+| clip | OFF A1 | ON B1 | OFF A2 | ON B2 | saved | texts |
+|---|---|---|---|---|---|---|
+| 2.1 s | 0.0322 | 0.0315 | 0.0316 | 0.0316 | 0.0004 | identical |
+| 5.8 s | 0.0403 | **0.0403** | 0.0401 | 0.0399 | 0.0001 | identical |
+| 10.4 s | 0.0537 | 0.0529 | 0.0529 | 0.0529 | 0.0004 | identical |
+| 35 s | 0.1099 | 0.0835 | 0.1080 | 0.0831 | 0.0257 (−23.6%) | identical |
+| 90 s | 0.2391 | 0.1799 | 0.2394 | 0.1761 | 0.0613 (−25.6%) | identical |
+
+- **The failing cell: the 5.8 s clip.** ON B1 0.0403 s is above OFF's mean of 0.0402 s, by 0.1 ms. The rule said "ON at most OFF at every clip", so rule 5 fails.
+- **Why the cell measures noise:** the 5.8 s clip's prompt is about 100 rows. No GEMM in it reaches tcgen05's 257 rows, so ON and OFF run the same kernels there.
+- **The rule was written without allowing for noise where the two builds run identical code. That is the design's fault, and it is recorded, not explained away.**
+- **Reported:** the audio encoder alone, OFF / ON, with identical output hashes at every clip:
+
+  | clip | OFF | ON |
+  |---|---|---|
+  | 2.1 s | 0.0052 s | 0.0053 s |
+  | 5.8 s | 0.0082 s | 0.0088 s |
+  | 10.4 s | 0.0109 s | 0.0108 s |
+  | 35 s | 0.0203 s | 0.0177 s |
+  | 90 s | 0.0450 s | 0.0382 s |
+
+  It is faster with tcgen05 from 35 s, where the encoder's tokens pass 257.
+- The first request of each process is not slower than the rest here (text 512, 1,149, 4,000).
+
+**Standing:** rules 1, 2, 3, 4b and 6 PASS; rule 5 FAIL as written (one 0.1 ms cell where tcgen05 cannot run). The option stays OFF until Tripp decides.
