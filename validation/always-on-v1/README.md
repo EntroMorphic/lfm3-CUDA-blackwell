@@ -270,3 +270,24 @@ The always-on service moved from `a681eab4c040` (the audio-handles-v1 merge) to 
 - TTS: 200, 3.68 s of audio, ended by EOS.
 - Audio in, the 90 s clip (ASR): 200, the right transcript. The first request after the restart reached its first text 0.401 s after the send; the second, 0.399 s. This is the live service, not a quiet window.
   - So the warm-up's audio request already covers the encoder's first-use costs.
+
+## The mel-tiered-v1 merge deployed (2026-11-21)
+The always-on service moved from `4025f693822c` (the audio-ttft-v1 merge) to main d90b115, the merge of mel-tiered-v1: the correctly rounded front end by tiered precision (F3, the same bytes as F2).
+- The new server is `build/merge3-srv`, sha256 `96e8510cdd3e…`, installed in `~/.local/lib/liquid-lfm3/96e8510cdd3e/`. The previous two binaries stay in place for a rollback.
+- The only line of the unit that changed is `ExecStart`. The unit before is kept as `build/merge3-check/liquid-lfm3.service.before`. `systemd-analyze --user verify` is clean.
+- `native/` is identical to the source of `mel3-srv`, which passed mel-tiered-v1.
+
+**Before the deploy, on Thor (`build/merge3-check/`, `tools/thor/deploy_check_merge3.sh`; the server on its own defaults):**
+- **Quiet, 20:54–21:05:**
+  - speech stream check: PASS;
+  - time to first token on the five clips: 0.0325, 0.0428, 0.0577, 0.1250 and 0.2748 s, texts identical to mel-tiered-v1's runs;
+  - MONITOR CLEAN (625 samples); power unchanged.
+
+  Again, as at the last deploy, this pass ran right after the stream check and came in under the round's own runs of the same source (0.0400–0.2890 s), by 5–19%. Two deploys now show it. It fits the open finding of audio-ttft-v1: something about the GPU's recent work changes the language model's prefill speed. Recorded, not claimed.
+- **Exact:** images PASS; image cache 24 of 24 identical; audio in PASS; 8 and 32 at once identical to `lfm3-speech`; TTS exit 0; text gate exit 0.
+
+**After the deploy (21:18):**
+- Restart: 5.11 s. Warm-up: startup 4.86 s, warm-up 3.97 s.
+- `/health`: 200. `oom_score_adj`: 100. The process runs `~/.local/lib/liquid-lfm3/96e8510cdd3e/liquid-lfm3-server`.
+- Text: 200, coherent. TTS: 200, 3.52 s of audio, ended by EOS.
+- Audio in, the 90 s clip: 200, the right transcript. The first text came 0.2645 and 0.2646 s after the send on the first two requests after the restart (the live service, not a quiet window; 0.401 s on the previous server).
