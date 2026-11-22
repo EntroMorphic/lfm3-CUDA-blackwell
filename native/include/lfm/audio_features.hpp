@@ -202,9 +202,10 @@ inline const std::vector<double>& turn_sin() {
   }();
   return s;
 }
-// a * W^t, W = exp(-2 pi i / 400)
-inline Complex twiddle(Complex a, int t) {
-  const double c = turn_cos()[size_t(t)], s = turn_sin()[size_t(t)];
+// a * W^t, W = exp(-2 pi i / 400); the tables may be passed in (fft() hoists them; the arithmetic is the same)
+inline Complex twiddle(Complex a, int t, const double* cos_table = turn_cos().data(),
+                       const double* sin_table = turn_sin().data()) {
+  const double c = cos_table[size_t(t)], s = sin_table[size_t(t)];
   // (re + i im)(c - i s) = (re c + im s) + i (im c - re s)
   return {std::fma(a.re, c, a.im * s), std::fma(a.im, c, -(a.re * s))};
 }
@@ -218,9 +219,11 @@ inline void fft(const Complex* in, int stride, int n, Complex* out) {
   const int m = n / r;
   for (int j = 0; j < r; ++j) fft(in + size_t(j) * stride, stride * r, m, out + size_t(j) * m);
   const int unit = kFft / n;  // W_n = W^unit
+  const double* C = turn_cos().data();
+  const double* S = turn_sin().data();
   Complex t[5];
   for (int k = 0; k < m; ++k) {
-    for (int j = 0; j < r; ++j) t[j] = j == 0 || k == 0 ? out[size_t(j) * m + k] : twiddle(out[size_t(j) * m + k], j * k * unit);
+    for (int j = 0; j < r; ++j) t[j] = j == 0 || k == 0 ? out[size_t(j) * m + k] : twiddle(out[size_t(j) * m + k], j * k * unit, C, S);
     if (r == 4) {  // multiplications by -i are exact
       const Complex a0{t[0].re + t[2].re, t[0].im + t[2].im}, a1{t[0].re - t[2].re, t[0].im - t[2].im};
       const Complex b0{t[1].re + t[3].re, t[1].im + t[3].im}, b1{t[1].re - t[3].re, t[1].im - t[3].im};
@@ -233,7 +236,7 @@ inline void fft(const Complex* in, int stride, int n, Complex* out) {
         double re = t[0].re, im = t[0].im;
         for (int j = 1; j < 5; ++j) {
           const int e = (j * q % 5) * (kFft / 5);
-          const double c = turn_cos()[size_t(e)], s = turn_sin()[size_t(e)];
+          const double c = C[size_t(e)], s = S[size_t(e)];
           re = std::fma(t[j].re, c, std::fma(t[j].im, s, re));
           im = std::fma(t[j].im, c, std::fma(-t[j].re, s, im));
         }
@@ -610,9 +613,8 @@ inline void frame_power(const double* frame, double a0, bool compensated, double
     dpower[k] = (e * (2 * (std::fabs(re[k]) + std::fabs(im[k])) + 4 * e) + 2.02 * kU * power[k]) * (1 + 1e-9);
 }
 // Mel `m`'s output from a frame's power and bound: true and `out` set when the bound decides its rounding
-inline bool mel_output(const double* power, const double* dpower, int m, float& out) {
-  const auto& filters = mel_filters();
-  const auto& taps = mel_taps();
+inline bool mel_output(const double* power, const double* dpower, int m, float& out,
+                       const std::vector<float>& filters = mel_filters(), const MelTaps& taps = mel_taps()) {
   double sum = 0, bound = 0;
   int n_taps = 0;
   for (int k = taps.k0[size_t(m)]; k < taps.k1[size_t(m)]; ++k) {
@@ -632,6 +634,8 @@ inline bool mel_output(const double* power, const double* dpower, int m, float& 
 inline void exact_frames(const float* x, size_t T, size_t t0, size_t t1, float* out, bool compensated,
                          bool tiered = false) {
   const auto& w = window();
+  const auto& filters = mel_filters();
+  const auto& taps = mel_taps();
   double frame[kFft], power[kBins], dpower[kBins], power_dd[kBins], dpower_dd[kBins];
   uint64_t fast = 0, second = 0, second_frames = 0;
   for (size_t t = t0; t < t1; ++t) {
@@ -644,11 +648,11 @@ inline void exact_frames(const float* x, size_t T, size_t t0, size_t t1, float* 
     bool have_dd = false;
     for (int m = 0; m < kMels; ++m) {
       float v;
-      if (mel_output(power, dpower, m, v)) {
+      if (mel_output(power, dpower, m, v, filters, taps)) {
         ++fast;
       } else if (tiered) {
         if (!have_dd) frame_power(frame, a0, true, power_dd, dpower_dd), have_dd = true, ++second_frames;
-        if (mel_output(power_dd, dpower_dd, m, v)) ++second;
+        if (mel_output(power_dd, dpower_dd, m, v, filters, taps)) ++second;
         else v = quad_output(frame, m);
       } else {
         v = quad_output(frame, m);
