@@ -124,3 +124,13 @@ Audio time to first token (the server, from the file), seconds:
 - The first request of each process is not slower than the rest here (text 512, 1,149, 4,000).
 
 **Standing:** rules 1, 2, 3, 4b and 6 PASS; rule 5 FAIL as written (one 0.1 ms cell where tcgen05 cannot run). The option stays OFF until Tripp decides.
+
+## Amendment 1 (2026-11-22, Tripp's choice, before any data from it): rule 5's audio part, with noise allowed where the builds run the same code
+**The amended gate, decided on a fresh run.** Time to first token on the five clips, OFF and ON alternating A1 B1 A2 B2, quiet, as before. For each clip:
+- **If tcgen05 never launches on it** (a trace of the ON server shows 0 `gemm_1cta` / `gemm_2cta` kernels), ON's worst run may be at most **1%** above OFF's mean. The two builds then run the same kernels; the 1% covers run-to-run noise (the failing cell was 0.25%).
+- **Otherwise**, ON's worst run must be at most OFF's mean, as before.
+- Texts identical in every run.
+
+**The launch check:** nsys (CUDA trace) on the ON server, two requests of each clip, after the timed window and not timed. It counts `gemm_1cta` and `gemm_2cta` kernels per clip. Expected 0 on the 2.1, 5.8 and 10.4 s clips (prompts under 257 rows) and more than 0 on the 35 and 90 s clips; that is the positive control, and if it shows 0 there the check is void.
+
+**Unchanged:** the failed run stays in the record as a failure under the rule as first written. Rule 5's text part passed and is not rerun.
