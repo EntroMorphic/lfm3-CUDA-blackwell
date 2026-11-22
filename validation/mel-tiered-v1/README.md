@@ -41,3 +41,38 @@ Every output is decided by a bound already validated (F1's or F2's, audio-fronte
    - the server's audio in, 8 and 32 at once, the text gate;
    - the host suites (with `test_audio_input_host.py`'s F3 cases at 1–12 threads and from 8 callers, plain, ASan+UBSan and TSan);
    - `LFM3_AUDIO_FEATURES=exact-f2` and `dft` still give their bytes.
+
+## Development (2026-11-21, Thor, not a rule run; `build/mel3-check/`, `build/mel3-diagbin/`)
+- **F3 as first built (448c1c5): byte-identical to F2, but only 1.5× faster.** On the 90 s clip, F2 and F3 at 1 and 4 threads all gave the same bytes. Per run: F2 0.69 / 0.18 s, F3 0.45 / 0.12 s.
+- **Why:** 4,483 of 8,999 frames needed the second tier, though only 8,861 of 1.15 M outputs did (about 2 per frame). So F3 still paid the double-double FFT on half the frames.
+  - From the two runs: the double path costs about 12 µs a frame, and a double-double frame about 77 µs.
+- **The bound is the lever.** A diagnostic build (not kept) scaled F1's bound down. The frames needing the second tier fell about linearly: 4,483 (×1), 2,266 (×0.3), 995 (×0.1), 332 (×0.03), 123 (×0.01).
+  - Outputs were identical at every scale. That is expected, since a looser or tighter bound changes only which tier decides; but a scaled bound is not a proof, so it is not used.
+
+## Amendment 1 (2026-11-21, before any rule data): F3's first tier under a 2-norm bound
+F1's bound is a max-norm recurrence in A0 = max |x[n]|: 435,103 u·A0 per component, u = 2^-53. It assumes every rounding error lines up against every bin. A bound on the whole transform's error vector in the 2-norm is also rigorous, and it scales with the frame's energy ‖x‖₂ instead. F3's first tier takes the smaller of the two (both hold). F1 and F2 are unchanged.
+
+**The derivation, for this code** (`detail::fft`: decimation in time, levels n = 5, 25, 100, 400 with radices 5, 5, 4, 4). Round to nearest throughout.
+- **The state.** At each level, the computed state is the 400 outputs of all the length-n DFTs, and e is its error vector.
+  - The exact state has ‖v‖₂ = √n ‖x‖₂. Each length-n DFT multiplies a subsequence's 2-norm by √n, and the subsequences partition x.
+  - A level applies the twiddles T (diagonal, |t| = 1 in exact arithmetic), then the radix-r butterflies F (block-diagonal, ‖F‖₂ = √r).
+  - So e' = F T e + F δt + δb, where δt is the twiddle multiply's rounding and δb the butterflies'.
+- **Twiddles** (`twiddle()`: re' = fma(re, ĉ, fl(im·ŝ)); im' = fma(im, ĉ, −fl(re·ŝ))). The table values ĉ, ŝ are within δw of the exact cos and sin.
+  - Expanding the roundings: |re' − re*| ≤ (|re| + |im|)·k1, with k1 = δw + u(1 + δw) + u(1 + δw)(1 + u); the same for im.
+  - So |δt_i| ≤ √2·k1·(|re| + |im|) ≤ 2 k1 |a_i| = κ |a_i|, and ‖δt‖₂ ≤ κ‖ṽ‖₂.
+- **Radix 4** (additions only; ±i exact). Each output component is a sum of 4 components of the block's inputs, with each term rounded at most twice, so its error is ≤ γ2·S4, where S4 = Σ(|re| + |im|) over the block ≤ 2√2‖t_b‖₂.
+  - A block's 4 complex outputs then have ‖δb‖₂ ≤ √4·√2·γ2·2√2‖t_b‖₂ = 8 γ2 ‖t_b‖₂. So b4 = 8 γ2, with γk = k u / (1 − k u).
+- **Radix 5** (`X_q = t0 + Σ_j fma(t_j.re, c, fma(t_j.im, s, ·))`). Each component is a chain of 8 fused operations over 9 exact terms, so its rounding error is ≤ γ8 times the sum of the terms' magnitudes, ≤ γ8 (1 + δw) S5. The constants' table error adds δw·S5. Here S5 ≤ √10‖t_b‖₂.
+  - Over the 5 outputs: b5 = √5·√2·√10·(γ8(1 + δw) + δw) = 10 (γ8(1 + δw) + δw).
+- **The recurrence**, with N0 ≥ ‖x‖₂ and V = √(n_prev)·N0 + E (a bound on the computed state's norm):
+  - level 1 (n = 5, no twiddles: k = 0 only): E = b5·N0;
+  - each later level: E' = √r·(E + κV) + b_r·(1 + κ)·V.
+  - The final E bounds every bin's complex error, so each component's too. It replaces e in the existing power bound: dpower = e(2(|re| + |im|) + 4e) + 2.02 u·power.
+- **δw** is measured, not assumed: the largest |table − exact| over the 400 entries of `turn_cos` and `turn_sin`. "Exact" is `quad_turn()`'s quad values (a few quad ulps), with 2^-200 added for them. In amendment 2's blanket bound it was 24u.
+- **N0** = √(Σ x[n]²) computed in double, times (1 + 1e-9) (the sum's 400 roundings are under 1e-13 relative).
+- **The result, with δw near u:** E ≈ 2,290 u·‖x‖₂. Windowed speech frames have ‖x‖₂ ≈ 3–9 A0, so this is about 20–60× tighter than 435,103 u·A0. By the diagnostic, that should leave about 3–6% of frames for the second tier.
+
+**An empirical check, added to rule 1 (gated):** the bound must hold against quad on real and adversarial frames.
+- The double FFT's actual per-bin error, measured against a quad direct DFT, divided by the bound, must be below 1 on every bin of every checked frame.
+- Frames checked: impulses, a full-scale square wave, random full-scale noise, and near-silence (host test); and 2,000 frames from the 90 s clip and the edge clips (Thor).
+- Reported: the largest ratio.
