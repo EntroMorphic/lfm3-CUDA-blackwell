@@ -33,3 +33,28 @@
 If every rule passes, the option goes ON by default (CMake) and the server deploys as before.
 
 **Deviation, recorded before any data from it (2026-11-22, 09:55):** rules 3 and 5's "4,096-token" text prompt is 4,000 tokens. `lfm3-speech`'s capacity of 4,096 includes the 8 new tokens, and the first request file (alloc-effect-v1's `L4096.req.json`) exceeded it. The file was rebuilt with a 4,000-token prompt before either rule's runs reached it; its name is unchanged.
+
+## Rules 1–3 (2026-11-22, 09:54–10:32, not timed; `build/tc2-exact/`, `tools/thor/tcgen05_v2_exact.sh`)
+Binaries from 55b5170's tree (`build/tc2-src`), by `build_tcgen05_engine.sh`:
+- ON: `lfm3-speech` `18eac2e8…`, server `a023e8c2…`, worker `6bdf11d9…`, `lfm3-vision-check` `7b768202…`, `lfm3-tcgen05-gemm-check` `ab4ca6fa…`;
+- OFF: `lfm3-speech` `7a14280c…`, server `c5cbd8db…`, worker `027dbefb…`.
+
+**Rule 1: PASS.** `lfm3-tcgen05-gemm-check`: 563 cases, 0 failed. Every case has 0 elements differing and tcgen05 launches exactly where its contract says. 210 of the cases are the audio encoder's x2 shapes, new in this round.
+
+**Rule 2: PASS** (the parts that are not timed; the stream and batch-server checks run in the quiet window):
+
+| check | result |
+|---|---|
+| `lfm3-speech` ON TTS regression | 36 SAME, 0 differ or failed |
+| rule-6 audio-in files, ON against main's (`mel3-speech-rule6`) | dump 360 of 360, edge 93 of 93 |
+| e2e and split | 90 of 90 and 90 of 90 |
+| vision encoder ON, 31 cases | 713 of 713 stage files identical to main's |
+| server ON: audio in against main's `lfm3-speech` | PASS |
+| server ON: 8 and 32 at once | 8 of 8, 32 of 32 identical; PASS |
+| server ON: images; image cache | PASS; 24 of 24 identical |
+| server ON: TTS; text gate | exit 0; exit 0 |
+
+**Rule 3: PASS.** On `lfm3-speech` ON, with the 4,000-token text prefill and the 90 s clip:
+- memcheck with leak check: 0 errors, 0 bytes leaked;
+- synccheck: 0 errors; initcheck: 0 errors;
+- every output identical to the plain run (the JSON without its timing keys, and the 4 other files).
