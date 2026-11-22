@@ -64,3 +64,42 @@ The depth scan and `Json::parse` stay as they are (together about 4 ms at 90 s):
 3. **Speed (gated; quiet Thor, one window):**
    - `audio-handler-bench`: the handler's sequence without log_mel at 90 s at most **0.015 s** (stage 0: 0.0462 s);
    - time to first token, the new server against the deployed one ABAB on the five clips: at most the deployed at every clip, and at 90 s at least **0.025 s** saved.
+
+## Stage 1 results (2026-11-21, Thor; `build/rest-s1/`, `tools/thor/ttft_rest_stage1.sh`)
+Binaries from the stage's tree (`build/rest-src1`):
+- server `rest-srv` `71a6e1d7…`, worker `6f54d6fd…`; `audio-handler-bench` `107dcf38…`;
+- deployed, for comparison: `merge3-srv` `96e8510c…`.
+
+**Rule 3: PASS** (quiet 23:03–23:05; the service stopped; MONITOR CLEAN, 89 samples, foreign processes in 0; power checked before every run).
+
+The handler, one thread, median of 20, in seconds. The new sequence is `strict_json` + `parse_messages` + one decode + put:
+
+| clip | valid_utf8 | strict_json | clip_from_base64 | of which base64 | the sequence without log_mel (stage 0: two decodes) |
+|---|---|---|---|---|---|
+| 2.1 s | 0.0000 | 0.0001 | 0.0000 | 0.0000 | 0.0002 (0.0010) |
+| 5.8 s | 0.0000 | 0.0003 | 0.0001 | 0.0001 | 0.0004 (0.0031) |
+| 10.4 s | 0.0000 | 0.0006 | 0.0002 | 0.0002 | 0.0008 (0.0055) |
+| 35 s | 0.0001 | 0.0023 | 0.0007 | 0.0005 | 0.0030 (0.0194) |
+| 90 s | 0.0002 | 0.0050 | 0.0017 | 0.0013 | **0.0070** (0.0462; bound 0.015) |
+
+`base64::decode` is 15× faster (19.0 → 1.3 ms at 90 s); `valid_utf8` 3.0 → 0.2 ms. `strict_json`'s other 4.8 ms (the depth scan, a copy, `Json::parse`) stays, as planned.
+
+Time to first token from the file, the deployed server against the new one, ABAB, in seconds:
+
+| clip | deployed A1 | new B1 | deployed A2 | new B2 | saved | change |
+|---|---|---|---|---|---|---|
+| 2.1 s | 0.0400 | 0.0390 | 0.0406 | 0.0394 | 0.0011 | −2.7% |
+| 5.8 s | 0.0487 | 0.0459 | 0.0493 | 0.0461 | 0.0030 | −6.1% |
+| 10.4 s | 0.0627 | 0.0577 | 0.0620 | 0.0578 | 0.0046 | −7.4% |
+| 35 s | 0.1316 | 0.1158 | 0.1304 | 0.1160 | 0.0151 | −11.5% |
+| 90 s | 0.2873 | 0.2512 | 0.2884 | 0.2518 | **0.0364** (bound 0.025) | −12.6% |
+
+Texts are identical in every run.
+
+**Rule 2, the server (23:05–23:18, not timed):**
+- audio in against `mel3-speech`: PASS;
+- 8 and 32 at once: 8 of 8 and 32 of 32 identical to `lfm3-speech`, PASS. The 32-at-once check took 5.5 s against 4.0–4.4 s in earlier runs. It is an exactness check with no timing criterion and ran outside a quiet window, so this is noted, not judged;
+- images through the server: PASS; the image cache 24 of 24 identical;
+- TTS exit 0; text gate exit 0.
+
+The host suites are running. Rule 1's equivalence (a million strings each, three builds) passed before Thor (3d51799).
