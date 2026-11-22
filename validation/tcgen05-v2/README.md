@@ -31,3 +31,5 @@
 6. **Coherency:** by rule 2 the outputs are the same bytes as validated outputs. Nothing new to read unless rule 2 fails.
 
 If every rule passes, the option goes ON by default (CMake) and the server deploys as before.
+
+**Deviation, recorded before any data from it (2026-11-22, 09:55):** rules 3 and 5's "4,096-token" text prompt is 4,000 tokens. `lfm3-speech`'s capacity of 4,096 includes the 8 new tokens, and the first request file (alloc-effect-v1's `L4096.req.json`) exceeded it. The file was rebuilt with a 4,000-token prompt before either rule's runs reached it; its name is unchanged.
