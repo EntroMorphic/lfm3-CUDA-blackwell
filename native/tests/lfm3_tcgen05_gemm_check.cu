@@ -74,7 +74,12 @@ static const Shape kShapes[] = {
     {"v.kv", 512, 2048, true},          {"v.w1w3", 2560, 2048, true},    {"v.w2", 1024, 5120, true},
     {"v.proj1", 4096, 8192, true},      {"v.proj2", 2048, 8192, true},   {"lm.in_proj", 6144, 2048, false},
     {"lm.q_o", 2048, 2048, false},      {"lm.kv", 512, 2048, false},     {"lm.w1w3", 7680, 2048, false},
-    {"lm.w2", 2048, 7680, false},       {"lm.head", 128000, 2048, false}};
+    {"lm.w2", 2048, 7680, false},       {"lm.head", 128000, 2048, false},
+    // validation/tcgen05-v2: the audio encoder's split multiplies (x2: K = 2 x in, [hi | lo] against [W | W], FP32
+    // out), which audio-ttft-v1 added after tcgen05-gemm-v1 (N tokens >= 257 from a clip of about 20.5 s)
+    {"a.attn", 768, 1536, true},        {"a.conv_in", 1536, 1536, true}, {"a.w1w3", 1792, 1536, true},
+    {"a.w2", 768, 3584, true},          {"a.lin_out", 768, 8192, true},  {"a.proj1", 2048, 1536, true},
+    {"a.proj2", 2048, 4096, true}};
 
 static std::vector<std::string> split_list(const std::string& s) {
   std::vector<std::string> v;
