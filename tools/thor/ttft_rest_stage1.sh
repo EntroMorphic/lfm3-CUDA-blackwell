@@ -6,7 +6,7 @@
 #   then rule 2 (not timed): audio in against mel3-speech, 8 and 32 at once, images, the image cache, TTS, the text gate.
 # Usage (Thor host, copied to build/rest-s1/run.sh): bash run.sh > run.log 2>&1
 set -uo pipefail
-W=$HOME/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build; O=rest-s1; S=rest-src
+W=$HOME/Projects/000-research/lfm3-omni-2B; R=$W/liquid-CUDA; B=$R/build; C=/workspace/liquid-CUDA/build; O=rest-s1; S=rest-src1
 M=/workspace/models/LFM3-Omni-2B; L=/workspace/data/librispeech/wav; T=$C/$S/tools; SV=rest-srv
 IMG=sha256:3c2b5b8e0857ada02326ee34175d52c35f6c909d89f49df6ae12f5ac5109052f
 X="docker exec -e LD_LIBRARY_PATH=/pinned-cuda:/usr/lib/aarch64-linux-gnu/nvidia lfm3-profile-v1"
