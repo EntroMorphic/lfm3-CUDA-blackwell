@@ -76,3 +76,31 @@ F1's bound is a max-norm recurrence in A0 = max |x[n]|: 435,103 u·A0 per compon
 - The double FFT's actual per-bin error, measured against a quad direct DFT, divided by the bound, must be below 1 on every bin of every checked frame.
 - Frames checked: impulses, a full-scale square wave, random full-scale noise, and near-silence (host test); and 2,000 frames from the 90 s clip and the edge clips (Thor).
 - Reported: the largest ratio.
+
+## Rule 1 (2026-11-21): PASS on Thor and x86
+**Thor** (aarch64; `build/mel3-rule1/`, `tools/thor/mel_tiered_rule1.sh`):
+- Binaries: `audio-mel-check` from main 717cca6 `28185279…` (the reference: F2 as deployed); from this round, 9ebeeb7's tree, `9dd6e929…`.
+- Built as the engine compiles the header: nvcc's host pass, `-O3 --fmad=false`.
+
+**x86** (the workstation; scratchpad `mel3-x86/`):
+- The same WAVs, copied from Thor.
+- g++ 13, `-O3 -ffp-contract=off -mfma`: main's tree `fedfea71…`, this round's `66a06754…`.
+
+**Results.** The counts below are summed over `--repeat 2` (two passes). Identity is checked on every pass.
+
+| set | F3, 1 and 4 threads, against main's F2 | F3 decisions (two passes) | frames to the second tier |
+|---|---|---|---|
+| 2,620 utterances | 2,620 of 2,620 identical, both platforms | 496,885,140 fast; 271,416 second tier; 308 quad (F2's own 154 per pass); 0 undecided | 255,492 of 3,884,038 (6.6%) |
+| 40 dumped clips | 40 of 40, both platforms | 8,777,690; 5,154; 4; 0 | 4,828 of 68,616 (7.0%) |
+| 12 edge clips | 12 of 12, both platforms | 517,968; 176; 0; 0 | 172 of 4,048 (4.2%) |
+
+- **The refactor changed neither F1 nor F2.** This round's F2 at 4 threads equals main's on every clip, on both platforms, and so does F1 (Thor).
+  - F1 still sends 4,650,016 outputs to quad on the 2,620 (two passes). That is why it was slow.
+- `dft` reproduces audio-frontend-v1's original bytes on all 2,672 clips (Thor).
+- **The bounds against quad (amendment 1's check, Thor):** the largest actual per-bin error divided by the bound, on 2,254 frames of the 90 s clip and on every frame of the 12 edge clips (up to 200 each):
+  - 2-norm bound: **0.012** at most;
+  - max-norm bound: 0.0007 at most.
+
+  The 2-norm bound is still 80× conservative on real frames, yet it holds everywhere.
+  - The host test adds an impulse, a full-scale square wave, full-scale noise and near-silence: all under 1.
+- **The table twiddles' measured error: 8.9u**, under amendment 2's assumed 24u. The bound uses the measured value.
