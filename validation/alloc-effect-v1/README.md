@@ -79,3 +79,42 @@ One user-readable clue: `/proc/buddyinfo` shows how much free memory is in large
 - **T** is read against stage 0's off-2 (fast) figures: slow if its median of requests 2–4 at 512 or 1,149 tokens exceeds them by 10%. This is reported beside the probe; it is not a rule.
 
 This is a diagnostic: it changes no engine code and gates nothing. What follows depends on the reading: placement points to how the engine allocates; state points to a pre-measurement warm-up for timing rules, and to Tripp's `sudo tegrastats` for the memory clock.
+
+### Stage 1 results (2026-11-22, `build/alloc-s1/`, quiet 21:27–21:34)
+**The run:**
+- Window 21:27–21:34. Sampler: 382 samples, CLEAN. Power state unchanged.
+- Probe `5b50adbb…`, built from 7645e17's tree. T is `9df9a245…`.
+- All five processes exited 0.
+
+**Reading: STATE.** Placement is not met: no B buffer was slow in pass 1.
+
+| process | B pass 1 (min / med / max ms) | B pass 2 | B pass 3 | A pass 1 | A pass 2 | first control | controls after |
+|---|---|---|---|---|---|---|---|
+| P1 | 0.944 / 1.056 / 1.212 | 1.362 / 1.547 / 1.788 | 1.442 / 1.546 / 1.748 | 1.600 / 1.677 / 1.781 | 1.590 / 1.690 / 1.829 | 0.866 | 1.64–1.89 |
+| P2 | 0.935 / 1.088 / 1.279 | 1.394 / 1.543 / 1.836 | 1.446 / 1.546 / 1.828 | 1.637 / 1.723 / 1.848 | 1.637 / 1.735 / 1.855 | 0.843 | up to 1.83 |
+| P3 | 1.003 / 1.084 / 1.232 | 1.257 / 1.559 / 1.784 | 1.474 / 1.556 / 1.726 | 1.598 / 1.641 / 1.743 | 1.580 / 1.648 / 1.697 | 0.862 | up to 1.75 |
+| P4 | 0.996 / 1.087 / 1.280 | 1.362 / 1.544 / 1.733 | 1.456 / 1.553 / 1.759 | 1.574 / 1.647 / 1.849 | 1.568 / 1.659 / 1.812 | 0.850 | 1.61–1.75 |
+
+- **The rule's own words.** Every A buffer is "slow" against the B pass-1 reference, and every B buffer "turns slow" in pass 2. That is the state moving under all of them, not placement. Per buffer, pass 1 and pass 2 do not track each other.
+- **The pattern is the same in all four processes, whether or not idle came before:**
+  - the fixed pair runs at about 0.85 ms right after setup;
+  - it runs at 1.6–1.9 ms from the first control on, 8 buffers later, and stays there to the end;
+  - B pass 1 runs at about 1.06 ms in the middle.
+- **What precedes each timing differs.** In B pass 1, every timing follows a fresh `cudaMalloc`, a 30 MiB host-to-device copy, a chase and a fill kernel that wrote that buffer. In the passes that re-read, it follows only the previous GEMMs. At the start, both operands had just been written.
+- **The translation chase is flat:** 61–70 ns per hop on every buffer.
+- **buddyinfo:** each process consumed about 1,500 free order-9 (2 MiB) blocks and gave them back, with no visible effect.
+- **T** (`lfm3-speech`, after 120 s idle) was slow throughout:
+
+  | tokens | request 1 | median of 2–4 | stage 0's fast off-2 |
+  |---|---|---|---|
+  | 512 | 0.0762 | 0.0762 | 0.0673 |
+  | 1,149 | 0.1740 | 0.1720 | 0.1388 |
+  | 4,000 | 0.8036 | 0.8051 | (4,096 failed in stage 0) |
+
+**An exploration after the window, not a rule** (`oc-explore.log`, the service idle, nothing else running):
+- `/sys/class/hwmon` is readable by a user: soctherm over-current counters (oc2, oc3, throttling enabled), the VDD_GPU rail (ina3221) and VIN (ina238).
+- A 24-buffer probe run of 1.1 s reproduced the step (control 0.837, then 1.53 ms).
+- Neither over-current counter moved. VDD_GPU peaked at 1.62 A at 19.8 V (limit 5.04 A).
+- **Over-current throttling is not the cause.**
+
+**What this leaves:** the fast state follows a recent write of the operands, more than idle or allocation calls, and it is lost within a few hundred launches. Stage 2 tests that directly.
