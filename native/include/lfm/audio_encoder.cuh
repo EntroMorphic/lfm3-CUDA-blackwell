@@ -428,7 +428,7 @@ class Encoder {
   std::vector<size_t> sizes_ = std::vector<size_t>(13, 0);
   bool fp32_ = false;                           // LFM3_AUDIO_ENCODER=fp32
   int parts_ = 2;                               // the activations' BF16 parts: 2 (x2) or 1 (x1)
-  lfm::split::Linear linear_;                   // the split multiply's doubled weights and scratch
+  lfm::split::Linear linear_;                   // the split multiply's scratch
   lfm::fp32::DeviceArray<double2> rope_;        // the rotary table, kept, grown to the longest clip seen
   int rope_rows_ = 0;
 

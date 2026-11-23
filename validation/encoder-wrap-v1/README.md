@@ -43,8 +43,11 @@ Tripp's go: 2026-11-23 ("Let's do 1, 2, 4, and the housekeeping items").
    - tcgen05: M ∈ {257, 300, 1125, 4500}; (in, out) from both encoders' x2 shapes with out ≥ 512 and out % 256 = 0.
      - The tcgen05 launch counter must rise on every such case: that is the positive control.
      - The same cases with `LFM3_TCGEN05=0` must also match (mma.sync).
-   - The invalid uses are refused: c968b5d's 4, plus a tcgen05-eligible shape with a wrap that is not a multiple of 64, which must run on mma.sync and still match.
-2. **Unchanged machine code (gated):** in the candidate's `liquid-lfm3-server` and `lfm3-speech`, the SASS of every `WRAP = false` instantiation of `wide_kernel`, `thin_kernel` and `gemm_2cta` is identical to main's for the same kernel (`cuobjdump -sass`, function bodies compared with their names normalized).
+   - The invalid uses are refused: c968b5d's 5, plus a tcgen05-eligible shape with a wrap that is not a multiple of 64, which must run on mma.sync and still match.
+2. **Unchanged machine code (gated):** `tools/compare_sass.py`, main at the branch point (built the same way) against the candidate, for `liquid-lfm3-server`, `lfm3-speech` and `lfm3-vision-check`.
+   - Every function in main's binary must have identical SASS in the candidate's (`cuobjdump -sass`, every instruction and its encoding).
+   - A `WRAP = false` instantiation is matched to main's kernel of the same name without that argument.
+   - Missing functions (expected: `double_rows`) and extra ones (expected: the `WRAP = true` instantiations) are listed.
    - This is what keeps the language model's speed out of question. No text timing rule is set.
 3. **Byte identity (gated):** tcgen05-v2's rule-2 suite on the candidate against main's outputs:
    - speech regression;
@@ -53,12 +56,13 @@ Tripp's go: 2026-11-23 ("Let's do 1, 2, 4, and the housekeeping items").
    - vision's 713 stage files;
    - the server's audio-in, 8 and 32 at once, images, the image cache, TTS and the text gate.
 4. **Sanitizers (gated):** memcheck with leak check, synccheck and initcheck on the candidate's `lfm3-speech` with the 90 s clip, cherry and two. 0 errors, outputs identical to the plain run. memcheck on `gemm-wrap-check`.
-5. **Memory (gated):** device memory in use, ABAB, main (A) against the candidate (B), each after the short clip, the 90 s clip and cherry.
+5. **Memory (gated):** device memory in use (`measure_lfm3_audio_device_memory.py`, with cherry after the 90 s clip), ABAB, main (A) against the candidate (B), each after the short clip, the 90 s clip and cherry.
    - B must be lower than A by at least 90% of the doubled bytes. That is Σ out × 2·in × 2 bytes over each encoder's x2 weights, computed from the checkpoint's shapes and reported.
    - Each pair is reported.
 6. **Speed (gated; quiet Thor, the samplers):**
    - audio time to first token on the five clips, ABAB, main (deployed `merge5-srv`) against the candidate;
-   - images cherry and two (`measure_lfm3_image_turns.py`), ABAB.
+   - images cherry and two (`measure_lfm3_image_turns.py`), ABAB, each of the three turns, with the image cache off (`--image-cache-mb 0`).
+     - With the cache on, only the first, discarded conversation would run the vision encoder.
    - Each: mean(B) ≤ mean(A) × 1.01.
    - This is pinned-uploads-v1 rule 2 with the mean in place of the larger B. One run varies by ±1% there: the long clip's A1 and A2 differed by 1.6%.
    - The encoders' own times are reported (`audio-encoder-bench` at 35 and 90 s, the image server's encode).

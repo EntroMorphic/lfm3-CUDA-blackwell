@@ -4,13 +4,13 @@
 // it; shared since validation/audio-ttft-v1 with the audio encoder). Parts:
 // - 1 (x1): x rounded to BF16, one GEMM;
 // - 2 (x2): hi = bf16(x), lo = bf16(x - hi), so hi + lo holds x to about 2^-16 of it; one GEMM over a doubled K,
-//   [hi | lo] against [W | W] (built once per weight and kept), which sums hi·W + lo·W in one accumulation.
+//   [hi | lo] against [W | W], which sums hi·W + lo·W in one accumulation. [W | W] is W itself read twice (the GEMM's
+//   b_k_wrap, validation/encoder-wrap-v1): the same values in the same order as the copy that was kept before.
 // The kernels below are the vision encoder's, moved here unchanged.
 #include <lfm/fp32_ops.cuh>
 #include <lfm/gemm.cuh>
 
 #include <cstddef>
-#include <map>
 
 namespace lfm::split {
 
@@ -23,7 +23,7 @@ __device__ __forceinline__ void split_bf16(float v, bf16& hi, bf16& lo) {
   lo = __float2bfloat16_rn(__fsub_rn(v, __bfloat162float(hi)));
 }
 // x [rows][in] FP32 -> lfm::gemm's A operand [rows][parts * in]: hi in columns 0..in, lo (x2) in in..2 in, so one
-// GEMM against [W | W] (double_rows) sums hi·W + lo·W.
+// GEMM against [W | W] (W read twice: the GEMM's b_k_wrap) sums hi·W + lo·W.
 __global__ void split_rows(const float* x, bf16* out, int rows, int in, int parts) {
   const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= size_t(rows) * in) return;
@@ -33,13 +33,6 @@ __global__ void split_rows(const float* x, bf16* out, int rows, int in, int part
   out[r * parts * in + c] = hi;
   if (parts == 2) out[r * parts * in + in + c] = lo;
 }
-// [W | W]: each row of W [rows][in] twice, the B operand of the split multiply
-__global__ void double_rows(const bf16* w, bf16* out, int rows, int in) {
-  const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
-  if (i >= size_t(rows) * in) return;
-  const size_t r = i / in, c = i % in;
-  out[r * 2 * in + c] = out[r * 2 * in + in + c] = w[i];
-}
 // y[i] = c[i] + bias[i % cols]
 __global__ void add_bias(const float* c, const bf16* bias, size_t n, int cols, float* y) {
   const size_t i = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -47,8 +40,7 @@ __global__ void add_bias(const float* c, const bf16* bias, size_t n, int cols, f
 }
 }  // namespace kernels
 
-// The multiply with its state: the doubled weights (kept for the object's life), and the scratch for the BF16
-// operand and the pre-bias output (kept until release()).
+// The multiply with its state: the scratch for the BF16 operand and the pre-bias output (kept until release()).
 class Linear {
  public:
   // y [rows][out] = x [rows][in] · Wᵀ (+ bias), x as `parts` (1 or 2) BF16 parts, on the tensor cores.
@@ -62,38 +54,22 @@ class Linear {
       if (unbiased_.n < c) unbiased_ = f::DeviceArray<float>(c);
       target = unbiased_.p;
     }
-    lfm::gemm::Problem p = lfm::gemm::linear(operand_.p, parts == 2 ? doubled(W, out, in) : W, nullptr, rows,
-                                             parts * in, out);
+    lfm::gemm::Problem p = lfm::gemm::linear(operand_.p, W, nullptr, rows, parts * in, out);
+    if (parts == 2) p.ldb = in, p.b_k_wrap = in;  // [W | W]
     p.c = nullptr, p.c_f32 = target;
     lfm::gemm::run(p);
     if (bias) kernels::add_bias<<<f::blocks(c), 256>>>(target, bias, c, out, y);
   }
-  // the scratch freed (the doubled weights kept); the caller has synchronized
+  // the scratch freed; the caller has synchronized
   void release() {
     operand_ = lfm::fp32::DeviceArray<bf16>();
     unbiased_ = lfm::fp32::DeviceArray<float>();
   }
   size_t scratch_bytes() const { return operand_.bytes() + unbiased_.bytes(); }
-  size_t doubled_bytes() const {
-    size_t n = 0;
-    for (const auto& [w, d] : doubled_) n += d.n * sizeof(bf16);
-    return n;
-  }
 
  private:
-  std::map<const bf16*, lfm::fp32::DeviceArray<bf16>> doubled_;
   lfm::fp32::DeviceArray<bf16> operand_;
   lfm::fp32::DeviceArray<float> unbiased_;
-
-  // [W | W], built on first use and kept
-  const bf16* doubled(const bf16* W, int rows, int in) {
-    auto it = doubled_.find(W);
-    if (it == doubled_.end()) {
-      it = doubled_.emplace(W, lfm::fp32::DeviceArray<bf16>(size_t(rows) * 2 * in)).first;
-      kernels::double_rows<<<lfm::fp32::blocks(size_t(rows) * in), 256>>>(W, it->second.p, rows, in);
-    }
-    return it->second.p;
-  }
 };
 
 }  // namespace lfm::split

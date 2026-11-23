@@ -6,8 +6,11 @@ re-sent, as every chat client does), text mode, 64 new tokens; per turn the clie
 prefill_seconds (the engine's decode, preprocessing, encode and prefill) and generate_seconds. REPEATS conversations,
 the first discarded as warm-up; medians per turn, with the time to the first text event (each turn is streamed).
 Usage: measure_lfm3_image_turns.py SERVER MODEL_DIR IMAGE_REQUEST_JSON OUT_JSON [REPEATS]
+LFM3_SERVER_ARGS (optional): extra server options, split on spaces (validation/encoder-wrap-v1: --image-cache-mb 0, so
+every turn runs the vision encoder).
 """
 import json
+import os
 import statistics
 import sys
 import tempfile
@@ -46,7 +49,7 @@ def main(server_bin, model, image_req, out_json, repeats=4):
     first = as_client(json.loads(Path(image_req).read_text()))
     runs = []
     with tempfile.TemporaryDirectory() as scratch:
-        s = Server(server_bin, model, scratch)
+        s = Server(server_bin, model, scratch, os.environ.get("LFM3_SERVER_ARGS", "").split())
         try:
             for r in range(int(repeats)):
                 runs.append(conversation(s, first))

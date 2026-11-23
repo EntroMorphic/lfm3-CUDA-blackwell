@@ -50,10 +50,11 @@ bool off(int device, const char* why) {
   std::fprintf(stderr, "lfm::gemm: tcgen05 path off on device %d: %s\n", device, why);
   return false;
 }
-template <bool BF> bool configure() {
+template <bool BF, bool WRAP> bool configure() {
   cudaFuncAttributes a;
-  if (cudaFuncGetAttributes(&a, tc05::gemm_2cta<kStages, BF>) != cudaSuccess) return false;
-  return cudaFuncSetAttribute(tc05::gemm_2cta<kStages, BF>, cudaFuncAttributeMaxDynamicSharedMemorySize, int(kSmem)) == cudaSuccess;
+  if (cudaFuncGetAttributes(&a, tc05::gemm_2cta<kStages, BF, WRAP>) != cudaSuccess) return false;
+  return cudaFuncSetAttribute(tc05::gemm_2cta<kStages, BF, WRAP>, cudaFuncAttributeMaxDynamicSharedMemorySize, int(kSmem)) ==
+         cudaSuccess;
 }
 // Under g_mutex.
 bool check_device(int device, DeviceState& d) {
@@ -64,7 +65,7 @@ bool check_device(int device, DeviceState& d) {
   if (major != 11 || minor != 0) return off(device, "not compute capability 11.0 (sm_110a code)");
   if (cudaDeviceGetAttribute(&d.sms, cudaDevAttrMultiProcessorCount, device) != cudaSuccess || d.sms < 2)
     return off(device, "SM count");
-  if (!configure<true>() || !configure<false>()) { cudaGetLastError(); return off(device, "kernel image or shared-memory opt-in"); }
+  if (!configure<true, false>() || !configure<false, false>() || !configure<true, true>() || !configure<false, true>()) { cudaGetLastError(); return off(device, "kernel image or shared-memory opt-in"); }
   if (!g_encode) {
     void* fn = nullptr;
     cudaDriverEntryPointQueryResult q;
@@ -100,9 +101,11 @@ bool aligned(const void* q) { return reinterpret_cast<std::uintptr_t>(q) % 16 ==
 bool eligible(const Problem& p) {
   // N >= 2 x kBN (validation/tcgen05-v2 amendment 2): with one 256-wide output tile per row block tcgen05 leaves most
   // SMs idle and lost to mma.sync (the audio downsampler's N = 256 multiplies, 0.73-0.82x); every N >= 512 won
+  // a wrapped B (validation/encoder-wrap-v1): N x b_k_wrap, read twice over k = 2 b_k_wrap, the wrap on a k tile's edge
+  const bool b_ok = p.b_k_wrap ? p.b_k_wrap % tc05::kBK == 0 && p.k == 2 * p.b_k_wrap && p.ldb == p.b_k_wrap : p.ldb == p.k;
   return p.b_k_contiguous && p.batch == 1 && p.group == 1 && p.m >= kMinRows && p.n >= 2 * tc05::kBN &&
          p.n % tc05::kBN == 0 &&
-         p.k % tc05::kBK == 0 && p.k >= tc05::kBK && p.lda == p.k && p.ldb == p.k && p.ldc == p.n && aligned(p.a) &&
+         p.k % tc05::kBK == 0 && p.k >= tc05::kBK && p.lda == p.k && b_ok && p.ldc == p.n && aligned(p.a) &&
          aligned(p.b) && aligned(p.c_f32 ? static_cast<const void*>(p.c_f32) : static_cast<const void*>(p.c));
 }
 
@@ -111,7 +114,7 @@ bool try_run(const Problem& p, cudaStream_t stream) {
   const DeviceState* d = device_state();
   if (!d) return false;
   CUtensorMap ma, mb;
-  if (!encode(ma, p.a, p.m, p.k, tc05::kBM) || !encode(mb, p.b, p.n, p.k, 128)) {
+  if (!encode(ma, p.a, p.m, p.k, tc05::kBM) || !encode(mb, p.b, p.n, p.b_k_wrap ? p.b_k_wrap : p.k, 128)) {
     static std::once_flag once;
     std::call_once(once, [] { std::fprintf(stderr, "lfm::gemm: tcgen05 tensor-map encoding failed; this call ran mma.sync\n"); });
     return false;
@@ -125,9 +128,15 @@ bool try_run(const Problem& p, cudaStream_t stream) {
   a.band = std::max(1, std::min(a.tiles_n, int((8u << 20) / (uint32_t(tc05::kBN) * p.k * 2))));
   a.wd.timeout_ns = kTimeoutNs;
   a.wd.trap_tag = nullptr;
+  a.b_k_wrap = p.b_k_wrap;
   const int grid = 2 * std::min(a.tiles, d->sms / 2);
-  if (p.c_f32) tc05::gemm_2cta<kStages, false><<<grid, 192, kSmem, stream>>>(ma, mb, a);
-  else tc05::gemm_2cta<kStages, true><<<grid, 192, kSmem, stream>>>(ma, mb, a);
+  if (p.b_k_wrap) {
+    if (p.c_f32) tc05::gemm_2cta<kStages, false, true><<<grid, 192, kSmem, stream>>>(ma, mb, a);
+    else tc05::gemm_2cta<kStages, true, true><<<grid, 192, kSmem, stream>>>(ma, mb, a);
+  } else {
+    if (p.c_f32) tc05::gemm_2cta<kStages, false><<<grid, 192, kSmem, stream>>>(ma, mb, a);
+    else tc05::gemm_2cta<kStages, true><<<grid, 192, kSmem, stream>>>(ma, mb, a);
+  }
   g_launches.fetch_add(1, std::memory_order_relaxed);
   return true;
 }

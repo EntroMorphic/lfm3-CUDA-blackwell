@@ -6,13 +6,16 @@ For each server in turn (one at a time, on a quiet Thor):
   0. before: the in-use reading with no server running;
   1. start the server (no extra options; its warm-up runs), then the in-use reading: `started`;
   2. one audio-in ASR request with the short clip (tools/measure_lfm3_audio_ttft.py's), then the reading: `short`;
-  3. two requests with the 90 s clip (the first warm, as audio-frontend-v1's idle reading), then the reading: `after_90`.
+  3. two requests with the 90 s clip (the first warm, as audio-frontend-v1's idle reading), then the reading: `after_90`;
+  4. (validation/encoder-wrap-v1) with LFM3_MEMORY_IMAGE set to an image request (images-v1's stage-0 form), that
+     request once (text mode, 16 new tokens; the vision encoder's first encode), then the reading: `after_image`.
 Each reading: 3 s idle, then the median of 5 samples 0.5 s apart. Requests must return the done event.
 Gate (rule 5b): device(after_90) of the round's server - that of the deployed server <= 1 GiB. The `short` difference
 (about the doubled weights, built on the first clip, and a small scratch) is reported.
 Usage: measure_lfm3_audio_device_memory.py SHORT_WAV LONG_WAV MODEL_DIR OUT_JSON NAME=SERVER...
 """
 import json
+import os
 import statistics
 import sys
 import tempfile
@@ -61,6 +64,11 @@ def reading(pid=None):
 
 def main(short_wav, long_wav, model, out_json, *servers):
     out, failed = {}, False
+    image = None
+    if os.environ.get("LFM3_MEMORY_IMAGE"):
+        from check_lfm3_image_server import as_client
+        image = as_client(json.loads(Path(os.environ["LFM3_MEMORY_IMAGE"]).read_text()))
+        image["mode"], image["max_new_tokens"] = "text", 16
     for spec in servers:
         name, binary = spec.split("=", 1)
         r = dict(before=reading())
@@ -76,14 +84,20 @@ def main(short_wav, long_wav, model, out_json, *servers):
                     failed |= not q["ok"]
                 r["after_90"] = reading(s.proc.pid)
                 r["text_90"] = q["text"]
+                if image:
+                    st, events, _, _ = s.stream(image)
+                    failed |= st != 200 or not any(e.get("event") == "done" for e in events)
+                    r["after_image"] = reading(s.proc.pid)
+                    r["text_image"] = "".join(e.get("text", "") for e in events if e.get("event") == "text")
             finally:
                 code, err = s.stop()
             r["server_exit"] = code
             failed |= code != 0
-        for k in ("started", "short", "after_90"):
+        keys = ("started", "short", "after_90") + (("after_image",) if image else ())
+        for k in keys:
             r[k]["device"] = r[k]["in_use"] - r["before"]["in_use"] - r[k]["anon_shmem"]
         out[name] = r
-        print(name, {k: round(r[k]["device"] / 2**20) for k in ("started", "short", "after_90")}, "MiB device;",
+        print(name, {k: round(r[k]["device"] / 2**20) for k in keys}, "MiB device;",
               "VmRSS after 90 s", round(r["after_90"]["vmrss"] / 2**20), "MiB; exit", code, flush=True)
     names = [s.split("=", 1)[0] for s in servers]
     if len(names) == 2:

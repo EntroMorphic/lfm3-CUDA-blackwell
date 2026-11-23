@@ -179,6 +179,9 @@ struct Args {
   int tiles_m = 0, tiles_n = 0, tiles = 0;
   int band = 1;  // N tiles per raster band (L2 reuse of B while walking M)
   Watchdog wd;
+  // gemm_2cta<..., WRAP = true> (validation/encoder-wrap-v1): B's k coordinate at or past it reads k - b_k_wrap (B's
+  // tensor map covers N x b_k_wrap). A multiple of kBK. Last, so every other field keeps its offset.
+  int b_k_wrap = 0;
 };
 
 // Tile t -> (M tile, N tile): bands of `band` N tiles; inside a band, N fastest then M, so the CTAs in flight share
@@ -397,7 +400,7 @@ inline constexpr uint32_t kPairStageBytes = kABytes + kPairHalfB;  // per CTA: A
 
 // V3: persistent CTA pairs, two TMEM accumulators, tiles 256 x 256 x 64. Grid = 2 x pairs, cluster (2, 1, 1).
 // Args.tiles_m counts 256-row tiles. Watchdog tags as gemm_1cta, plus 10 + tag in the peer.
-template <int STAGES, bool BF16_OUT>
+template <int STAGES, bool BF16_OUT, bool WRAP = false>  // WRAP: Args::b_k_wrap; false is the kernel as it was
 __global__ void __cluster_dims__(2, 1, 1) __launch_bounds__(192, 1)
 gemm_2cta(const __grid_constant__ CUtensorMap map_a, const __grid_constant__ CUtensorMap map_b, const Args args) {
   constexpr int ACC = 2;
@@ -444,7 +447,12 @@ gemm_2cta(const __grid_constant__ CUtensorMap map_a, const __grid_constant__ CUt
           const uint32_t fb = map_to_rank(smem_u32(&full[s]), 0), sa = base + s * kPairStageBytes;
           if (leader) mbar_expect_tx(smem_u32(&full[s]), 2 * kPairStageBytes);
           tma_load_2d_pair(sa, &map_a, kt * kBK, mt * kPairBM + int(rank) * kBM, fb);
-          tma_load_2d_pair(sa + kABytes, &map_b, kt * kBK, nt * kBN + int(rank) * 128, fb);
+          if constexpr (WRAP) {
+            const int bk = kt * kBK >= args.b_k_wrap ? kt * kBK - args.b_k_wrap : kt * kBK;
+            tma_load_2d_pair(sa + kABytes, &map_b, bk, nt * kBN + int(rank) * 128, fb);
+          } else {
+            tma_load_2d_pair(sa + kABytes, &map_b, kt * kBK, nt * kBN + int(rank) * 128, fb);
+          }
         }
       }
     }
