@@ -175,3 +175,36 @@ A diagnostic: no engine change, nothing gated.
 - The fixed pair ran at its fast speed through about 2,100 launches per process, with every condition between them. The rule did not foresee a slow state that never forms. That is the rule's gap, recorded as found.
 - **What stage 2 removed from stage 1:** in stage 1, each B buffer's pass 1 allocated a new 30 MiB buffer (kept), uploaded 30 MiB from pageable host memory into it, ran the chase and filled it. The fixed pair was slow by the first control, 8 such buffers in. Stage 2 allocates five buffers at the start and nothing after; no fill, copy, read, idle gap or allocation call made it slow.
 - **So the question turns around:** not what restores the fast state, but which of stage 1's per-buffer steps brings on the slow one. Stage 3.
+
+## Stage 3: which of stage 1's steps brings on the slow state? (rules set 2026-11-22, before any data)
+**The tool:** `native/tests/alloc_onset_probe.cu` (`alloc-onset-probe INGREDIENT`), built for mma.sync and for tcgen05 as in stage 2.
+
+**One ingredient per process:**
+- `none`;
+- `malloc`: 30 MiB allocated, kept, untouched;
+- `malloc_fill`: the same, written by a kernel;
+- `h2d`: 30 MiB uploaded from pageable host memory into a spare allocated at the start;
+- `h2d_pinned`: the same from `cudaMallocHost` memory;
+- `malloc_h2d`: allocate, keep, and the pageable upload into it;
+- `gemm_other`: 6 GEMMs on one of 8 other weights, allocated and written at the start;
+- `stage1`: stage 1's whole step.
+
+**The process:**
+1. 30 launches of a fixed pair: the **baseline** median.
+2. 8 steps of the ingredient, each followed by 6 timed launches of the fixed pair.
+3. 30 launches: the **after** median.
+4. Then, each followed by 6 launches: `idle_1000ms`, `fill_b`, `alloc` (2 MiB malloc + free), `free_kept` (free every buffer the steps kept), and `idle_1000ms` again.
+
+**The run** (`tools/thor/alloc_effect_stage3.sh`):
+- Quiet Thor, the service stopped, the 1 s sampler, `power_state.sh`, the 10 Hz hardware sampler.
+- After 60 s idle, every ingredient twice per binary: 32 processes back to back, in a fixed shuffled order, binaries alternating.
+
+**Readings, set now, per binary:**
+- **Induces in a process:** after ≥ 1.25 × baseline.
+- **An ingredient induces** if it does so in both of its processes.
+- **Void:** the binary is void if `none` induces in either process.
+- **Onset:** the first step whose 6-launch median is ≥ 1.25 × baseline, reported for inducing processes.
+- **A restorer restores** in an inducing process if its 6-launch median ≤ 0.80 × after. This is reported per restorer; it is not a rule.
+- **The start's footprint:** `gemm_other`'s baseline (8 extra 30 MiB buffers at the start) against `none`'s, reported.
+
+A diagnostic: no engine change, nothing gated.
