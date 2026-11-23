@@ -240,3 +240,32 @@ Text prefill, first request | median of requests 2–4, seconds:
 - **That spread is the state effect of alloc-effect-v1, at full size, on identical code.** The same build differs by up to 25% between processes (B1 0.0394 against B2 0.0316 s on the 2.1 s clip). OFF's own text prefill at 1,149 tokens was 0.170 s in its first process and 0.137 s in its second.
 - **No 1% gate can be read through a ±20% state swing.** Rule 5 fails as written. What fails it is the measurement, not tcgen05: where tcgen05 runs it is 20–49% faster in every cell.
 - **The option stays OFF.** The decision of what comes next is Tripp's.
+
+## Decision (2026-11-22, Tripp: option 1): ON by default
+`LIQUID_LFM3_TCGEN05` defaults to ON in `native/CMakeLists.txt`.
+
+**The standing at the decision:**
+
+| rule | verdict |
+|---|---|
+| 1, exactness at the entry point | PASS (593/593) |
+| 2, byte identity | PASS |
+| 3, sanitizers | PASS |
+| 4b, the soak pair | PASS |
+| 6, coherency | PASS (by rule 2) |
+| 5, speed | **FAIL as written, three times** |
+
+**The three rule-5 failures:**
+1. As first written: a 0.1 ms cell.
+2. Under amendment 1: a real 0.1–0.4 ms regression from the N = 256 downsampler multiplies, which amendment 2 removed.
+3. Under amendments 1 and 2: identical code on the short clips swinging up to 25% between processes, the state effect of alloc-effect-v1.
+
+**The reasoning offered for the choice:**
+- Where tcgen05 does not run, the code is the same as before, so it cannot be slower there.
+- Where it runs, it was 20–49% faster in every measured cell.
+
+The failures stay in the record as failures.
+
+**After it:** alloc-effect-v1 (controlling the state) makes a clean speed measurement possible. tcgen05's speed is then measured again on the deployed build, reported, not gated.
+
+`lfm3-speech`, `lfm3-vision-check` and the benches are built by `nvcc` directly, not CMake (`build_speech.sh` and the others). They stay without tcgen05 unless built with `build_tcgen05_engine.sh`. The deployed server and worker are built by CMake and take the new default.

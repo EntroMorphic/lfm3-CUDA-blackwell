@@ -10,10 +10,11 @@ option(LIQUID_LFM3_NATIVE_GEMM "LFM3 engine without cuBLAS (lfm::gemm)" ON)
 
 find_package(CUDAToolkit REQUIRED)
 find_package(Threads REQUIRED)
-# tcgen05 (validation/tcgen05-gemm-v1): lfm::gemm runs its large projections (M >= 257) on Thor's tensor memory,
-# bitwise identical to mma.sync. The one sm_110a unit is an object library; every other unit stays sm_110.
-# OFF until every rule of tcgen05-gemm-v1 passes.
-option(LIQUID_LFM3_TCGEN05 "lfm::gemm's tcgen05 path (sm_110a) for M >= 257" OFF)
+# tcgen05 (validation/tcgen05-gemm-v1, tcgen05-v2): lfm::gemm runs its large projections (M >= 257, N >= 512) on Thor's
+# tensor memory, bitwise identical to mma.sync. The one sm_110a unit is an object library; every other unit stays
+# sm_110. ON by default since tcgen05-v2 (Tripp's decision 2026-11-22: every exactness and safety rule passed; the speed
+# rule failed as written on run-to-run state noise, recorded there). -DLIQUID_LFM3_TCGEN05=OFF builds without it.
+option(LIQUID_LFM3_TCGEN05 "lfm::gemm's tcgen05 path (sm_110a) for M >= 257, N >= 512" ON)
 if(LIQUID_LFM3_TCGEN05)
   add_library(lfm_gemm_tcgen05 OBJECT src/gemm_tcgen05.cu)
   target_include_directories(lfm_gemm_tcgen05 PUBLIC include)
