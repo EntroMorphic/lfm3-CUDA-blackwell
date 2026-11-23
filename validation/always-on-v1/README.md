@@ -313,3 +313,22 @@ The always-on service moved from `96e8510cdd3e` (the mel-tiered-v1 merge) to mai
 - `/health`: 200. `oom_score_adj`: 100. The process runs `~/.local/lib/liquid-lfm3/71a6e1d793a4/liquid-lfm3-server`.
 - Text: 200, coherent. TTS: 200, 2.72 s of audio, ended by EOS.
 - Audio in, the 90 s clip: 200, the right transcript. The first text came 0.2279 and 0.2273 s after the send on the first two requests after the restart. That is the live service, not a quiet window; it was 0.265 s on the previous server.
+
+## The tcgen05-v2 merge deployed (2026-11-22)
+The always-on service moved from `71a6e1d793a4` (the ttft-rest-v1 merge) to main 6f2142d, the merge of tcgen05-v2: lfm::gemm's tcgen05 path, ON by default for M ≥ 257 and N ≥ 512.
+- The new server is `build/merge5-srv`, sha256 `f19f4ee40708…`, built by CMake with the new default. `LIQUID_LFM3_TCGEN05:BOOL=ON` is in its cache, and the binary carries the tcgen05 path.
+- It is installed in `~/.local/lib/liquid-lfm3/f19f4ee40708/`. The previous binaries stay in place for a rollback.
+- The only line of the unit that changed is `ExecStart`. The unit before is kept as `build/merge5-check/liquid-lfm3.service.before`. `systemd-analyze --user verify` is clean.
+
+**Before the deploy (`build/merge5-check/`, `tools/thor/deploy_check_merge5.sh`):**
+- **Quiet, 18:26–18:37:**
+  - speech stream check: PASS;
+  - time to first token on the five clips: 0.0315, 0.0405, 0.0534, 0.0834 and 0.1789 s, texts identical to tcgen05-v2's ON runs;
+  - MONITOR CLEAN (616 samples); power unchanged.
+- **Exact:** images PASS; image cache 24 of 24 identical; audio in PASS; 8 and 32 at once identical to `lfm3-speech`; TTS exit 0; text gate exit 0.
+
+**After the deploy (18:50):**
+- Restart: 4.93 s. Warm-up: startup 4.69 s, warm-up 3.84 s.
+- `/health`: 200. `oom_score_adj`: 100. The process runs `~/.local/lib/liquid-lfm3/f19f4ee40708/liquid-lfm3-server`.
+- Text: 200, coherent. TTS: 200, 2.88 s of audio, ended by EOS.
+- Audio in, the 90 s clip: 200, the right transcript. The first text came 0.1712 and 0.1701 s after the send on the first two requests after the restart. That is the live service, not a quiet window; it was 0.228 s on the previous server.

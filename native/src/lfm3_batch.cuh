@@ -163,6 +163,9 @@ inline void linear_tiled(const lfm::gemm::Problem& p, int rows, int in, int out)
     else if (up) launch<A64>(p);
     else launch<B64>(p);
   } else {
+#ifdef LFM_GEMM_TCGEN05
+    if (lfm::gemm::tcgen05::try_run(p, 0)) return;  // M >= 257 inside its contract (validation/tcgen05-gemm-v1)
+#endif
     launch<lfm::gemm::detail::Wide128>(p);
   }
 }

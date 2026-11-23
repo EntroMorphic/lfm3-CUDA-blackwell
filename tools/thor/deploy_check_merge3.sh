@@ -33,7 +33,7 @@ $X python3 $T/measure_lfm3_audio_ttft.py $C/$SV/liquid-lfm3-server $M $C/$O/clip
 bash $R/tools/thor/power_state.sh power-end.json power-start.json > /dev/null && echo "power: unchanged" || echo "POWER DIFFERS"
 kill -TERM $SAMPLER 2>/dev/null; SAMPLER=""
 python3 - <<'PY'
-import collections, json, statistics
+import collections, json, os, statistics
 rows = collections.defaultdict(list)
 for line in open('samples.log'):
     p = line.rstrip('\n').split(' ', 2)
@@ -46,7 +46,7 @@ for t, r in rows.items():
     foreign += any(d not in ('lfm3-profile-v1', 'lfm3-omni-dev') for d in dock) or any(
         ('kin_' in q or 'nsys' in q or 'compute-sanitizer' in q or 'lfm3-speech' in q or '/.local/lib/liquid-lfm3/' in q) for q in procs)
 print(f"sampler: {n} samples; foreign in {foreign}"); print("MONITOR:", "CLEAN" if n and not foreign else "NOT CLEAN")
-m = json.load(open('ttft.json'))['medians']; b = [json.load(open(f'/home/ztflynn/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/mel3-run/{t}.json'))['medians'] for t in ('B1', 'B2')]
+m = json.load(open('ttft.json'))['medians']; b = [json.load(open(os.path.expanduser('~/Projects/000-research/lfm3-omni-2B/liquid-CUDA/build/') + f'mel3-run/{t}.json'))['medians'] for t in ('B1', 'B2')]
 for c in m:
     print(f"{c:9} merge3 {m[c]['from_file_seconds']:.4f} s | mel3 B1 {b[0][c]['from_file_seconds']:.4f} B2 {b[1][c]['from_file_seconds']:.4f} | text same as mel3: {m[c]['text'] == b[0][c]['text']}")
 PY
