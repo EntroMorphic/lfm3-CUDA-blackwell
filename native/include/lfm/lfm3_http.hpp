@@ -243,7 +243,14 @@ inline Json strict_json(std::string_view raw) {
   if (!lfm3_text::valid_utf8(raw)) throw std::invalid_argument("invalid UTF-8");
   bool quoted = false, escaped = false;
   int depth = 0;
-  for (const char c : raw) {
+  for (size_t i = 0; i < raw.size(); ++i) {
+    // inside a string and not after a backslash, only '"' and '\\' change anything: whole 8-byte words without either
+    // are skipped (validation/ttft-rest-v2 stage 1; a 90 s clip's base64 is one string)
+    if (quoted && !escaped) {
+      i = json_scan::skip_plain(raw, i, false);
+      if (i == raw.size()) break;
+    }
+    const char c = raw[i];
     if (quoted) {
       if (escaped) escaped = false;
       else if (c == '\\') escaped = true;
@@ -252,7 +259,7 @@ inline Json strict_json(std::string_view raw) {
     else if (c == '[' || c == '{') { if (++depth > 64) throw std::invalid_argument("JSON nesting exceeds limit"); }
     else if (c == ']' || c == '}') --depth;
   }
-  Json j = Json::parse(std::string(raw));
+  Json j = Json::parse(raw);  // in place (ttft-rest-v2 stage 1: it was parsed from a copy)
   if (!std::holds_alternative<Json::Object>(j.value)) throw std::invalid_argument("expected JSON object");
   return j;
 }
@@ -906,15 +913,17 @@ class Service {
   // image with its own code as before. The images' order is encode_speech's (image input is never split).
   void decode_images(Speech& s, Clock::time_point deadline, const std::function<bool()>& gone) {
     if (!s.image_input) return;
-    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true, /*allow_image=*/true))
+    // the parts' media in the request's JSON (ttft-rest-v2 stage 1), which lives until encode_speech drops it
+    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true, /*allow_image=*/true,
+                                                   /*copy_media=*/false))
       for (const auto& part : m.parts) {
         if (!part.image) continue;
         // image-cache-v1: these exact bytes were decoded before (and accepted: only a decoded image is kept): their
         // count, with no decode; the engine finds the image's rows in its own cache, or decodes it again itself
         // C3: in process, only when the engine also holds its rows (else the engine thread would decode it): decoded
         // here instead and handed over, as a miss
-        if (const auto known = image_token_cache_.find(part.data);
-            known && (!policy_.image_handoff || lfm::image::shared_held_images().holds(part.data))) {
+        if (const auto known = image_token_cache_.find(part.source());
+            known && (!policy_.image_handoff || lfm::image::shared_held_images().holds(part.source()))) {
           s.image_tokens.push_back(*known);
           continue;
         }
@@ -942,16 +951,16 @@ class Service {
         // refusals: each its own code, before the engine
         int tokens;
         if (policy_.image_handoff) {  // part 2: preprocessed here, found by the engine (lfm/image_handoff.hpp)
-          auto pixels = decode_image(part.data, [](const lfm::image::Rgb& rgb) {
+          auto pixels = decode_image(part.source(), [](const lfm::image::Rgb& rgb) {
             return std::make_shared<const lfm::image::PixelValues>(lfm::image::preprocess(rgb));
           });
           tokens = pixels->tokens;
-          s.image_leases.push_back(lfm::image::shared_pixel_handoff().put(part.data, std::move(pixels)));
+          s.image_leases.push_back(lfm::image::shared_pixel_handoff().put(part.source(), std::move(pixels)));
         } else {
-          tokens = decode_image(part.data, [](const lfm::image::Rgb& rgb) { return lfm::image::tokens(rgb); });
+          tokens = decode_image(part.source(), [](const lfm::image::Rgb& rgb) { return lfm::image::tokens(rgb); });
         }
         s.image_tokens.push_back(tokens);
-        image_token_cache_.put(part.data, std::make_shared<const int>(tokens), sizeof(int));
+        image_token_cache_.put(part.source(), std::make_shared<const int>(tokens), sizeof(int));
       }
   }
   // validation/audio-frontend-v1: each audio clip's features (lfm::audio_features::log_mel) computed on the request's
@@ -1065,7 +1074,9 @@ class Service {
     // any other system prompt (audio-assurance-v1 rule 10: "Tengo 3 gatos" must not become "Tengo three gatos").
     bool has_system = false, english = false;
     size_t text_bytes = 0;
-    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true, /*allow_image=*/true)) {
+    // the parts' media not copied (ttft-rest-v2 stage 1): only counted here
+    for (const auto& m : lfm3_text::parse_messages(*s.messages, /*allow_audio=*/true, /*allow_image=*/true,
+                                                   /*copy_media=*/false)) {
       for (const auto& part : m.parts) clips += part.audio, images += part.image;
       text_bytes += m.content.size() + m.thinking.size();
       for (const auto& part : m.parts) text_bytes += part.text.size();
@@ -1111,30 +1122,39 @@ class Service {
   // Audio input (#3): each user audio part (base64 16 kHz mono WAV) renders as the template's single <|audio|>, then
   // expands to its clip's encoder token count (lfm3_text::expand_audio); the clips go to the engine as given.
   void encode_speech(Speech& s) const {
-    auto messages = lfm3_text::parse_messages(*s.messages, /*allow_audio=*/!s.split, /*allow_image=*/!s.split);
+    // the parts' media in the request's JSON (ttft-rest-v2 stage 1), dropped at the end of this function
+    auto messages = lfm3_text::parse_messages(*s.messages, /*allow_audio=*/!s.split, /*allow_image=*/!s.split,
+                                              /*copy_media=*/false);
     if (s.normalize) speech_text::normalize_user_text(messages);
     std::vector<size_t> clip_tokens;
     std::vector<lfm3_text::MediaTokens> media;  // every part's medium in prompt order (with images: expand_media)
     size_t image_count = 0;
     s.audio_json = "[";
+    {  // reserved at its final size (ttft-rest-v2 stage 1: the closing '"' after a clip regrew it, a second MB copy)
+      size_t bytes = 2;
+      for (const auto& m : messages)
+        for (const auto& part : m.parts)
+          if (part.audio) bytes += part.source().size() + 3;
+      s.audio_json.reserve(bytes);
+    }
     s.images_json = "[";
     for (const auto& m : messages)
       for (const auto& part : m.parts) {
         if (part.audio) {
-          auto pcm = lfm3_speech::clip_from_base64(part.data);
+          auto pcm = lfm3_speech::clip_from_base64(part.source());
           clip_tokens.push_back(lfm::audio_features::tokens(pcm.size()));
           if (policy_.audio_features_ahead) s.audio_pcm.push_back(std::move(pcm));
           else s.audio_pcm.emplace_back();
           s.audio_json += clip_tokens.size() > 1 ? ",\"" : "\"";
-          s.audio_clips.emplace_back(s.audio_json.size(), part.data.size());  // compute_audio_features' clips
-          s.audio_json += part.data;  // checked base64: no escapes
+          s.audio_clips.emplace_back(s.audio_json.size(), part.source().size());  // compute_audio_features' clips
+          s.audio_json += part.source();  // checked base64: no escapes
           s.audio_json += '"';
           media.push_back({lfm3_text::kAudioToken, clip_tokens.back()});
         } else if (part.image) {
           // decoded and preprocessed before the front end (decode_images), as the engine will: its token count
           if (image_count >= s.image_tokens.size()) throw std::logic_error("encode_speech: an image not decoded");
           media.push_back({lfm3_text::kImageToken, size_t(s.image_tokens[image_count])});
-          s.images_json += (++image_count > 1 ? ",\"" : "\"") + part.data + "\"";  // checked base64: no escapes
+          s.images_json += (++image_count > 1 ? ",\"" : "\"") + part.source() + "\"";  // checked base64: no escapes
         }
       }
     if (image_count != s.image_tokens.size()) throw std::logic_error("encode_speech: decoded images differ from parts");
@@ -2591,7 +2611,11 @@ class Connection {
       const auto types = r.all("content-type");
       if (types.size() != 1 || lower(types[0]) != "application/json") throw ApiError(415, "application_json_required");
       const auto deadline = Clock::now() + seconds(service_.settings().socket_timeout);
-      std::string body = buffer_.substr(pos_);
+      // reserved at its length (validation/ttft-rest-v2 stage 1: grown by doubling, a 90 s clip's body was copied
+      // and page-faulted about twice over); the bytes and every refusal as before
+      std::string body;
+      body.reserve(std::max(length, buffer_.size() - pos_));
+      body.append(buffer_, pos_);
       while (body.size() < length) {
         if (Clock::now() >= deadline) throw ApiError(408, "body_deadline");
         buffer_.clear();
