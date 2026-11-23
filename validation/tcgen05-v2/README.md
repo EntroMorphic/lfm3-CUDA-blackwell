@@ -199,3 +199,40 @@ Each engine GEMM shape at each M ≥ 257, `lfm::gemm::run` with tcgen05 on and o
 **Not run again: rule 4b.** Its pass stands. The change only narrows which problems take the tcgen05 path that rule 4b soaked for an hour on each side; it adds no path and no new state.
 
 If rules 1–3 and 5 pass, the option goes ON by default.
+
+## Amendment 2's runs (2026-11-22)
+**Rules 1–3, the N ≥ 512 build (16:38–17:15; `build/tc3-exact/`): PASS.**
+- **Rule 1:** 593 entry-point cases, 0 failed. 240 are audio-encoder cases; `a.lin_mid` (N 256) takes mma.sync, as the contract now says.
+- **Rule 2** (the parts that are not timed): every check as before.
+  - TTS regression 36 SAME; audio-in dump 360 of 360 and edge 93 of 93 against main; e2e and split 90 of 90;
+  - vision 713 of 713;
+  - server audio in, 8 and 32 at once, images, the image cache 24 of 24, TTS, the text gate: all pass.
+- **Rule 3:** memcheck (0 errors, 0 leaks), synccheck and initcheck clean on the 4,000-token prefill and the 90 s clip; outputs identical to the plain run.
+
+**Rule 5 under amendments 1 and 2 (quiet 17:30–17:32, launch check after; `build/tc3-r5/`): FAIL as written.**
+- MONITOR CLEAN (106 samples).
+- **The launch check is valid:** 0 tcgen05 kernels on the 2.1, 5.8 and 10.4 s clips; 460 on the 35 and 90 s clips. Amendment 2 did what it was for.
+
+Audio time to first token, seconds:
+
+| clip | OFF A1 | ON B1 | OFF A2 | ON B2 | tcgen05 | bound | verdict |
+|---|---|---|---|---|---|---|---|
+| 2.1 s | 0.0388 | **0.0394** | 0.0387 | 0.0316 | 0 | 0.0391 (+1%) | over |
+| 5.8 s | 0.0455 | **0.0463** | 0.0457 | 0.0410 | 0 | 0.0460 (+1%) | over |
+| 10.4 s | 0.0569 | **0.0576** | 0.0570 | 0.0536 | 0 | 0.0575 (+1%) | over |
+| 35 s | 0.1144 | 0.0917 | 0.1090 | 0.0844 | 460 | 0.1117 | pass (−20%) |
+| 90 s | 0.2503 | 0.1885 | 0.2407 | 0.1781 | 460 | 0.2455 | pass (−25%) |
+
+Text prefill, first request | median of requests 2–4, seconds:
+
+| tokens | OFF 1 | ON 1 | OFF 2 | ON 2 | worst ON ÷ mean OFF |
+|---|---|---|---|---|---|
+| 512 | 0.0784 / 0.0758 | 0.0429 / 0.0435 | 0.0782 / 0.0656 | 0.0449 / 0.0433 | 0.615 |
+| 1,149 | 0.1739 / 0.1702 | 0.0780 / 0.0784 | 0.1375 / 0.1371 | 0.0798 / 0.0781 | 0.510 |
+| 4,000 | 0.8176 / 0.7621 | 0.4743 / 0.4730 | 0.6558 / 0.6540 | 0.4752 / 0.4756 | 0.672 |
+
+**Reading:**
+- **On the three short clips the two builds now run the same kernels** (0 tcgen05 launches, by the trace). Yet ON B1 was 0.8–1.5% over the bound, and ON B2 was 6–19% under OFF.
+- **That spread is the state effect of alloc-effect-v1, at full size, on identical code.** The same build differs by up to 25% between processes (B1 0.0394 against B2 0.0316 s on the 2.1 s clip). OFF's own text prefill at 1,149 tokens was 0.170 s in its first process and 0.137 s in its second.
+- **No 1% gate can be read through a ±20% state swing.** Rule 5 fails as written. What fails it is the measurement, not tcgen05: where tcgen05 runs it is 20–49% faster in every cell.
+- **The option stays OFF.** The decision of what comes next is Tripp's.
