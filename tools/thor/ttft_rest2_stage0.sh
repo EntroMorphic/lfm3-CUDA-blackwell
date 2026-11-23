@@ -29,7 +29,8 @@ docker run --rm --network none -v $W:/workspace $IMG bash -c "set -e; N=$C/$S/na
     $C/$S/native/tests/audio_handler_bench.cpp > build-bench.log 2>&1
   chown -R 1000:1000 $C/rest2-trace $C/$O"; echo "builds exit $?"
 (cd $B && sha256sum rest2-trace/liquid-lfm3-server $O/audio-handler-bench merge5-srv/liquid-lfm3-server) | tee binaries.sha256
-strings -a $B/rest2-trace/liquid-lfm3-server | grep -qx 's_enqueued' && echo "trace build: marks present" || { echo "trace build: NO MARKS"; exit 1; }
+# grep -c reads to the end (grep -q would stop early, strings would get SIGPIPE, and pipefail would fail the check)
+[ "$(strings -a $B/rest2-trace/liquid-lfm3-server | grep -cxE 's_enqueued|c_t0|o_text|h_sent')" -eq 4 ] && echo "trace build: marks present" || { echo "trace build: NO MARKS"; exit 1; }
 (
 wait_quiet 2880 || { echo "NOT QUIET after 24 h"; exit 1; }
 SVC=0; systemctl --user is-active --quiet liquid-lfm3 && systemctl --user stop liquid-lfm3 && SVC=1 && echo "stopped liquid-lfm3 $(date +%T)"
