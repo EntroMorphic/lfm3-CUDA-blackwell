@@ -46,3 +46,41 @@ Tripp's go: item 2 of the remaining list ("the allocation effect"), 2026-11-22.
 6. **Coherency.** Read the 90 s transcript and an image answer from the candidate end to end.
 
 The merge and deploy are Tripp's call.
+
+## Results
+### Rules 1 and 3, and the unit check (`build/pu-exact/`, 22:54–23:32)
+- **Source:** `build/pu-src` (081eab9), built by `build_tcgen05_engine.sh pu-on on`.
+- **Binaries:**
+  - `lfm3-speech` `987b407a…`
+  - `liquid-lfm3-server` `d9b8c038…`
+  - `liquid-lfm3-worker` `9c85bc0f…`
+  - `lfm3-vision-check` `185aa050…`
+  - `pinned-staging-check` `9d26ba44…`
+
+**The unit check:** `pinned-staging-check` passed 72 of 72 cases. Each case uploads one of 8 sizes, from 0 bytes through 13 MiB + 5 across the 4 MiB chunk, at 3 × 3 unaligned source and target offsets. In every case the device held the source's bytes exactly, and every guard byte was unchanged.
+
+**Rule 1, byte identity: PASS.**
+
+| check | result |
+|---|---|
+| speech regression | 36 SAME, 0 differ |
+| dump against main | 360 of 360 identical |
+| edge against main | 93 of 93 identical |
+| e2e | 90 of 90 identical |
+| split | 90 of 90 identical |
+| vision stage files against main's | 713 of 713 identical |
+| audio-in server | PASS |
+| 8 at once | 8 served, 8 identical to `lfm3-speech`, PASS |
+| 32 at once | 32 served, 32 identical, PASS |
+| images | IMAGE SERVER PASS |
+| image cache | 24 of 24 identical, PASS |
+| TTS | exit 0 |
+| text gate | exit 0 |
+
+**Rule 3, sanitizers: PASS.** The candidate's `lfm3-speech` ran on the 90 s clip, `cherry` and `two`.
+
+| sanitizer | result | outputs against the plain run |
+|---|---|---|
+| memcheck (leak check) | 0 errors, 0 bytes leaked | 90 s, cherry, two: JSON and every file the same |
+| synccheck | 0 errors | the same |
+| initcheck | 0 errors | the same |
