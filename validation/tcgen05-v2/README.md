@@ -202,6 +202,10 @@ If rules 1–3 and 5 pass, the option goes ON by default.
 
 ## Amendment 2's runs (2026-11-22)
 **Rules 1–3, the N ≥ 512 build (16:38–17:15; `build/tc3-exact/`): PASS.**
+Binaries from d268658's tree (`build/tc3-src`):
+- ON: `lfm3-speech` `d92c83a7…`, server `1facaf14…`, worker `0c1e11a4…`, `lfm3-vision-check` `dfe9893f…`, check `48cec46e…`;
+- OFF: `lfm3-speech` `b7b8a6f9…`, server `95adf8aa…`, worker `51902b7b…`.
+
 - **Rule 1:** 593 entry-point cases, 0 failed. 240 are audio-encoder cases; `a.lin_mid` (N 256) takes mma.sync, as the contract now says.
 - **Rule 2** (the parts that are not timed): every check as before.
   - TTS regression 36 SAME; audio-in dump 360 of 360 and edge 93 of 93 against main; e2e and split 90 of 90;
