@@ -246,3 +246,28 @@ A diagnostic: no engine change, nothing gated.
 - How long the state lasts without idle, and what shorter idle restores it.
 - Which of the engine's other kernels it slows (stage 0's traces: grid 16×9 1.05, norm 1.02).
 - Then an engine round, if the numbers justify one: pinned staging for the engine's uploads, under the usual exactness rules.
+
+## Stage 4: how far does it reach into the engine? (rules set 2026-11-22, before any data)
+**The tool:** `native/tests/alloc_extent_probe.cu` (`alloc-extent-probe`), built for mma.sync and for tcgen05 as before. "Induce" means one 30 MiB pageable host-to-device `cudaMemcpy`; "rest" means a sync and a 1.5 s idle.
+
+**Parts:**
+- **size:** rest, 6 launches of the fixed pair (pre), one copy, 6 launches (post). The copies:
+  - pageable H2D of 4 KiB, 64 KiB, 1 MiB, 8 MiB and 30 MiB;
+  - a pageable `cudaMemcpyAsync` H2D of 64 KiB;
+  - pageable D2H of 4 KiB and 30 MiB.
+  
+  3 rounds, rotated.
+- **restore:** rest, pre, induce, a host sleep of 0, 1, 10, 100, 300 or 1,000 ms, post. 3 rounds, rotated.
+- **persist:** rest, pre, induce, then 2,000 back-to-back launches, with the median per 100.
+- **shapes:** the language model's five GEMM shapes and three encoder shapes, at M = 1, 8, 32, 128, 256 and 1,149, plus a 30 MiB streaming write and read. Each: rest, 6 launches (fast), induce, 6 launches (slow). Through `lfm::gemm::run`, so each binary's dispatch picks the kernel. 2 rounds.
+
+**The run** (`tools/thor/alloc_effect_stage4.sh`): quiet Thor, the service stopped, the samplers as before. Processes mma.sync, tcgen05, mma.sync, tcgen05, after 60 s idle.
+
+**Readings, set now:**
+- **size** (mma.sync, 6 trials per copy): a copy induces if post ÷ pre ≥ 1.25 in all 6. Report the smallest inducing H2D size, and whether async H2D and D2H induce.
+- **restore** (mma.sync): a gap restores if post ÷ pre ≤ 1.10 in all 6. Report the shortest.
+- **persist:** the series, reported.
+- **shapes** (per binary, 4 trials): a work item is affected if slow ÷ fast ≥ 1.25 in all 4. The tcgen05 binary's list is the deployed dispatch.
+- **An engine round is warranted** if any shape at a row count the deployed engine runs on mma.sync (M ≤ 256, or the N = 256 downsampler) is affected in the tcgen05 binary, and copies of a size the engine makes induce. Otherwise this record closes the investigation with the cause found.
+
+A diagnostic: no engine change, nothing gated.
