@@ -118,3 +118,43 @@ This is a diagnostic: it changes no engine code and gates nothing. What follows 
 - **Over-current throttling is not the cause.**
 
 **What this leaves:** the fast state follows a recent write of the operands, more than idle or allocation calls, and it is lost within a few hundred launches. Stage 2 tests that directly.
+
+## Stage 2: what restores the fast state? (rules set 2026-11-22, before any data)
+**The tool:** `native/tests/alloc_state_probe.cu` (`alloc-state-probe`), built twice:
+- plain, which takes lfm::gemm's mma.sync path;
+- with `-DLFM_GEMM_TCGEN05` and tc2-on's `gemm_tcgen05.o`, which takes the deployed tcgen05 path.
+
+**Each process:**
+- One fixed operand pair at the slowed shape.
+- 300 back-to-back launches, each timed (the **sustained** series), right after both operands are written.
+- Then 5 rounds. Each round runs ten conditions in a rotated order. Each condition gets 30 settling launches (**pre** is the median of the last 5), then the action, then 6 timed launches (**median6**).
+- The conditions:
+  - `none`;
+  - `fill_b`: a kernel rewrites the weight, same values;
+  - `fill_a`: the same for the activation;
+  - `fill_other`: a kernel writes an unrelated 30 MiB buffer;
+  - `copy_b`: the weight is copied to a spare and back by the copy engine;
+  - `read_b`: a kernel reads the whole weight;
+  - `idle_5ms`, `idle_100ms`, `idle_1000ms`: the host sleeps and the GPU is idle;
+  - `alloc`: a 2 MiB `cudaMalloc` + `cudaFree`.
+
+**The run** (`tools/thor/alloc_effect_stage2.sh`):
+- Quiet Thor, the service stopped, the 1 s sampler, `power_state.sh`.
+- The over-current counters, VDD_GPU current and VIN power sampled at 10 Hz.
+- Processes in the order mma.sync, tcgen05, mma.sync, tcgen05, back to back, after 60 s idle.
+
+**Readings, set now, per binary:**
+- **Restores in a round:** median6 ≤ 0.80 × pre.
+- **A condition restores** if it does so in at least 8 of that binary's 10 rounds (2 processes × 5).
+- **Void:** if `none` restores in more than 2 of 10 rounds, the settling does not reach the slow state. The binary's readings are then void.
+- The named readings:
+  - **write of the operand:** `fill_b` or `copy_b` restores and `fill_other` does not;
+  - **write in general:** `fill_other` restores;
+  - **activation:** `fill_a` restores;
+  - **read:** `read_b` restores;
+  - **idle:** the shortest idle that restores;
+  - **allocation:** `alloc` restores.
+- **The sustained series:** the launch at which a time first exceeds 1.25 × the median of launches 1–5, and the median of launches 251–300.
+- **Over-current:** whether either counter moved.
+
+A diagnostic: no engine change, nothing gated.
