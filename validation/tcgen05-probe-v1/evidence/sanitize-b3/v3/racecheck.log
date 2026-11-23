@@ -1,0 +1,47 @@
+========= COMPUTE-SANITIZER
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [32 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [64 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [80 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [32 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [64 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [80 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [32 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [64 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [80 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [80 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [80 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [80 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [80 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [80 hazards]
+========= 
+========= Error: Race reported between Write access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0xfffffffffffffe80
+=========     and Read access at void tc05::gemm_2cta<(int)6, (bool)1>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x670 [80 hazards]
+========= 
+========= RACECHECK SUMMARY: 15 hazards displayed (15 errors, 0 warnings)

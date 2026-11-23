@@ -1,0 +1,43 @@
+========= COMPUTE-SANITIZER
+========= Invalid __global__ write of size 16 bytes
+=========     at void tc05::gemm_1cta<(int)4, (int)1, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x1750
+=========     by thread (100,0,0) in block (0,0,0)
+=========     Access to 0x1c43760800 is out of bounds
+=========     and is 1 bytes after the nearest allocation at 0x1c436fc800 of size 409600 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: run_plan(Plan const&, CUstream_st*) [clone .constprop.0] [0x1420b] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde1b] in tcgen05-gemm-probe
+========= 
+========= Invalid __global__ write of size 16 bytes
+=========     at void tc05::gemm_1cta<(int)4, (int)1, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x1750
+=========     by thread (100,0,0) in block (1,0,0)
+=========     Access to 0x1c43760c00 is out of bounds
+=========     and is 1025 bytes after the nearest allocation at 0x1c436fc800 of size 409600 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: run_plan(Plan const&, CUstream_st*) [clone .constprop.0] [0x1420b] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde1b] in tcgen05-gemm-probe
+========= 
+========= Invalid __global__ write of size 16 bytes
+=========     at void tc05::gemm_1cta<(int)4, (int)1, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x1750
+=========     by thread (100,0,0) in block (2,0,0)
+=========     Access to 0x1c43761000 is out of bounds
+=========     and is 2049 bytes after the nearest allocation at 0x1c436fc800 of size 409600 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: run_plan(Plan const&, CUstream_st*) [clone .constprop.0] [0x1420b] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde1b] in tcgen05-gemm-probe
+========= 
+========= Invalid __global__ write of size 16 bytes
+=========     at void tc05::gemm_1cta<(int)4, (int)1, (bool)0>(CUtensorMap_st, CUtensorMap_st, tc05::Args)+0x1750
+=========     by thread (100,0,0) in block (3,0,0)
+=========     Access to 0x1c43761400 is out of bounds
+=========     and is 3073 bytes after the nearest allocation at 0x1c436fc800 of size 409600 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: run_plan(Plan const&, CUstream_st*) [clone .constprop.0] [0x1420b] in tcgen05-gemm-probe
+=========         Host Frame: main [0xde1b] in tcgen05-gemm-probe
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaDeviceSynchronize.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: main [0xde1f] in tcgen05-gemm-probe
+========= 
+========= Target application returned an error
+========= ERROR SUMMARY: 5 errors
