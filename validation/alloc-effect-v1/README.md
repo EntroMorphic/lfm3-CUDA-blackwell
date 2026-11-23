@@ -271,3 +271,83 @@ A diagnostic: no engine change, nothing gated.
 - **An engine round is warranted** if any shape at a row count the deployed engine runs on mma.sync (M ≤ 256, or the N = 256 downsampler) is affected in the tcgen05 binary, and copies of a size the engine makes induce. Otherwise this record closes the investigation with the cause found.
 
 A diagnostic: no engine change, nothing gated.
+
+### Stage 4 results (2026-11-22, `build/alloc-s4/`, quiet 22:32–22:49)
+**The run:**
+- Window 22:32–22:49. Sampler: 919 samples, CLEAN. Power state unchanged. All four processes exited 0.
+- Binaries: mma.sync `e0d7d20e…`, tcgen05 `8bfdae44…`; 2,719 tcgen05 launches in each tcgen05 process.
+- Hardware (8,962 samples): oc2 moved 0 and oc3 moved 3; VDD_GPU peaked at 3.70 A (limit 5.04).
+
+**size** (mma.sync, post ÷ pre, 6 trials):
+
+| copy | trials | reading |
+|---|---|---|
+| H2D 4 KiB | 0.98–1.00 | — |
+| H2D 64 KiB | 0.99–1.01 | — |
+| **H2D 1 MiB** | 1.30–1.46 | **induces** |
+| H2D 8 MiB | 1.01, 1.88, 1.94, 1.90, 1.88, 1.99 | 5 of 6: not "all 6", so not induces as written |
+| **H2D 30 MiB** | 1.82–1.99 | **induces** |
+| async H2D 64 KiB | 0.99–1.01 | — |
+| D2H 4 KiB | 0.97–1.02 | — |
+| D2H 30 MiB | 0.99–1.01 | — |
+
+**The smallest inducing H2D size is 1 MiB.** Device-to-host copies do not induce at either size.
+
+**restore** (mma.sync, post ÷ pre, 6 trials):
+
+| gap | trials | reading |
+|---|---|---|
+| 0 ms | 1.84–1.98 | still slow |
+| 1 ms | 0.97–1.02 | restored |
+| 10 ms | restored | |
+| 100 ms | restored | |
+| 300 ms | restored | |
+| 1,000 ms | restored | |
+
+**The shortest restoring gap is 1 ms.** Any host pause of 1 ms with the GPU idle ends the state.
+
+**persist:**
+- M1 stayed slow for all 2,000 back-to-back launches (1.68–1.72 against 0.866 ms).
+- M2 was slow for about 300 launches, then fast (0.859) to the end.
+- tcgen05: about +2% throughout (0.36 against 0.35).
+
+**shapes** (slow ÷ fast, 4 trials). Affected in all 4 trials:
+
+| work | mma.sync binary | tcgen05 binary (the deployed dispatch) |
+|---|---|---|
+| `lm.in_proj`@1149 | 1.85–1.89 | 1.00–1.05 (tcgen05) |
+| `lm.w1w3`@32 | 4.41–5.73 | **4.25–4.45** |
+| `lm.w1w3`@128 | 1.63–1.67 | **1.64–1.71** |
+| `lm.w1w3`@256 | 1.31–1.44 | **1.25–1.37** |
+| `lm.w1w3`@1149 | 1.80–1.99 | 1.02–1.04 (tcgen05) |
+| `lm.w2`@32 | 3.71–4.11 | **3.00–3.07** |
+| `lm.w2`@128 | 2.14–2.46 | **1.76–1.83** |
+| `lm.w2`@256 | 1.31–1.51 | 1.10–1.12 |
+| `lm.w2`@1149 | 1.15–1.44 (not all 4) | **2.02–2.71 (tcgen05)** |
+| `a.w1w3`@1 | 1.78–1.93 | 1.78–1.97 |
+| `v.w1w3`@1 | 2.00–2.19 | 0.97–2.33 (not all 4) |
+| 30 MiB streaming **read** | 2.31–2.35 | 2.34–2.37 |
+| 30 MiB streaming write | 1.00 | 1.00–1.01 |
+
+- Every other work item is not affected in all 4 trials. Some M = 1 and 8 cells swing between rounds (`lm.in_proj`@1: 3.75 / 0.99 / 3.91 / 0.99).
+- **What is slowed is reading memory.** A plain streaming read is 2.3× slower; a streaming write is untouched. The GEMMs it hits are the ones whose time is spent streaming a large weight: `w1w3` (7,680 × 2,048) and `w2` (2,048 × 7,680) at the row counts where neither compute nor L2 reuse dominates. tcgen05 at M = 1,149 hides it for `in_proj` and `w1w3`, but not for `w2`, whose K = 7,680 weight is read in full.
+- Stage 0's "norm and swiglu unaffected" fits: their reads are small and mostly hit L2.
+
+**The engine's uploads** (a survey of `native/`):
+- Serving makes two kinds of pageable host-to-device copy of 1 MiB or more:
+  - the audio encoder's mel features (`audio_encoder.cuh:326`): 128 × frames × 4 bytes, 4.6 MB at 90 s, at least 1 MiB from about 20 s of audio;
+  - the vision encoder's pixel values (`vision_encoder.cuh:508`): patches × 3,072 × 4 bytes, megabytes per image.
+- Everything else per request or per step is at most about 130 KB: token ids, positions, pointer tables, the suppress mask, codec codes.
+- The weights' upload at startup is followed by warm-up and idle.
+
+### Conclusion (stages 0–4)
+- **The cause is found: a host-to-device copy of 1 MiB or more from pageable memory.** After it, the GPU's memory reads run at about half speed until the GPU is idle for 1 ms or more. It is not allocation, placement, clock, idle decay or over-current.
+- **It explains the record:**
+  - **audio-ttft-v1:** the 90 s clip's 4.6 MB feature upload precedes the encoder and the prefill, with no gap between them. Releasing the scratch (`cudaFree` synchronizes) and the 2 MiB malloc + free both inserted a gap long enough to restore the speed. That is why both "fixed" the 40 ms.
+  - **The first process after idle:** the weights' upload, followed directly by work.
+  - **tcgen05-v2's rule-5 swings:** whether a gap of 1 ms or more happened to fall between a clip's upload and its prefill.
+- **The rule for an engine round is met:**
+  - the deployed dispatch is affected at row counts it runs (`lm.w1w3` and `lm.w2` at 32 and 128 rows, `w1w3` at 256, `w2` at 1,149 under tcgen05);
+  - the engine makes inducing copies on every audio request over about 20 s and every image request.
+  
+  **Proposed: pinned staging for those two uploads**, as its own round (pinned-uploads-v1), rules before code.
