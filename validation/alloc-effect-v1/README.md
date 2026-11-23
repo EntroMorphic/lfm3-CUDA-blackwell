@@ -158,3 +158,20 @@ This is a diagnostic: it changes no engine code and gates nothing. What follows 
 - **Over-current:** whether either counter moved.
 
 A diagnostic: no engine change, nothing gated.
+
+### Stage 2 results (2026-11-22, `build/alloc-s2/`, quiet 21:52–21:55)
+**The run:**
+- Window 21:52–21:55. Sampler: 88 samples, CLEAN. Power state unchanged.
+- Binaries: mma.sync `470a18a2…`, tcgen05 `1b34ee77…` (tc2-on `gemm_tcgen05.o` `3a8c563b…`). All four processes exited 0. tcgen05 launched 300 of 300 in T1 and T2.
+- Hardware, sampled at 10 Hz (855 samples): the over-current counters moved 0 and 0; VDD_GPU peaked at 2.72 A; VIN at 135 W.
+
+**As written, the reading is NONE RESTORES for both binaries: 0 of 10 rounds for every condition.** `none` restored in 0 of 10, so the run is not void by its rule. **The reading is still empty: the slow state never appeared.**
+
+| binary | sustained: launches 1–5 | 251–300 | first launch over 1.25× | median pre across conditions |
+|---|---|---|---|---|
+| mma.sync M1 / M2 | 0.846 / 0.882 ms | 0.843 / 0.888 | none / none | 0.864–0.870 ms |
+| tcgen05 T1 / T2 | 0.391 / 0.352 ms | 0.390 / 0.360 | none / none | 0.367–0.376 ms |
+
+- The fixed pair ran at its fast speed through about 2,100 launches per process, with every condition between them. The rule did not foresee a slow state that never forms. That is the rule's gap, recorded as found.
+- **What stage 2 removed from stage 1:** in stage 1, each B buffer's pass 1 allocated a new 30 MiB buffer (kept), uploaded 30 MiB from pageable host memory into it, ran the chase and filled it. The fixed pair was slow by the first control, 8 such buffers in. Stage 2 allocates five buffers at the start and nothing after; no fill, copy, read, idle gap or allocation call made it slow.
+- **So the question turns around:** not what restores the fast state, but which of stage 1's per-buffer steps brings on the slow one. Stage 3.
