@@ -36,7 +36,7 @@ The in-process server with the speech batch (`--speech-rows 8`), on a streamed `
 - The marks:
   - handler: `h_handle` (the handler thread starts, just after `accept`), `h_head` (`post` entered), `h_body` (the body is whole), `h_parsed` (`strict_json` returned);
   - `speech_stream`: `s_validated`, `s_encoded`, `s_features`, `s_enqueued`;
-  - engine owner: `o_popped` (the ticket is taken), `c_t0`, `c_encoded` (the encoder synchronized), `c_forward` (the prefill's `forward` returned, before the synchronize), `c_t1`, `o_admitted` (the admit call returned), `c_step` (each `Batch::step` begins), `o_text` (each text event pushed);
+  - engine owner: `o_popped` (the ticket is taken), `c_t0`, `c_encoded` (the encoder synchronized), `c_forward` (the prefill's `forward` returned, before the synchronize), `c_t1`, `o_admitted` (the admit call returned), `c_step` (each `Batch::step` begins), `o_text` (each text event, just before it is pushed);
   - handler: `h_sent` (each event line's `send_all` returned).
 - **The client:** `tools/trace_lfm3_audio_ttft.py`, the same request as `measure_lfm3_audio_ttft.py`, with `time.monotonic_ns()` (the same clock) taken at:
   - `t_send` (before `sendall`);

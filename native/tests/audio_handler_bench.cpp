@@ -17,6 +17,8 @@
 #include <fstream>
 #include <iterator>
 #include <string>
+#include <string_view>
+#include <stdexcept>
 #include <vector>
 
 namespace {
@@ -52,6 +54,25 @@ int main(int argc, char** argv) try {
   const double utf8 = timed(repeat, [&] { sink += lfm::lfm3_text::valid_utf8(body) ? 1 : 0; });
   const double strict = timed(repeat, [&] { sink += lfm::http::strict_json(body).at("mode").string().size(); });
   const double json_parse = timed(repeat, [&] { sink += lfm::Json::parse(body).at("mode").string().size(); });
+  // validation/ttft-rest-v2 stage 0: strict_json's other parts, one at a time. The depth scan is a copy of
+  // strict_json's loop, kept identical.
+  const double depth_scan = timed(repeat, [&] {
+    bool quoted = false, escaped = false;
+    int depth = 0;
+    for (const char c : body) {
+      if (quoted) {
+        if (escaped) escaped = false;
+        else if (c == '\\') escaped = true;
+        else if (c == '"') quoted = false;
+      } else if (c == '"') quoted = true;
+      else if (c == '[' || c == '{') { if (++depth > 64) throw std::invalid_argument("JSON nesting exceeds limit"); }
+      else if (c == ']' || c == '}') --depth;
+    }
+    sink += size_t(depth + quoted + escaped);  // the loop's state, so it is not optimized away
+  });
+  const double body_copy = timed(repeat, [&] { sink += std::string(std::string_view(body)).size(); });
+  const lfm::Json tree = lfm::Json::parse(body);
+  const double tree_copy = timed(repeat, [&] { const lfm::Json copy = tree; sink += copy.at("mode").string().size(); });
   const auto request = lfm::http::strict_json(body);
   const double messages = timed(repeat, [&] {
     sink += lfm::lfm3_text::parse_messages(request.at("messages"), true, true).size();
@@ -77,10 +98,10 @@ int main(int argc, char** argv) try {
   // the handler's own sequence: strict_json, parse_messages, decode (token count), copy + decode (features), log_mel, put
   const double handler = strict + messages + decode + copy + decode + mel + put;
   std::printf("{\"wav_bytes\":%zu,\"base64_bytes\":%zu,\"body_bytes\":%zu,\"repeat\":%d,\"valid_utf8\":%.6f,"
-              "\"strict_json\":%.6f,\"json_parse\":%.6f,\"parse_messages\":%.6f,\"base64_decode\":%.6f,\"wav_parse\":%.6f,"
+              "\"strict_json\":%.6f,\"json_parse\":%.6f,\"depth_scan\":%.6f,\"body_copy\":%.6f,\"tree_copy\":%.6f,\"parse_messages\":%.6f,\"base64_decode\":%.6f,\"wav_parse\":%.6f,"
               "\"clip_from_base64\":%.6f,\"clip_copy\":%.6f,\"log_mel\":%.6f,\"cache_put\":%.6f,"
               "\"handler_sequence\":%.6f,\"handler_without_log_mel\":%.6f,\"sink\":%zu}\n",
-              wav.size(), b64.size(), body.size(), repeat, utf8, strict, json_parse, messages, base64, wav_parse, decode,
+              wav.size(), b64.size(), body.size(), repeat, utf8, strict, json_parse, depth_scan, body_copy, tree_copy, messages, base64, wav_parse, decode,
               copy, mel, put, handler, handler - mel, sink);
   return 0;
 } catch (const std::exception& e) {

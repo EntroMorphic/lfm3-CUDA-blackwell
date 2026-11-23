@@ -78,6 +78,7 @@
 #include "lfm/speech_run.hpp"
 #include "lfm/speech_text.hpp"
 #include "lfm/model_config.hpp"
+#include "lfm/ttft_trace.hpp"
 
 namespace lfm::http {
 
@@ -1244,7 +1245,10 @@ class Service {
         text_slots_.push_back(id);
         if (!text_mode_) return;
         const auto piece = decoder_.push(id);
-        if (!piece.empty()) lines_->push(Obj().str("event", "text").num("chunk", (long long)chunk_).str("text", piece).done());
+        if (!piece.empty()) {
+          LFM3_TTFT_MARK("o_text");  // before the push: the handler may send it at once
+          lines_->push(Obj().str("event", "text").num("chunk", (long long)chunk_).str("text", piece).done());
+        }
       } else if (o.count("chunk")) {
         // the chunk's text is complete: bytes held back for an unfinished character end as decode() ends them
         // (text comes only unsplit, in one chunk, so this is decode() of all the text)
@@ -1442,6 +1446,7 @@ class Service {
     const auto deadline = Clock::now() + seconds(settings_.request_timeout);
     auto request = std::make_shared<Speech>(validate_speech(*body));
     if (!request->stream) throw std::logic_error("speech_stream without stream");
+    LFM3_TTFT_MARK("s_validated");
     if (request->audio_input && !policy_.audio_input) throw ApiError(501, "audio_input_unsupported");
     if (request->image_input && !policy_.image_input) throw ApiError(501, "image_input_unsupported");
     // the cap after validation: a malformed request is a 400 whatever the load, never a retryable 429
@@ -1457,7 +1462,9 @@ class Service {
     const std::function<bool()> reset = [&] { return sink.peer && sink.peer() == Peer::Reset; };
     decode_images(*request, deadline, reset);
     frontend_call([&] { encode_speech(*request); }, deadline, request->image_input || request->audio_input, reset);
+    LFM3_TTFT_MARK("s_encoded");
     compute_audio_features(*request, deadline, reset);
+    LFM3_TTFT_MARK("s_features");
     auto lines = std::make_shared<Lines>();
     std::future<std::string> future;
     // past the deadline: true if the request goes on (it completed meanwhile, or, in the speech batch, was admitted: it
@@ -1470,6 +1477,7 @@ class Service {
       t->request = request, t->deadline = deadline, t->lines = lines;
       future = t->promise.get_future();
       enqueue_ticket(t);
+      LFM3_TTFT_MARK("s_enqueued");
       abandon_now = [t, &future] { return abandon_ticket(*t, future); };
       deadline_code = "queue_deadline";  // abandoned only while queued: it never started
       leave = [t] { t->cancel = true; };
@@ -1891,6 +1899,7 @@ class Service {
           t = speech_queue_.front();
           speech_queue_.pop_front();
         }
+        LFM3_TTFT_MARK("o_popped");
         if (failed()) { settle(*t, ApiError(503, "worker_unavailable")); continue; }
         {
           std::lock_guard g(t->completion);
@@ -1911,6 +1920,7 @@ class Service {
         running_[t->id] = t;  // before the call: a failure fails it with the rest
         const Backend::Progress none = [](const std::string&) { throw WorkerFailure("unexpected speech progress"); };
         const auto reply = rpc(std::move(frame), {}, false, kMaxBody, &none, kMaxSpeechFrame);
+        LFM3_TTFT_MARK("o_admitted");
         if (!reply.has("ticket") || reply.at("ticket").integer() != t->id) throw WorkerFailure("invalid speech admit reply");
       }
       if (running_.empty()) return;
@@ -2327,6 +2337,7 @@ class Connection {
   }
 
   void handle() {
+    LFM3_TTFT_MARK("h_handle");
     Request request;
     // The whole request line and header block must arrive within one socket timeout; a peer trickling
     // one byte per timeout must not hold a handler forever.
@@ -2532,7 +2543,9 @@ class Connection {
       std::string out = header();
       out += line;
       out += '\n';
-      return send_all(out);
+      const bool sent = send_all(out);
+      LFM3_TTFT_MARK("h_sent");
+      return sent;
     };
     sink.commit = [&] { return send_all(header()); };
     sink.peer = [&] {
@@ -2558,6 +2571,7 @@ class Connection {
   }
 
   void post(const Request& r) {
+    LFM3_TTFT_MARK("h_head");
     try {
       const auto auth = r.all("authorization");
       bool ascii = auth.size() == 1;
@@ -2592,6 +2606,7 @@ class Connection {
         body += buffer_;
       }
       body.resize(length);
+      LFM3_TTFT_MARK("h_body");
       // A parsed body is a tree several times the size of its text. Bodies over 1 MiB are parsed one
       // at a time; with the try-only frontend lock this bounds the trees alive at once.
       std::shared_ptr<const Json> parsed;
@@ -2601,6 +2616,7 @@ class Connection {
         if (length > (size_t(1) << 20)) guard.lock();
         parsed = std::make_shared<const Json>(strict_json(body));
       }
+      LFM3_TTFT_MARK("h_parsed");
       std::string().swap(body);
       std::string().swap(buffer_);
       const Json& request = *parsed;
