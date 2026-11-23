@@ -124,3 +124,21 @@ I read B1's texts.
 - **joined90:** "He hoped there would be stew for dinner, turnips and carrots and bruised potatoes and fat mutton pieces to be ladled out in thick peppered flour" (32 tokens, as requested).
 - **long:** "Yesterday you were trembling for a health that is dear to you. Today you fear for your own. Tomorrow it will be anxiety about money. The day".
 - **cherry, all three turns:** on topic and consistent with the image (white blossoms, brown branches, soft diffused light). Turn 1 calls the stamens "pink-tinged … golden anthers" and turn 3 "orange". That is the model's own wording, byte-identical to main.
+
+### Rule 4, host suites: PASS
+`python3 -m pytest -q tests audit/test_host_contracts.py` (workstation): **2,590 passed, 3 skipped, 0 failed**, in 56 min 39 s. That is the same count as main's last run; this round adds no host test.
+- A first attempt was stopped by my own 3,000 s `timeout` before the suite finished, which is not a test failure. I terminated its orphaned TSan harness and reran without the cap.
+
+## Conclusion
+| rule | result |
+|---|---|
+| 1 byte identity | **PASS** |
+| 2 speed | **FAIL** as written: the long clip +1.0%, cherry B1 over; the joined90 prediction not met (0.998) |
+| 3 sanitizers | **PASS** |
+| 4 host suites | **PASS** |
+| 5 memory | **PASS** (−13.5 MiB) |
+| 6 coherency | **PASS** |
+
+- **The change is correct and costs nothing measurable, but it buys no measurable speed in the deployed server.** Amendment 6's per-clip scratch release already leaves the 1 ms gap that ends the slow state before the prefill.
+- What it would buy is robustness: the prefill would no longer depend on that release. Any later change that kept the encoder's scratch, or otherwise ran the prefill straight after the upload, would bring back audio-ttft's 40 ms at 90 s.
+- Merging is Tripp's call.
