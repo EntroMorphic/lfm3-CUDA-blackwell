@@ -42,6 +42,7 @@ Tripp's go: item 2 of the remaining list ("the allocation effect"), 2026-11-22.
 3. **Sanitizers.** memcheck (with leak check), synccheck and initcheck on the candidate's `lfm3-speech` with the 90 s clip and an image request: 0 errors, 0 leaks, and outputs identical to the plain run.
 4. **Host suites** pass (the same command as before; failures recorded).
 5. **Memory.** The pinned buffers add at most 8 MiB per process (two encoders × 4 MiB), by construction. On the device stand-in (MemTotal − MemAvailable, ABAB, with the 90 s clip and an image), the candidate's increase over main is at most 16 MiB.
+   - *Clarified 2026-11-22, before any data:* the measuring tool is `measure_lfm3_audio_device_memory.py` (the short clip, then the 90 s clip twice; ABAB). It has no image request. The vision encoder's staging is the same fixed 4 MiB buffer by construction, so the audio reading stands for both. The tool subtracts the server's RssAnon + RssShmem; whether pinned host memory lands there is not known, and is reported as found.
 6. **Coherency.** Read the 90 s transcript and an image answer from the candidate end to end.
 
 The merge and deploy are Tripp's call.
