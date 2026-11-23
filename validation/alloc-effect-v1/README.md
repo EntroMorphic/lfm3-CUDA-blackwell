@@ -208,3 +208,41 @@ A diagnostic: no engine change, nothing gated.
 - **The start's footprint:** `gemm_other`'s baseline (8 extra 30 MiB buffers at the start) against `none`'s, reported.
 
 A diagnostic: no engine change, nothing gated.
+
+### Stage 3 results (2026-11-22, `build/alloc-s3/`, quiet 22:12–22:15)
+**The run:**
+- Window 22:12–22:15. Sampler: 134 samples, CLEAN. Power state unchanged. All 32 processes exited 0.
+- Binaries: mma.sync `f1a7c20d…`, tcgen05 `42ae6532…`.
+- Hardware (1,302 samples): the over-current counters moved 0 and 0; VDD_GPU peaked at 1.82 A.
+
+**mma.sync: `h2d`, `malloc_h2d` and `stage1` induce** (both processes each); none of the others does, and `none` doesn't, so the binary is not void.
+
+| ingredient | after ÷ baseline (process 1, process 2) | onset |
+|---|---|---|
+| `h2d` (pageable upload into a spare) | 1.92×, 1.85× | step 1 |
+| `malloc_h2d` | 2.19×, 1.92× | step 1 |
+| `stage1` | 1.90×, 1.95× | step 1 |
+| `h2d_pinned` (the same upload from pinned memory) | 1.00×, 1.00× | — |
+| `malloc`, `malloc_fill`, `gemm_other`, `none` | 1.00× each | — |
+
+**tcgen05: NONE induces.** Every ingredient stays at 0.99–1.04×, including the three that double the mma.sync GEMM. The deployed path for this shape is immune.
+
+**Reading:**
+- **The slow state is brought on by a host-to-device `cudaMemcpy` from pageable memory, alone.** It needs no allocation and no write of the GEMM's own operands. It comes from the first such copy, and the copy need not touch the GEMM's buffers (`h2d` writes only the spare).
+- **It is the copy's source, not its size or target.** The same 30 MiB from pinned memory does nothing.
+- **It is specific to the mma.sync kernel's way of reading.** The tcgen05 kernel at the same shape and on the same buffers is unaffected.
+- **The 1 s idle restored it** in all 6 inducing processes (for example 1.566 → 0.835 ms). That is the only restorer tested while slow: the others ran after the idle had already restored the speed, so their stars are not evidence.
+  - This fits stage 1: there, the slow state lasted through thousands of launches with no idle.
+  - It also fits stage 2, where a 1 s idle changed nothing, since nothing was slow.
+- **The start's footprint:** `gemm_other`'s baseline, with 8 extra 30 MiB buffers, is 0.843 against `none`'s 0.809 ms (mma.sync) and 0.353 against 0.354 (tcgen05). Footprint has no material effect.
+
+**What it explains, as hypotheses for the next stage, not yet tested:**
+- audio-ttft-v1's 40 ms: the features' upload (pageable) before an mma.sync prefill.
+- The first process after idle: the weights' upload.
+- tcgen05-v2's rule-5 swings: whatever mma.sync GEMMs remained.
+
+**Next:**
+- Which engine uploads are pageable, and on which paths.
+- How long the state lasts without idle, and what shorter idle restores it.
+- Which of the engine's other kernels it slows (stage 0's traces: grid 16×9 1.05, norm 1.02).
+- Then an engine round, if the numbers justify one: pinned staging for the engine's uploads, under the usual exactness rules.
