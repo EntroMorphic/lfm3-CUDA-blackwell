@@ -44,3 +44,38 @@ Prefill seconds, first request | median of requests 2–4:
 - That process was the first GPU work after the window opened (the service stopped, the GPU idle for over 30 s). That fits a state that decays when idle and is raised by allocation calls or by sustained work; it does not prove it.
 
 **Next:** the same run, repeated, with the first process's state controlled: an idle wait before each process, and the switch's allocation alone against heavy GPU work. To be designed after tcgen05-v2's window, which holds Thor until mid-afternoon.
+
+## Stage 1: does the slowdown follow the buffer or the time? (rules set 2026-11-22, before any data)
+**The question.** Every sighting so far fits two different causes:
+- **Placement:** the speed depends on where the driver put a buffer's memory (for example large pages against small ones, so address translation costs more on the GEMMs that re-read a 30 MiB weight 9 times and a 4.5 MiB activation 60 times). A new allocation lands somewhere else, which would explain why a 2 MiB `cudaMalloc` + `cudaFree`, or releasing the encoder's scratch, changed the speed.
+- **State:** a clock or mode of the memory system that drops when the GPU is idle and recovers under work. That would explain why the first process after an idle window ran slow twice (stage 0, and tcgen05-v2's amendment-2 rule 5: `off-1` 1,149 tokens 0.170 against `off-2` 0.137 s).
+
+One user-readable clue: `/proc/buddyinfo` shows how much free memory is in large blocks. The memory clock needs root and is not read.
+
+**The tool:** `native/tests/alloc_placement_probe.cu` (`alloc-placement-probe`), built with nvcc as `alloc-effect-probe` was.
+- One process, back to back, no idle waits:
+  - **B:** 96 fresh 30 MiB weight buffers (N 7,680 × K 2,048), each kept, with one fixed activation buffer. lfm::gemm at M 1,149 (the slowed grid 60×9) is timed on each in allocation order (pass 1), then in reverse (pass 2), then in order again (pass 3). Pass 1 also times a one-thread pointer chase, one hop per 64 KiB region, shuffled (ns per hop: the cost of address translation).
+  - **A:** 64 fresh 4.5 MiB activation buffers, with one fixed weight, timed in order and in reverse.
+  - **Control:** the fixed pair, re-timed every 8 buffers: a time series of the GPU's state.
+- Every time is the median of 5 launches after 1 untimed. `/proc/buddyinfo` is read before and after.
+
+**The run** (`tools/thor/alloc_effect_stage1.sh`): quiet Thor, the service stopped (restarted by an EXIT trap), the 1 s sampler, `power_state.sh`.
+1. 120 s idle, then probe **P1**.
+2. **P2**, immediately after P1.
+3. 120 s idle, then stage 0's `lfm3-speech` (`9df9a245…`, switch off) on the same 128 / 512 / 1,149 / 4,000-token prompts, 4 times each (**T**).
+4. **P3**, immediately after T.
+5. 120 s idle, then **P4**.
+
+**Readings, set now.** Within a probe process, the reference is the median of its B pass-1 times. A buffer is slow if its time exceeds 1.25 × the reference.
+- **Placement** if, in some process:
+  - at least 2 buffers (B or A) are slow in pass 1;
+  - at least 80% of them are slow again in every later pass;
+  - at most 5% of the pass-1 fast buffers turn slow later;
+  - no control reading exceeds 1.25 × that process's first control.
+  
+  The chase then says whether it is translation: placement plus every slow B buffer's ns per hop above every fast one's means translation is supported.
+- **State** if any control reading in a process exceeds 1.25 × that process's first, or one process's reference exceeds 1.25 × another's.
+- **Neither** if no process has 2 slow buffers and no state reading is met. The effect is then not reproduced by fresh allocations or by idle, and that is recorded as such.
+- **T** is read against stage 0's off-2 (fast) figures: slow if its median of requests 2–4 at 512 or 1,149 tokens exceeds them by 10%. This is reported beside the probe; it is not a rule.
+
+This is a diagnostic: it changes no engine code and gates nothing. What follows depends on the reading: placement points to how the engine allocates; state points to a pre-measurement warm-up for timing rules, and to Tripp's `sudo tegrastats` for the memory clock.
