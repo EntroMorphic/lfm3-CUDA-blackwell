@@ -71,3 +71,35 @@ Tripp's go: 2026-11-23 ("Let's do 1, 2, 4, and the housekeeping items").
 
 **What would stop the round:** rule 2 failing (machine code on an untouched path changed), or rule 6 failing at either encoder.
 - If rule 6 fails only on the mma.sync wrap (the audio downsampler, N = 256), the wrap is limited to tcgen05 calls, and the downsampler's `[W | W]` (2 × 256 × 2 × 256 × 2 bytes each, under 1 MiB) stays, as an amendment.
+
+## The first exactness run (2026-11-23, Thor, 16:50–17:05; `build/wrap-exact/`, stopped)
+**Builds:**
+- candidate `wrap-on` (5f5498f): server `ca5e381b…`, `lfm3-speech` `3d2eeaea…`;
+- main at the branch point `wrap-main` (e41e36c): server `9a31794f…`, `lfm3-speech` `8b772cbe…`;
+- `gemm-wrap-check` `4de2f68d…`.
+
+**Rule 1: PASS.**
+- mma.sync: 154 of 154 identical.
+- tcgen05: 104 of 104 identical, with the launch counter rising by two on each.
+- tcgen05 off, and the wrap that is not a multiple of 64: 106 of 106 identical.
+- Launch-count mismatches: 0.
+- 5 of 5 invalid uses refused.
+
+**Rule 2: FAIL as written.**
+- Server and `lfm3-speech`: 74 of 161 functions identical, 50 differ.
+- `lfm3-vision-check`: 19 of 98 identical, 48 differ.
+- Two causes:
+  1. **The comparison tool's error.** `cu++filt` prints the new template argument as `(bool)0`, not `false`. So no `WRAP = false` instantiation was matched to main's kernel; they were listed as missing and extra.
+  2. **A real change.** Kernels the round does not touch differ too, for example `thin_k128_kernel<8>`: different register allocation, 5,214 against 5,310 lines.
+     - The build is deterministic: the deployed `merge5-srv` and `wrap-main` (the same source) give byte-identical SASS for that kernel.
+     - So the change is the round's own. `b_k_wrap` was appended to `lfm::gemm::Problem`, growing it from 128 to 136 bytes. Every GEMM kernel takes a `Problem` by value.
+- Rule 2 did what it was set for: it caught a change in machine code on paths the round claimed not to touch.
+
+The run was stopped (SIGTERM, during rule 3's e2e step; 36 of 36 speech regression SAME by then) because the build it was certifying had to change. Rule 1's result stands as evidence for the wrap's arithmetic. It is rerun on the amended build.
+
+## Amendment 1 (2026-11-23, before the next run)
+- **`Problem::b_k_wrap` moves into the 7 bytes of padding after `bool b_k_contiguous`** (offset 108; `workspace` stays at 112; size 128). That is main's layout.
+- **`tc05::Args::b_k_wrap` moves into the 4 bytes of padding after `k`** (offset 12; size 64), also main's.
+- `static_assert`s pin both layouts (size and the offsets around the new field), so a later edit cannot grow either struct by accident.
+- **`compare_sass.py`** strips `, (bool)0>` as well as `, false>` from a wrapped kernel's name before matching.
+- The rules are unchanged. The whole exactness run (rules 1–4) is repeated on the amended build.

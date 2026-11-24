@@ -15,6 +15,7 @@
 // No reproduction of cuBLAS's kernel selection or reduction order is attempted or claimed.
 #include <cuda_bf16.h>
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -38,15 +39,21 @@ struct Problem {
   long long stride_a = 0, stride_b = 0, stride_c = 0;  // per batch item; B indexed by z / group
   int batch = 1, group = 1;
   bool b_k_contiguous = true;
-  // FP32 scratch for the split-K path (M <= 8 with a K x N B: decode P·V); see workspace_bytes().
-  float* workspace = nullptr;
-  size_t workspace_size = 0;  // bytes
   // For an N x K B (b_k_contiguous): when set, k at or past it reads B at k - b_k_wrap, so B (ldb >= b_k_wrap) acts
   // as [W | W] over K without the copy: the split multiply's [hi | lo] against W (validation/encoder-wrap-v1; first
   // tried in audio-ttft-v1 amendment 5, c968b5d). A multiple of 8, so no 8-element chunk straddles it; k <= 2 b_k_wrap.
-  // 0: off. Last in the struct, so every other field keeps its offset in the kernels' parameters.
+  // 0: off. In the padding after b_k_contiguous, so the struct's size and every other field's offset are main's (the
+  // static_asserts below): a kernel that takes a Problem and ignores the wrap compiles to main's machine code
+  // (encoder-wrap-v1 amendment 1; appended at the end, it grew the struct and changed untouched kernels).
   int b_k_wrap = 0;
+  // FP32 scratch for the split-K path (M <= 8 with a K x N B: decode P·V); see workspace_bytes().
+  float* workspace = nullptr;
+  size_t workspace_size = 0;  // bytes
 };
+// main's layout (encoder-wrap-v1 amendment 1): b_k_wrap sits in padding
+static_assert(sizeof(Problem) == 128 && offsetof(Problem, b_k_wrap) == 108 && offsetof(Problem, workspace) == 112 &&
+                  offsetof(Problem, workspace_size) == 120 && offsetof(Problem, batch) == 96,
+              "lfm::gemm::Problem's layout must stay main's");
 
 // Keys per split of the decode P·V path, and the scratch it needs.
 inline constexpr int kSplitKeys = 256;

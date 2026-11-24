@@ -50,6 +50,7 @@
 // ---------------------------------------------------------------------------------------------------------------
 #include <cuda.h>
 #include <cuda_bf16.h>
+#include <cstddef>
 #include <cstdint>
 
 namespace tc05 {
@@ -174,15 +175,18 @@ inline constexpr uint32_t kABytes = kBM * kBK * 2, kBBytes = kBN * kBK * 2, kSta
 
 struct Args {
   int m = 0, n = 0, k = 0;
+  // gemm_2cta<..., WRAP = true> (validation/encoder-wrap-v1): B's k coordinate at or past it reads k - b_k_wrap (B's
+  // tensor map covers N x b_k_wrap). A multiple of kBK. In the padding after k, so the struct is main's in size and
+  // offsets (amendment 1; the static_assert below).
+  int b_k_wrap = 0;
   void* c = nullptr;
   long long ldc = 0;
   int tiles_m = 0, tiles_n = 0, tiles = 0;
   int band = 1;  // N tiles per raster band (L2 reuse of B while walking M)
   Watchdog wd;
-  // gemm_2cta<..., WRAP = true> (validation/encoder-wrap-v1): B's k coordinate at or past it reads k - b_k_wrap (B's
-  // tensor map covers N x b_k_wrap). A multiple of kBK. Last, so every other field keeps its offset.
-  int b_k_wrap = 0;
 };
+static_assert(sizeof(Args) == 64 && offsetof(Args, b_k_wrap) == 12 && offsetof(Args, c) == 16 && offsetof(Args, wd) == 48,
+              "tc05::Args' layout must stay main's");
 
 // Tile t -> (M tile, N tile): bands of `band` N tiles; inside a band, N fastest then M, so the CTAs in flight share
 // a few A row blocks and a few B column blocks.

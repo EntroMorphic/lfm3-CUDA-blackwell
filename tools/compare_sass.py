@@ -50,8 +50,9 @@ def functions(binary, cuobjdump, cufilt):
 
 def normalize(name):
     if any(name.startswith(w) or ("::" + w) in name for w in WRAPPED) or "gemm_2cta<" in name:
-        # the last template argument "false" of WRAP = false: "..., false>(...)" -> "...>(...)"
-        name = re.sub(r", false>\(", ">(", name, count=1)
+        # the last template argument of WRAP = false (cu++filt prints it "(bool)0"; "false" kept for other demanglers):
+        # "..., (bool)0>(...)" -> "...>(...)"
+        name = re.sub(r", (?:\(bool\)0|false)>\(", ">(", name, count=1)
     return name
 
 
