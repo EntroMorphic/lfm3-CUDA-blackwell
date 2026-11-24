@@ -103,3 +103,31 @@ The run was stopped (SIGTERM, during rule 3's e2e step; 36 of 36 speech regressi
 - `static_assert`s pin both layouts (size and the offsets around the new field), so a later edit cannot grow either struct by accident.
 - **`compare_sass.py`** strips `, (bool)0>` as well as `, false>` from a wrapped kernel's name before matching.
 - The rules are unchanged. The whole exactness run (rules 1–4) is repeated on the amended build.
+
+## The amended run, rules 1 and 2 (2026-11-23, Thor, from 17:04; `build/wrap-exact/`)
+**Builds:**
+- candidate `wrap-on` (947d57b): server `75f8c5b4…`, `lfm3-speech` `eb9204e8…`, `lfm3-vision-check` `525b3ec1…`;
+- main `wrap-main` (e41e36c): server `9a31794f…`, the same as the first run's;
+- `gemm-wrap-check` `18341816…`.
+
+Both `static_assert`s held: the build compiled.
+
+**Rule 1: PASS.**
+- mma.sync: 154 of 154 identical.
+- tcgen05: 104 of 104 identical.
+- tcgen05 off, and the wrap that is not a multiple of 64: 106 of 106 identical.
+- 0 launch-count mismatches; 5 of 5 invalid uses refused.
+
+**Rule 2: PASS** (`sass2-*.log`).
+- `liquid-lfm3-server` and `lfm3-speech`: 160 of 161 of main's functions identical, 36 of them `wide_kernel`, `thin_kernel` and `gemm_2cta` instantiations. 0 differ.
+- `lfm3-vision-check`: 97 of 98 identical (30 of those kernels). 0 differ.
+- The one missing function is `lfm::split::kernels::double_rows`, which the round removes.
+- The 24 extra are all `WRAP = true` instantiations:
+  - `thin_kernel` R = 1–8;
+  - the three wide tiles, for sm_110 and sm_110a;
+  - `gemm_2cta` with FP32 and BF16 output.
+
+The comparison tool needed one more fix first.
+- The run's own comparison (`sass-*.log`) also showed 0 differ, but it matched no wrapped kernel: `cu++filt`'s names begin with `void `, and the tool tested for a leading namespace.
+- That reading was vacuous for those kernels and is not counted.
+- `compare_sass.py` now looks for the kernel's name anywhere. It was rerun on the same binaries.

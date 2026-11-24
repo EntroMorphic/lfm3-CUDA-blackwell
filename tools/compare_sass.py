@@ -14,10 +14,6 @@ import re
 import subprocess
 import sys
 
-WRAPPED = ("lfm::gemm::detail::wide_kernel<", "lfm::gemm::detail::thin_kernel<", "lfm::gemm::tcgen05::tc05::gemm_2cta<",
-           "tc05::gemm_2cta<")
-
-
 def functions(binary, cuobjdump, cufilt):
     text = subprocess.run([cuobjdump, "-sass", binary], check=True, capture_output=True, text=True).stdout
     out, arch, name, body = {}, None, None, []
@@ -49,7 +45,7 @@ def functions(binary, cuobjdump, cufilt):
 
 
 def normalize(name):
-    if any(name.startswith(w) or ("::" + w) in name for w in WRAPPED) or "gemm_2cta<" in name:
+    if any(w in name for w in ("wide_kernel<", "thin_kernel<", "gemm_2cta<")):  # cu++filt's names begin "void lfm::..."
         # the last template argument of WRAP = false (cu++filt prints it "(bool)0"; "false" kept for other demanglers):
         # "..., (bool)0>(...)" -> "...>(...)"
         name = re.sub(r", (?:\(bool\)0|false)>\(", ">(", name, count=1)
