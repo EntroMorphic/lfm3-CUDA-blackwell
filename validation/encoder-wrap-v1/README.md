@@ -131,3 +131,95 @@ The comparison tool needed one more fix first.
 - The run's own comparison (`sass-*.log`) also showed 0 differ, but it matched no wrapped kernel: `cu++filt`'s names begin with `void `, and the tool tested for a leading namespace.
 - That reading was vacuous for those kernels and is not counted.
 - `compare_sass.py` now looks for the kernel's name anywhere. It was rerun on the same binaries.
+
+## The amended run, rules 3 and 4 (2026-11-23, Thor, 17:13–17:49; `build/wrap-exact/`)
+**Rule 3: PASS.**
+- speech regression: 36 SAME, 0 differ;
+- dump and edge: 360 of 360 and 93 of 93 identical to main's, none missing or extra;
+- e2e and split: 90 of 90 each;
+- vision: 713 of 713 stage files identical to main's;
+- the server:
+  - audio in: PASS;
+  - 8 at once and 32 at once (2.4 s and 4.4 s): identical to `lfm3-speech`;
+  - images: PASS;
+  - the image cache: 24 of 24;
+  - TTS and the text gate: exit 0.
+
+**Rule 4: PASS.**
+- On the candidate's `lfm3-speech`, with the 90 s clip, cherry and two:
+  - memcheck: 0 errors, 0 bytes leaked;
+  - synccheck: 0 errors;
+  - initcheck: 0 errors;
+  - every output (JSON and files) the same as the plain run's.
+- memcheck on `gemm-wrap-check`: 0 errors, 0 leaks, and the check passes under it.
+
+## Rules 5 and 6, the quiet window (2026-11-23, Thor, 18:04–18:12; `build/wrap-quiet/`)
+**Binaries:**
+- A = deployed `merge5-srv` `f19f4ee4…`;
+- B = `wrap-on` `75f8c5b4…`;
+- `audio-encoder-bench` from main's tree `b7c9e76a…` and the candidate's `70ac8942…`.
+
+**The window:**
+- service stopped 18:04:34, started again 18:12:00;
+- power unchanged;
+- sampler 397 samples, foreign in 0. **MONITOR: CLEAN.**
+
+**Rule 6: PASS.** Time to first text in seconds; images with the image cache off; mean(B) ≤ mean(A) × 1.01; texts identical across all four runs.
+
+| item | A1 | B1 | A2 | B2 | B/A |
+|---|---|---|---|---|---|
+| 2.1 s | 0.0386 | 0.0376 | 0.0387 | 0.0381 | 0.979 |
+| 5.8 s | 0.0458 | 0.0452 | 0.0457 | 0.0450 | 0.986 |
+| 10.4 s | 0.0575 | 0.0566 | 0.0572 | 0.0567 | 0.988 |
+| 35 s | 0.0892 | 0.0875 | 0.0895 | 0.0877 | 0.980 |
+| 90 s | 0.1840 | 0.1835 | 0.1867 | 0.1832 | 0.989 |
+| cherry, turn 1 | 0.8754 | 0.8647 | 0.8592 | 0.8615 | 0.995 |
+| cherry, turn 2 | 0.9308 | 0.9163 | 0.9166 | 0.9169 | 0.992 |
+| cherry, turn 3 | 0.9360 | 0.9198 | 0.9159 | 0.9196 | 0.993 |
+| two, turn 1 | 0.1290 | 0.1266 | 0.1280 | 0.1258 | 0.982 |
+| two, turn 2 | 0.1317 | 0.1302 | 0.1317 | 0.1295 | 0.986 |
+| two, turn 3 | 0.1339 | 0.1326 | 0.1350 | 0.1321 | 0.984 |
+
+The candidate is at or below main on every item: 1–2% lower.
+
+The encoder alone (`audio-encoder-bench`, reported, ms; main, candidate, main, candidate):
+
+| clip | main 1 | candidate 2 | main 3 | candidate 4 |
+|---|---|---|---|---|
+| 2.1 s | 5.05 | 5.32 | 6.09 | 5.28 |
+| 35 s | 17.75 | 18.09 | 18.54 | 17.67 |
+| 90 s | 38.29 | 37.90 | 40.60 | 38.83 |
+
+The encoded features' hash is the same in all four (`c4399214feec3835` at 90 s).
+
+**Rule 5: PASS.**
+- **The doubled bytes,** from the checkpoint's shapes (`out × 2·in × 2` bytes over every weight the encoders' `mul()` takes):
+  - audio: 104 weights, **460,849,152 bytes (439.5 MiB)**. The three downsampler weights are stored as 1 × 1 convolutions and counted by every dimension.
+  - vision: 85 weights, **757,071,872 bytes (722.0 MiB)**.
+- **Device memory** (MiB, the in-use stand-in):
+
+| reading | A1 | B1 | A2 | B2 | saved (pairs) | bound |
+|---|---|---|---|---|---|---|
+| short clip | 7,762 | 7,218 | 7,728 | 7,181 | 544, 547 | 395.6 (90% of audio's) |
+| 90 s clip | 7,741 | 7,185 | 7,729 | 7,177 | 556, 552 | 395.6 |
+| cherry | 9,096 | 7,785 | 9,090 | 7,845 | 1,311, 1,245 | 1,045.4 (90% of both) |
+
+- The savings exceed the doubled bytes a little: about 110 MiB for audio, by allocation rounding.
+- A1's `started` reading (539 MiB, against 22–28 for the other three) is a baseline drift in that one server's start. The gated readings are differences after requests.
+
+**Rule 7 (coherency):** outputs are byte-identical (rule 3). Read once:
+- the 90 s transcript ("He hoped there would be stew for dinner, turnips and carrots and bruised potatoes…");
+- cherry's three turns (the white blossoms as the focal point; the soft, diffuse daylight);
+- two's first turn (the red, multi-tiered pavilion).
+
+All are right and coherent.
+
+## Conclusion (2026-11-23)
+**Every rule passes on the amended build. The first build failed rule 2 as written; that is recorded above.**
+- Both encoders drop their `[W | W]` copies: **about 0.54 GiB less after audio, 1.25 GiB less once an image has been encoded.**
+- Every output is unchanged byte for byte.
+- Every kernel that takes no wrap runs main's exact machine code, so text and the language model are untouched.
+- Audio and images are 1–2% faster.
+- Merging and deploying are Tripp's call.
+
+**What it opens:** keeping the audio encoder's scratch (about 10 ms at 90 s; audio-ttft-v1) is now roughly memory-neutral against today's server. That needs pinned-uploads-v1 first.
