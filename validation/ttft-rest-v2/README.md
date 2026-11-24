@@ -185,3 +185,85 @@ The marks check failed twice on the script before the run, with the build correc
    - mean(B) ≤ mean(A) at every clip;
    - at 90 s, mean(A) − mean(B) ≥ **0.006 s**. The estimate is about 0.010 s; the bound is set below it for the run-to-run spread.
    - A trace build of the new tree, one pass of 1 + 5, shows where the time went (reported, not gated).
+
+## Stage 1 results (2026-11-23; `build/rest2-s1/`, `tools/thor/ttft_rest2_stage1.sh`)
+**Builds** (0ed9ecc):
+- server `rest2-on` `04ab2055…`, worker `a10011f3…`;
+- trace build `rest2-trace1` `5364e3da…`;
+- deployed, for comparison: `merge5-srv` `f19f4ee4…`.
+
+**Rule 1: PASS.** In the plain, ASan+UBSan and TSan builds:
+- `strict_json` and `Json::parse` against main's, frozen as `json_reference_v2.hpp`, on 1,000,000 documents: 0 differ (23,959 accepted, 976,169 refused). The clip-sized bodies (3.84 MB and others), each with every atom at a random place, also match.
+- `parse_messages` with `copy_media` false against true, on 100,000 message lists: 0 differ (8,978 accepted, 91,022 refused).
+- **The check can fail.** A planted bug (the word scan blind to `\`), built from a copy of the headers, gave 51,377 differences on 100,000 documents.
+- The v1 reference check (`json_parse_check.cpp`, against the parser of 2026-11-17) passes too: 5 of 5 in `tests/test_json_parse.py`.
+
+**Rule 2: PASS.**
+- The server, 17:02–17:17, not timed:
+  - audio in: PASS;
+  - 8 and 32 at once: 8 of 8 and 32 of 32 identical to `lfm3-speech`, PASS. 32 at once took 5.3 s; it ran beside encoder-wrap-v1's exactness work and has no timing criterion, so that is noted, not judged;
+  - images: PASS; the image cache 24 of 24;
+  - TTS and the text gate: exit 0.
+- **Host suites** (`tests` and `audit/test_host_contracts.py`, the main checkout at 0ed9ecc): **2,593 passed, 3 skipped**. That is the 2,590 before plus this stage's three.
+- Two earlier attempts do not count:
+  - one was stopped, because the checkout was switched to another branch while it ran;
+  - one ran from a fresh `git worktree`, which lacks the checkout's untracked data: 1,760 passed, 811 skipped.
+
+**Rule 3: FAIL as written.** Quiet window 18:27–18:29:
+- the service stopped and started again;
+- power unchanged;
+- sampler 101 samples, foreign in 0. **MONITOR: CLEAN.**
+
+From the first byte, A = deployed, B = this stage, in seconds; texts identical in every run:
+
+| clip | A1 | B1 | A2 | B2 | saved (mean) | B/A |
+|---|---|---|---|---|---|---|
+| 2.1 s | 0.0378 | 0.0383 | 0.0378 | 0.0381 | **−0.0004** | 1.011 |
+| 5.8 s | 0.0446 | 0.0439 | 0.0450 | 0.0439 | 0.0009 | 0.980 |
+| 10.4 s | 0.0556 | 0.0548 | 0.0555 | 0.0544 | 0.0009 | 0.984 |
+| 35 s | 0.0850 | 0.0815 | 0.0854 | 0.0816 | 0.0037 | 0.956 |
+| 90 s | 0.1741 | 0.1676 | 0.1750 | 0.1677 | **0.0069** (bound 0.006) | 0.960 |
+
+- The 90 s saving meets its bound. The 2.1 s clip is 0.4 ms slower than the deployed server, and the rule asks for no slower at every clip.
+- **Where the 2.1 s difference is.** It is not where the change is. This stage's trace (T) against stage 0's (T1, T2), in ms:
+  - the handler's parts all fell: body 0.057 → 0.023, `strict_json` 0.138 → 0.060, `validate_speech` 0.036 → 0.012, `encode_speech` 0.178 → 0.122. That is 0.41 → 0.22 ms;
+  - the engine's `prefill_seconds` medians are B 36.0–36.1 against A 35.5–35.7 ms. It holds the whole excess, but this stage changes no engine or GPU code (the server's JSON, the handler and `parse_messages` only).
+  - The per-run times overlap: A 37.67–38.50, B 37.65–38.79 ms.
+- The stage was not re-run to pass.
+
+**The trace of the new tree** (T, one pass of 1 + 5, ms; stage 0's in brackets):
+
+| part | 90 s | 35 s |
+|---|---|---|
+| body | 1.43 (2.58) | 1.01 (1.40) |
+| `strict_json` | 2.28 (6.22) | 0.91 (2.76) |
+| `validate_speech` | 0.16 (1.11) | 0.16 (0.58) |
+| `encode_speech` | 3.96 (7.02) | 2.04 (3.93) |
+| `log_mel` | 38.65 (38.57) | 17.85 (17.67) |
+| encoder | 41.47 (41.31) | 19.89 (19.19) |
+| language model `forward` | 76.55 (76.68) | 38.39 (38.31) |
+| total | 166.83 (175.95) | 81.83 (85.61) |
+
+## Conclusion (2026-11-23)
+**Rules 1 and 2 pass; rule 3 fails as written** on the 2.1 s clip, by 0.4 ms. That difference sits in engine time the stage does not touch.
+- At 90 s, time to first token from the first byte is **6.9 ms lower** (0.1746 → 0.1677 s): the handler's work before `log_mel` fell from 16.9 to 7.9 ms.
+- At 35 s it is 3.7 ms lower. Every output is unchanged.
+- Merging is Tripp's call.
+
+**Where 90 s time to first token goes now** (this stage's trace, ms):
+
+| part | ms |
+|---|---|
+| connect and head | 0.6 |
+| body | 1.4 |
+| `strict_json` | 2.3 |
+| `validate_speech` | 0.2 |
+| `encode_speech` | 4.0 |
+| `log_mel` | 38.7 |
+| encoder | 41.5 |
+| language model | 77.5 |
+| the rest | ~0.9 |
+
+- The handler is no longer the place to look: `encode_speech`'s 4.0 ms is now mostly the decode into fresh mappings.
+- `log_mel`, the encoder and the language model are 94% of the 90 s total.
+- The encoder's ~10 ms of allocation is the next measured lever. It needs pinned-uploads-v1, whose merge is Tripp's call.
