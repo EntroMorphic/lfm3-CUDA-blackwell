@@ -44,6 +44,7 @@
 #include <sstream>
 #include <thread>
 #include <lfm/lru_bytes.hpp>
+#include <lfm/ttft_trace.hpp>
 
 namespace lfm3_speech {
 
@@ -243,6 +244,7 @@ class Batch {
     if (marker >= 0) prompt.push_back(marker);
     w.res.prompt = prompt;
     const auto t0 = Clock::now();
+    LFM3_TTFT_MARK("c_t0");
     runner_.reset();
     if (!audio_clip_count(o) && o.images.empty()) {
       runner_.forward(prompt);
@@ -307,7 +309,9 @@ class Batch {
         throw std::runtime_error("speech: encoded media rows differ from the placeholders");
       cuda_check(cudaDeviceSynchronize());
       w.res.encode_seconds = secs(e0);
+      LFM3_TTFT_MARK("c_encoded");
       runner_.forward(prompt, audio_rows_->p, std::vector<int>{audio_token, image_token});
+      LFM3_TTFT_MARK("c_forward");
     }
     dec_.load(r);
     try {  // the row is active in the decoder from here: a throw must not leave it decoding (audio-assurance-v1)
@@ -318,6 +322,7 @@ class Batch {
       throw;
     }
     w.t1 = Clock::now();
+    LFM3_TTFT_MARK("c_t1");
     w.res.prefill_seconds = std::chrono::duration<double>(w.t1 - t0).count();
     // the row keeps its options without the media: after the prefill nothing reads them, and kept they would hold
     // pixels, keys and cached GPU rows until the row is next used, outside every budget (validation/image-cache-v1 C4)
@@ -335,6 +340,7 @@ class Batch {
   // One step of every busy, unfinished row. Returns the rows that finished in it (their results wait in take()).
   // A throw leaves every row closed: the caller treats the engine as faulted.
   std::vector<int> step() {
+    LFM3_TTFT_MARK("c_step");
     try {
       return step_rows();
     } catch (...) {

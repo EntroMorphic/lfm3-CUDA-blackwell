@@ -5,15 +5,38 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <limits>
 #include <map>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
 namespace lfm {
+
+namespace json_scan {
+// validation/ttft-rest-v2 stage 1: whether any of the 8 bytes at p is '"' or '\\' (and, with controls, one under
+// 0x20). Exact as a yes/no: (x - 0x01..) & ~x & 0x80.. is nonzero iff some byte of x is zero, and (x - 0x20..) & ~x &
+// 0x80.. iff some byte is under 0x20. A scan stops at the first 8 bytes that may hold one and goes on a byte at a time.
+inline bool any_special(const char* p, bool controls) {
+  std::uint64_t x;
+  std::memcpy(&x, p, 8);
+  constexpr std::uint64_t ones = 0x0101010101010101ull, highs = 0x8080808080808080ull;
+  const auto zero = [&](std::uint64_t v) { return (v - ones) & ~v & highs; };
+  std::uint64_t hit = zero(x ^ (ones * '"')) | zero(x ^ (ones * '\\'));
+  if (controls) hit |= (x - ones * 0x20) & ~x & highs;
+  return hit != 0;
+}
+// The first index at or after p where a byte that is '"' or '\\' (or, with controls, under 0x20) may be: whole 8-byte
+// words without one are skipped; the caller checks bytes one at a time from there, as before.
+inline size_t skip_plain(std::string_view s, size_t p, bool controls) {
+  while (p + 8 <= s.size() && !any_special(s.data() + p, controls)) p += 8;
+  return p;
+}
+}  // namespace json_scan
 
 inline size_t checked_product(std::initializer_list<size_t> factors) {
   size_t result = 1;
@@ -63,22 +86,24 @@ class Json {
     if (const auto* a = std::get_if<Array>(&value)) return *a;
     throw std::runtime_error("configuration field must be an array");
   }
-  static Json parse(const std::string& text) {
+  // validation/ttft-rest-v2 stage 1: a view (the caller's text parsed in place, not copied), and the result returned by
+  // move (it was a const local, copied on return).
+  static Json parse(std::string_view text) {
     size_t p = 0;
-    const Json result = parse_value(text, p, 0);
+    Json result = parse_value(text, p, 0);
     space(text, p);
     if (p != text.size()) throw std::runtime_error("trailing configuration JSON");
     return result;
   }
  private:
-  static void space(const std::string& s, size_t& p) {
+  static void space(std::string_view s, size_t& p) {
     while (p < s.size() && (s[p] == ' ' || s[p] == '\n' || s[p] == '\r' || s[p] == '\t')) ++p;
   }
-  static char take(const std::string& s, size_t& p) {
+  static char take(std::string_view s, size_t& p) {
     if (p == s.size()) throw std::runtime_error("truncated configuration JSON");
     return s[p++];
   }
-  static unsigned hex4(const std::string& s, size_t& p) {
+  static unsigned hex4(std::string_view s, size_t& p) {
     unsigned n = 0;
     for (int i = 0; i < 4; ++i) {
       const char h = take(s, p);
@@ -100,19 +125,19 @@ class Json {
       out += static_cast<char>(0x80 | ((n >> 6) & 63)); out += static_cast<char>(0x80 | (n & 63));
     }
   }
-  static std::string quoted(const std::string& s, size_t& p) {
+  static std::string quoted(std::string_view s, size_t& p) {
     if (take(s, p) != '"') throw std::runtime_error("expected JSON string");
     std::string out;
     for (;;) {
       // the plain run up to the next quote, backslash or control character, appended at once (the same bytes as one
       // at a time: a 13 MB base64 image part parsed ~6x faster)
-      size_t run = p;
+      size_t run = json_scan::skip_plain(s, p, true);  // whole plain 8-byte words first (ttft-rest-v2 stage 1)
       while (run < s.size()) {
         const unsigned char u = static_cast<unsigned char>(s[run]);
         if (u == '"' || u == '\\' || u < 32) break;
         ++run;
       }
-      out.append(s, p, run - p);
+      out.append(s.data() + p, run - p);
       p = run;
       char c = take(s, p);
       if (c == '"') return out;
@@ -142,7 +167,7 @@ class Json {
       out += c;
     }
   }
-  static Json parse_value(const std::string& s, size_t& p, int depth) {
+  static Json parse_value(std::string_view s, size_t& p, int depth) {
     if (depth > 64) throw std::runtime_error("configuration JSON nesting too deep");
     space(s, p);
     if (p == s.size()) throw std::runtime_error("missing configuration JSON value");
@@ -200,7 +225,7 @@ class Json {
     }
     double n = 0;
     try {
-      n = std::stod(s.substr(begin, p - begin));
+      n = std::stod(std::string(s.substr(begin, p - begin)));
     } catch (const std::out_of_range&) {  // overflow, or underflow to a subnormal/zero (ERANGE)
       throw std::runtime_error("JSON number outside the double range");
     }

@@ -569,7 +569,16 @@ inline std::string python_strip(std::string_view s) {
 // string (the caller's reference to the clip: a path, or base64 WAV bytes) and the part renders as the template's
 // <|vision_start|><|audio|><|vision_end|>; or (image input, allow_image) an image: `data` holds the part's "image"
 // string (a path, or base64 JPEG/PNG bytes) and the part renders as <|vision_start|><|image|><|vision_end|>.
-struct ContentPart { std::string text; bool audio = false; std::string data; bool image = false; };
+// `media` (parse_messages with copy_media false; validation/ttft-rest-v2 stage 1): an audio or image part's string in
+// the caller's JSON, not copied into `data`; valid while that JSON lives. source() is the part's string either way.
+struct ContentPart {
+  std::string text;
+  bool audio = false;
+  std::string data;
+  bool image = false;
+  const std::string* media = nullptr;
+  const std::string& source() const { return media ? *media : data; }
+};
 struct Message {
   std::string role;
   bool content_is_list = false;
@@ -598,7 +607,10 @@ inline bool has_reserved(std::string_view s) {
 // Validation of tools/lfm3_text_frontend.py validate_messages, on the JSON form of the messages.
 // allow_audio (speech input, #3): a user message's content list may also hold {type: "audio", audio: string} parts.
 // allow_image (image input, #4): likewise {type: "image", image: string} parts.
-inline std::vector<Message> parse_messages(const Json& j, bool allow_audio = false, bool allow_image = false) {
+// copy_media (default true): false leaves an audio or image part's string in `j` (ContentPart::media) instead of
+// copying it into `data` (a clip's base64 is MBs); the caller keeps `j` alive while it uses the parts.
+inline std::vector<Message> parse_messages(const Json& j, bool allow_audio = false, bool allow_image = false,
+                                           bool copy_media = true) {
   const auto bad = [](const std::string& why) { throw std::runtime_error("lfm3 chat: " + why); };
   const auto* list = std::get_if<Json::Array>(&j.value);
   if (!list || list->empty() || list->size() > kMaxMessages) bad("messages must contain 1..4096 messages");
@@ -645,7 +657,8 @@ inline std::vector<Message> parse_messages(const Json& j, bool allow_audio = fal
           if (m.role != "user") bad("audio parts are supported in user messages only");
           const auto* data = std::get_if<std::string>(&po->at("audio").value);
           if (!data || data->empty()) bad("an audio part's audio must be a nonempty string");
-          m.parts.push_back({std::string(), true, *data});
+          if (copy_media) m.parts.push_back({std::string(), true, *data});
+          else m.parts.push_back({std::string(), true, std::string(), false, data});
           // the text on either side of an audio part is not adjacent in the prompt (the part renders as its span
           // tokens between them), so each run of text parts is checked as joined text on its own
           text(Json{joined}, "joined content");
@@ -657,7 +670,8 @@ inline std::vector<Message> parse_messages(const Json& j, bool allow_audio = fal
           if (m.role != "user") bad("image parts are supported in user messages only");
           const auto* data = std::get_if<std::string>(&po->at("image").value);
           if (!data || data->empty()) bad("an image part's image must be a nonempty string");
-          m.parts.push_back({std::string(), false, *data, true});
+          if (copy_media) m.parts.push_back({std::string(), false, *data, true});
+          else m.parts.push_back({std::string(), false, std::string(), true, data});
           text(Json{joined}, "joined content");  // as for audio: the span separates the text on either side
           joined.clear();
           continue;
