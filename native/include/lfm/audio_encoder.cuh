@@ -24,6 +24,7 @@
 // values are those of lfm::fp32::rotary in both modes.
 #include <lfm/audio_features.hpp>
 #include <lfm/fp32_ops.cuh>
+#include <lfm/pinned_staging.hpp>
 #include <lfm/safetensors_header.hpp>
 #include <lfm/split_linear.cuh>
 
@@ -323,7 +324,8 @@ class Encoder {
     const int T = int(mel.size() / M), W1 = (T + 1) / 2, W2 = (W1 + 1) / 2, N = (W2 + 1) / 2;
     if (N != int((size_t(T) + 7) / 8)) throw std::runtime_error("audio encoder: token count");  // unreachable
     auto& in = scratch(0, mel.size());
-    cuda_check(cudaMemcpy(in.p, mel.data(), mel.size() * sizeof(float), cudaMemcpyHostToDevice));
+    // through pinned memory: a pageable upload this size slows the GPU's reads until it next idles (pinned-uploads-v1)
+    cuda_check(staging_.upload(in.p, mel.data(), mel.size() * sizeof(float)));
     const std::string D = "model.audio_encoder.downsample.";
     // downsampler; mul(x, w, bias, y, rows, out, in)
     auto& a1 = scratch(1, size_t(W1) * 64 * kChannels);
@@ -431,6 +433,7 @@ class Encoder {
   lfm::split::Linear linear_;                   // the split multiply's scratch
   lfm::fp32::DeviceArray<double2> rope_;        // the rotary table, kept, grown to the longest clip seen
   int rope_rows_ = 0;
+  lfm::PinnedStaging staging_;                  // the features' upload (pinned-uploads-v1)
 
   // y [rows][out] = x [rows][in] · Wᵀ (+ bias): the split multiply on the tensor cores (x2, x1), or lfm::fp32::linear
   void mul(const float* x, const bf16* W, const bf16* bias, float* y, int rows, int out, int in) {

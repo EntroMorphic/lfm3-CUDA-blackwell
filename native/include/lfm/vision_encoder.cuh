@@ -24,6 +24,7 @@
 #include <lfm/fp32_ops.cuh>
 #include <lfm/gemm.cuh>
 #include <lfm/model_config.hpp>
+#include <lfm/pinned_staging.hpp>
 #include <lfm/safetensors.hpp>
 #include <lfm/safetensors_header.hpp>
 #include <lfm/split_linear.cuh>
@@ -504,7 +505,8 @@ class Encoder {
     const int N = grid_h * grid_w, T = N / (kMerge * kMerge);
     const size_t NW = size_t(N) * kWidth;
     auto& in = scratch(0, size_t(N) * kPatchDim);
-    f::check(cudaMemcpy(in.p, pixel_values, size_t(N) * kPatchDim * sizeof(float), cudaMemcpyHostToDevice), "pixels");
+    // through pinned memory: a pageable upload this size slows the GPU's reads until it next idles (pinned-uploads-v1)
+    f::check(staging_.upload(in.p, pixel_values, size_t(N) * kPatchDim * sizeof(float)), "pixels");
     const std::string V = "model.vision_tower.";
     auto& x = scratch(1, NW);
     mul(in.p, w(V + "patchifier.weight"), nullptr, x.p, N, kWidth, kPatchDim);
@@ -605,6 +607,7 @@ class Encoder {
   // scratch: kept between images (images-speed-v1 amendment 1), grown to the largest image seen
   std::vector<lfm::fp32::DeviceArray<bf16>> scratch16_ = std::vector<lfm::fp32::DeviceArray<bf16>>(3);
   lfm::fp32::DeviceArray<double2> rope_;
+  lfm::PinnedStaging staging_;  // the pixels' upload (pinned-uploads-v1)
 
   // y [rows][out] = x [rows][in] · Wᵀ (+ bias): the CUDA cores (kFp32), or lfm::gemm on the tensor cores with the
   // activations as one BF16 part (kX1) or two (kX2: [hi | lo] against [W | W], one GEMM over K = 2 in, [W | W] being
