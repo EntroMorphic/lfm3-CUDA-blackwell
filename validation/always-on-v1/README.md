@@ -366,3 +366,20 @@ The always-on service moved from `f19f4ee40708` (the tcgen05-v2 merge) to main 8
   - TTS: 200, 3.36 s of audio, ended by EOS.
   - Audio in, the 90 s clip: 200, the right transcript. The first text came 0.1667 and 0.1689 s after the send. That is the live service, not a quiet window; it was 0.171 s on the previous server.
 - While I was writing that tool, two sessions it opened stayed open. I closed one by hand; the other was reaped after the server's 300 s idle timeout.
+
+## The scratch-keep-v1 merge deployed (2026-11-25)
+The always-on service moved from `0012be944a78` to main 1fd28c0, the merge of scratch-keep-v1. That round's rule 4, memory, failed as written: about 690 MiB more is held after a 90 s clip. Tripp's decision: "Merge it, deploy".
+- **The binary:** the round's own build, `build/keep-on/liquid-lfm3-server`, sha256 `bbf085b991b8…`. It was built by `build_tcgen05_engine.sh keep-on on build/keep-src`, and `LIQUID_LFM3_TCGEN05:BOOL=ON` is in its CMake cache.
+  - The merged main's `native/` and `tools/` are identical to d9981c2, the tree the round built and tested (`git diff d9981c2 1fd28c0 -- native tools deploy` is empty).
+  - So the round's checks are this binary's pre-deploy checks. Exact (`build/keep-exact/`): byte identity, the server checks, the order list, the three sanitizers, machine code. Quiet (`build/keep-quiet/`): time to first token. See validation/scratch-keep-v1.
+- It is installed in `~/.local/lib/liquid-lfm3/bbf085b991b8/`. The previous binaries stay in place for a rollback.
+- The only line of the unit that changed is `ExecStart`. The unit before is kept as `build/keep-deploy/liquid-lfm3.service.before`. `systemd-analyze --user verify` is clean.
+
+**After the deploy (07:44), with `tools/thor/deploy_live_check.py`:**
+- Restart: 5.14 s. Warm-up: startup 4.90 s, warm-up 4.08 s.
+- `/health`: 200. `oom_score_adj`: 100. The process runs `~/.local/lib/liquid-lfm3/bbf085b991b8/liquid-lfm3-server`.
+- Text: 200, coherent; its session was closed afterward. TTS: 200, 3.36 s of audio, ended by EOS.
+- Audio in, the 90 s clip: 200, the right transcript.
+  - The first text came 0.1656 s after the send on the first request. That request allocated the 90 s scratch, since the warm-up's clip is shorter.
+  - It came 0.1520 s after the send on the second request, which reused the kept scratch.
+  - That is the live service, not a quiet window. It was 0.167–0.169 s on `0012be944a78`.
