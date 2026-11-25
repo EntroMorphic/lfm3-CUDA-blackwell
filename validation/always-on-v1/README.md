@@ -332,3 +332,37 @@ The always-on service moved from `71a6e1d793a4` (the ttft-rest-v1 merge) to main
 - `/health`: 200. `oom_score_adj`: 100. The process runs `~/.local/lib/liquid-lfm3/f19f4ee40708/liquid-lfm3-server`.
 - Text: 200, coherent. TTS: 200, 2.88 s of audio, ended by EOS.
 - Audio in, the 90 s clip: 200, the right transcript. The first text came 0.1712 and 0.1701 s after the send on the first two requests after the restart. That is the live service, not a quiet window; it was 0.228 s on the previous server.
+
+## The merges of encoder-wrap-v1, ttft-rest-v2 and pinned-uploads-v1 deployed (2026-11-25)
+The always-on service moved from `f19f4ee40708` (the tcgen05-v2 merge) to main 8120c19: the merges of encoder-wrap-v1, ttft-rest-v2 and pinned-uploads-v1 on e41e36c. Tripp's decisions: encoder-wrap "Yes" (merge and deploy); ttft-rest-v2 "Take the gains" (its rule 3 failed as written on the 2.1 s clip); pinned-uploads "Take the savings".
+- The new server is `build/merge6-srv`, sha256 `0012be944a78…`. It was built by `build_tcgen05_engine.sh merge6-srv on build/merge6-src`, the same way each round built its candidate. `LIQUID_LFM3_TCGEN05:BOOL=ON` is in its CMake cache.
+- It is installed in `~/.local/lib/liquid-lfm3/0012be944a78/`. The previous binaries stay in place for a rollback.
+- The only line of the unit that changed is `ExecStart`. The unit before is kept as `build/merge6-check/liquid-lfm3.service.before`. `systemd-analyze --user verify` is clean.
+- Each round had passed its exactness rules against main separately. This check ran the three together.
+
+**Before the deploy (`build/merge6-check/`, `tools/thor/deploy_check_merge6.sh`):**
+- **Exact (05:08–05:42):**
+  - The speech regression: 36 SAME. The rule-6 suite: dump 360 of 360 and edge 93 of 93 against main; e2e and split 90 of 90 each. Vision: 713 of 713 stage files identical to main's.
+  - Audio in: PASS. 8 and 32 at once: identical to `lfm3-speech`. Images: PASS. The image cache: 24 of 24 identical. TTS exit 0. The text gate exit 0.
+  - memcheck with the full leak check on `lfm3-speech` (the 90 s clip, cherry, two): 0 errors, 0 bytes leaked, and every output the same as the plain run's.
+- **Quiet (05:57–06:08):** the speech stream check PASS; MONITOR CLEAN; power unchanged. Time to first token from the file, median of 5 timed passes, with texts identical to tcgen05-v2's ON runs at every clip:
+
+| clip | merge6 | merge5 (deployed until now) |
+|---|---|---|
+| short (2.1 s) | 0.0313 s | 0.0315 s |
+| median (5.8 s) | 0.0392 s | 0.0405 s |
+| typical (10.4 s) | 0.0521 s | 0.0534 s |
+| long (35 s) | 0.0790 s | 0.0834 s |
+| joined90 | 0.1687 s | 0.1789 s |
+
+  The merge5 figures come from its own pre-deploy window (2026-11-22), not this one.
+- **Host suites on main 8120c19:** 2,593 passed, 3 skipped.
+
+**After the deploy (06:14):**
+- Restart: 5.14 s. Warm-up: startup 4.89 s, warm-up 4.08 s.
+- `/health`: 200. `oom_score_adj`: 100. The process runs `~/.local/lib/liquid-lfm3/0012be944a78/liquid-lfm3-server`.
+- The live checks used `tools/thor/deploy_live_check.py`.
+  - Text: 200, coherent; its session was closed afterward.
+  - TTS: 200, 3.36 s of audio, ended by EOS.
+  - Audio in, the 90 s clip: 200, the right transcript. The first text came 0.1667 and 0.1689 s after the send. That is the live service, not a quiet window; it was 0.171 s on the previous server.
+- While I was writing that tool, two sessions it opened stayed open. I closed one by hand; the other was reaped after the server's 300 s idle timeout.
