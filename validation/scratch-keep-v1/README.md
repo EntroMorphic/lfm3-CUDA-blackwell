@@ -56,7 +56,7 @@ Binaries:
 - B: `build/keep-on` from d9981c2, server `bbf085b991b8…`.
 - Trace builds: `keep-trace-a` `a2868f8c…` and `keep-trace-b` `e95b031a…`.
 
-Exact runs: `build/keep-exact/`, 06:2x–07:04. Quiet window: `build/keep-quiet/`, 07:22–07:28, with the service stopped; MONITOR CLEAN (316 samples, foreign in 0); power unchanged.
+Exact runs: `build/keep-exact/`, 06:19–07:04. Quiet window: `build/keep-quiet/`, 07:22–07:28, with the service stopped; MONITOR CLEAN (316 samples, foreign in 0); power unchanged.
 
 | rule | result |
 |---|---|
