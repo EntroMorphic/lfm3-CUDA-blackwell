@@ -164,10 +164,9 @@ __global__ void __launch_bounds__(kAttnQueries) attention(const float* q, const 
   for (int d = 0; d < 64; ++d) out[(size_t(query) * heads + h) * 64 + d] = __fdiv_rn(acc[d], total);
 }
 // ---- the tensor-core paths (validation/images-speed-v1) ----
-// split_bf16, split_rows, double_rows and add_bias: lfm/split_linear.cuh (moved there unchanged; shared with the
+// split_bf16, split_rows and add_bias: lfm/split_linear.cuh (moved there unchanged; shared with the
 // audio encoder since validation/audio-ttft-v1)
 using lfm::split::kernels::add_bias;
-using lfm::split::kernels::double_rows;
 using lfm::split::kernels::split_bf16;
 using lfm::split::kernels::split_rows;
 // K and V split once per layer into the attention tiles' layouts: ks [kv][npad][PARTS * 64] (part p in columns
@@ -605,11 +604,11 @@ class Encoder {
   std::vector<lfm::fp32::DeviceArray<float>> scratch_ = std::vector<lfm::fp32::DeviceArray<float>>(9);
   // scratch: kept between images (images-speed-v1 amendment 1), grown to the largest image seen
   std::vector<lfm::fp32::DeviceArray<bf16>> scratch16_ = std::vector<lfm::fp32::DeviceArray<bf16>>(3);
-  std::map<const bf16*, lfm::fp32::DeviceArray<bf16>> doubled_;
   lfm::fp32::DeviceArray<double2> rope_;
 
   // y [rows][out] = x [rows][in] · Wᵀ (+ bias): the CUDA cores (kFp32), or lfm::gemm on the tensor cores with the
-  // activations as one BF16 part (kX1) or two (kX2: [hi | lo] against [W | W], one GEMM over K = 2 in), FP32 out.
+  // activations as one BF16 part (kX1) or two (kX2: [hi | lo] against [W | W], one GEMM over K = 2 in, [W | W] being
+  // W read twice by the GEMM's b_k_wrap, validation/encoder-wrap-v1), FP32 out.
   void mul(const float* x, const bf16* W, const bf16* bias, float* y, int rows, int out, int in) {
     namespace f = lfm::fp32;
     if (precision_.linear == Precision::kFp32) {
@@ -621,20 +620,11 @@ class Encoder {
     if (scratch16_[0].n < a) scratch16_[0] = f::DeviceArray<bf16>(a);
     kernels::split_rows<<<f::blocks(size_t(rows) * in), 256>>>(x, scratch16_[0].p, rows, in, parts);
     float* target = bias ? scratch(8, c).p : y;
-    lfm::gemm::Problem p = lfm::gemm::linear(scratch16_[0].p, parts == 2 ? doubled(W, out, in) : W, nullptr, rows,
-                                             parts * in, out);
+    lfm::gemm::Problem p = lfm::gemm::linear(scratch16_[0].p, W, nullptr, rows, parts * in, out);
+    if (parts == 2) p.ldb = in, p.b_k_wrap = in;  // [W | W]
     p.c = nullptr, p.c_f32 = target;
     lfm::gemm::run(p);
     if (bias) kernels::add_bias<<<f::blocks(c), 256>>>(target, bias, c, out, y);
-  }
-  // [W | W] for the split multiply, built on first use and kept
-  const bf16* doubled(const bf16* W, int rows, int in) {
-    auto it = doubled_.find(W);
-    if (it == doubled_.end()) {
-      it = doubled_.emplace(W, lfm::fp32::DeviceArray<bf16>(size_t(rows) * 2 * in)).first;
-      kernels::double_rows<<<lfm::fp32::blocks(size_t(rows) * in), 256>>>(W, it->second.p, rows, in);
-    }
-    return it->second.p;
   }
   // Bidirectional attention over the image's n tokens (scale 1/8): the CUDA-core kernel, or K and V split once into
   // the tensor-core kernel's tile layouts, then the kernel.

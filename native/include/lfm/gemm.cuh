@@ -15,6 +15,7 @@
 // No reproduction of cuBLAS's kernel selection or reduction order is attempted or claimed.
 #include <cuda_bf16.h>
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -38,10 +39,21 @@ struct Problem {
   long long stride_a = 0, stride_b = 0, stride_c = 0;  // per batch item; B indexed by z / group
   int batch = 1, group = 1;
   bool b_k_contiguous = true;
+  // For an N x K B (b_k_contiguous): when set, k at or past it reads B at k - b_k_wrap, so B (ldb >= b_k_wrap) acts
+  // as [W | W] over K without the copy: the split multiply's [hi | lo] against W (validation/encoder-wrap-v1; first
+  // tried in audio-ttft-v1 amendment 5, c968b5d). A multiple of 8, so no 8-element chunk straddles it; k <= 2 b_k_wrap.
+  // 0: off. In the padding after b_k_contiguous, so the struct's size and every other field's offset are main's (the
+  // static_asserts below): a kernel that takes a Problem and ignores the wrap compiles to main's machine code
+  // (encoder-wrap-v1 amendment 1; appended at the end, it grew the struct and changed untouched kernels).
+  int b_k_wrap = 0;
   // FP32 scratch for the split-K path (M <= 8 with a K x N B: decode P·V); see workspace_bytes().
   float* workspace = nullptr;
   size_t workspace_size = 0;  // bytes
 };
+// main's layout (encoder-wrap-v1 amendment 1): b_k_wrap sits in padding
+static_assert(sizeof(Problem) == 128 && offsetof(Problem, b_k_wrap) == 108 && offsetof(Problem, workspace) == 112 &&
+                  offsetof(Problem, workspace_size) == 120 && offsetof(Problem, batch) == 96,
+              "lfm::gemm::Problem's layout must stay main's");
 
 // Keys per split of the decode P·V path, and the scratch it needs.
 inline constexpr int kSplitKeys = 256;
@@ -104,7 +116,8 @@ __device__ __forceinline__ int swz_k(int row, int chunk) {
 template <int CPR>
 __device__ __forceinline__ int swz_n(int row, int chunk) { return row * CPR + (chunk ^ (row & 7)); }
 
-template <class T, bool BK_CONTIGUOUS>
+// WRAP: B's k index wraps at p.b_k_wrap (encoder-wrap-v1); false is the kernel as it was, the same machine code.
+template <class T, bool BK_CONTIGUOUS, bool WRAP = false>
 __global__ void __launch_bounds__(T::THREADS) wide_kernel(Problem p) {
   constexpr int BM = T::BM, BN = T::BN, BK = T::BK, MI = T::MI, NI = T::NI, KCH = T::KCH, STAGES = T::STAGES;
   constexpr int NCH = BN / 8;  // chunks per row of a K x BN tile
@@ -138,7 +151,12 @@ __global__ void __launch_bounds__(T::THREADS) wide_kernel(Problem p) {
         const int row = i / KCH, ch = i % KCH;
         const int gn = n0 + row, gk = k0 + ch * 8;
         const bool ok = gn < p.n && gk < p.k;
-        cp_async16(smem_u32(db + swz_k<KCH>(row, ch)), ok ? B + gn * p.ldb + gk : B, ok);
+        if constexpr (WRAP) {
+          const int bk = gk >= p.b_k_wrap ? gk - p.b_k_wrap : gk;
+          cp_async16(smem_u32(db + swz_k<KCH>(row, ch)), ok ? B + gn * p.ldb + bk : B, ok);
+        } else {
+          cp_async16(smem_u32(db + swz_k<KCH>(row, ch)), ok ? B + gn * p.ldb + gk : B, ok);
+        }
       }
     } else {
 #pragma unroll
@@ -232,7 +250,7 @@ __global__ void __launch_bounds__(T::THREADS) wide_kernel(Problem p) {
 
 // M <= 8 rows: each warp produces COLS outputs for all rows, streaming B rows with 16-byte loads.
 // The reduction order is fixed: per-lane strided partial sums, then a butterfly over the warp.
-template <int R>
+template <int R, bool WRAP = false>  // WRAP: as wide_kernel's
 __global__ void __launch_bounds__(256) thin_kernel(Problem p) {
   constexpr int COLS = 4;
   const int z = blockIdx.y;
@@ -252,7 +270,12 @@ __global__ void __launch_bounds__(256) thin_kernel(Problem p) {
     int4 w[COLS];
 #pragma unroll
     for (int j = 0; j < COLS; ++j)
-      w[j] = col0 + j < p.n ? __ldcs(reinterpret_cast<const int4*>(B + (col0 + j) * p.ldb + kb)) : make_int4(0, 0, 0, 0);
+      if constexpr (WRAP) {
+        const int bk = kb >= p.b_k_wrap ? kb - p.b_k_wrap : kb;
+        w[j] = col0 + j < p.n ? __ldcs(reinterpret_cast<const int4*>(B + (col0 + j) * p.ldb + bk)) : make_int4(0, 0, 0, 0);
+      } else {
+        w[j] = col0 + j < p.n ? __ldcs(reinterpret_cast<const int4*>(B + (col0 + j) * p.ldb + kb)) : make_int4(0, 0, 0, 0);
+      }
 #pragma unroll
     for (int r = 0; r < R; ++r) {
       const int4 xa = __ldg(reinterpret_cast<const int4*>(A + r * p.lda + kb));
@@ -401,18 +424,32 @@ inline void launch_thin_k128(const Problem& p, cudaStream_t stream) {
   thin_k128_kernel<R><<<dim3(blocks, p.batch), 256, 0, stream>>>(p);
 }
 
-template <int R>
+template <int R, bool WRAP = false>
 inline void launch_thin(const Problem& p, cudaStream_t stream) {
   const int warps = (p.n + 3) / 4;
-  thin_kernel<R><<<dim3((warps + 7) / 8, p.batch), 256, 0, stream>>>(p);
+  thin_kernel<R, WRAP><<<dim3((warps + 7) / 8, p.batch), 256, 0, stream>>>(p);
 }
 
-template <class T, bool KC>
+template <class T, bool KC, bool WRAP = false>
 inline void launch_wide(const Problem& p, cudaStream_t stream) {
   static const bool configured =
-      cudaFuncSetAttribute(wide_kernel<T, KC>, cudaFuncAttributeMaxDynamicSharedMemorySize, T::SMEM) == cudaSuccess;
+      cudaFuncSetAttribute(wide_kernel<T, KC, WRAP>, cudaFuncAttributeMaxDynamicSharedMemorySize, T::SMEM) == cudaSuccess;
   if (!configured) throw std::runtime_error("gemm: cannot configure shared memory");
-  wide_kernel<T, KC><<<dim3((p.n + T::BN - 1) / T::BN, (p.m + T::BM - 1) / T::BM, p.batch), T::THREADS, T::SMEM, stream>>>(p);
+  wide_kernel<T, KC, WRAP><<<dim3((p.n + T::BN - 1) / T::BN, (p.m + T::BM - 1) / T::BM, p.batch), T::THREADS, T::SMEM, stream>>>(p);
+}
+
+template <bool WRAP>
+inline void launch_thin_rows(const Problem& p, cudaStream_t stream) {
+  switch (p.m) {
+    case 1: launch_thin<1, WRAP>(p, stream); return;
+    case 2: launch_thin<2, WRAP>(p, stream); return;
+    case 3: launch_thin<3, WRAP>(p, stream); return;
+    case 4: launch_thin<4, WRAP>(p, stream); return;
+    case 5: launch_thin<5, WRAP>(p, stream); return;
+    case 6: launch_thin<6, WRAP>(p, stream); return;
+    case 7: launch_thin<7, WRAP>(p, stream); return;
+    default: launch_thin<8, WRAP>(p, stream); return;
+  }
 }
 
 // Measured on Thor (validation/gemm-probe-v1, sweep): 128x128x64 with four 64x64 warp tiles and three
@@ -431,6 +468,10 @@ inline void check(const Problem& p) {
   if (!aligned(p.a) || !aligned(p.b) || p.lda % 8 || p.ldb % 8 || p.stride_a % 8 || p.stride_b % 8)
     throw std::runtime_error("gemm: operands must be 16-byte aligned with 8-element strides");
   if (!p.b_k_contiguous && (p.b_rows < 0 || p.b_rows > p.k || p.n % 8)) throw std::runtime_error("gemm: invalid K x N operand");
+  if (p.b_k_wrap && (p.b_k_wrap < 0 || p.b_k_wrap % 8 || !p.b_k_contiguous || p.ldb < p.b_k_wrap || p.k > 2 * p.b_k_wrap ||
+                     (p.m <= 8 && p.k == 128)))
+    throw std::runtime_error("gemm: invalid b_k_wrap (a multiple of 8, an N x K B, ldb at least it, k at most twice it; not the "
+                             "K = 128 decode path)");
 }
 
 #ifdef LFM_GEMM_TCGEN05
@@ -464,16 +505,8 @@ inline void run(const Problem& p, cudaStream_t stream = 0) {
     }
   }
   if (p.b_k_contiguous && p.m <= 8) {
-    switch (p.m) {
-      case 1: detail::launch_thin<1>(p, stream); return;
-      case 2: detail::launch_thin<2>(p, stream); return;
-      case 3: detail::launch_thin<3>(p, stream); return;
-      case 4: detail::launch_thin<4>(p, stream); return;
-      case 5: detail::launch_thin<5>(p, stream); return;
-      case 6: detail::launch_thin<6>(p, stream); return;
-      case 7: detail::launch_thin<7>(p, stream); return;
-      default: detail::launch_thin<8>(p, stream); return;
-    }
+    p.b_k_wrap ? detail::launch_thin_rows<true>(p, stream) : detail::launch_thin_rows<false>(p, stream);
+    return;
   }
   if (!p.b_k_contiguous && p.m <= 8) {
     switch (p.m) {
@@ -486,6 +519,12 @@ inline void run(const Problem& p, cudaStream_t stream = 0) {
       case 7: detail::launch_split_kn<7>(p, stream); return;
       default: detail::launch_split_kn<8>(p, stream); return;
     }
+  }
+  if (p.b_k_wrap) {  // an N x K B (check)
+    if (p.m <= 32) detail::launch_wide<detail::Wide32, true, true>(p, stream);
+    else if (p.m <= 64) detail::launch_wide<detail::Wide64, true, true>(p, stream);
+    else detail::launch_wide<detail::Wide128, true, true>(p, stream);
+    return;
   }
   const bool kc = p.b_k_contiguous;
   if (p.m <= 32) kc ? detail::launch_wide<detail::Wide32, true>(p, stream) : detail::launch_wide<detail::Wide32, false>(p, stream);
