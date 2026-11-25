@@ -312,6 +312,15 @@ class Encoder {
       fp32_ = m == "fp32";
       parts_ = m == "x1" ? 1 : 2;
     }
+    // validation/scratch-keep-v1: the scratch kept between clips, at most this many MiB (default 1024; 0 releases it
+    // after every clip)
+    const char* keep = std::getenv("LFM3_AUDIO_SCRATCH_KEEP_MIB");
+    if (keep && *keep) {
+      const std::string k = keep;
+      if (k.size() > 7 || k.find_first_not_of("0123456789") != std::string::npos)
+        throw std::runtime_error("LFM3_AUDIO_SCRATCH_KEEP_MIB must be a whole number of MiB: " + k);
+      keep_bytes_ = size_t(std::stoul(k)) << 20;
+    }
   }
 
   // Encodes one clip's features (mel: [128][T], from lfm::audio_features::log_mel) into `out` (device, [N][2048] BF16,
@@ -403,15 +412,20 @@ class Encoder {
     mul(hid.p, w(P + "linear_2.weight"), w(P + "linear_2.bias"), proj.p, N, kOut, kOut);
     to_bf16<<<grid(size_t(N) * kOut), 256>>>(proj.p, out, size_t(N) * kOut);
     cuda_check(cudaGetLastError());
-    // the scratch is released after every clip, so a long clip's stages (the first is W1 x 64 x 256 floats) do not stay
-    // allocated for the process's life (validation/audio-in-v1 red-team). Keeping it up to 1 GiB saved the ~30
-    // cudaMalloc calls (~10 ms at 90 s) but cost the language model's prefill that follows ~40 ms at 90 s, by an effect
-    // not understood: one small cudaMalloc + cudaFree after the encode restored it (validation/audio-ttft-v1,
-    // amendment 6 and the diagnostics before it).
+    // The scratch is kept for the next clip while it holds at most keep_bytes_ (validation/scratch-keep-v1): that saves
+    // the next clip's ~30 cudaMalloc calls (~10 ms at 90 s). A longer clip's stages (the first is W1 x 64 x 256 floats)
+    // are released at its end, so they do not stay allocated for the process's life (validation/audio-in-v1 red-team).
+    // Keeping once cost the language model's prefill ~40 ms at 90 s (validation/audio-ttft-v1 amendment 6): the pageable
+    // upload of the features slowed the GPU's reads until it next idled, and releasing gave it that idle
+    // (validation/alloc-effect-v1). The upload is now pinned (validation/pinned-uploads-v1), so nothing needs the idle.
     cuda_check(cudaDeviceSynchronize());
-    for (auto& b : scratch_) b.reset();
-    std::fill(sizes_.begin(), sizes_.end(), 0);
-    linear_.release();
+    size_t held = linear_.scratch_bytes();
+    for (size_t z : sizes_) held += z * sizeof(float);
+    if (held > keep_bytes_) {
+      for (auto& b : scratch_) b.reset();
+      std::fill(sizes_.begin(), sizes_.end(), 0);
+      linear_.release();
+    }
     if (dumps) {
       std::vector<bf16> b(size_t(N) * kOut);
       cuda_check(cudaMemcpy(b.data(), out, b.size() * sizeof(bf16), cudaMemcpyDeviceToHost));
@@ -428,6 +442,7 @@ class Encoder {
   double theta_ = 1e6;
   std::vector<std::unique_ptr<Buffer<float>>> scratch_ = std::vector<std::unique_ptr<Buffer<float>>>(13);
   std::vector<size_t> sizes_ = std::vector<size_t>(13, 0);
+  size_t keep_bytes_ = size_t(1024) << 20;      // the scratch kept between clips, at most (scratch-keep-v1)
   bool fp32_ = false;                           // LFM3_AUDIO_ENCODER=fp32
   int parts_ = 2;                               // the activations' BF16 parts: 2 (x2) or 1 (x1)
   lfm::split::Linear linear_;                   // the split multiply's scratch
@@ -443,7 +458,7 @@ class Encoder {
 
   static std::string layer(int i) { return "model.audio_encoder.lfm.layers." + std::to_string(i) + "."; }
   const bf16* w(const std::string& name) const { return weights_->at(name).device_data; }
-  // device scratch for one encode, released at its end; within an encode a slot is reused only after its contents are
+  // device scratch, kept between encodes up to keep_bytes_; within an encode a slot is reused only after its contents are
   // consumed (kernels run in stream order, and a reallocation's cudaFree waits for the device)
   Buffer<float>& scratch(int slot, size_t n) {
     if (sizes_[slot] < n) scratch_[slot] = std::make_unique<Buffer<float>>(n), sizes_[slot] = n;

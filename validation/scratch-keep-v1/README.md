@@ -38,6 +38,7 @@ A is main 8120c19 (`build/merge6-srv`, the build checked for this deploy). B is 
    - 3b. At every one of the five clips, mean(B) is below mean(A). Amendment 1 saved 1.6 ms on the short clip against amendment 6, and 2.9 ms on the 5.8 s clip.
    - 3c. Texts are identical to A's at every clip.
    - Reported, not ruled on: a trace run of B (`-DLFM3_TTFT_TRACE`, `trace_lfm3_audio_ttft.py`) splitting the encoder from the language-model call. It shows whether the language model's 40 ms has stayed away. If it came back, 3a would fail on its own.
+   - Note added with the scripts, before any data: the trace runs on A's tree too, built the same way, so the two splits sit side by side in the same window. Scripts: `tools/thor/scratch_keep_exact.sh` (rules 1, 2 and 7) and `tools/thor/scratch_keep_quiet.sh` (rules 3 and 4).
 4. **Memory:** `measure_lfm3_audio_device_memory.py`, the in-use stand-in, runs in the order A1 B1 A2 B2.
    - 4a. After the 90 s clip, B − A is between 550 and 700 MiB. The prediction is 623 MiB held; the window allows for the stand-in's granularity.
    - 4b. After the 90 s clip, B is at most the deployed server's figure from encoder-wrap-v1's run (A1 7,741 and A2 7,729 MiB, mean 7,735) + 128 MiB.
